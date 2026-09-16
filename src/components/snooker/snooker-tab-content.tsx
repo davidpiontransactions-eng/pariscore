@@ -1228,6 +1228,21 @@ export function SnookerTabContent() {
                           ) : (
                             datetime
                           )}
+                          {!live && m.status !== "finished" && (() => {
+                            const p1Data = resolvePlayers(m, players)[0];
+                            const p2Data = resolvePlayers(m, players)[1];
+                            if (!p1Data || !p2Data) return null;
+                            const s1 = playerScore(p1Data);
+                            const s2 = playerScore(p2Data);
+                            const pf = s1 / (s1 + s2);
+                            const need = Math.ceil(bo / 2);
+                            const expFrames = need + (bo - need) * pf * (1 - pf) * 4;
+                            return (
+                              <span className="ml-1 inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[8px] font-semibold text-blue-600">
+                                E:{expFrames.toFixed(1)}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
