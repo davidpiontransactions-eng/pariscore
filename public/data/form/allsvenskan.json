@@ -4,7 +4,7 @@
     "leagueId": "allsvenskan",
     "leagueName": "Sweden",
     "season": "2026/27",
-    "lastUpdated": "2026-09-15T09:32:41.151521Z",
+    "lastUpdated": "2026-09-16T09:25:50.211735Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 16,
     "window": 8,
@@ -12,42 +12,6 @@
     "partial": false
   },
   "home": [
-    {
-      "teamName": "Orgryte",
-      "gp": 8,
-      "w": 1,
-      "d": 5,
-      "l": 2,
-      "gf": 14,
-      "ga": 15
-    },
-    {
-      "teamName": "Brommapojkarna",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 12,
-      "ga": 8
-    },
-    {
-      "teamName": "Elfsborg",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 12,
-      "ga": 7
-    },
-    {
-      "teamName": "Degerfors",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 11,
-      "ga": 10
-    },
     {
       "teamName": "Vasteras",
       "gp": 8,
@@ -58,13 +22,13 @@
       "ga": 8
     },
     {
-      "teamName": "Kalmar",
+      "teamName": "Orgryte",
       "gp": 8,
-      "w": 5,
-      "d": 1,
+      "w": 1,
+      "d": 5,
       "l": 2,
-      "gf": 13,
-      "ga": 10
+      "gf": 14,
+      "ga": 15
     },
     {
       "teamName": "Mjallby",
@@ -76,12 +40,84 @@
       "ga": 13
     },
     {
+      "teamName": "Sirius",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 16,
+      "ga": 12
+    },
+    {
+      "teamName": "Brommapojkarna",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 12,
+      "ga": 8
+    },
+    {
       "teamName": "Malmo Ff",
       "gp": 8,
       "w": 3,
       "d": 1,
       "l": 4,
       "gf": 17,
+      "ga": 13
+    },
+    {
+      "teamName": "Kalmar",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 13,
+      "ga": 10
+    },
+    {
+      "teamName": "Degerfors",
+      "gp": 8,
+      "w": 3,
+      "d": 2,
+      "l": 3,
+      "gf": 11,
+      "ga": 10
+    },
+    {
+      "teamName": "Hammarby",
+      "gp": 8,
+      "w": 7,
+      "d": 0,
+      "l": 1,
+      "gf": 22,
+      "ga": 4
+    },
+    {
+      "teamName": "Elfsborg",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 12,
+      "ga": 7
+    },
+    {
+      "teamName": "Gais",
+      "gp": 8,
+      "w": 4,
+      "d": 3,
+      "l": 1,
+      "gf": 12,
+      "ga": 3
+    },
+    {
+      "teamName": "Hacken",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 12,
       "ga": 13
     },
     {
@@ -94,22 +130,13 @@
       "ga": 13
     },
     {
-      "teamName": "Hammarby",
+      "teamName": "Aik",
       "gp": 8,
-      "w": 7,
+      "w": 3,
       "d": 0,
-      "l": 1,
-      "gf": 22,
-      "ga": 4
-    },
-    {
-      "teamName": "Ifk Goteborg",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 13,
-      "ga": 8
+      "l": 5,
+      "gf": 9,
+      "ga": 17
     },
     {
       "teamName": "Djurgarden",
@@ -121,79 +148,16 @@
       "ga": 8
     },
     {
-      "teamName": "Sirius",
+      "teamName": "Ifk Goteborg",
       "gp": 8,
-      "w": 4,
+      "w": 5,
       "d": 2,
-      "l": 2,
-      "gf": 16,
-      "ga": 12
-    },
-    {
-      "teamName": "Aik",
-      "gp": 8,
-      "w": 3,
-      "d": 0,
-      "l": 5,
-      "gf": 9,
-      "ga": 17
-    },
-    {
-      "teamName": "Hacken",
-      "gp": 8,
-      "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 12,
-      "ga": 13
-    },
-    {
-      "teamName": "Gais",
-      "gp": 8,
-      "w": 4,
-      "d": 3,
       "l": 1,
-      "gf": 12,
-      "ga": 3
+      "gf": 13,
+      "ga": 8
     }
   ],
   "away": [
-    {
-      "teamName": "Orgryte",
-      "gp": 8,
-      "w": 1,
-      "d": 0,
-      "l": 7,
-      "gf": 5,
-      "ga": 17
-    },
-    {
-      "teamName": "Brommapojkarna",
-      "gp": 8,
-      "w": 2,
-      "d": 2,
-      "l": 4,
-      "gf": 11,
-      "ga": 17
-    },
-    {
-      "teamName": "Elfsborg",
-      "gp": 8,
-      "w": 2,
-      "d": 3,
-      "l": 3,
-      "gf": 9,
-      "ga": 10
-    },
-    {
-      "teamName": "Degerfors",
-      "gp": 8,
-      "w": 1,
-      "d": 0,
-      "l": 7,
-      "gf": 3,
-      "ga": 17
-    },
     {
       "teamName": "Vasteras",
       "gp": 8,
@@ -204,13 +168,13 @@
       "ga": 17
     },
     {
-      "teamName": "Kalmar",
+      "teamName": "Orgryte",
       "gp": 8,
-      "w": 0,
-      "d": 2,
-      "l": 6,
-      "gf": 3,
-      "ga": 12
+      "w": 1,
+      "d": 0,
+      "l": 7,
+      "gf": 5,
+      "ga": 17
     },
     {
       "teamName": "Mjallby",
@@ -222,6 +186,24 @@
       "ga": 16
     },
     {
+      "teamName": "Sirius",
+      "gp": 8,
+      "w": 6,
+      "d": 1,
+      "l": 1,
+      "gf": 19,
+      "ga": 10
+    },
+    {
+      "teamName": "Brommapojkarna",
+      "gp": 8,
+      "w": 2,
+      "d": 2,
+      "l": 4,
+      "gf": 11,
+      "ga": 17
+    },
+    {
       "teamName": "Malmo Ff",
       "gp": 8,
       "w": 5,
@@ -231,12 +213,21 @@
       "ga": 10
     },
     {
-      "teamName": "Halmstad",
+      "teamName": "Kalmar",
       "gp": 8,
       "w": 0,
       "d": 2,
       "l": 6,
-      "gf": 5,
+      "gf": 3,
+      "ga": 12
+    },
+    {
+      "teamName": "Degerfors",
+      "gp": 8,
+      "w": 1,
+      "d": 0,
+      "l": 7,
+      "gf": 3,
       "ga": 17
     },
     {
@@ -249,13 +240,49 @@
       "ga": 11
     },
     {
-      "teamName": "Sirius",
+      "teamName": "Elfsborg",
       "gp": 8,
-      "w": 6,
-      "d": 1,
-      "l": 1,
-      "gf": 19,
+      "w": 2,
+      "d": 3,
+      "l": 3,
+      "gf": 9,
       "ga": 10
+    },
+    {
+      "teamName": "Gais",
+      "gp": 8,
+      "w": 2,
+      "d": 2,
+      "l": 4,
+      "gf": 7,
+      "ga": 11
+    },
+    {
+      "teamName": "Hacken",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 11,
+      "ga": 9
+    },
+    {
+      "teamName": "Halmstad",
+      "gp": 8,
+      "w": 0,
+      "d": 2,
+      "l": 6,
+      "gf": 5,
+      "ga": 17
+    },
+    {
+      "teamName": "Aik",
+      "gp": 8,
+      "w": 5,
+      "d": 3,
+      "l": 0,
+      "gf": 14,
+      "ga": 8
     },
     {
       "teamName": "Djurgarden",
@@ -274,33 +301,6 @@
       "l": 4,
       "gf": 14,
       "ga": 25
-    },
-    {
-      "teamName": "Aik",
-      "gp": 8,
-      "w": 5,
-      "d": 3,
-      "l": 0,
-      "gf": 14,
-      "ga": 8
-    },
-    {
-      "teamName": "Hacken",
-      "gp": 8,
-      "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 11,
-      "ga": 9
-    },
-    {
-      "teamName": "Gais",
-      "gp": 8,
-      "w": 2,
-      "d": 2,
-      "l": 4,
-      "gf": 7,
-      "ga": 11
     }
   ]
 }
