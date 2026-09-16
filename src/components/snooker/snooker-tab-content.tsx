@@ -437,6 +437,19 @@ export function SnookerTabContent() {
     revalidateOnFocus: true,
   });
 
+  type AccuracyResponse = {
+    totalMatches: number;
+    accuracy: number;
+    highConfidence: { count: number; accuracy: number };
+    edge: { count: number; accuracy: number };
+    brierScore: number;
+    logLoss: number;
+  };
+  const accuracyRes = useSWR<AccuracyResponse>("/api/v1/snooker/accuracy", fetcher, {
+    refreshInterval: 600_000,
+  });
+  const accuracy = accuracyRes.data;
+
   const matches = useMemo(() => matchesRes.data?.matches ?? [], [matchesRes.data]);
   const players = useMemo(() => playersRes.data?.players ?? [], [playersRes.data]);
   const liveMatches = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
@@ -917,6 +930,55 @@ export function SnookerTabContent() {
           <span>{calFiltered.length} matchs affichés</span>
         </div>
       </section>
+
+      {/* ======== PRÉCISION DU MODÈLE ======== */}
+      {accuracy && accuracy.totalMatches > 0 && (
+        <section
+          aria-label="Précision du modèle"
+          className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
+          style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
+        >
+          <h2 className="text-[13px] font-semibold mb-3" style={{ color: "#000000" }}>
+            Précision du modèle
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: "Précision globale",
+                value: `${accuracy.accuracy}%`,
+                sub: `${accuracy.totalMatches} matchs analysés`,
+                color: accuracy.accuracy >= 60 ? "#00985f" : accuracy.accuracy >= 55 ? "#FF6D00" : "#6b7280",
+              },
+              {
+                label: "Haute confiance",
+                value: `${accuracy.highConfidence.accuracy}%`,
+                sub: `${accuracy.highConfidence.count} paris (>65% confiance)`,
+                color: accuracy.highConfidence.accuracy >= 65 ? "#00985f" : "#FF6D00",
+              },
+              {
+                label: "Edge vs cotes",
+                value: `${accuracy.edge.accuracy}%`,
+                sub: `${accuracy.edge.count} paris avec edge >5%`,
+                color: accuracy.edge.accuracy >= 55 ? "#00985f" : "#FF6D00",
+              },
+              {
+                label: "Brier Score",
+                value: accuracy.brierScore.toFixed(3),
+                sub: accuracy.brierScore < 0.2 ? "Excellente calibration" : accuracy.brierScore < 0.25 ? "Bonne calibration" : "À améliorer",
+                color: accuracy.brierScore < 0.2 ? "#00985f" : accuracy.brierScore < 0.25 ? "#FF6D00" : "#6b7280",
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl bg-gray-50 p-3 text-center">
+                <div className="text-[18px] font-bold tabular-nums" style={{ color: stat.color }}>
+                  {stat.value}
+                </div>
+                <div className="text-[10px] font-medium text-gray-500 mt-1">{stat.label}</div>
+                <div className="text-[9px] text-gray-400 mt-0.5">{stat.sub}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ======== TOP 10 PAR MARCHÉ DE PARI — 1xBet ======== */}
       <section
