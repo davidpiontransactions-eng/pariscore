@@ -104,6 +104,48 @@ function StatBar({ label, val1, val2, higher }: { label: string; val1: number; v
   );
 }
 
+function RecentForm({ playerName, matches, color }: { playerName: string; matches: Match[]; color: "emerald" | "amber" }) {
+  const recent = matches
+    .filter((m) => m.status === "finished" && (m.player1 === playerName || m.player2 === playerName))
+    .sort((a, b) => (b.scheduled_at ?? "").localeCompare(a.scheduled_at ?? ""))
+    .slice(0, 5);
+
+  if (recent.length === 0) return null;
+
+  const wins = recent.filter((m) => {
+    const isP1 = m.player1 === playerName;
+    return isP1 ? m.scoreA > m.scoreB : m.scoreB > m.scoreA;
+  }).length;
+
+  return (
+    <div className="rounded-xl bg-white p-4 border border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[12px] font-bold text-gray-900">Forme récente — {playerName}</h3>
+        <span className={`text-[10px] font-bold ${color === "emerald" ? "text-emerald-600" : "text-amber-600"}`}>
+          {wins}V / {recent.length - wins}D
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {recent.map((m) => {
+          const isP1 = m.player1 === playerName;
+          const opponent = isP1 ? m.player2 : m.player1;
+          const won = isP1 ? m.scoreA > m.scoreB : m.scoreB > m.scoreA;
+          const score = isP1 ? `${m.scoreA}-${m.scoreB}` : `${m.scoreB}-${m.scoreA}`;
+          return (
+            <div key={m.id} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5">
+              <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${won ? "bg-emerald-500" : "bg-rose-500"}`}>
+                {won ? "W" : "L"}
+              </span>
+              <span className="text-[11px] text-gray-600 flex-1 truncate">{opponent}</span>
+              <span className={`text-[11px] font-bold tabular-nums ${won ? "text-emerald-600" : "text-rose-600"}`}>{score}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function SnookerH2HPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: matchesData } = useSWR("/api/v1/snooker/matches", fetcher, { refreshInterval: 60_000 });
@@ -216,6 +258,10 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
             <StatBar label="Avg Break" val1={p1.avgBreak ?? 30} val2={p2.avgBreak ?? 30} />
           </div>
         </div>
+
+        {/* Forme récente */}
+        <RecentForm playerName={match.player1} matches={matches} color="emerald" />
+        <RecentForm playerName={match.player2} matches={matches} color="amber" />
 
         {/* Predictions */}
         <div className="rounded-xl bg-white p-4 border border-gray-100">
