@@ -637,13 +637,19 @@ export function SnookerTabContent() {
       }
       const roi = hasOdds && edge > 0 ? (edge / (100 - prob)) * 100 : 0;
 
+      // Niveau de confiance basé sur edge + probabilité
+      let confidence: "high" | "medium" | "low" = "low";
+      if (hasOdds && edge > 8) confidence = "high";
+      else if (hasOdds && edge > 4) confidence = "medium";
+      else if (!hasOdds && prob > 70) confidence = "medium";
+
       return {
-        match: m, prob, label, sub, edge, roi, hasOdds,
+        match: m, prob, label, sub, edge, roi, hasOdds, confidence,
         p1, p2, pFrame, bestOf: bo,
       };
     }).filter(Boolean) as Array<{
       match: ApiMatch; prob: number; label: string; sub: string;
-      edge: number; roi: number; hasOdds: boolean;
+      edge: number; roi: number; hasOdds: boolean; confidence: "high" | "medium" | "low";
       p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
     }>;
 
@@ -1180,7 +1186,7 @@ export function SnookerTabContent() {
             /* Match rows */
             <div>
               {top10.map((row, i) => {
-                const { match: m, prob, label, sub, edge, roi, hasOdds, p1, p2, bestOf: bo } = row;
+                const { match: m, prob, label, sub, edge, roi, hasOdds, confidence, p1, p2, bestOf: bo } = row;
                 const datetime = m.scheduled_at
                   ? new Intl.DateTimeFormat("fr-FR", {
                       weekday: "short",
@@ -1273,9 +1279,14 @@ export function SnookerTabContent() {
                           +{edge.toFixed(1)}%
                         </span>
                       )}
-                      {hasOdds && edge > 5 && (
-                        <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[8px] font-bold text-amber-600">
-                          VALUE
+                      {confidence === "high" && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                          ★ Forte
+                        </span>
+                      )}
+                      {confidence === "medium" && (
+                        <span className="inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                          Moyen
                         </span>
                       )}
                     </div>
