@@ -422,9 +422,15 @@ export function SnookerTabContent() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [videoQuery, setVideoQuery] = useState<string | null>(null);
 
+  // Détection live pour refresh fréquent
+  const [hasLive, setHasLive] = useState(false);
+
   const matchesRes = useSWR<MatchesResponse>("/api/v1/snooker/matches", fetcher, {
-    refreshInterval: 1_200_000,
+    refreshInterval: hasLive ? 120_000 : 1_200_000,
     revalidateOnFocus: true,
+    onSuccess: (data) => {
+      setHasLive(data.matches.some((m) => m.status === "live"));
+    },
   });
   const playersRes = useSWR<PlayersResponse>("/api/v1/snooker/players", fetcher, {
     refreshInterval: 600_000,
@@ -860,12 +866,32 @@ export function SnookerTabContent() {
                         </svg>
                       </button>
 
-                      {/* LIVE link */}
-                      <div className="ml-1.5 shrink-0">
+                      {/* LIVE link + Momentum */}
+                      <div className="ml-1.5 shrink-0 flex items-center gap-1">
                         {live ? (
-                          <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                            LIVE &gt;
-                          </span>
+                          <>
+                            <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                              LIVE
+                            </span>
+                            {/* Momentum bar */}
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: m.bestOf || 7 }).map((_, fi) => {
+                                const total = m.scoreA + m.scoreB;
+                                const isP1Frame = fi < m.scoreA;
+                                const isP2Frame = fi >= m.scoreA && fi < total;
+                                const isFuture = fi >= total;
+                                return (
+                                  <div
+                                    key={fi}
+                                    className={`h-1.5 w-1.5 rounded-full ${
+                                      isP1Frame ? "bg-emerald-500" : isP2Frame ? "bg-amber-500" : "bg-gray-200"
+                                    }`}
+                                    title={isP1Frame ? m.player1 : isP2Frame ? m.player2 : "à jouer"}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </>
                         ) : (
                           <span className="text-[10px] font-medium text-gray-400 transition-colors group-hover:text-rose-500">
                             LIVE &gt;
