@@ -4,7 +4,7 @@
     "leagueId": "jupiler",
     "leagueName": "Belgium",
     "season": "2026/27",
-    "lastUpdated": "2026-09-15T09:32:25.130869Z",
+    "lastUpdated": "2026-09-16T09:25:33.076984Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,13 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Club Brugge",
+      "teamName": "Krc Genk",
       "gp": 3,
-      "w": 3,
-      "d": 0,
+      "w": 2,
+      "d": 1,
       "l": 0,
-      "gf": 7,
-      "ga": 1
+      "gf": 8,
+      "ga": 3
     },
     {
       "teamName": "Royale Union Sg",
@@ -49,34 +49,16 @@
       "ga": 1
     },
     {
-      "teamName": "Krc Genk",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 8,
-      "ga": 3
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Charleroi",
+      "teamName": "Club Brugge",
       "gp": 3,
       "w": 3,
       "d": 0,
       "l": 0,
-      "gf": 5,
+      "gf": 7,
       "ga": 1
-    },
-    {
-      "teamName": "Club Brugge",
-      "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 5,
-      "ga": 2
-    },
+    }
+  ],
+  "away": [
     {
       "teamName": "Royale Union Sg",
       "gp": 3,
@@ -103,6 +85,24 @@
       "l": 0,
       "gf": 4,
       "ga": 2
+    },
+    {
+      "teamName": "Club Brugge",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 5,
+      "ga": 2
+    },
+    {
+      "teamName": "Charleroi",
+      "gp": 3,
+      "w": 3,
+      "d": 0,
+      "l": 0,
+      "gf": 5,
+      "ga": 1
     }
   ]
 }
