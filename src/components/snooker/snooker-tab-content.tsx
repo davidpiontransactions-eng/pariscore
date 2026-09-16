@@ -1083,6 +1083,38 @@ export function SnookerTabContent() {
         </section>
       )}
 
+      {/* ======== PARIS RECOMMANDÉS — Meilleurs paris toutes confiances ======== */}
+      {top10.filter(t => t.confidence === "high").length > 0 && (
+        <section
+          aria-label="Paris recommandés"
+          className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
+          style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)", border: "1px solid #bbf7d0" }}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">★</span>
+            <h2 className="text-[13px] font-semibold text-emerald-800">Paris recommandés — Confiance forte</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {top10.filter(t => t.confidence === "high").slice(0, 5).map((t) => (
+              <div
+                key={`${t.match.id}-${t.label}`}
+                className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm border border-emerald-100"
+              >
+                <span className="text-[11px] font-medium text-gray-700">
+                  {t.p1.name} vs {t.p2.name}
+                </span>
+                <span className="text-[10px] text-gray-400">·</span>
+                <span className="text-[11px] font-bold text-emerald-600">{t.label}</span>
+                <span className="text-[11px] font-bold tabular-nums text-emerald-700">{t.prob.toFixed(1)}%</span>
+                {t.hasOdds && t.edge > 0 && (
+                  <span className="text-[9px] font-bold text-emerald-500">+{t.edge.toFixed(1)}%</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ======== TOP 10 PAR MARCHÉ DE PARI — 1xBet ======== */}
       <section
         aria-label="Top 10 paris sportifs"
