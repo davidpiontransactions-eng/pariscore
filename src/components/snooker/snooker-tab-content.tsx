@@ -16,15 +16,16 @@ import { SnookerVideoPopup } from "@/components/snooker/snooker-video-popup";
 // Styles
 // ---------------------------------------------------------------------------
 
-type StrategyKey = "form" | "scoring" | "clutch" | "format" | "momentum" | "all";
+type MarketKey = "matchWinner" | "overTotal" | "handicapP1" | "handicapP2" | "firstTo2" | "totalOverP1" | "totalOverP2";
 
-const STRATEGIES: { key: StrategyKey; label: string; desc: string }[] = [
-  { key: "form", label: "Forme", desc: "Elo + Win% + décideurs" },
-  { key: "scoring", label: "Scoring", desc: "Century rate + avg break" },
-  { key: "clutch", label: "Clutch", desc: "Décideurs gagnés" },
-  { key: "format", label: "Format", desc: "Long vs court" },
-  { key: "momentum", label: "Momentum", desc: "Élan récent" },
-  { key: "all", label: "Tous", desc: "Aucun filtre" },
+const MARKETS: { key: MarketKey; label: string; desc: string }[] = [
+  { key: "matchWinner", label: "Gagnant", desc: "Vainqueur du match" },
+  { key: "overTotal", label: "Over Total", desc: "Over total manches" },
+  { key: "handicapP1", label: "Handicap P1", desc: "Handicap frames P1" },
+  { key: "handicapP2", label: "Handicap P2", desc: "Handicap frames P2" },
+  { key: "firstTo2", label: "1er à 2", desc: "1er à obtenir 2 manches" },
+  { key: "totalOverP1", label: "P1 Over", desc: "P1 total manches over" },
+  { key: "totalOverP2", label: "P2 Over", desc: "P2 total manches over" },
 ];
 
 // Scoring helpers — basé sur les données DB (Elo, WinPct, CenturyRate, DeciderWinPct, AvgBreak)
@@ -75,6 +76,108 @@ function oddsWinProb(odds1: number, odds2: number): number {
   const margin = (1 / odds1) + (1 / odds2);
   const p1 = (1 / odds1) / margin;
   return p1 * 100;
+}
+
+// ─── Probabilités frame (binomial) ────────────────────────────────────────
+
+/** Log-binomial PMF pour éviter underflow sur gros n. */
+function logBinomPMF(k: number, n: number, p: number): number {
+  if (p <= 0) return k === 0 ? 0 : -Infinity;
+  if (p >= 1) return k === n ? 0 : -Infinity;
+  let logC = 0;
+  for (let i = 0; i < k; i++) {
+    logC += Math.log(n - i) - Math.log(i + 1);
+  }
+  return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
+}
+
+/** P(P1 gagne le match) — best-of-(2N-1). */
+function matchWinProb(pFrame: number, bestOf: number): number {
+  const winsNeeded = Math.ceil(bestOf / 2);
+  let pWin = 0;
+  for (let i = 0; i < winsNeeded; i++) {
+    pWin += Math.exp(logBinomPMF(i, bestOf - 1, pFrame));
+  }
+  return (1 - pWin) * 100;
+}
+
+/** P(total frames > threshold) — lo best-of. */
+function overTotalFramesProb(pFrame: number, bestOf: number, threshold: number): number {
+  const winsNeeded = Math.ceil(bestOf / 2);
+  let pOver = 0;
+  for (let t = threshold + 1; t <= bestOf; t++) {
+    for (let a = Math.max(0, t - winsNeeded); a <= Math.min(winsNeeded - 1, t); a++) {
+      const b = t - a;
+      if (b >= winsNeeded || b < 0) continue;
+      const logP = logBinomPMF(a, t - 1, pFrame) + Math.log(pFrame)
+                 + logBinomPMF(b, t - 1, pFrame) + Math.log(1 - pFrame);
+      pOver += Math.exp(logP);
+    }
+  }
+  return Math.min(100, Math.max(0, pOver * 100));
+}
+
+/** P(P1 gagne avec ≥m frames d'avance sur P2). */
+function handicapProb(pFrame: number, bestOf: number, handicap: number): number {
+  const winsNeeded = Math.ceil(bestOf / 2);
+  let pCover = 0;
+  for (let b = 0; b < winsNeeded; b++) {
+    const aNeeded = b + handicap + 1;
+    if (aNeeded < winsNeeded && aNeeded <= bestOf) {
+      pCover += Math.exp(logBinomPMF(aNeeded, bestOf - 1, pFrame));
+    }
+  }
+  // Cas P1 gagne le match avec l'avance
+  for (let a = winsNeeded; a <= bestOf; a++) {
+    for (let b = Math.max(0, a - handicap); b < winsNeeded; b++) {
+      if (a + b > bestOf) continue;
+      if (a === winsNeeded && b < winsNeeded) {
+        pCover += Math.exp(logBinomPMF(b, a + b - 1, pFrame)) * (1 - pFrame);
+      }
+    }
+  }
+  return Math.min(100, Math.max(0, pCover * 100));
+}
+
+/** P(P1 atteint k frames avant P2). */
+function firstToKProb(pFrame: number, k: number): number {
+  let pFirst = 0;
+  for (let i = 0; i < k; i++) {
+    pFirst += Math.exp(logBinomPMF(i, k + i - 1, pFrame)) * pFrame;
+  }
+  return Math.min(100, Math.max(0, pFirst * 100));
+}
+
+/** P(P1 gagne ≥k frames dans le match. */
+function totalFramesOverProb(pFrame: number, bestOf: number, k: number): number {
+  const winsNeeded = Math.ceil(bestOf / 2);
+  let pOver = 0;
+  for (let a = k; a <= bestOf; a++) {
+    for (let b = 0; b < winsNeeded; b++) {
+      if (a + b > bestOf) continue;
+      if (a >= winsNeeded) {
+        pOver += Math.exp(logBinomPMF(b, a + b - 1, pFrame)) * (1 - pFrame);
+      }
+    }
+  }
+  return Math.min(100, Math.max(0, pOver * 100));
+}
+
+/** Seuil par défaut pour handicap selon le format. */
+function defaultHandicap(bestOf: number): number {
+  if (bestOf <= 5) return 1;
+  if (bestOf <= 7) return 2;
+  return 3;
+}
+
+/** Seuil over total par défaut (frames-1 ou frames). */
+function defaultOverThreshold(bestOf: number): number {
+  return bestOf - 1;
+}
+
+/** Seuil over par joueur (ᵖ1 ou p2). */
+function defaultPlayerOverThreshold(bestOf: number): number {
+  return Math.ceil(bestOf / 2);
 }
 
 // ─── Meilleur joueur du match (sans cotes) ───────────────────────────────
@@ -215,7 +318,7 @@ function resolvePlayers(m: ApiMatch, players: ApiPlayer[]): [ApiPlayer, ApiPlaye
 function computeCompositeProb(
   m: ApiMatch,
   players: ApiPlayer[],
-  strategy: StrategyKey,
+  _strategy?: string,
 ): { prob1: number; prob2: number } | null {
   const [p1, p2] = resolvePlayers(m, players);
   const noDb = p1.id === "" && p2.id === "";
@@ -249,25 +352,10 @@ function computeCompositeProb(
 
   if (probs.length === 0) return null;
 
-  // Moyenne pondérée — boost selon la stratégie active
-  let weights = probs.map(() => 1);
-  if (strategy === "form" && probs.length >= 2) weights[1] = 2;     // double la forme
-  if (strategy === "scoring" && probs.length >= 3) weights[2] = 2;  // double le scoring
-  if (strategy === "clutch" && probs.length >= 4) weights[3] = 2;   // double le clutch
-
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-  const prob1 = probs.reduce((sum, p, i) => sum + p * weights[i], 0) / totalWeight;
+  // Moyenne simple
+  const prob1 = probs.reduce((a, b) => a + b, 0) / probs.length;
 
   return { prob1: Math.round(prob1), prob2: 100 - Math.round(prob1) };
-}
-
-// ─── Bande de confiance ───────────────────────────────────────────────────
-
-function confidenceBand(probPct: number): { label: string; cls: string } | null {
-  if (probPct >= 70) return { label: "Élevée", cls: "bg-[#00985f]/10 text-[#00985f] border-[#00985f]/20" };
-  if (probPct >= 60) return { label: "Moyenne", cls: "bg-[#FF6D00]/10 text-[#FF6D00] border-[#FF6D00]/20" };
-  if (probPct >= 50) return { label: "Correcte", cls: "bg-[#2196F3]/10 text-[#2196F3] border-[#2196F3]/20" };
-  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +417,7 @@ const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
 ];
 
 export function SnookerTabContent() {
-  const [activeStrategy, setActiveStrategy] = useState<StrategyKey>("all");
+  const [activeMarket, setActiveMarket] = useState<MarketKey>("matchWinner");
   const [calFilter, setCalFilter] = useState<CalendarFilter>("all");
   const [calDate, setCalDate] = useState<string>(() => {
     const d = new Date();
@@ -361,22 +449,94 @@ export function SnookerTabContent() {
     });
   }, [matches]);
 
-  // Top 10 par stratégie — uniquement matchs avec proba ≥50%
+  // Top 10 par marché de pari
   const top10 = useMemo(() => {
     const candidates = sorted.filter((m) => m.status !== "finished");
 
     const scored = candidates.map((m) => {
-      const prob = computeCompositeProb(m, players, activeStrategy);
-      if (!prob) return null;
-      const favorite = prob.prob1 >= prob.prob2 ? m.player1 : m.player2;
-      const bestProb = Math.max(prob.prob1, prob.prob2);
-      if (bestProb < 50) return null; // filtre ≥50%
-      return { match: m, prob1: prob.prob1, prob2: prob.prob2, favorite, bestProb };
-    }).filter(Boolean) as Array<{ match: ApiMatch; prob1: number; prob2: number; favorite: string; bestProb: number }>;
+      const [p1, p2] = resolvePlayers(m, players);
+      const baseProb = computeCompositeProb(m, players, "all");
+      if (!baseProb) return null;
 
-    scored.sort((a, b) => b.bestProb - a.bestProb);
+      // pFrame = probabilité que P1 gagne une frame
+      const pFrame = baseProb.prob1 / 100;
+      const bo = m.bestOf || 7;
+
+      let prob: number;
+      let label: string;
+      let sub: string;
+
+      switch (activeMarket) {
+        case "matchWinner": {
+          prob = baseProb.prob1;
+          label = p1.name;
+          sub = `${baseProb.prob1}% / ${baseProb.prob2}%`;
+          break;
+        }
+        case "overTotal": {
+          const thr = defaultOverThreshold(bo);
+          prob = overTotalFramesProb(pFrame, bo, thr);
+          label = `Over ${thr}`;
+          sub = `${prob.toFixed(1)}%`;
+          break;
+        }
+        case "handicapP1": {
+          const hc = defaultHandicap(bo);
+          prob = handicapProb(pFrame, bo, hc);
+          label = `P1 -${hc}`;
+          sub = `${prob.toFixed(1)}%`;
+          break;
+        }
+        case "handicapP2": {
+          const hc = defaultHandicap(bo);
+          prob = (100 - handicapProb(pFrame, bo, hc));
+          label = `P2 -${hc}`;
+          sub = `${prob.toFixed(1)}%`;
+          break;
+        }
+        case "firstTo2": {
+          prob = firstToKProb(pFrame, 2);
+          label = p1.name;
+          sub = `${prob.toFixed(1)}% / ${(100 - prob).toFixed(1)}%`;
+          break;
+        }
+        case "totalOverP1": {
+          const thr = defaultPlayerOverThreshold(bo);
+          prob = totalFramesOverProb(pFrame, bo, thr);
+          label = `P1 Over ${thr}`;
+          sub = `${prob.toFixed(1)}%`;
+          break;
+        }
+        case "totalOverP2": {
+          const thr = defaultPlayerOverThreshold(bo);
+          prob = totalFramesOverProb(1 - pFrame, bo, thr);
+          label = `P2 Over ${thr}`;
+          sub = `${prob.toFixed(1)}%`;
+          break;
+        }
+        default:
+          return null;
+      }
+
+      if (prob < 45) return null;
+
+      // Edge = différence avec cote implicite (si dispo)
+      let edge = 0;
+      if (activeMarket === "matchWinner" && m.odds && m.odds.player1 > 0 && m.odds.player2 > 0) {
+        const implied = oddsWinProb(m.odds.player1, m.odds.player2);
+        edge = prob - implied;
+      }
+
+      return { match: m, prob, label, sub, edge, p1, p2, pFrame, bestOf: bo };
+    }).filter(Boolean) as Array<{
+      match: ApiMatch; prob: number; label: string; sub: string;
+      edge: number; p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
+    }>;
+
+    // Tri par probabilité décroissante
+    scored.sort((a, b) => b.prob - a.prob);
     return scored.slice(0, 10);
-  }, [sorted, activeStrategy, players]);
+  }, [sorted, activeMarket, players]);
 
   // ── Calendrier FlashScore : filtrage par onglet + date ──────────────────
 
@@ -729,26 +889,26 @@ export function SnookerTabContent() {
         </div>
       </section>
 
-      {/* ======== TOP 10 PAR STRATÉGIE — Style Oddsportal / Football ======== */}
+      {/* ======== TOP 10 PAR MARCHÉ DE PARI — 1xBet ======== */}
       <section
-        aria-label="Top 10 matchs par stratégie"
+        aria-label="Top 10 paris sportifs"
         className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
         style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
       >
         {/* En-tête + filtres */}
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <h2 className="text-[13px] font-semibold" style={{ color: "#000000" }}>
-            Top 10 — {STRATEGIES.find((s) => s.key === activeStrategy)?.label ?? "Tous"}
+            Top 10 — {MARKETS.find((s) => s.key === activeMarket)?.label ?? "Gagnant"}
           </h2>
           <div className="flex shrink-0 items-center gap-1">
-            <div className="flex overflow-hidden rounded" style={{ border: "1px solid #f0f0f0" }}>
-              {STRATEGIES.map((s) => (
+            <div className="flex flex-wrap overflow-hidden rounded" style={{ border: "1px solid #f0f0f0" }}>
+              {MARKETS.map((s) => (
                 <button
                   key={s.key}
                   type="button"
-                  onClick={() => setActiveStrategy(s.key)}
+                  onClick={() => setActiveMarket(s.key)}
                   className={`min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5 ${
-                    activeStrategy === s.key
+                    activeMarket === s.key
                       ? "bg-[#00985f]/10 text-[#00985f]"
                       : "bg-transparent text-[#717171] hover:text-[#222]"
                   }`}
@@ -765,7 +925,7 @@ export function SnookerTabContent() {
           {/* Header bar */}
           <div className="flex h-10 items-center px-4" style={{ background: "#f5f5f5", borderBottom: "1px solid #f0f0f0" }}>
             <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>
-              Matchs par stratégie
+              {MARKETS.find((s) => s.key === activeMarket)?.desc ?? "Pari"}
             </span>
             <span
               className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
@@ -779,13 +939,14 @@ export function SnookerTabContent() {
           <div
             className="hidden items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider md:grid"
             style={{
-              gridTemplateColumns: "minmax(0,1fr) minmax(90px,auto) 28px",
+              gridTemplateColumns: "minmax(0,1fr) minmax(120px,auto) 80px 28px",
               color: "#717171",
               borderBottom: "1px solid #f5f5f5",
             }}
           >
             <span>Match</span>
-            <span className="px-3">Valeur</span>
+            <span className="px-3">Pari recommandé</span>
+            <span className="px-3 text-center">Probabilité</span>
             <span className="w-7 text-center">→</span>
           </div>
 
@@ -798,14 +959,13 @@ export function SnookerTabContent() {
             </div>
           ) : !hasData || top10.length === 0 ? (
             <div className="text-center py-10 text-sm" style={{ color: "#717171" }}>
-              Aucun match pour cette stratégie.
+              Aucun match pour ce marché.
             </div>
           ) : (
             /* Match rows */
             <div>
               {top10.map((row, i) => {
-                const { match: m, prob1, prob2, favorite, bestProb } = row;
-                const band = confidenceBand(bestProb);
+                const { match: m, prob, label, sub, edge, p1, p2, bestOf: bo } = row;
                 const datetime = m.scheduled_at
                   ? new Intl.DateTimeFormat("fr-FR", {
                       weekday: "short",
@@ -818,18 +978,26 @@ export function SnookerTabContent() {
                   : "—";
                 const live = m.status === "live";
 
+                // Couleur selon probabilité
+                const probColor = prob >= 70 ? "#00985f" : prob >= 60 ? "#FF6D00" : "#2196F3";
+                const probBg = `${probColor}15`;
+                const probBorder = `${probColor}30`;
+
                 return (
                   <div
                     key={m.id}
-                    className={`flex flex-col gap-1 px-3 py-2 transition-colors md:grid md:items-center md:gap-0 hover:bg-[#f8f8f8]`}
+                    className="flex flex-col gap-1 px-3 py-2 transition-colors md:grid md:items-center md:gap-0 hover:bg-[#f8f8f8]"
                     style={{
-                      gridTemplateColumns: "minmax(0,1fr) minmax(90px,auto) 28px",
+                      gridTemplateColumns: "minmax(0,1fr) minmax(120px,auto) 80px 28px",
                       borderBottom: i < top10.length - 1 ? "1px solid #f5f5f5" : undefined,
                     }}
                   >
                     {/* Col 1 — Match info */}
                     <div className="flex min-w-0 items-center gap-2">
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00985f]/10 text-[#00985f] text-[10px] font-extrabold shrink-0">
+                      <div
+                        className="flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-extrabold shrink-0"
+                        style={{ background: probBg, color: probColor }}
+                      >
                         {i + 1}
                       </div>
                       <div className="min-w-0">
@@ -837,7 +1005,7 @@ export function SnookerTabContent() {
                           {m.player1} <span style={{ color: "#717171" }}>vs</span> {m.player2}
                         </div>
                         <div className="truncate text-[11px]" style={{ color: "#717171" }}>
-                          {m.tournament || "Northern Ireland Open"} · {m.bestOf === 11 ? "Bo11" : `Bo${m.bestOf}`} ·{" "}
+                          {m.tournament || "Northern Ireland Open"} · {bo === 11 ? "Bo11" : `Bo${bo}`} ·{" "}
                           {live ? (
                             <span className="font-bold text-[#00985f]">
                               LIVE {m.scoreA}-{m.scoreB}
@@ -849,26 +1017,35 @@ export function SnookerTabContent() {
                       </div>
                     </div>
 
-                    {/* Col 2 — Probabilité du favori */}
+                    {/* Col 2 — Pari recommandé */}
                     <div className="flex items-center gap-1.5 px-0 md:px-3">
-                      {band ? (
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums ${band.cls}`}>
-                          {favorite} {bestProb}%
-                        </span>
-                      ) : (
-                        <span
-                          className="inline-flex items-center rounded-full border border-[#e0e0e0] bg-[#f5f5f5] px-2 py-0.5 text-[11px] font-semibold tabular-nums"
-                          style={{ color: "#222222" }}
-                        >
-                          {favorite} {bestProb}%
-                        </span>
-                      )}
+                      <span
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums"
+                        style={{ background: probBg, color: probColor, borderColor: probBorder }}
+                      >
+                        {label}
+                      </span>
                       <span className="text-[10px]" style={{ color: "#717171" }}>
-                        ({prob1}% / {prob2}%)
+                        {sub}
                       </span>
                     </div>
 
-                    {/* Col 3 — Trend arrow */}
+                    {/* Col 3 — Probabilité */}
+                    <div className="flex items-center justify-center px-0 md:px-3">
+                      <span
+                        className="text-[13px] font-bold tabular-nums"
+                        style={{ color: probColor }}
+                      >
+                        {prob.toFixed(1)}%
+                      </span>
+                      {edge > 0 && (
+                        <span className="ml-1 text-[9px] font-semibold text-emerald-600">
+                          +{edge.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Col 4 — Arrow */}
                     <div className="hidden w-7 justify-center md:flex">
                       <svg className="h-3 w-3" style={{ color: "#717171" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M5 12h14M12 5l7 7-7 7" />
@@ -882,18 +1059,18 @@ export function SnookerTabContent() {
         </div>
       </section>
 
-      {/* ======== DÉFINITIONS DES STRATÉGIES ======== */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-        {STRATEGIES.filter((s) => s.key !== "all").map((s) => (
+      {/* ======== DÉFINITIONS DES MARCHÉS ======== */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+        {MARKETS.map((s) => (
           <div
             key={s.key}
             className="rounded-lg border px-3 py-2 text-center"
             style={{
-              background: activeStrategy === s.key ? "#00985f12" : "#ffffff",
-              borderColor: activeStrategy === s.key ? "#00985f30" : "#f0f0f0",
+              background: activeMarket === s.key ? "#00985f12" : "#ffffff",
+              borderColor: activeMarket === s.key ? "#00985f30" : "#f0f0f0",
             }}
           >
-            <div className="text-[11px] font-bold" style={{ color: activeStrategy === s.key ? "#00985f" : "#222" }}>
+            <div className="text-[11px] font-bold" style={{ color: activeMarket === s.key ? "#00985f" : "#222" }}>
               {s.label}
             </div>
             <div className="mt-0.5 text-[10px]" style={{ color: "#717171" }}>
