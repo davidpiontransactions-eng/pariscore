@@ -35,14 +35,12 @@ export async function GET(request: NextRequest) {
     updatedAt: new Date().toISOString(),
   };
 
-  // Rollup par league optionnel (backward-compatible : absent sans ?by=league)
-  if (request.nextUrl.searchParams.get("by") === "league") {
-    const byLeague: Record<string, Record<string, typeof strategies[string]>> = {};
-    for (const key of STRATEGY_TOP5_KEYS) {
-      byLeague[key] = aggregateByLeague(entries, key);
-    }
-    payload.byLeague = byLeague;
+  // Rollup par league — toujours inclus pour le FootballHeroHeader (top championnats)
+  const byLeague: Record<string, Record<string, typeof strategies[string]>> = {};
+  for (const key of STRATEGY_TOP5_KEYS) {
+    byLeague[key] = aggregateByLeague(entries, key);
   }
+  payload.byLeague = byLeague;
 
   return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } });
 }

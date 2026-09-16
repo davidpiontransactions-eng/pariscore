@@ -40,6 +40,7 @@ import { HockeyTabContent } from "@/components/hockey/hockey-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { HeroSection } from "@/components/dashboard/hero-stats";
+import { FootballHeroHeader } from "@/components/football/football-hero-header";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import { PersonalDashboard } from "@/components/dashboard/personal-dashboard";
@@ -359,6 +360,13 @@ function HomeInner() {
               className="flex-1"
             >
 
+        {/* Hero Football — tout en haut de la page */}
+        {activeTab === "football" && (
+          <section className="w-full px-4 sm:px-6 pt-6">
+            <FootballHeroHeader />
+          </section>
+        )}
+
         {/* Calendrier des matchs — filtré par sport + mode */}
         <section className="w-full px-4 sm:px-6 pt-6">
           {activeTab === "tennis" ? (
@@ -381,7 +389,8 @@ function HomeInner() {
           </section>
         )}
 
-        {/* Hero Dashboard Section — Bento Grid layout */}
+        {/* Hero Dashboard Section — Bento Grid layout (masqué sur football : FootballHeroHeader en haut) */}
+        {activeTab !== "football" && (
         <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
           <BentoGrid cols={4}>
             {/* Hero tile — 2×2 */}
@@ -431,6 +440,7 @@ function HomeInner() {
             </button>
           </div>
         </section>
+        )}
         <motion.div
           key={activeTab}
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
