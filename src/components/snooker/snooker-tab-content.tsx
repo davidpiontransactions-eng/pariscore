@@ -11,6 +11,8 @@ import { SnookerBetsPanel } from "@/components/snooker/snooker-bets-panel";
 import { SnookerHero } from "@/components/snooker/snooker-hero";
 import { SnookerPlayerPopup } from "@/components/snooker/snooker-player-popup";
 import { SnookerVideoPopup } from "@/components/snooker/snooker-video-popup";
+import { BetTrackerPanel } from "@/components/snooker/bet-tracker-panel";
+import { addBet, isTracked } from "@/lib/snooker/bet-tracker";
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -1322,11 +1324,41 @@ export function SnookerTabContent() {
                       )}
                     </div>
 
-                    {/* Col 4 — Arrow */}
-                    <div className="hidden w-7 justify-center md:flex">
-                      <svg className="h-3 w-3" style={{ color: "#717171" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
+                    {/* Col 4 — Suivre */}
+                    <div className="flex w-7 justify-center">
+                      {(() => {
+                        const tracked = isTracked(m.id, activeMarket);
+                        return (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!tracked) {
+                                addBet({
+                                  matchId: m.id,
+                                  match: `${m.player1} vs ${m.player2}`,
+                                  market: activeMarket,
+                                  selection: label,
+                                  odds: m.odds?.player1,
+                                  probability: prob,
+                                  edge,
+                                  confidence,
+                                });
+                              }
+                            }}
+                            className={`rounded-full p-1.5 transition-colors ${
+                              tracked
+                                ? "bg-[#00985f] text-white"
+                                : "bg-gray-100 text-gray-400 hover:bg-[#00985f]/10 hover:text-[#00985f]"
+                            }`}
+                            title={tracked ? "Pari suivi" : "Suivre ce pari"}
+                            disabled={tracked}
+                          >
+                            <svg className="h-3 w-3" fill={tracked ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
@@ -1486,6 +1518,9 @@ export function SnookerTabContent() {
           onClose={() => setVideoQuery(null)}
         />
       )}
+
+      {/* ======== BET TRACKER ======== */}
+      <BetTrackerPanel />
     </div>
   );
 }
