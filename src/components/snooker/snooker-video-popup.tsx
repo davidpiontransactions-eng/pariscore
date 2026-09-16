@@ -62,7 +62,7 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
             </div>
           ) : selectedVideo ? (
             <iframe
-              src={`https://www.youtube.com/embed/${selectedVideo}?autoplay=1&rel=0`}
+              src={`https://www.youtube.com/embed/${selectedVideo}?rel=0`}
               className="h-full w-full"
               allow="autoplay; encrypted-media"
               allowFullScreen
