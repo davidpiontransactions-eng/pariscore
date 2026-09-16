@@ -39,9 +39,9 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
   }, [query]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={onClose}>
       <div
-        className="relative mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="relative mx-0 w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:mx-4 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

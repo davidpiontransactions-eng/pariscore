@@ -92,14 +92,14 @@ function StatBar({ label, val1, val2, higher }: { label: string; val1: number; v
   const pct1 = (val1 / total) * 100;
   const better = higher === false ? val1 < val2 : val1 > val2;
   return (
-    <div className="flex items-center gap-2 text-[11px]">
-      <span className={`w-16 text-right tabular-nums ${better ? "font-bold text-emerald-600" : "text-gray-600"}`}>{val1.toFixed(1)}</span>
+    <div className="flex items-center gap-1.5 text-[11px] sm:gap-2">
+      <span className={`w-10 text-right tabular-nums sm:w-16 ${better ? "font-bold text-emerald-600" : "text-gray-600"}`}>{val1.toFixed(1)}</span>
       <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden flex">
         <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct1}%` }} />
         <div className="h-full rounded-full bg-amber-500" style={{ width: `${100 - pct1}%` }} />
       </div>
-      <span className={`w-16 tabular-nums ${!better ? "font-bold text-amber-600" : "text-gray-600"}`}>{val2.toFixed(1)}</span>
-      <span className="w-16 text-center text-gray-400 text-[10px]">{label}</span>
+      <span className={`w-10 tabular-nums sm:w-16 ${!better ? "font-bold text-amber-600" : "text-gray-600"}`}>{val2.toFixed(1)}</span>
+      <span className="hidden w-16 text-center text-gray-400 text-[10px] sm:inline">{label}</span>
     </div>
   );
 }

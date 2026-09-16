@@ -292,11 +292,11 @@ export function SnookerPlayerPopup({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-md sm:items-center"
       onClick={onClose}
     >
       <div
-        className="relative mx-4 max-h-[72vh] w-full max-w-sm overflow-y-auto rounded-3xl sm:max-w-md"
+        className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl sm:mx-4 sm:max-h-[72vh] sm:rounded-3xl sm:max-w-md"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%)",

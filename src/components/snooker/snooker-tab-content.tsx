@@ -1190,9 +1190,8 @@ export function SnookerTabContent() {
 
           {/* Column headers — desktop */}
           <div
-            className="hidden items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider md:grid"
+            className="hidden items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px]"
             style={{
-              gridTemplateColumns: "minmax(0,1fr) minmax(120px,auto) 80px 28px",
               color: "#717171",
               borderBottom: "1px solid #f5f5f5",
             }}
@@ -1239,9 +1238,8 @@ export function SnookerTabContent() {
                 return (
                   <div
                     key={m.id}
-                    className="flex flex-col gap-1 px-3 py-2 transition-colors md:grid md:items-center md:gap-0 hover:bg-[#f8f8f8]"
+                    className="flex flex-col gap-1 px-3 py-2 transition-colors hover:bg-[#f8f8f8] md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px] md:items-center md:gap-0"
                     style={{
-                      gridTemplateColumns: "minmax(0,1fr) minmax(120px,auto) 80px 28px",
                       borderBottom: i < top10.length - 1 ? "1px solid #f5f5f5" : undefined,
                     }}
                   >
@@ -1293,7 +1291,7 @@ export function SnookerTabContent() {
                       >
                         {label}
                       </span>
-                      <span className="text-[10px]" style={{ color: "#717171" }}>
+                      <span className="hidden text-[10px] md:inline" style={{ color: "#717171" }}>
                         {sub}
                       </span>
                     </div>
@@ -1307,17 +1305,18 @@ export function SnookerTabContent() {
                         {prob.toFixed(1)}%
                       </span>
                       {hasOdds && edge > 2 && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600">
+                        <span className="hidden sm:inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600">
                           +{edge.toFixed(1)}%
                         </span>
                       )}
                       {confidence === "high" && (
                         <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-                          ★ Forte
+                          ★
                         </span>
                       )}
                       {confidence === "medium" && (
                         <span className="inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                          M
                           Moyen
                         </span>
                       )}
