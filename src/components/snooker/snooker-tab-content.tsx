@@ -454,9 +454,9 @@ export function SnookerTabContent() {
       const baseProb = computeCompositeProb(m, players, "all");
       if (!baseProb) return null;
 
-      // pFrame = probabilité que P1 gagne une frame
       const pFrame = baseProb.prob1 / 100;
       const bo = m.bestOf || 7;
+      const hasOdds = !!(m.odds && m.odds.player1 > 0 && m.odds.player2 > 0);
 
       let prob: number;
       let label: string;
@@ -482,7 +482,7 @@ export function SnookerTabContent() {
           break;
         }
         case "handicapP2": {
-          prob = (100 - handicapProb(pFrame, bo, handicapVal));
+          prob = 100 - handicapProb(pFrame, bo, handicapVal);
           label = `P2 -${handicapVal}`;
           sub = `${prob.toFixed(1)}%`;
           break;
@@ -511,21 +511,33 @@ export function SnookerTabContent() {
 
       if (prob < 45) return null;
 
-      // Edge = différence avec cote implicite (si dispo)
+      // Edge vs cotes
       let edge = 0;
-      if (activeMarket === "matchWinner" && m.odds && m.odds.player1 > 0 && m.odds.player2 > 0) {
-        const implied = oddsWinProb(m.odds.player1, m.odds.player2);
-        edge = prob - implied;
+      if (hasOdds) {
+        const implied = oddsWinProb(m.odds!.player1, m.odds!.player2);
+        edge = activeMarket === "matchWinner"
+          ? prob - implied
+          : prob - implied * (prob / baseProb.prob1); // adjust for non-winner markets
       }
+      const roi = hasOdds && edge > 0 ? (edge / (100 - prob)) * 100 : 0;
 
-      return { match: m, prob, label, sub, edge, p1, p2, pFrame, bestOf: bo };
+      return {
+        match: m, prob, label, sub, edge, roi, hasOdds,
+        p1, p2, pFrame, bestOf: bo,
+      };
     }).filter(Boolean) as Array<{
       match: ApiMatch; prob: number; label: string; sub: string;
-      edge: number; p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
+      edge: number; roi: number; hasOdds: boolean;
+      p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
     }>;
 
-    // Tri par probabilité décroissante
-    scored.sort((a, b) => b.prob - a.prob);
+    // Tri: edge décroissant si odds, sinon prob décroissante
+    scored.sort((a, b) => {
+      if (a.hasOdds && b.hasOdds) return b.edge - a.edge;
+      if (a.hasOdds) return -1;
+      if (b.hasOdds) return 1;
+      return b.prob - a.prob;
+    });
     return scored.slice(0, 10);
   }, [sorted, activeMarket, players, handicapVal, overLine]);
 
@@ -983,7 +995,7 @@ export function SnookerTabContent() {
             /* Match rows */
             <div>
               {top10.map((row, i) => {
-                const { match: m, prob, label, sub, edge, p1, p2, bestOf: bo } = row;
+                const { match: m, prob, label, sub, edge, roi, hasOdds, p1, p2, bestOf: bo } = row;
                 const datetime = m.scheduled_at
                   ? new Intl.DateTimeFormat("fr-FR", {
                       weekday: "short",
@@ -1048,17 +1060,22 @@ export function SnookerTabContent() {
                       </span>
                     </div>
 
-                    {/* Col 3 — Probabilité */}
-                    <div className="flex items-center justify-center px-0 md:px-3">
+                    {/* Col 3 — Probabilité + Edge */}
+                    <div className="flex items-center gap-1 px-0 md:px-3">
                       <span
                         className="text-[13px] font-bold tabular-nums"
                         style={{ color: probColor }}
                       >
                         {prob.toFixed(1)}%
                       </span>
-                      {edge > 0 && (
-                        <span className="ml-1 text-[9px] font-semibold text-emerald-600">
-                          +{edge.toFixed(1)}
+                      {hasOdds && edge > 2 && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600">
+                          +{edge.toFixed(1)}%
+                        </span>
+                      )}
+                      {hasOdds && edge > 5 && (
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[8px] font-bold text-amber-600">
+                          VALUE
                         </span>
                       )}
                     </div>
