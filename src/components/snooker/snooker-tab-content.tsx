@@ -121,19 +121,13 @@ function overTotalFramesProb(pFrame: number, bestOf: number, threshold: number):
 function handicapProb(pFrame: number, bestOf: number, handicap: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
   let pCover = 0;
-  for (let b = 0; b < winsNeeded; b++) {
-    const aNeeded = b + handicap + 1;
-    if (aNeeded < winsNeeded && aNeeded <= bestOf) {
-      pCover += Math.exp(logBinomPMF(aNeeded, bestOf - 1, pFrame));
-    }
-  }
-  // Cas P1 gagne le match avec l'avance
+  // Parcourir tous les scores finaux possibles où P1 gagne avec avance ≥ handicap
   for (let a = winsNeeded; a <= bestOf; a++) {
-    for (let b = Math.max(0, a - handicap); b < winsNeeded; b++) {
+    for (let b = 0; b < a - handicap; b++) {
       if (a + b > bestOf) continue;
-      if (a === winsNeeded && b < winsNeeded) {
-        pCover += Math.exp(logBinomPMF(b, a + b - 1, pFrame)) * (1 - pFrame);
-      }
+      if (b >= winsNeeded) continue;
+      // P1 gagne a-b : la dernière frame est gagnée par P1
+      pCover += Math.exp(logBinomPMF(b, a + b - 1, pFrame));
     }
   }
   return Math.min(100, Math.max(0, pCover * 100));
@@ -418,6 +412,8 @@ const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
 
 export function SnookerTabContent() {
   const [activeMarket, setActiveMarket] = useState<MarketKey>("matchWinner");
+  const [handicapVal, setHandicapVal] = useState(2);
+  const [overLine, setOverLine] = useState(6);
   const [calFilter, setCalFilter] = useState<CalendarFilter>("all");
   const [calDate, setCalDate] = useState<string>(() => {
     const d = new Date();
@@ -474,23 +470,20 @@ export function SnookerTabContent() {
           break;
         }
         case "overTotal": {
-          const thr = defaultOverThreshold(bo);
-          prob = overTotalFramesProb(pFrame, bo, thr);
-          label = `Over ${thr}`;
+          prob = overTotalFramesProb(pFrame, bo, overLine);
+          label = `Over ${overLine}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
         case "handicapP1": {
-          const hc = defaultHandicap(bo);
-          prob = handicapProb(pFrame, bo, hc);
-          label = `P1 -${hc}`;
+          prob = handicapProb(pFrame, bo, handicapVal);
+          label = `P1 -${handicapVal}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
         case "handicapP2": {
-          const hc = defaultHandicap(bo);
-          prob = (100 - handicapProb(pFrame, bo, hc));
-          label = `P2 -${hc}`;
+          prob = (100 - handicapProb(pFrame, bo, handicapVal));
+          label = `P2 -${handicapVal}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
@@ -501,16 +494,14 @@ export function SnookerTabContent() {
           break;
         }
         case "totalOverP1": {
-          const thr = defaultPlayerOverThreshold(bo);
-          prob = totalFramesOverProb(pFrame, bo, thr);
-          label = `P1 Over ${thr}`;
+          prob = totalFramesOverProb(pFrame, bo, overLine - 1);
+          label = `P1 Over ${overLine - 1}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
         case "totalOverP2": {
-          const thr = defaultPlayerOverThreshold(bo);
-          prob = totalFramesOverProb(1 - pFrame, bo, thr);
-          label = `P2 Over ${thr}`;
+          prob = totalFramesOverProb(1 - pFrame, bo, overLine - 1);
+          label = `P2 Over ${overLine - 1}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
@@ -536,7 +527,7 @@ export function SnookerTabContent() {
     // Tri par probabilité décroissante
     scored.sort((a, b) => b.prob - a.prob);
     return scored.slice(0, 10);
-  }, [sorted, activeMarket, players]);
+  }, [sorted, activeMarket, players, handicapVal, overLine]);
 
   // ── Calendrier FlashScore : filtrage par onglet + date ──────────────────
 
@@ -917,6 +908,33 @@ export function SnookerTabContent() {
                 </button>
               ))}
             </div>
+            {/* Seuils configurables */}
+            {(activeMarket === "handicapP1" || activeMarket === "handicapP2") && (
+              <div className="flex items-center gap-1 rounded border border-gray-200 px-2 py-0.5">
+                <span className="text-[10px] text-gray-500">HC</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={handicapVal}
+                  onChange={(e) => setHandicapVal(Math.max(1, Math.min(6, Number(e.target.value) || 1)))}
+                  className="w-8 bg-transparent text-center text-[11px] font-bold text-gray-900 outline-none"
+                />
+              </div>
+            )}
+            {(activeMarket === "overTotal" || activeMarket === "totalOverP1" || activeMarket === "totalOverP2") && (
+              <div className="flex items-center gap-1 rounded border border-gray-200 px-2 py-0.5">
+                <span className="text-[10px] text-gray-500">Over</span>
+                <input
+                  type="number"
+                  min={2}
+                  max={9}
+                  value={overLine}
+                  onChange={(e) => setOverLine(Math.max(2, Math.min(9, Number(e.target.value) || 2)))}
+                  className="w-8 bg-transparent text-center text-[11px] font-bold text-gray-900 outline-none"
+                />
+              </div>
+            )}
           </div>
         </div>
 
