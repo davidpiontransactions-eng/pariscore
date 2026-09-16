@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { quickElo } from "@/lib/snooker/elo-engine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export async function GET() {
         playerList.push({
           id: String(row.player_id ?? key),
           name: key,
-          eloRating: row.elo_rating ?? 1500,
+          eloRating: quickElo(row.wins ?? 0, row.losses ?? 0, row.centuries ?? 0),
           winPct: row.win_pct,
           centuryRate: row.century_rate,
           deciderWinPct: row.decider_win_pct,

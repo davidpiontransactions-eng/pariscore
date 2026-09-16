@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
+import { quickElo } from "@/lib/snooker/elo-engine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,14 +61,12 @@ function readData(): CueTrackerFile | null {
 }
 
 /**
- * Elo heuristique dérivé des données CueTracker (matches/wins/losses) en l'absence
- * d'historique Elo complet : baseline 1500 + (wins - losses) * 15.
- * À remplacer par des vrais ratings dès que le moteur Elo aura un historique.
+ * Elo heuristique via le moteur Elo.
+ * Utilise quickElo(wins, losses, centuries) pour un calcul plus précis
+ * que l'ancienne formule linéaire (1500 + (wins-losses)*15).
  */
 function deriveElo(p: CueTrackerFile["players"][number]): number {
-  const wins = p.wins ?? 0;
-  const losses = p.losses ?? 0;
-  return Math.max(400, Math.min(2200, 1500 + (wins - losses) * 15));
+  return quickElo(p.wins ?? 0, p.losses ?? 0, p.centuries ?? 0);
 }
 
 function transformPlayer(p: CueTrackerFile["players"][number]): SnookerPlayer {
@@ -97,8 +96,10 @@ function transformPlayer(p: CueTrackerFile["players"][number]): SnookerPlayer {
   return out;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const data = readData();
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(500, Math.max(1, parseInt(searchParams.get("limit") ?? "200", 10) || 200));
 
   if (!data) {
     return NextResponse.json(
@@ -113,7 +114,7 @@ export async function GET() {
     );
   }
 
-  const players = (data.players ?? []).map(transformPlayer).slice(0, 100);
+  const players = (data.players ?? []).map(transformPlayer).slice(0, limit);
 
   // Photo lookup async (Wikipedia Commons) — best-effort, jamais bloquant
   const photoPromises = players.map(async (p) => {
