@@ -127,7 +127,7 @@ export async function GET() {
       odds: m.odds as { player1: number; player2: number } | undefined,
     }));
 
-    // Compute accuracy for finished matches
+    // Finished matches only
     const finished = matches.filter((m) => m.status === "finished" && (m.scoreA + m.scoreB) > 0);
 
     let correctPredictions = 0;
@@ -138,6 +138,20 @@ export async function GET() {
     let edgeTotal = 0;
     let brierScores: number[] = [];
     let logLossScores: number[] = [];
+
+    // Calibration buckets (10 buckets: 50-55%, 55-60%, ..., 95-100%)
+    const buckets: { min: number; correct: number; total: number; predicted: number[] }[] = [];
+    for (let i = 0; i < 10; i++) {
+      buckets.push({ min: 50 + i * 5, correct: 0, total: 0, predicted: [] });
+    }
+
+    // Per-match predictions for calibration
+    const perMatch: {
+      match: string;
+      predicted: number;
+      actual: "win" | "loss";
+      correct: boolean;
+    }[] = [];
 
     for (const m of finished) {
       const p1 = playerByName.get(m.player1);
@@ -156,14 +170,34 @@ export async function GET() {
 
       // Model prediction: predict player1 wins if prob > 50%
       const modelPredictedP1 = modelProb > 0.5;
+      const isCorrect = modelPredictedP1 === p1Won;
 
       totalPredictions++;
-      if (modelPredictedP1 === p1Won) correctPredictions++;
+      if (isCorrect) correctPredictions++;
+
+      // Per-match data (limit to last 50)
+      if (perMatch.length < 50) {
+        perMatch.push({
+          match: `${m.player1} vs ${m.player2}`,
+          predicted: Math.round(modelProb * 1000) / 10,
+          actual: p1Won ? "win" : "loss",
+          correct: isCorrect,
+        });
+      }
+
+      // Calibration bucket
+      const probPct = modelProb * 100;
+      const bIdx = Math.min(9, Math.max(0, Math.floor((probPct - 50) / 5)));
+      if (probPct >= 50) {
+        buckets[bIdx].total++;
+        buckets[bIdx].predicted.push(probPct);
+        if (isCorrect) buckets[bIdx].correct++;
+      }
 
       // High confidence (>65%)
       if (modelProb > 0.65 || modelProb < 0.35) {
         highConfidenceTotal++;
-        if (modelPredictedP1 === p1Won) highConfidenceCorrect++;
+        if (isCorrect) highConfidenceCorrect++;
       }
 
       // Brier score
@@ -197,6 +231,16 @@ export async function GET() {
       ? logLossScores.reduce((a, b) => a + b, 0) / logLossScores.length
       : 0;
 
+    // Calibration data: average predicted vs actual win rate per bucket
+    const calibration = buckets
+      .filter((b) => b.total > 0)
+      .map((b) => ({
+        range: `${b.min}-${b.min + 5}%`,
+        avgPredicted: Math.round((b.predicted.reduce((a, c) => a + c, 0) / b.total) * 10) / 10,
+        actualRate: Math.round((b.correct / b.total) * 1000) / 10,
+        count: b.total,
+      }));
+
     return NextResponse.json({
       totalMatches: totalPredictions,
       accuracy: Math.round(accuracy * 10) / 10,
@@ -210,6 +254,8 @@ export async function GET() {
       },
       brierScore: Math.round(avgBrier * 1000) / 1000,
       logLoss: Math.round(avgLogLoss * 1000) / 1000,
+      calibration,
+      perMatch,
       scraped_at: new Date().toISOString(),
     });
   } catch (err) {

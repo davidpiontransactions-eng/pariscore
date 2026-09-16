@@ -12,6 +12,7 @@ import { SnookerHero } from "@/components/snooker/snooker-hero";
 import { SnookerPlayerPopup } from "@/components/snooker/snooker-player-popup";
 import { SnookerVideoPopup } from "@/components/snooker/snooker-video-popup";
 import { BetTrackerPanel } from "@/components/snooker/bet-tracker-panel";
+import { SnookerAccuracyDashboard } from "@/components/snooker/snooker-accuracy-dashboard";
 import { addBet, isTracked } from "@/lib/snooker/bet-tracker";
 
 // ---------------------------------------------------------------------------
@@ -1510,6 +1511,11 @@ export function SnookerTabContent() {
           onClose={() => setSelectedPlayerId(null)}
         />
       )}
+
+      {/* ======== PRÉCISION DU MODÈLE ======== */}
+      <section className="px-0 sm:px-0">
+        <SnookerAccuracyDashboard />
+      </section>
 
       {/* ======== POPUP VIDEO HIGHLIGHTS ======== */}
       {videoQuery && (
