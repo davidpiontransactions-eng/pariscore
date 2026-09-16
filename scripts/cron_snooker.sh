@@ -7,7 +7,8 @@
 #   node scripts/scrape_flashscore_snooker.mjs && node scripts/scrape_oddsportal_nio.mjs
 #
 # Cron VPS (ajouter à crontab -e):
-#   0 6 * * * cd /home/ubuntu/pariscore && bash scripts/cron_snooker.sh >> logs/snooker-cron.log 2>&1
+#   0 8 * * * cd /home/ubuntu/pariscore && bash scripts/cron_snooker.sh >> logs/snooker-cron.log 2>&1
+#   (FlashScore refresh toutes les 20 min géré par cron_snooker_refresh.sh)
 
 set -euo pipefail
 

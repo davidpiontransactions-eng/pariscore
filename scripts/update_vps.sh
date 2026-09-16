@@ -17,7 +17,7 @@ cd "$DEPLOY_DIR" || { echo "ERR: deploy dir $DEPLOY_DIR introuvable"; exit 1; }
 
 # Préserver les données snooker scrapées par le cron VPS (hors git)
 SNOOKER_BACKUP=$(mktemp -d)
-for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json; do
+for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json data/snooker_matches.json; do
   [ -f "$f" ] && cp "$f" "$SNOOKER_BACKUP/" 2>/dev/null
 done
 
@@ -28,7 +28,7 @@ git fetch --all -q || { echo "ERR: git fetch"; exit 1; }
 git reset --hard origin/main -q || { echo "ERR: git reset"; exit 1; }
 
 # Restaurer les données snooker scrapées par le cron VPS
-for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json; do
+for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json data/snooker_matches.json; do
   [ -f "$SNOOKER_BACKUP/$(basename $f)" ] && cp "$SNOOKER_BACKUP/$(basename $f)" "$f" 2>/dev/null
 done
 rm -rf "$SNOOKER_BACKUP"
@@ -159,6 +159,15 @@ else
   echo "  cron jobs NOT restarted (legacy-only deploy)"
 fi
 pm2 save 2>/dev/null || true
+
+# FlashScore refresh toutes les 20 min (cron système, pas pm2)
+CRON_LINE="*/20 * * * * cd $OPT_DIR && bash scripts/cron_snooker_refresh.sh >> logs/snooker-refresh.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q "cron_snooker_refresh"; then
+  (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
+  echo "  ✅ cron snooker-refresh ajouté (*/20)"
+else
+  echo "  cron snooker-refresh déjà présent"
+fi
 
 echo "[6/6] Health check..."
 HEALTH_OK=0
