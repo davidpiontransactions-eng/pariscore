@@ -20,7 +20,7 @@ LOG_FILE="$LOG_DIR/snooker-refresh.log"
 
 echo "[$TIMESTAMP] FlashScore refresh..." | tee -a "$LOG_FILE"
 
-if node "$SCRIPT_DIR/scrape_flashscore_snooker.mjs" >> "$LOG_FILE" 2>&1; then
+if node "$SCRIPT_DIR/scrape_flashscore_snooker.mjs" --both >> "$LOG_FILE" 2>&1; then
   # Copier les données vers /opt/pariscorebis (cwd pm2)
   PM2_DATA="/opt/pariscorebis/data"
   if [ -d "$PM2_DATA" ]; then
