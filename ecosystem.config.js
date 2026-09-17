@@ -62,6 +62,9 @@ module.exports = {
         // PORT 3000 : l'instance Next standalone sert tout le site derrière
         // nginx (location / → :3000). Ne pas déplacer (cf. incident 2026-09-08).
         PORT: 3000,
+        // DATA_DIR : répertoire des fichiers JSON (scrapers). Nécessaire car
+        // le standalone server.js fait process.chdir(__dirname) → cwd ≠ /opt/pariscorebis
+        DATA_DIR: '/opt/pariscorebis/data',
       },
       error_file: 'logs/pariscore-next.err.log',
       out_file: 'logs/pariscore-next.out.log',
