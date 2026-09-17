@@ -207,7 +207,7 @@ function NhlConferenceTable({ conf, teams }: { conf: "west" | "east"; teams: Tea
       <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Trophy className="w-4 h-4 text-[#00e676]" /> {label}</h3>
       <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
         <table className="w-full text-sm">
-          <thead><tr className="border-b border-white/10 text-[10px] uppercase text-white/50">
+          <thead><tr className="border-b border-white/10 text-[10px] uppercase text-[#222222]">
             <th className="py-1.5 px-2 text-left">Team</th>
             <th className="py-1.5 px-1 text-center">R1</th>
             <th className="py-1.5 px-1 text-center">R2</th>
@@ -238,7 +238,7 @@ function StandingsTable({ league }: { league: LeagueData }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
       <table className="w-full text-sm">
-        <thead><tr className="border-b border-white/10 text-[10px] uppercase text-white/50">
+        <thead><tr className="border-b border-white/10 text-[10px] uppercase text-[#222222]">
           <th className="py-1.5 px-2 text-left w-8">#</th>
           <th className="py-1.5 px-2 text-left">Team</th>
           <th className="py-1.5 px-1 text-center">GP</th>
@@ -261,11 +261,11 @@ function StandingsTable({ league }: { league: LeagueData }) {
                 <td className="py-1.5 px-2"><span className="text-sm font-semibold text-white">{t.name}</span></td>
                 <td className="py-1.5 px-1 text-center text-white/60">{t.gp}</td>
                 <td className="py-1.5 px-1 text-center text-white/70">{t.w}</td>
-                <td className="py-1.5 px-1 text-center text-white/50">{t.l}</td>
+                <td className="py-1.5 px-1 text-center text-[#222222]">{t.l}</td>
                 <td className="py-1.5 px-1 text-center text-white/60">{t.otw}</td>
-                <td className="py-1.5 px-1 text-center text-white/50">{t.otl}</td>
+                <td className="py-1.5 px-1 text-center text-[#222222]">{t.otl}</td>
                 <td className="py-1.5 px-1 text-center text-white/60">{t.gf}</td>
-                <td className="py-1.5 px-1 text-center text-white/50">{t.ga}</td>
+                <td className="py-1.5 px-1 text-center text-[#222222]">{t.ga}</td>
                 <td className={cn("py-1.5 px-1 text-center text-xs", t.plusMinus > 0 ? "text-[#00e676]" : t.plusMinus < 0 ? "text-red-400" : "text-white/40")}>
                   {t.plusMinus > 0 ? "+" : ""}{t.plusMinus}
                 </td>
@@ -290,7 +290,7 @@ function NhlSpotlight({ teams }: { teams: TeamProjection[] }) {
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Flame className="w-5 h-5 text-[#00e676]" /></div>
         <div>
-          <p className="text-xs text-white/50 uppercase tracking-wider">Stanley Cup Favorite</p>
+          <p className="text-xs text-[#222222] uppercase tracking-wider">Stanley Cup Favorite</p>
           <p className="text-sm font-bold text-white">{top.name} — <span className="text-[#00e676]">{top.winCup}%</span></p>
         </div>
       </div>
@@ -306,7 +306,7 @@ function KhlSpotlight({ teams }: { teams: TeamStanding[] }) {
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Trophy className="w-5 h-5 text-[#00e676]" /></div>
         <div>
-          <p className="text-xs text-white/50 uppercase tracking-wider">KHL Leader</p>
+          <p className="text-xs text-[#222222] uppercase tracking-wider">KHL Leader</p>
           <p className="text-sm font-bold text-white">{top.name} — <span className="text-[#00e676]">{top.tp} pts</span> ({top.ppg.toFixed(2)} PPG)</p>
         </div>
       </div>
@@ -584,7 +584,7 @@ export function HockeyTabContent() {
               </p>
               {magnusData.teams[0]?.gp === 0 && (
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-4">
-                  <p className="text-sm text-white/50 text-center">La saison Ligue Magnus 2026-27 n&apos;a pas encore commence.</p>
+                  <p className="text-sm text-[#222222] text-center">La saison Ligue Magnus 2026-27 n&apos;a pas encore commence.</p>
                 </div>
               )}
               <StandingsTable league={magnusData} />
@@ -604,16 +604,14 @@ export function HockeyTabContent() {
 
       {/* Error — all leagues */}
       {!loading && !standings && !projections && activeLeague === "nhl" && subView === "standings" && (
-        <div className="text-center text-white/50 text-sm py-10">
-          <Info className="w-5 h-5 mx-auto mb-2 text-white/30" />
-          Données NHL indisponibles — Lancez <code>scrape-hockeystats-projections.mjs</code>
-        </div>
+<div className="text-center text-[#222222] text-sm py-10">
+  <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+</div>
       )}
       {!loading && activeLeague !== "nhl" && !standings && (
-        <div className="text-center text-white/50 text-sm py-10">
-          <Info className="w-5 h-5 mx-auto mb-2 text-white/30" />
-          Données indisponibles. Lancez les scrapers.
-        </div>
+<div className="text-center text-[#222222] text-sm py-10">
+  <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+</div>
       )}
 
       {/* ─── PREMATCH ────────────────────────────────────────────────── */}
@@ -632,7 +630,7 @@ export function HockeyTabContent() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-white">{m.team1Name}</span>
-                    <span className="text-xs text-white/30">vs</span>
+                    <span className="text-xs text-[#717171]">vs</span>
                     <span className="text-sm font-semibold text-white">{m.team2Name}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -648,19 +646,19 @@ export function HockeyTabContent() {
                     ) : m.error ? (
                       <span className="text-[10px] text-red-400">✗ Erreur</span>
                     ) : (
-                      <span className="text-[10px] text-white/30">—</span>
+                      <span className="text-[10px] text-[#717171]">—</span>
                     )}
                   </div>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="text-center text-white/50 text-sm py-10">
-              <FileText className="w-5 h-5 mx-auto mb-2 text-white/30" />
-              {prematch?.leagues?.[activeLeague]?.error
-                ? "Erreur de chargement — IP potentiellement bloquee par Annabet"
-                : "Aucun match prematch disponible. Lancez scrape-annabet-hockey-prematch.mjs"}
-            </div>
+            <div className="text-center text-[#222222] text-sm py-10">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+{prematch?.leagues?.[activeLeague]?.error
+    ? "Erreur de chargement — source de données indisponible"
+    : "Aucun match prematch disponible"}
+</div>
           )}
         </>
       )}
