@@ -1,7 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import useSWR from "swr";
+import { buildPlayerIndex, findCuePlayer, type PlayerLike } from "@/lib/snooker/player-match";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -155,6 +156,24 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
   const players: Player[] = playersData?.players ?? [];
   const match = matches.find((m) => m.id === id);
 
+  // Index joueur pour matching fuzzy (FlashScore "O'Sullivan R." → CueTracker "Ronnie O'Sullivan")
+  const playerIndex = useMemo(() => {
+    const playerLikes: PlayerLike[] = players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matches_played: 80, // valeur par défaut pour désambiguïser
+    }));
+    return buildPlayerIndex(playerLikes);
+  }, [players]);
+
+  const allPlayerLikes: PlayerLike[] = useMemo(() =>
+    players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matches_played: 80,
+    })),
+  [players]);
+
   if (!match) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -166,10 +185,14 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const p1 = players.find((p) => p.name === match.player1) ?? {
+  // Matching fuzzy : "O'Sullivan R." → "Ronnie O'Sullivan"
+  const found1 = findCuePlayer(match.player1, playerIndex, allPlayerLikes);
+  const found2 = findCuePlayer(match.player2, playerIndex, allPlayerLikes);
+
+  const p1 = (found1 ? players.find((p) => p.id === found1.id) : null) ?? {
     id: "", name: match.player1, eloRating: 1500, winPct: 50, centuryRate: 0, deciderWinPct: 50, avgBreak: 30,
   };
-  const p2 = players.find((p) => p.name === match.player2) ?? {
+  const p2 = (found2 ? players.find((p) => p.id === found2.id) : null) ?? {
     id: "", name: match.player2, eloRating: 1500, winPct: 50, centuryRate: 0, deciderWinPct: 50, avgBreak: 30,
   };
 

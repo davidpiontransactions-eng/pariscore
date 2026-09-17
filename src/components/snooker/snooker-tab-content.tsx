@@ -16,6 +16,7 @@ import { SnookerAccuracyDashboard } from "@/components/snooker/snooker-accuracy-
 import { BankrollSimulator } from "@/components/snooker/bankroll-simulator";
 import { addBet, isTracked } from "@/lib/snooker/bet-tracker";
 import { kellyCriterion, verdictColor } from "@/lib/snooker/kelly";
+import { buildPlayerIndex, findCuePlayer } from "@/lib/snooker/player-match";
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -362,47 +363,23 @@ function OverTotalTag({ bestOf, p1, p2 }: { bestOf: number; p1: number; p2: numb
 }
 
 // Résolution du joueur pour un match donné
-function resolvePlayers(m: ApiMatch, players: ApiPlayer[]): [ApiPlayer, ApiPlayer] {
+function resolvePlayers(
+  m: ApiMatch,
+  players: ApiPlayer[],
+  playerIndex: Map<string, import("@/lib/snooker/player-match").PlayerLike[]>,
+  allPlayerLikes: import("@/lib/snooker/player-match").PlayerLike[],
+): [ApiPlayer, ApiPlayer] {
   const DEFAULT: ApiPlayer = {
     id: "", name: "", eloRating: 1500, winPct: 50, centuryRate: 0, deciderWinPct: 50, avgBreak: 30,
   };
 
   const find = (name: string): ApiPlayer => {
-    const low = name.toLowerCase();
-    // 1. Match exact
-    const exact = players.find((p) => p.name.toLowerCase() === low);
-    if (exact) return exact;
-
-    // 2. FlashScore "Last First" → CueTracker "First Last"
-    //    "Lines O." → cherche un joueur dont le last name est "lines"
-    //    "Cheung K. W." → cherche un joueur dont le last name est "cheung"
-    const fsParts = low.replace(/\./g, "").split(" ").filter(Boolean);
-    // Le premier token est toujours le last name dans le format FlashScore
-    const fsLastName = fsParts[0];
-
-    // 2a. Match par last name (le nom CueTracker se termine par le last name FlashScore)
-    const byLast = players.find((p) => {
-      const pParts = p.name.toLowerCase().split(" ");
-      const pLastName = pParts[pParts.length - 1];
-      return pLastName === fsLastName || fsLastName.startsWith(pLastName) || pLastName.startsWith(fsLastName);
-    });
-    if (byLast) return byLast;
-
-    // 2b. Match par first name (le 2e token FlashScore = initiale, cherche un first name commençant par cette lettre)
-    const fsFirstInitial = fsParts[1]?.[0];
-    if (fsFirstInitial) {
-      const byFirst = players.find((p) => {
-        const pParts = p.name.toLowerCase().split(" ");
-        const pFirstName = pParts[0];
-        return pParts.some(part => part.startsWith(fsLastName)) &&
-               pFirstName.startsWith(fsFirstInitial);
-      });
-      if (byFirst) return byFirst;
+    // Utiliser le matching fuzzy du module player-match
+    const found = findCuePlayer(name, playerIndex, allPlayerLikes);
+    if (found) {
+      const matched = players.find((p) => p.id === found.id);
+      if (matched) return matched;
     }
-
-    // 3. Match partiel par last name
-    const partial = players.find((p) => p.name.toLowerCase().includes(fsLastName));
-    if (partial) return partial;
 
     return { ...DEFAULT, name };
   };
@@ -414,9 +391,11 @@ function resolvePlayers(m: ApiMatch, players: ApiPlayer[]): [ApiPlayer, ApiPlaye
 function computeCompositeProb(
   m: ApiMatch,
   players: ApiPlayer[],
+  playerIndex: Map<string, import("@/lib/snooker/player-match").PlayerLike[]>,
+  allPlayerLikes: import("@/lib/snooker/player-match").PlayerLike[],
   _strategy?: string,
 ): { prob1: number; prob2: number } | null {
-  const [p1, p2] = resolvePlayers(m, players);
+  const [p1, p2] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
   const noDb = p1.id === "" && p2.id === "";
 
   const probs: number[] = [];
@@ -556,6 +535,24 @@ export function SnookerTabContent() {
   const players = useMemo(() => playersRes.data?.players ?? [], [playersRes.data]);
   const liveMatches = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
 
+  // Index joueur pour matching fuzzy (FlashScore → CueTracker)
+  const playerIndex = useMemo(() => {
+    const playerLikes: import("@/lib/snooker/player-match").PlayerLike[] = players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matches_played: 80,
+    }));
+    return buildPlayerIndex(playerLikes);
+  }, [players]);
+
+  const allPlayerLikes: import("@/lib/snooker/player-match").PlayerLike[] = useMemo(() =>
+    players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matches_played: 80,
+    })),
+  [players]);
+
   // Tri : live d'abord, puis programmés, puis terminés
   const sorted = useMemo(() => {
     const order: Record<ApiMatch["status"], number> = { live: 0, scheduled: 1, finished: 2 };
@@ -571,8 +568,8 @@ export function SnookerTabContent() {
     const candidates = sorted.filter((m) => m.status !== "finished");
 
     const scored = candidates.map((m) => {
-      const [p1, p2] = resolvePlayers(m, players);
-      const baseProb = computeCompositeProb(m, players, "all");
+      const [p1, p2] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
+      const baseProb = computeCompositeProb(m, players, playerIndex, allPlayerLikes, "all");
       if (!baseProb) return null;
 
       const pFrame = baseProb.prob1 / 100;
@@ -841,10 +838,10 @@ export function SnookerTabContent() {
                   const framesLabel = `${m.bestOf === 11 ? 6 : m.bestOf === 9 ? 5 : Math.floor(m.bestOf / 2) + 1} F`;
 
                   // ── Meilleur joueur (sans cotes) ──
-                  const [pa, pb] = resolvePlayers(m, players);
+                  const [pa, pb] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
                   const bestPlayer = computeBestPlayer(pa, pb);
                   const bestName = bestPlayer === "a" ? m.player1 : m.player2;
-                  const compositeProb = computeCompositeProb(m, players, "all");
+                  const compositeProb = computeCompositeProb(m, players, playerIndex, allPlayerLikes, "all");
                   const winP1 = compositeProb?.prob1 ?? 50;
                   const winP2 = compositeProb?.prob2 ?? 50;
 
@@ -1270,8 +1267,8 @@ export function SnookerTabContent() {
                             datetime
                           )}
                           {!live && m.status !== "finished" && (() => {
-                            const p1Data = resolvePlayers(m, players)[0];
-                            const p2Data = resolvePlayers(m, players)[1];
+                            const p1Data = resolvePlayers(m, players, playerIndex, allPlayerLikes)[0];
+                            const p2Data = resolvePlayers(m, players, playerIndex, allPlayerLikes)[1];
                             if (!p1Data || !p2Data) return null;
                             const s1 = playerScore(p1Data);
                             const s2 = playerScore(p2Data);

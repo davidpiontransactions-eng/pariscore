@@ -7,6 +7,7 @@
 // Idempotent : les upserts sont basés sur l'id (slug) ; relancer est sans effet.
 
 import { prisma } from "../prisma";
+import { quickElo } from "../snooker/elo-engine";
 
 export type CuetrackerPlayer = {
   id?: string;
@@ -64,7 +65,7 @@ function toPlayerData(p: CuetrackerPlayer) {
   const wins = p.wins ?? 0;
   const losses = p.losses ?? 0;
   const played = p.matches_played ?? wins + losses;
-  const eloRating = clampElo(1500 + (wins - losses) * 15);
+  const eloRating = quickElo(wins, losses, p.centuries ?? 0);
 
   return {
     name: p.name,
