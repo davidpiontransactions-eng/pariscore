@@ -1,15 +1,9 @@
 "use client";
 
 import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense, useRef } from "react";
-import { cn } from "@/lib/utils";
 import {
-  Trophy,
   Code,
   HelpCircle,
-  Star,
-  Timer,
-  Sparkles,
-  BarChart3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
@@ -23,7 +17,6 @@ import {
   SportsSidebarUrlSync,
 } from "@/components/layout/sports-sidebar";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
-import { ModeToggle } from "@/components/layout/mode-toggle";
 import type { SportTabId } from "@/types/sports-sidebar";
 import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { motion, useReducedMotion } from "framer-motion";
@@ -40,8 +33,8 @@ import { HockeyTabContent } from "@/components/hockey/hockey-tab-content";
 import { HandballTabContent } from "@/components/handball/handball-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
-import { HeroSection } from "@/components/dashboard/hero-stats";
 import { FootballHeroHeader } from "@/components/football/football-hero-header";
+import { HockeyHeroHeader } from "@/components/hockey/hockey-hero-header";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import { PersonalDashboard } from "@/components/dashboard/personal-dashboard";
@@ -195,38 +188,6 @@ function HomeInner() {
   const reduceMotion = useReducedMotion();
 
   // Pills navigation active state
-  const [activePill, setActivePill] = useState("best-matches");
-
-  // IntersectionObserver pour synchroniser le pill actif avec le scroll
-  useEffect(() => {
-    const sections = ["best-matches", "upcoming", "gemini"];
-    const els = sections.map((s) => document.getElementById(`section-${s}`)).filter(Boolean);
-    if (els.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
-            const id = entry.target.id.replace("section-", "");
-            setActivePill(id);
-            break;
-          }
-        }
-      },
-      { threshold: [0, 0.3, 0.5, 1], rootMargin: "-80px 0px -40% 0px" },
-    );
-
-    els.forEach((el) => observer.observe(el!));
-    return () => observer.disconnect();
-  }, []);
-
-  /** Scroll + met à jour activePill */
-  const scrollToSection = (sectionId: string, pillId: string) => {
-    setActivePill(pillId);
-    const el = document.getElementById(sectionId);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
   const { data: footballMatches, isLoading: footballLoading } = useFootballMatches();
@@ -306,30 +267,6 @@ function HomeInner() {
     return () => window.removeEventListener("open-match-detail", handler);
   }, [tennisData, footData]);
 
-  // Compute stats dynamically
-  const stats = useMemo(() => {
-    const tennisMatches = tennisData?.matches ?? [];
-    const footMatches = footData?.matches ?? [];
-
-    // Count value bets (edge > 0 across all bookmakers)
-    let tennisValues = 0;
-    for (const m of tennisMatches) {
-      if (!m.allOdds) continue;
-      for (const odd of m.allOdds) {
-        if (m.probA - odd.impliedProbA > 0 || m.probB - odd.impliedProbB > 0) {
-          tennisValues++;
-          break;
-        }
-      }
-    }
-
-    return {
-      tennis: { matchCount: tennisMatches.length, valueCount: tennisValues },
-      football: { matchCount: footMatches.length, valueCount: 0 },
-      totalValueBets: tennisValues,
-    };
-  }, [tennisData?.matches, footData?.matches]);
-
   // Sidebar (store) → onglet central : un clic sport/ligue dans le filtre
   // latéral bascule la grille. Le store reste source de vérité URL-partageable.
   const storeSportId = useSportsSidebarStore((s) => s.selectedSportId);
@@ -346,9 +283,6 @@ function HomeInner() {
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
-        {/* Mode Toggle — Prematch / Live (masqué sur football : filtre FotMob, masqué sur snooker) */}
-        {activeTab !== "football" && activeTab !== "snooker" && <ModeToggle />}
-
         {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}
 
         {/* Filtre latéral multi-sports (1xBet) : sync URL + aside desktop */}
@@ -367,6 +301,13 @@ function HomeInner() {
         {activeTab === "football" && (
           <section className="w-full px-4 sm:px-6 pt-6">
             <FootballHeroHeader />
+          </section>
+        )}
+
+        {/* Encart Hockey — accroche + ROI par stratégie, tout en haut */}
+        {activeTab === "hockey" && (
+          <section className="w-full px-4 sm:px-6 pt-6">
+            <HockeyHeroHeader />
           </section>
         )}
 
@@ -392,58 +333,7 @@ function HomeInner() {
           </section>
         )}
 
-        {/* Hero Dashboard Section — Bento Grid layout (masqué sur football et snooker : heroes dédiés) */}
-        {activeTab !== "football" && activeTab !== "snooker" && (
-        <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
-          <BentoGrid cols={4}>
-            {/* Hero tile — 2×2 */}
-            <BentoTile size="hero" variant="glass">
-              <HeroSection totalValueBets={stats.totalValueBets} />
-            </BentoTile>
-          </BentoGrid>
-
-          {/* Ancres de navigation rapide */}
-          <div className="mt-4 flex items-center gap-3 text-xs text-[#6B5B8D] overflow-x-auto pb-1 scrollbar-none">
-            <span className="shrink-0 font-medium text-[#1A1145]">Aller à :</span>
-            <button
-              type="button"
-              onClick={() => scrollToSection("section-best-matches", "best-matches")}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
-                activePill === "best-matches"
-                  ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 border-emerald-500/40"
-                  : "border-border/50 hover:border-emerald-500/40 hover:text-emerald-400",
-              )}
-            >
-              <Star className="h-3 w-3" /> Meilleurs matchs
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection("section-upcoming", "upcoming")}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
-                activePill === "upcoming"
-                  ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30 border-sky-500/40"
-                  : "border-border/50 hover:border-sky-500/40 hover:text-sky-400",
-              )}
-            >
-              <Timer className="h-3 w-3" /> Prochains matchs
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection("section-gemini", "gemini")}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
-                activePill === "gemini"
-                  ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30 border-purple-500/40"
-                  : "border-border/50 hover:border-purple-500/40 hover:text-purple-400",
-              )}
-            >
-              <Sparkles className="h-3 w-3" /> Gemini AI
-            </button>
-          </div>
-        </section>
-        )}
+        {/* Hero générique supprimé — heroes dédiés par sport (football, hockey) */}
         <motion.div
           key={activeTab}
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
