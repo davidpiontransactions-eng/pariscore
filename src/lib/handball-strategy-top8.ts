@@ -283,21 +283,30 @@ function scoreMatch(
     }
 
     case "over55": {
-      // Données réelles — ligne dynamique ciblant ≥55% proba
+      // Données réelles — ligne la plus proche de ≥55% proba
       const lambda = realExpectedTotal(match.home.name, match.away.name);
-      // Trouver la ligne Over qui donne ≥55% de proba
+      // Trouver la ligne Over qui donne le plus proche de 55% (≥55%)
       let bestLine = 57.5;
       let bestProb = 0;
-      for (let line = 57.5; line >= 45.5; line -= 1) {
+      // Scanner de 45.5 à 65.5 pour trouver la ligne optimale
+      for (let line = 45.5; line <= 65.5; line += 1) {
         const prob = poissonGe(Math.ceil(line), lambda);
         if (prob >= 0.55) {
-          bestLine = line;
-          bestProb = prob;
-          break;
+          // Cette ligne donne ≥55% — garder la plus haute ligne (plus de value)
+          if (line > bestLine || bestLine === 57.5) {
+            bestLine = line;
+            bestProb = prob;
+          }
         }
-        if (prob > bestProb) {
-          bestProb = prob;
-          bestLine = line;
+      }
+      // Si aucune ligne ≥55%, prendre la plus proche
+      if (bestProb === 0) {
+        for (let line = 45.5; line <= 65.5; line += 1) {
+          const prob = poissonGe(Math.ceil(line), lambda);
+          if (Math.abs(prob - 0.55) < Math.abs(bestProb - 0.55)) {
+            bestLine = line;
+            bestProb = prob;
+          }
         }
       }
       const ev = match.odds?.home && match.odds?.away ? bestProb * (match.odds.home + match.odds.away) / 2 - 1 : null;
