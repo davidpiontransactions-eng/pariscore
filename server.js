@@ -4322,6 +4322,51 @@ function recordPrematchOddsSnapshot(match) {
   } catch (_) { /* best-effort — ne doit jamais casser l'enrichissement */ }
 }
 
+// ── Persistance odds → DB (odds_snapshots table) ─────────────────────────────
+// Appelé après recordPrematchOddsSnapshot pour créer un historique persistant.
+// INSERT direct SQLite (pas de Prisma bridge — server.js utilise better-sqlite3).
+function persistOddsToDB(match, summary) {
+  try {
+    if (!sqldb || !match || !match.id || !summary) return;
+    // Dedup : ignorer si dernier snapshot pour ce match < 10 min
+    const last = sqldb.prepare('SELECT scrapedAt FROM odds_snapshots WHERE matchId = ? ORDER BY scrapedAt DESC LIMIT 1').get(match.id);
+    if (last) {
+      const lastTs = new Date(last.scrapedAt).getTime();
+      if (Date.now() - lastTs < 10 * 60 * 1000) return;
+    }
+    const now = new Date().toISOString();
+    const stmt = sqldb.prepare(
+      'INSERT INTO odds_snapshots (id, matchId, sport, homeTeam, awayTeam, bookmaker, market, outcome, odds, impliedProb, source, scrapedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    const rows = [];
+    // Best odds (par bookmaker)
+    if (summary.best.home) rows.push(['1X2', 'H', summary.best.home.value, summary.best.home.bookmaker]);
+    if (summary.best.draw) rows.push(['1X2', 'D', summary.best.draw.value, summary.best.draw.bookmaker]);
+    if (summary.best.away) rows.push(['1X2', 'A', summary.best.away.value, summary.best.away.bookmaker]);
+    // Consensus
+    if (summary.consensus.home) rows.push(['1X2', 'H', summary.consensus.home, 'consensus']);
+    if (summary.consensus.draw) rows.push(['1X2', 'D', summary.consensus.draw, 'consensus']);
+    if (summary.consensus.away) rows.push(['1X2', 'A', summary.consensus.away, 'consensus']);
+    // BTTS
+    if (summary.btts) {
+      if (summary.btts.yes) rows.push(['BTTS', 'Yes', summary.btts.yes, 'consensus']);
+      if (summary.btts.no) rows.push(['BTTS', 'No', summary.btts.no, 'consensus']);
+    }
+    // Over/Under 2.5
+    if (summary.over25) {
+      if (summary.over25.over) rows.push(['OU25', 'O', summary.over25.over, 'consensus']);
+      if (summary.over25.under) rows.push(['OU25', 'U', summary.over25.under, 'consensus']);
+    }
+    const homeTeam = match.home || match.homeTeam || '';
+    const awayTeam = match.away || match.awayTeam || '';
+    for (const [market, outcome, odds, bookmaker] of rows) {
+      const id = `${match.id}_${market}_${outcome}_${bookmaker}_${Date.now()}`;
+      const impliedProb = odds > 0 ? 1 / odds : 0;
+      stmt.run(id, match.id, 'football', homeTeam, awayTeam, bookmaker, market, outcome, odds, impliedProb, 'bsd-compare', now);
+    }
+  } catch (_) { /* best-effort */ }
+}
+
 // Enrichit un match record avec BSD odds compare + predictions ML + polymarket (fire-and-forget appelé via cron).
 async function enrichMatchWithBSDFullStack(match) {
   if (!match || !match._bsd_event_id) return;
@@ -4355,6 +4400,8 @@ async function enrichMatchWithBSDFullStack(match) {
       }
       // Insights v2 — capturer le snapshot de cotes pour la sparkline mouvement
       recordPrematchOddsSnapshot(match);
+      // Persistance odds → DB (historique persistant, survit aux restarts)
+      persistOddsToDB(match, summary);
       // Market depth bonus: patch reliability_score after BSD books count known
       const _depthBonus = summary.books_count >= 10 ? 8 : summary.books_count >= 6 ? 4 : 0;
       if (_depthBonus > 0 && match.reliability_score != null) {
