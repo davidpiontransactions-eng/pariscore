@@ -30,7 +30,12 @@ export const handballAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    const data = await res.json() as { matches?: unknown[] };
+    const data = await res.json() as { matches?: unknown[]; degraded?: boolean };
+    // Si l'API est dégradée (pas de données), retourner groupes vides mais valides
+    // Le frontend affichera "Aucun match top disponible" seulement après chargement
+    if (data.degraded && (!data.matches || data.matches.length === 0)) {
+      return [];
+    }
     const matches = (data.matches || []) as Array<{
       id?: number;
       league?: { name?: string; country?: string; countryCode?: string };

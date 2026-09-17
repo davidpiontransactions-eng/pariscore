@@ -39,9 +39,12 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[handball] fetch failed:", (err as Error).message);
-    return NextResponse.json(
-      { error: "handball data unavailable" },
-      { status: 503 },
-    );
+    // Retourner structure valide même en cas d'erreur (pas 503)
+    return NextResponse.json({
+      matches: [],
+      source: "error",
+      degraded: true,
+      updatedAt: new Date(now).toISOString(),
+    });
   }
 }
