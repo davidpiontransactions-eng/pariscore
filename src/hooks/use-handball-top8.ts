@@ -20,6 +20,7 @@ type StrategyEntry = {
   probPct?: number;
   ev?: number | null;
   trend?: number | null;
+  formSummary?: { home: string; away: string };
 };
 
 type StrategyResponse = {
