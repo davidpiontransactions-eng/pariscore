@@ -323,6 +323,16 @@ export async function GET(req: Request) {
   }
   matches = Array.from(byKey.values());
 
+  // Filtrer les matchs stale (oddsportal avec date < hier)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const cutoff = yesterday.toISOString().slice(0, 10);
+  matches = matches.filter((m) => {
+    if (!m.scheduled_at) return true;
+    const matchDate = m.scheduled_at.slice(0, 10);
+    return matchDate >= cutoff;
+  });
+
   if (liveOnly) {
     matches = matches.filter((m) => m.status === "live");
   }

@@ -17,7 +17,7 @@ cd "$DEPLOY_DIR" || { echo "ERR: deploy dir $DEPLOY_DIR introuvable"; exit 1; }
 
 # Préserver les données snooker scrapées par le cron VPS (hors git)
 SNOOKER_BACKUP=$(mktemp -d)
-for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json data/snooker_matches.json; do
+for f in data/odds_flashscore_snooker.json data/snooker_matches.json; do
   [ -f "$f" ] && cp "$f" "$SNOOKER_BACKUP/" 2>/dev/null
 done
 
@@ -28,7 +28,7 @@ git fetch --all -q || { echo "ERR: git fetch"; exit 1; }
 git reset --hard origin/main -q || { echo "ERR: git reset"; exit 1; }
 
 # Restaurer les données snooker scrapées par le cron VPS
-for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json data/snooker_matches.json; do
+for f in data/odds_flashscore_snooker.json data/snooker_matches.json; do
   [ -f "$SNOOKER_BACKUP/$(basename $f)" ] && cp "$SNOOKER_BACKUP/$(basename $f)" "$f" 2>/dev/null
 done
 rm -rf "$SNOOKER_BACKUP"
