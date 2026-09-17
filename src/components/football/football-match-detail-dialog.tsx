@@ -35,6 +35,7 @@ import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { PowerScoreBar } from "@/components/shared/power-score-bar";
 import { footballPowerScore } from "@/lib/power-score";
 import { FootballRadarChart } from "@/components/football/football-radar-chart";
+import { OddsHistoryChart } from "@/components/football/odds-history-chart";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
@@ -592,6 +593,13 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                   player1Name={view.home.shortName}
                   player2Name={view.away.shortName}
                 />
+              </section>
+            )}
+
+            {/* Historique odds archive (serveur) */}
+            {view && !view.live && (
+              <section className="mt-2">
+                <OddsHistoryChart matchId={view.id} market="1X2" />
               </section>
             )}
 
