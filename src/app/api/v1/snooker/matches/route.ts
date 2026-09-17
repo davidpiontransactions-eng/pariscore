@@ -309,10 +309,11 @@ export async function GET(req: Request) {
     matches.push(...nioMatches);
   }
 
-  // Dédupliquer par nom de joueurs — prioriser Oddsportal (a les cotes)
+  // Dédupliquer par nom de joueurs + date — prioriser Oddsportal (a les cotes)
   const byKey = new Map<string, SnookerMatch>();
   for (const m of matches) {
-    const key = `${m.player1.toLowerCase()}-${m.player2.toLowerCase()}`;
+    const datePart = m.scheduled_at ? m.scheduled_at.slice(0, 10) : "nodate";
+    const key = `${m.player1.toLowerCase()}-${m.player2.toLowerCase()}-${datePart}`;
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, m);
