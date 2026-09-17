@@ -22,6 +22,7 @@ import { PlayerStatsFilters, type GameRange, type Position, type ScaleMode } fro
 import { PlayerStatsTable } from "@/components/leagues/player-stats-table";
 import { per90 } from "@/lib/football-understat-types";
 import { AttackDefenseScatter } from "@/components/leagues/attack-defense-scatter";
+import { CleanSheetsWidget } from "@/components/leagues/clean-sheets-widget";
 import { FastestLeagues } from "@/components/leagues/fastest-leagues";
 import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
 import { LateDrama } from "@/components/leagues/late-drama";
@@ -361,6 +362,11 @@ export default function LeagueDetailPage() {
               />
             </div>
           ) : null}
+
+          {/* Clean Sheets */}
+          <div className="mt-6">
+            <CleanSheetsWidget country={country} slug={slug} limit={15} />
+          </div>
 
           {/* Sections stats OddAlerts */}
           {league.gamesPlayed === 0 && league.sections.length === 0 ? null : (
