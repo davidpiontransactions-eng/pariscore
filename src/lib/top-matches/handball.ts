@@ -21,62 +21,6 @@ function getLeagueColor(league: string): string {
   return '#00897B';
 }
 
-// Données mock pour le fallback quand l'API-Sports est indisponible
-const MOCK_HANDBALL_LEAGUES = [
-  { name: 'Starligue', country: 'France', color: '#1E88E5' },
-  { name: 'Bundesliga', country: 'Allemagne', color: '#FDD835' },
-  { name: 'Liga ASOBAL', country: 'Espagne', color: '#E53935' },
-  { name: 'EHF Champions League', country: 'Europe', color: '#7B1FA2' },
-];
-
-const MOCK_TEAMS: Record<string, string[]> = {
-  'Starligue': ['Paris Saint-Germain', 'HBC Nantes', 'Montpellier HB', 'Toulouse HB', 'Saint-Raphaël', 'US Créteil', 'Chambéry', 'Ivry'],
-  'Bundesliga': ['THW Kiel', 'SG Flensburg', 'SC Magdeburg', 'Füchse Berlin', 'Rhein-Neckar Löwen', 'TBV Lemgo', 'MT Melsungen', 'HSG Wetzlar'],
-  'Liga ASOBAL': ['FC Barcelona', 'Ademar León', 'Bidasoa Irun', 'Logroño La Rioja', 'Granollers', 'Puerto Sagunto'],
-  'EHF Champions League': ['FC Barcelona', 'THW Kiel', 'Paris Saint-Germain', 'SC Magdeburg', 'Veszprém', 'Kielce', 'Aalborg', 'GOG'],
-};
-
-function generateMockHandballMatches(): TopLeague[] {
-  const now = new Date();
-  const groups: TopLeague[] = [];
-
-  for (const league of MOCK_HANDBALL_LEAGUES) {
-    const teams = MOCK_TEAMS[league.name] || [];
-    const matches: TopMatch[] = [];
-
-    // Générer 2-3 matchs par ligue
-    for (let i = 0; i < Math.min(3, Math.floor(teams.length / 2)); i++) {
-      const homeIdx = i * 2;
-      const awayIdx = i * 2 + 1;
-      if (awayIdx >= teams.length) break;
-
-      const kickoff = new Date(now);
-      kickoff.setHours(kickoff.getHours() + i + 1, 0, 0, 0);
-
-      matches.push({
-        id: `mock-hb-${league.name.toLowerCase().replace(/\s+/g, '-')}-${i}`,
-        home: { name: teams[homeIdx] },
-        away: { name: teams[awayIdx] },
-        kickoff: kickoff.toISOString(),
-        status: 'scheduled',
-      });
-    }
-
-    if (matches.length > 0) {
-      groups.push({
-        league: league.name,
-        leagueIcon: '🤾',
-        leagueColor: league.color,
-        sport: 'handball',
-        country: league.country,
-        matches,
-      });
-    }
-  }
-
-  return groups;
-}
-
 export const handballAdapter: SportAdapter = {
   sport: 'handball',
 
@@ -86,9 +30,9 @@ export const handballAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    const data = await res.json() as { matches?: unknown[]; degraded?: boolean };
+    const data = await res.json() as { matches?: unknown[]; degraded?: boolean; source?: string };
     const matches = (data.matches || []) as Array<{
-      id?: number;
+      id?: number | string;
       league?: { name?: string; country?: string; countryCode?: string };
       home?: { name?: string; shortName?: string };
       away?: { name?: string; shortName?: string };
@@ -99,11 +43,6 @@ export const handballAdapter: SportAdapter = {
       odds?: { home?: number; draw?: number; away?: number };
       stats?: { home7m?: number; away7m?: number; homeSaves?: number; awaySaves?: number };
     }>;
-
-    // Si l'API est dégradée (pas de données), utiliser les données mockées
-    if (data.degraded && matches.length === 0) {
-      return generateMockHandballMatches();
-    }
 
     // Filtrer matchs futurs/live uniquement
     const now = Date.now();
