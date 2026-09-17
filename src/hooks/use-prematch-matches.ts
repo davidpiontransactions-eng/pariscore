@@ -79,5 +79,9 @@ export function usePrematchMatches() {
     swr.data?.source === "cache-stale" ||
     swr.data?.source === "error";
 
-  return { ...swr, isDegraded };
+  // Ne propager l'erreur à l'error boundary que pour les erreurs réseau réelles,
+  // pas pour le mode dégradé ou les réponses vides du cache.
+  const tennisError = swr.error?.code !== undefined ? swr.error : null;
+
+  return { ...swr, tennisError, isDegraded };
 }

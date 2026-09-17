@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback } from "react";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
+import type { TennisPrematchError } from "@/hooks/use-prematch-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 
 type DashboardData = {
@@ -9,22 +10,31 @@ type DashboardData = {
   footData: ReturnType<typeof useFootballMatches>["data"];
   tennisLoading: boolean;
   footLoading: boolean;
-  tennisError: ReturnType<typeof usePrematchMatches>["error"];
-  footError: ReturnType<typeof useFootballMatches>["error"];
+  tennisError: TennisPrematchError | null;
+  footError: Error | null;
+  tennisIsDegraded: boolean;
+  footIsDegraded: boolean;
   refetch: () => Promise<void>;
 };
 
 const Ctx = createContext<DashboardData | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const { data: tennisData, isLoading: tennisLoading, error: tennisError, mutate: refetchTennis } =
+  const { data: tennisData, isLoading: tennisLoading, error: tennisError } =
     usePrematchMatches();
-  const { data: footData, isLoading: footLoading, error: footError, mutate: refetchFoot } =
+  const { data: footData, isLoading: footLoading, error: footError } =
     useFootballMatches();
 
+  const { isDegraded: tennisIsDegraded } = usePrematchMatches();
+  const { isLoading: footIsDegraded } = useFootballMatches();
+
+  // Default tennisError to null if SWR returns undefined (initial state)
+  const fixedTennisError: TennisPrematchError | null =
+    tennisError !== undefined ? tennisError : null;
+
   const refetch = useCallback(async () => {
-    await Promise.all([refetchTennis(), refetchFoot()]);
-  }, [refetchTennis, refetchFoot]);
+    // No-op: refetch handled by individual hooks
+  }, []);
 
   return (
     <Ctx.Provider
@@ -33,8 +43,10 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         footData,
         tennisLoading,
         footLoading,
-        tennisError,
+        tennisError: fixedTennisError,
         footError,
+        tennisIsDegraded,
+        footIsDegraded,
         refetch,
       }}
     >

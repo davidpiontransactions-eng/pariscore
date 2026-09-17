@@ -28,14 +28,35 @@ export function useFootballMatches() {
     setError(null);
     try {
       const res = await fetch("/api/football/matches");
-      if (!res.ok) throw new Error(`API football HTTP ${res.status}`);
+      if (!res.ok) {
+        // Keep last good data or empty - don't throw to error boundary
+        // The degraded banner will handle "limited source" display
+        const json: FootballResponse = await res.json();
+        if ((json.matches ?? []).length === 0 && !json.degraded) {
+          // Empty API response, not a hard error - just clear data
+          setData(json);
+          setIsLoading(false);
+          setIsValidating(false);
+          return;
+        }
+        throw new Error(`API football HTTP ${res.status}`);
+      }
       const json: FootballResponse = await res.json();
       // Dégradé (BSD vide) ≠ erreur : on ne casse pas l'onglet, on laisse le
       // bandeau « source limitée » + l'état vide s'afficher.
-      if ((json.matches ?? []).length === 0 && !json.degraded) throw new Error("API football vide");
-      setData(json);
+      if ((json.matches ?? []).length === 0 && !json.degraded) {
+        setData(json);
+      } else {
+        setData(json);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("API football indisponible"));
+      // Only set error for truly unexpected failures, not API empty responses
+      if (err instanceof Error && err.message !== "API football vide") {
+        setError(err instanceof Error ? err : new Error("API football indisponible"));
+      } else {
+        // Empty response - just clear data, don't set error
+        setData(null);
+      }
     } finally {
       setIsLoading(false);
       setIsValidating(false);
