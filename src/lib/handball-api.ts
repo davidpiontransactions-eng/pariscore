@@ -169,29 +169,37 @@ function generateMockFixtures(): HandballMatch[] {
   ];
   const teams: Record<number, { id: number; name: string; shortName: string }[]> = {
     1: [
-      { id: 101, name: "Paris Saint-Germain HB", shortName: "PSG" },
-      { id: 102, name: "HBC Nantes", shortName: "Nantes" },
-      { id: 103, name: "Montpellier HB", shortName: "Montpellier" },
-      { id: 104, name: "Toulouse HB", shortName: "Toulouse" },
-      { id: 105, name: "Chambéry SMB", shortName: "Chambéry" },
-      { id: 106, name: "US Créteil", shortName: "Créteil" },
+      { id: 101, name: "Paris Saint-Germain", shortName: "PSG" },
+      { id: 102, name: "Nantes", shortName: "Nantes" },
+      { id: 103, name: "Montpellier", shortName: "Montpellier" },
+      { id: 104, name: "Toulouse", shortName: "Toulouse" },
+      { id: 105, name: "Chambéry", shortName: "Chambéry" },
+      { id: 106, name: "Créteil", shortName: "Créteil" },
     ],
     2: [
       { id: 201, name: "THW Kiel", shortName: "Kiel" },
-      { id: 202, name: "SG Flensburg-Handewitt", shortName: "Flensburg" },
+      { id: 202, name: "Flensburg", shortName: "Flensburg" },
       { id: 203, name: "SC Magdeburg", shortName: "Magdeburg" },
-      { id: 204, name: "Füchse Berlin", shortName: "Berlin" },
+      { id: 204, name: "MT Melsungen", shortName: "Melsungen" },
     ],
     3: [
-      { id: 301, name: "FC Barcelona", shortName: "Barça" },
+      { id: 301, name: "Barcelona", shortName: "Barça" },
       { id: 302, name: "Ademar León", shortName: "Ademar" },
       { id: 303, name: "Bidasoa Irun", shortName: "Bidasoa" },
     ],
     4: [
       { id: 401, name: "KC Veszprém", shortName: "Veszprém" },
       { id: 402, name: "RK Vardar", shortName: "Vardar" },
-      { id: 403, name: "Barça", shortName: "Barça" },
-      { id: 404, name: "THW Kiel", shortName: "Kiel" },
+      { id: 403, name: "Barcelona", shortName: "Barça" },
+      { id: 404, name: "Aalborg", shortName: "Aalborg" },
+      { id: 405, name: "Wisla Plock", shortName: "Wisla" },
+      { id: 406, name: "Celje", shortName: "Celje" },
+      { id: 407, name: "Porto", shortName: "Porto" },
+      { id: 408, name: "Partizan", shortName: "Partizan" },
+      { id: 409, name: "HC Kriens", shortName: "Kriens" },
+      { id: 410, name: "Skanderborg AGF", shortName: "Skanderborg" },
+      { id: 411, name: "Din. Bucuresti", shortName: "Dinamo" },
+      { id: 412, name: "SC Magdeburg", shortName: "Magdeburg" },
     ],
   };
 

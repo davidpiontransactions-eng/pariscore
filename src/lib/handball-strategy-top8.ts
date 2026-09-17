@@ -3,6 +3,7 @@
 // Architecture : pure scoring lib (no I/O), miroir football-strategy-top5.ts
 
 import type { HandballMatch, HandballLeague, HandballTeam } from "./handball-data";
+import { realExpectedTotal, getRealHandballOver, type OverResult } from "./handball-real-data";
 
 // ─── Types ───
 
@@ -282,13 +283,25 @@ function scoreMatch(
     }
 
     case "over55": {
-      // CMP sur total attendu (Karlis 2026)
-      const lambda = hasForm ? expectedTotal(formStore, match) : TOTAL_LINE;
-      // CMP sous-dispersé → ajuster lambda
-      const adjustedLambda = lambda / Math.pow(CMP_NU, 0.5);
-      const prob = poissonGe(Math.ceil(TOTAL_LINE), adjustedLambda);
-      const ev = match.odds?.home && match.odds?.away ? prob * (match.odds.home + match.odds.away) / 2 - 1 : null;
-      return { value: prob * 100, pick: null, probPct: prob * 100, ev };
+      // Données réelles — ligne dynamique ciblant ≥55% proba
+      const lambda = realExpectedTotal(match.home.name, match.away.name);
+      // Trouver la ligne Over qui donne ≥55% de proba
+      let bestLine = 57.5;
+      let bestProb = 0;
+      for (let line = 57.5; line >= 45.5; line -= 1) {
+        const prob = poissonGe(Math.ceil(line), lambda);
+        if (prob >= 0.55) {
+          bestLine = line;
+          bestProb = prob;
+          break;
+        }
+        if (prob > bestProb) {
+          bestProb = prob;
+          bestLine = line;
+        }
+      }
+      const ev = match.odds?.home && match.odds?.away ? bestProb * (match.odds.home + match.odds.away) / 2 - 1 : null;
+      return { value: bestProb * 100, pick: null, probPct: bestProb * 100, ev };
     }
 
     case "under62": {
@@ -360,7 +373,7 @@ function scoreMatch(
 export const HANDBALL_STRATEGY_DEFS: Record<HandballStrategyKey, { label: string; emoji: string; description: string }> = {
   bestTeam: { label: "Meilleure équipe", emoji: "🏆", description: "PPG pondéré L5/L10 — Felice 2025" },
   bestTeam1x2: { label: "1X2 Favori", emoji: "📊", description: "Probabilité dévigée depuis cotes marché" },
-  over55: { label: "Over 55.5", emoji: "⬆️", description: "CMP sous-dispersé — Karlis 2026" },
+  over55: { label: "Over Total", emoji: "⬆️", description: "Ligne dynamique ≥55% proba — CMP sous-dispersé" },
   under62: { label: "Under 62.5", emoji: "⬇️", description: "CMP inverse — défense + gardien" },
   handicap: { label: "Handicap -4.5", emoji: "🎯", description: "Skellam goal difference — Karlis 2026" },
   btts30: { label: "BTTS 30+", emoji: "⚡", description: "Les deux marquent 30+ — bivarié" },
