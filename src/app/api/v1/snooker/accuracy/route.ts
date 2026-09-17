@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { quickElo } from "@/lib/snooker/elo-engine";
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ function oddsWinProb(odds1: number, odds2: number): number {
 
 export async function GET() {
   try {
-    const dataDir = join(process.cwd(), "data");
+    const dataDir = DATA_DIR;
     const playersFile = join(dataDir, "cuetracker_matches.json");
     const matchesFile = join(dataDir, "odds_flashscore_snooker.json");
     const oddsportalFile = join(dataDir, "oddsportal_nio.json");

@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { expectedScore, calculateEdge, kellyStake } from "../../../../../lib/snooker/elo";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -142,8 +143,8 @@ function parseTime(time: string, scrapedAt: string): string | undefined {
   } catch { return undefined; }
 }
 
-const MATCHES_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
-const PLAYERS_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
+const MATCHES_FILE = join(DATA_DIR, "odds_flashscore_snooker.json");
+const PLAYERS_FILE = join(DATA_DIR, "cuetracker_matches.json");
 const MIN_PROB = 0.58;
 const LIMIT = 10;
 /** Seuil d'échantillon au-delà duquel les stats carrière sont considérées fiables. */

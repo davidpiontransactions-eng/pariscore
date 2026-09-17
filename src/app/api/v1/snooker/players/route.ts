@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 import { quickElo } from "@/lib/snooker/elo-engine";
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ type SnookerPlayer = {
   photoUrl?: string;
 };
 
-const DATA_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
+const DATA_FILE = join(DATA_DIR, "cuetracker_matches.json");
 
 function readData(): CueTrackerFile | null {
   try {

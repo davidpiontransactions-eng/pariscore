@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "@/lib/prisma";
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 import {
   compositeWinProb,
   expectedValue,
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     const oddsIndex = new Map<string, { home: number; away: number }>();
     try {
       const file = JSON.parse(
-        readFileSync(join(process.cwd(), "data", "odds_flashscore_snooker.json"), "utf-8"),
+        readFileSync(join(DATA_DIR, "odds_flashscore_snooker.json"), "utf-8"),
       ) as { matches?: Array<Record<string, unknown>> };
       for (const r of file.matches ?? []) {
         if (typeof r.home === "string" && typeof r.away === "string" && r.odds) {

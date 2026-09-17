@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,8 +100,8 @@ function parseFrames(raw: string | undefined): number {
   return isNaN(n) ? 0 : Math.max(0, n);
 }
 
-const DATA_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
-const ODDSPORTAL_FILE = join(process.cwd(), "data", "oddsportal_nio.json");
+const DATA_FILE = join(DATA_DIR, "odds_flashscore_snooker.json");
+const ODDSPORTAL_FILE = join(DATA_DIR, "oddsportal_nio.json");
 
 // ─── Mapping FlashScore → CueTracker ID pour photos Wikipedia ────────────
 // FlashScore returns abbreviated names ("Selby M."). We map to CueTracker IDs.
