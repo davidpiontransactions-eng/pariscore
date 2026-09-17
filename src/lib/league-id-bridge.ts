@@ -46,6 +46,8 @@ const ODDALERTS_TO_SLUG: Record<string, string> = {
   "usa/mls": "mls",
   "brazil/brasileirao-serie-a": "brasileirao_a",
   "mexico/liga-mx": "liga_mx",
+  "australia/a-league-men": "australia_a_league",
+  "austria/admiral-bundesliga": "austria_bundesliga",
   "russia/premier-league": "russian_premier",
 };
 

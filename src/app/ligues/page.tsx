@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Search, Trophy } from "lucide-react";
+import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
 import type { CountryGroup, LeagueIndexEntry } from "@/lib/leagues-stats/types";
 
 type IndexResponse = {
@@ -103,6 +104,11 @@ export default function LeaguesIndexPage() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Goals Map */}
+      <div className="mb-6">
+        <GoalsMapScatter />
       </div>
 
       {/* Contenu */}

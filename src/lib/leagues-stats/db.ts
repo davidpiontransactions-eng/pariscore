@@ -139,3 +139,55 @@ export function getLeague(country: string, slug: string): LeagueDetail | null {
   if (!row) return null;
   return rowToDetail(row);
 }
+
+/** Point pour le scatter plot Goals Map (goals/match vs draw rate). */
+export type GoalsMapPoint = {
+  league: string;
+  country: string;
+  slug: string;
+  goalsPerGame: number;
+  drawRate: number;
+  gamesPlayed: number;
+};
+
+/**
+ * Extrait goals/match et draw rate pour toutes les ligues ayant des stats.
+ * Utilisé par le scatter plot Goals Map.
+ */
+export function getGoalsMapData(): GoalsMapPoint[] {
+  const db = getDb();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT leagueName, country, slug, gamesPlayed, statsJson
+       FROM league_season_stats
+       WHERE gamesPlayed > 10 AND statsJson IS NOT NULL
+       ORDER BY leagueName ASC`
+    )
+    .all() as Record<string, unknown>[];
+
+  const points: GoalsMapPoint[] = [];
+  for (const row of rows) {
+    const sections = parseJsonSafe<StatsSection[]>(row.statsJson as string, []);
+    const general = sections.find((s) => s.id === "general");
+    if (!general) continue;
+
+    const gpItem = general.items.find((i) => i.key === "goals_per_game");
+    const drawsItem = general.items.find((i) => i.key === "draws");
+    const gp = Number(row.gamesPlayed || 0);
+    const goalsPerGame = gpItem?.value ?? gpItem?.avg ?? null;
+    const draws = drawsItem?.value ?? null;
+
+    if (goalsPerGame === null || draws === null || gp === 0) continue;
+
+    points.push({
+      league: String(row.leagueName),
+      country: String(row.country),
+      slug: String(row.slug),
+      goalsPerGame: Number(goalsPerGame),
+      drawRate: (Number(draws) / gp) * 100,
+      gamesPlayed: gp,
+    });
+  }
+  return points;
+}

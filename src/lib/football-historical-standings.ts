@@ -72,6 +72,9 @@ const LEAGUE_SST_MAP: Record<string, { ss: string; histYear: number | null }> = 
   // ── Asie ──
   j1_league:         { ss: "japan",       histYear: null },
   k_league1:         { ss: "southkorea",  histYear: null },
+  // ── Océanie / Autriche ──
+  australia_a_league:{ ss: "australia",   histYear: null },
+  austria_bundesliga:{ ss: "austria",     histYear: 2026 },
 };
 
 // ── Normalisation noms d'équipes ────────────────────────────────────────────

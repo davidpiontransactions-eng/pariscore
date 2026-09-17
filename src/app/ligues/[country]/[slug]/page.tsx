@@ -21,6 +21,7 @@ import { StandingsTable, type StandingRow } from "@/components/leagues/league-st
 import { PlayerStatsFilters, type GameRange, type Position, type ScaleMode } from "@/components/leagues/player-stats-filters";
 import { PlayerStatsTable } from "@/components/leagues/player-stats-table";
 import { per90 } from "@/lib/football-understat-types";
+import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
 import type { LeagueDetail } from "@/lib/leagues-stats/types";
 
 const fetcher = async (url: string) => {
@@ -280,6 +281,11 @@ export default function LeagueDetailPage() {
               </Card>
             </section>
           )}
+
+          {/* Goals Map */}
+          <div className="mt-8">
+            <GoalsMapScatter />
+          </div>
 
           {/* Sections stats OddAlerts */}
           {league.gamesPlayed === 0 && league.sections.length === 0 ? null : (

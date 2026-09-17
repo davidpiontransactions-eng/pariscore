@@ -5,7 +5,7 @@ import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 const STRATEGIES: { key: HandballStrategyKey; label: string; emoji: string }[] = [
   { key: "bestTeam", label: "Équipe", emoji: "🏆" },
   { key: "bestTeam1x2", label: "1X2", emoji: "📊" },
-  { key: "over55", label: "O55.5", emoji: "⬆️" },
+  { key: "over55", label: "Over", emoji: "⬆️" },
   { key: "under62", label: "U62.5", emoji: "⬇️" },
   { key: "handicap", label: "HC", emoji: "🎯" },
   { key: "btts30", label: "BTTS", emoji: "⚡" },

@@ -104,7 +104,18 @@ export const BSD_UNCOVERED_LEAGUES: ReadonlySet<string> = new Set([
   "paraguay_primera",   // Primera División (Paraguay)
   "austria_bundesliga", // Bundesliga (Autriche)
   "australia_a_league", // A-League (Australie)
+  "afc_champions_league_elite", // AFC Champions League Elite (source: FotMob, pas BSD)
+  "afc_champions_league_two",   // AFC Champions League Two (source: FotMob, pas BSD)
 ]);
+
+/**
+ * IDs FotMoB pour les ligues sans couverture BSD.
+ * Scraper : scripts/scrape-afc-champions.py → public/data/afc/{elite,two}.json
+ */
+export const FOTMOB_LEAGUE_IDS: Record<string, number> = {
+  afc_champions_league_elite: 525,
+  afc_champions_league_two: 9469,
+};
 
 /** Ids legacy leagues_config.json (≈ ids API-Football). Référence uniquement. */
 export const CONFIG_LEAGUE_IDS: Record<string, number> = {
@@ -242,4 +253,7 @@ export const LEAGUE_INFO: Record<string, { name: string; country: string; sport:
   taca_da_liga: { name: "Taça da Liga", country: "Portugal", sport: "football" },
   campeonato_portugal: { name: "Campeonato de Portugal", country: "Portugal", sport: "football" },
   puchar_polski: { name: "Puchar Polski", country: "Poland", sport: "football" },
+  // AFC Champions League (source: FotMob — pas de couverture BSD)
+  afc_champions_league_elite: { name: "AFC Champions League Elite", country: "Asia", sport: "football" },
+  afc_champions_league_two: { name: "AFC Champions League Two", country: "Asia", sport: "football" },
 };

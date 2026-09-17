@@ -4,12 +4,12 @@ name: Refresh Snooker
 # Les scrapers Playwright sortent des JSON dans data/ — le workflow commite les changements.
 #
 # Triggers:
-#   - schedule: 06:00 UTC daily (avant les matchs EU)
+#   - schedule: 08:00 UTC daily (avant les matchs EU)
 #   - workflow_dispatch: trigger manuel
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       source:
