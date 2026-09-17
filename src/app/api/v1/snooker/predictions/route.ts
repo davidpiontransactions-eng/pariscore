@@ -358,22 +358,15 @@ export async function GET() {
 
   const top = picks.slice(0, LIMIT);
 
-  // Enrichir avec photos Wikipedia (best-effort parallèle)
-  // On reconstitue les IDs CueTracker depuis le nom via l'index
+  // Enrichir avec photos Wikipedia
   const cueAIndex = new Map<string, CuePlayer>();
   for (const p of playersData.players ?? []) {
-    const key = p.name.toLowerCase().trim();
-    cueAIndex.set(key, p);
-    // also store partial (lastname)
-    const parts = key.split(/\s+/);
-    if (parts.length >= 2) cueAIndex.set(parts[0], p);
+    cueAIndex.set(p.name.toLowerCase().trim(), p);
   }
 
   const photoPromises = top.map(async (pick) => {
-    const keyA = pick.player1.name.toLowerCase().trim();
-    const keyB = pick.player2.name.toLowerCase().trim();
-    const p1 = cueAIndex.get(keyA) || cueAIndex.get(keyA.split(/\s+/)[0]);
-    const p2 = cueAIndex.get(keyB) || cueAIndex.get(keyB.split(/\s+/)[0]);
+    const p1 = cueAIndex.get(pick.player1.name.toLowerCase().trim());
+    const p2 = cueAIndex.get(pick.player2.name.toLowerCase().trim());
     const [p1Photo, p2Photo] = await Promise.all([
       p1 ? fetchPlayerPhoto(p1.id).catch(() => undefined) : Promise.resolve(undefined),
       p2 ? fetchPlayerPhoto(p2.id).catch(() => undefined) : Promise.resolve(undefined),

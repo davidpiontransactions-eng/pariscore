@@ -67,15 +67,14 @@ function matchWinProb(pFrame: number, bestOf: number): number {
 
 function overTotalProb(pFrame: number, bestOf: number, threshold: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
+  // Formule négative binomiale : P(match se termine à la frame t)
+  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   let pOver = 0;
   for (let t = threshold + 1; t <= bestOf; t++) {
-    for (let a = Math.max(0, t - winsNeeded); a <= Math.min(winsNeeded - 1, t); a++) {
-      const b = t - a;
-      if (b >= winsNeeded || b < 0) continue;
-      const logP = logBinomPMF(a, t - 1, pFrame) + Math.log(pFrame)
-                 + logBinomPMF(b, t - 1, pFrame) + Math.log(1 - pFrame);
-      pOver += Math.exp(logP);
-    }
+    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
+    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
+    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
+    pOver += coeff * (pA + pB);
   }
   return Math.min(100, Math.max(0, pOver * 100));
 }
@@ -83,7 +82,9 @@ function overTotalProb(pFrame: number, bestOf: number, threshold: number): numbe
 function firstToK(pFrame: number, k: number): number {
   let p = 0;
   for (let i = 0; i < k; i++) {
-    p += Math.exp(logBinomPMF(i, k + i - 1, pFrame)) * pFrame;
+    // Formule négative binomiale : C(k+i-1, i) * p^k * (1-p)^i
+    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
+    p += Math.exp(logP);
   }
   return Math.min(100, Math.max(0, p * 100));
 }

@@ -134,7 +134,7 @@ export async function syncMatches(
       const status = ["live", "finished", "scheduled"].includes(rawStatus) ? rawStatus : "scheduled";
       const winnerId = status === "finished" ? (scoreA > scoreB ? id1 : scoreB > scoreA ? id2 : null) : null;
 
-      const id = `${id1}_vs_${id2}`;
+      const id = `${id1}_vs_${id2}_${fallbackDate.toISOString().slice(0, 10)}`;
       const source = m.source || "cuetracker";
       const tournament = source === "snooker.org" ? "World Tour" : "";
 

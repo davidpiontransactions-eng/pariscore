@@ -67,13 +67,14 @@ function scoringWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
   const b2 = normalize(p2.avgBreak ?? 30, 20, 80);
   const s1 = c1 * 0.55 + b1 * 0.45;
   const s2 = c2 * 0.55 + b2 * 0.45;
+  if (s1 + s2 === 0) return 50;
   return s1 / (s1 + s2) * 100;
 }
 
 /** Modèle Clutch : performance en décideurs */
 function clutchWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
-  const d1 = (p1.deciderWinPct ?? 0.5) * 100;
-  const d2 = (p2.deciderWinPct ?? 0.5) * 100;
+  const d1 = p1.deciderWinPct ?? 50;
+  const d2 = p2.deciderWinPct ?? 50;
   return d1 / (d1 + d2) * 100;
 }
 
@@ -109,57 +110,17 @@ function matchWinProb(pFrame: number, bestOf: number): number {
 
 /** P(total frames > threshold) — lo best-of. */
 function overTotalFramesProb(pFrame: number, bestOf: number, threshold: number): number {
-  /**
-   * Modèle amélioré: Negative Binomial correction pour surdispersion
-   * Basé sur Collingwood, Wright & Brooks (EJOR 2023):
-   * - Frames pas parfaitement indépendantes → surdispersion
-   * - Correction: multiplier les queues de distribution
-   */
   const winsNeeded = Math.ceil(bestOf / 2);
+  // Formule négative binomiale : P(match se termine à la frame t)
+  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   let pOver = 0;
-
-  // Estimer la surdispersion (défaut: 1.15 pour matchs professionnels)
-  const dispersion = 1.15;
-
   for (let t = threshold + 1; t <= bestOf; t++) {
-    for (let a = Math.max(0, t - winsNeeded); a <= Math.min(winsNeeded - 1, t); a++) {
-      const b = t - a;
-      if (b >= winsNeeded || b < 0) continue;
-      // P(P1 gagne a frames, P2 gagne b frames, total = t)
-      const logP1 = logBinomPMF(a, t - 1, pFrame) + Math.log(pFrame);
-      const logP2 = logBinomPMF(b, t - 1, pFrame) + Math.log(1 - pFrame);
-      let prob = Math.exp(logP1) + Math.exp(logP2);
-
-      // Correction Negative Binomial: plus de poids aux extrêmes
-      const meanFrames = winsNeeded + (bestOf - winsNeeded) * 0.5;
-      const distFromMean = Math.abs(t - meanFrames) / (bestOf - winsNeeded);
-      const nbCorrection = 1 + (dispersion - 1) * distFromMean * 0.3;
-      prob *= nbCorrection;
-
-      pOver += prob;
-    }
+    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
+    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
+    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
+    pOver += coeff * (pA + pB);
   }
-
-  // Renormaliser
-  const totalProb = (() => {
-    let sum = 0;
-    for (let t = winsNeeded; t <= bestOf; t++) {
-      for (let a = Math.max(0, t - winsNeeded); a <= Math.min(winsNeeded - 1, t); a++) {
-        const b = t - a;
-        if (b >= winsNeeded || b < 0) continue;
-        const logP1 = logBinomPMF(a, t - 1, pFrame) + Math.log(pFrame);
-        const logP2 = logBinomPMF(b, t - 1, pFrame) + Math.log(1 - pFrame);
-        let prob = Math.exp(logP1) + Math.exp(logP2);
-        const meanFrames = winsNeeded + (bestOf - winsNeeded) * 0.5;
-        const distFromMean = Math.abs(t - meanFrames) / (bestOf - winsNeeded);
-        prob *= 1 + (dispersion - 1) * distFromMean * 0.3;
-        sum += prob;
-      }
-    }
-    return sum;
-  })();
-
-  return Math.min(100, Math.max(0, (pOver / totalProb) * 100));
+  return Math.min(100, Math.max(0, pOver * 100));
 }
 
 /** P(P1 gagne avec ≥m frames d'avance sur P2). */
@@ -182,38 +143,33 @@ function handicapProb(pFrame: number, bestOf: number, handicap: number): number 
 function firstToKProb(pFrame: number, k: number): number {
   let pFirst = 0;
   for (let i = 0; i < k; i++) {
-    pFirst += Math.exp(logBinomPMF(i, k + i - 1, pFrame)) * pFrame;
+    // Formule négative binomiale : C(k+i-1, i) * p^k * (1-p)^i
+    // logBinomPMF(i, k+i-1, p) donne C * p^i * (1-p)^(k-1)
+    // Correction : ajouter (k - i - 1) * log(p) pour obtenir p^k * (1-p)^i
+    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
+    pFirst += Math.exp(logP);
   }
   return Math.min(100, Math.max(0, pFirst * 100));
 }
 
 /** P(P1 gagne ≥k frames dans le match. */
 function totalFramesOverProb(pFrame: number, bestOf: number, k: number): number {
-  /**
-   * Modèle amélioré: Negative Binomial correction
-   * P(P1 gagne > k frames dans un match bestOf)
-   */
+  // Formule négative binomiale : P(match se termine à la frame t)
+  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   const winsNeeded = Math.ceil(bestOf / 2);
-  const dispersion = 1.15;
   let pOver = 0;
   let totalProb = 0;
-
-  for (let a = 0; a <= bestOf; a++) {
-    for (let b = 0; b < winsNeeded; b++) {
-      if (a + b > bestOf) continue;
-      if (a >= winsNeeded) {
-        // P1 gagne avec a frames (a > k)
-        let prob = Math.exp(logBinomPMF(b, a + b - 1, pFrame)) * (1 - pFrame);
-        // Correction surdispersion
-        const meanFrames = winsNeeded + (bestOf - winsNeeded) * 0.5;
-        const distFromMean = Math.abs(a + b - meanFrames) / (bestOf - winsNeeded);
-        prob *= 1 + (dispersion - 1) * distFromMean * 0.3;
-        if (a > k) pOver += prob;
-        totalProb += prob;
-      }
-    }
+  for (let t = winsNeeded; t <= bestOf; t++) {
+    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
+    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
+    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
+    const prob = coeff * (pA + pB);
+    // Compter les frames du perdant : si P1 gagne, P2 a (t - winsNeeded) frames
+    const loserFrames = t - winsNeeded;
+    if (loserFrames >= k) pOver += prob;
+    totalProb += prob;
   }
-
+  if (totalProb === 0) return 50;
   return Math.min(100, Math.max(0, (pOver / totalProb) * 100));
 }
 
@@ -298,61 +254,29 @@ function WinBar({ prob1, prob2 }: { prob1: number; prob2: number }) {
 
 /** Indicateur over/total frames pour le match avec pourcentage. */
 function OverTotalTag({ bestOf, p1, p2 }: { bestOf: number; p1: number; p2: number }) {
-  /**
-   * Modèle amélioré: Negative Binomial correction
-   * Réf: Collingwood, Wright & Brooks (EJOR 2023)
-   */
   const target = bestOf === 11 ? 6.5 : bestOf === 9 ? 5.5 : Math.floor(bestOf / 2) + 0.5;
   const total = p1 + p2;
   const pFrame = total > 0 ? p1 / total : 0.5;
-  const q = 1 - pFrame;
   const need = Math.ceil(bestOf / 2);
-  const dispersion = 1.15;
 
-  // P(total ≤ target) avec correction surdispersion
+  // Formule négative binomiale : P(match se termine à la frame t)
+  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   let cumUnder = 0;
   let totalProb = 0;
+  let expectedSum = 0;
 
   for (let t = need; t <= bestOf; t++) {
-    let prob = 0;
-    for (let a = Math.max(0, t - need); a <= Math.min(need - 1, t); a++) {
-      const b = t - a;
-      if (b >= need || b < 0) continue;
-      // P1 gagne: C(t-1, a) * p^a * q^b * p
-      const p1Win = Math.exp(logBinomPMF(a, t - 1, pFrame)) * pFrame;
-      // P2 gagne: C(t-1, a) * p^a * q^b * q
-      const p2Win = Math.exp(logBinomPMF(a, t - 1, pFrame)) * q;
-      prob += p1Win + p2Win;
-    }
-    // Correction Negative Binomial
-    const meanFrames = need + (bestOf - need) * 0.5;
-    const distFromMean = Math.abs(t - meanFrames) / (bestOf - need);
-    prob *= 1 + (dispersion - 1) * distFromMean * 0.3;
+    const coeff = Math.exp(logBinomPMF(need - 1, t - 1, pFrame));
+    const pA = Math.pow(pFrame, need) * Math.pow(1 - pFrame, t - need);
+    const pB = Math.pow(1 - pFrame, need) * Math.pow(pFrame, t - need);
+    const prob = coeff * (pA + pB);
     totalProb += prob;
     if (t <= target) cumUnder += prob;
+    expectedSum += t * prob;
   }
 
   const overProb = totalProb > 0 ? Math.round(((totalProb - cumUnder) / totalProb) * 100) : 50;
-
-  // Frames attendues (espérance)
-  const expectedFrames = (() => {
-    let sum = 0;
-    for (let t = need; t <= bestOf; t++) {
-      let prob = 0;
-      for (let a = Math.max(0, t - need); a <= Math.min(need - 1, t); a++) {
-        const b = t - a;
-        if (b >= need || b < 0) continue;
-        const p1Win = Math.exp(logBinomPMF(a, t - 1, pFrame)) * pFrame;
-        const p2Win = Math.exp(logBinomPMF(a, t - 1, pFrame)) * q;
-        prob += p1Win + p2Win;
-      }
-      const meanFrames = need + (bestOf - need) * 0.5;
-      const distFromMean = Math.abs(t - meanFrames) / (bestOf - need);
-      prob *= 1 + (dispersion - 1) * distFromMean * 0.3;
-      sum += t * prob;
-    }
-    return totalProb > 0 ? (sum / totalProb).toFixed(1) : "—";
-  })();
+  const expectedFrames = totalProb > 0 ? (expectedSum / totalProb).toFixed(1) : "—";
 
   return (
     <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[8px] font-semibold text-blue-600">

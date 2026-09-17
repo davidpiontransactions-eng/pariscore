@@ -42,18 +42,19 @@ export async function GET(request: Request) {
     // Index cotes optionnel : data/odds_flashscore_snooker.json (EV si cotes dispo).
     const oddsIndex = new Map<string, { home: number; away: number }>();
     try {
-      const rows = JSON.parse(
+      const file = JSON.parse(
         readFileSync(join(process.cwd(), "data", "odds_flashscore_snooker.json"), "utf-8"),
-      ) as Array<{ home?: string; away?: string; oddsHome?: number; oddsAway?: number }>;
-      if (Array.isArray(rows)) {
-        for (const r of rows) {
-          if (typeof r.home === "string" && typeof r.away === "string") {
-            oddsIndex.set(`${norm(r.home)}|${norm(r.away)}`, { home: r.oddsHome ?? 0, away: r.oddsAway ?? 0 });
+      ) as { matches?: Array<Record<string, unknown>> };
+      for (const r of file.matches ?? []) {
+        if (typeof r.home === "string" && typeof r.away === "string" && r.odds) {
+          const odds = r.odds as { home?: number; away?: number };
+          if (odds.home && odds.away) {
+            oddsIndex.set(`${norm(r.home)}|${norm(r.away)}`, { home: odds.home, away: odds.away });
           }
         }
       }
     } catch {
-      /* cotes optionnelles — fichier absent ou non-array */
+      /* cotes optionnelles — fichier absent ou invalide */
     }
 
     const out = dbMatches.map((m) => {

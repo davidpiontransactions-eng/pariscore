@@ -94,16 +94,15 @@ export function verdictColor(v: KellyResult["verdict"]): string {
 }
 
 /**
- * Calcule le Kelly pour une cote implicite (sans cote réelle)
- * Utilise la probabilité du modèle comme cote implicite
+ * Calcule le Kelly avec probabilité du modèle ET cotes marché réelles
+ * @param modelProb - Probabilité estimée par le modèle (0-1)
+ * @param marketOdds - Cotes du marché (décimales, ex: 2.10)
  */
-export function kellyFromProb(modelProb: number): KellyResult {
-  if (modelProb <= 0.5) {
+export function kellyFromProb(modelProb: number, marketOdds?: number): KellyResult {
+  if (!marketOdds || marketOdds <= 1) {
     return { fullKelly: 0, halfKelly: 0, ev: 0, roi: 0, verdict: "no_edge" };
   }
-  // Cote implicite basée sur la probabilité du modèle
-  const impliedOdds = 1 / modelProb;
-  return kellyCriterion(modelProb, impliedOdds);
+  return kellyCriterion(modelProb, marketOdds);
 }
 
 /**

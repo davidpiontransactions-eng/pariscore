@@ -64,18 +64,6 @@ function deriveElo(p: CueTrackerFile["players"][number]): number {
   return quickElo(p.wins ?? 0, p.losses ?? 0, p.centuries ?? 0);
 }
 
-/** Generate a simulated form string based on win rate */
-function generateForm(winPct: number): string {
-  const forms = ["W", "L"];
-  const weights = [winPct / 100, 1 - winPct / 100];
-  let result = "";
-  for (let i = 0; i < 10; i++) {
-    const rand = Math.random();
-    result += rand < weights[0] ? "W" : "L";
-  }
-  return result;
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -106,10 +94,9 @@ export async function GET(
   const centuryRate = played > 0 ? ((player.centuries ?? 0) / played) * 100 : 0;
   const deciderWinPct = (player.decider_win_pct ?? 0.5) * 100;
 
-  // Simulated streaks based on win rate
-  const winStreak = Math.floor(Math.random() * Math.ceil(winPct / 20));
-  const lossStreak = Math.floor(Math.random() * Math.ceil((100 - winPct) / 25));
-  const formLast10 = generateForm(winPct);
+  // Forme basée sur le win% (déterministe)
+  const formWinPct = Math.round(winPct / 10);
+  const formLast10 = "W".repeat(formWinPct) + "L".repeat(10 - formWinPct);
 
   // Fetch photo from Wikipedia
   let photoUrl: string | undefined;
@@ -134,8 +121,8 @@ export async function GET(
     losses,
     centuries: player.centuries ?? 0,
     maxBreak: player.max_break ?? null,
-    winStreak,
-    lossStreak,
+    winStreak: 0,
+    lossStreak: 0,
     formLast10,
   };
 

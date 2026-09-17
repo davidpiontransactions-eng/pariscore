@@ -111,15 +111,9 @@ export function buildPlayerIndex(players: PlayerLike[]): Map<string, PlayerLike[
   for (const p of players) {
     const toks = tokens(p.name);
     if (toks.length === 0) continue;
-    // Indexer par chaque token + premier + dernier
-    const keys = new Set<string>();
-    keys.add(toks[0]);
-    keys.add(toks[toks.length - 1]);
-    if (toks.length >= 2) {
-      keys.add(toks[0]); // premier = last name en ordre western
-      keys.add(toks[toks.length - 1]); // dernier = last name en ordre asiatique
-    }
-    for (const k of Array.from(keys)) {
+    // Indexer par premier et dernier token (last name en ordre western/asiatique)
+    const keys = new Set<string>([toks[0], toks[toks.length - 1]]);
+    for (const k of keys) {
       const list = index.get(k);
       if (list) list.push(p);
       else index.set(k, [p]);
@@ -185,11 +179,14 @@ export function findCuePlayer(
   }
 
   // 3. Recherche par surname + filtre initiale
-  for (const surname of surnames) {
+  // Essayer chaque token du surname individuellement ("o", "sullivan") ET le complet ("osullivan")
+  // pour gérer les noms composés et les apostrophes (O'Sullivan → tokens ["o", "sullivan"])
+  const surnameVariants = [...new Set([...surnames, ...surnames.flatMap((s) => s.split(" ").filter(Boolean))])];
+  for (const surname of surnameVariants) {
     const candidates = (index.get(surname) ?? []).filter((p) => {
       if (!initial) return true;
       const pToks = tokens(p.name);
-      return pToks.some((t) => t !== surname && t.startsWith(initial));
+      return pToks.some((t) => t.startsWith(initial));
     });
     if (candidates.length > 0) {
       // Désambiguïsation : joueur le plus expérimenté

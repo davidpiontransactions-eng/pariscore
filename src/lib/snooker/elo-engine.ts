@@ -119,20 +119,18 @@ export function computeEloRatings(
     const losses = p.losses ?? 0;
     const played = p.matches_played ?? (wins + losses);
 
-    // Rating initial basé sur le ratio wins/losses (heuristique améliorée)
-    const winRatio = played > 0 ? wins / played : 0.5;
-    // Mapping: 50% → 1500, 70% → 1800, 30% → 1200
-    const initialRating = Math.round(1500 + (winRatio - 0.5) * 1500);
+    // Rating initial fixe — les matchs simulés ci-dessous construiront le vrai rating
+    const initialRating = INITIAL_RATING;
 
     ratings.set(p.id, {
       id: p.id,
       name: p.name,
-      rating: Math.max(800, Math.min(2200, initialRating)),
+      rating: initialRating,
       matchesPlayed: played,
       wins,
       losses,
-      peakRating: Math.max(800, Math.min(2200, initialRating)),
-      currentForm: winRatio * 100,
+      peakRating: initialRating,
+      currentForm: played > 0 ? (wins / played) * 100 : 50,
     });
   }
 

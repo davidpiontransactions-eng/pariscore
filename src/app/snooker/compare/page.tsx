@@ -67,10 +67,12 @@ function powerScore(p: Player): number {
 }
 
 function playerScore(p: Player): number {
-  return (p.eloRating / 1800) * 30 + (p.winPct ?? 50) * 0.25 +
-    Math.min(100, ((p.centuryRate ?? 0) / 30) * 100) * 0.20 +
-    (p.deciderWinPct ?? 50) * 0.15 +
-    Math.min(100, (((p.avgBreak ?? 30) - 20) / 60) * 100) * 0.10;
+  const elo = normalize(p.eloRating, 1200, 1800);
+  const win = p.winPct ?? 50;
+  const century = normalize(p.centuryRate ?? 0, 0, 30);
+  const decider = p.deciderWinPct ?? 50;
+  const avgBreak = normalize(p.avgBreak ?? 30, 20, 80);
+  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + avgBreak * 0.10;
 }
 
 // ── UI Components ─────────────────────────────────────────────────────────

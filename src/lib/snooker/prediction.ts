@@ -97,15 +97,9 @@ export function predictMatch(
   
   if (probA > 0.6) {
     bet = 'match_winner_a';
-    // Placeholder odds — will be filled from real odds
-    betOdds = 1 / probA; // fair odds
-    edge = probA - (1 / betOdds);
-    kelly = kellyStake(probA, betOdds);
+    // Pas de cotes marché → pas d'edge calculable (voir predictWithValue pour les cotes réelles)
   } else if (probB > 0.6) {
     bet = 'match_winner_b';
-    betOdds = 1 / probB;
-    edge = probB - (1 / betOdds);
-    kelly = kellyStake(probB, betOdds);
   }
   
   return {

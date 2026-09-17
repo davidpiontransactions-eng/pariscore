@@ -76,11 +76,11 @@ export async function GET() {
     const oddsportalFile = join(dataDir, "oddsportal_nio.json");
 
     // Default empty structures when data files are missing
-    const defaultPlayersData = { matches: [] };
+    const defaultPlayersData = { players: [] };
     const defaultFlashData = { matches: [] };
 
-    let playersData: any;
-    let flashData: any;
+    let playersData: { players: Array<Record<string, unknown>> };
+    let flashData: { matches: Array<Record<string, unknown>> };
 
     // Try loading data files, fall back to empty structures
     if (existsSync(playersFile) && existsSync(matchesFile)) {
@@ -91,22 +91,21 @@ export async function GET() {
       flashData = defaultFlashData;
     }
 
-    // Build player list from players data
+    // Build player list from CueTracker players data (NOT matches)
     const playerList: Player[] = [];
     const seen = new Set<string>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const row of (playersData.matches ?? []) as any[]) {
-      const key = (row.player_name as string).trim();
+    for (const row of (playersData.players ?? [])) {
+      const key = (row.name as string)?.trim();
       if (!seen.has(key) && key) {
         seen.add(key);
         playerList.push({
-          id: String(row.player_id ?? key),
+          id: String(row.id ?? key),
           name: key,
-          eloRating: quickElo(row.wins ?? 0, row.losses ?? 0, row.centuries ?? 0),
-          winPct: row.win_pct,
-          centuryRate: row.century_rate,
-          deciderWinPct: row.decider_win_pct,
-          avgBreak: row.avg_break,
+          eloRating: quickElo(row.wins as number ?? 0, row.losses as number ?? 0, row.centuries as number ?? 0),
+          winPct: row.win_pct as number | undefined,
+          centuryRate: row.century_rate as number | undefined,
+          deciderWinPct: row.decider_win_pct as number | undefined,
+          avgBreak: row.avg_break as number | undefined,
         });
       }
     }
@@ -117,7 +116,7 @@ export async function GET() {
       id: m.id as string,
       player1: m.home as string,
       player2: m.away as string,
-      status: m.isLive ? "live" : (m.scoreHome === "0" && m.scoreAway === "0" ? "scheduled" : "finished"),
+      status: m.isLive ? "live" : (m.scoreHome !== "-" && m.scoreHome !== "" ? "finished" : "scheduled"),
       scoreA: parseInt(m.scoreHome as string) || 0,
       scoreB: parseInt(m.scoreAway as string) || 0,
       bestOf: 7,

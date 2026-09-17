@@ -50,26 +50,6 @@ function binomPMF(k: number, n: number, p: number): number {
   return Math.exp(logBinomPMF(k, n, p));
 }
 
-/**
- * Negative Binomial PMF (forme alternative)
- * X ~ NB(r, p): nombre d'échecs avant r succès
- * Utilisé pour modéliser la surdispersion des frames
- *
- * Paramètre r contrôlé par la variance observée:
- * - r → ∞: converge vers Poisson
- * - r petit: plus de surdispersion (frames moins indépendantes)
- */
-function negBinomPMF(k: number, r: number, p: number): number {
-  if (p <= 0 || r <= 0) return k === 0 ? 1 : 0;
-  if (k < 0) return 0;
-  // log(C(k+r-1, k))
-  let logC = 0;
-  for (let i = 0; i < k; i++) {
-    logC += Math.log(k + r - 1 - i) - Math.log(i + 1);
-  }
-  return Math.exp(logC + r * Math.log(p) + k * Math.log(1 - p));
-}
-
 // ── Modèle principal ────────────────────────────────────────────────
 
 export type PlayerStats = {
