@@ -4,7 +4,7 @@
     "leagueId": "seriea",
     "leagueName": "Italy",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-16T09:25:20.400633Z",
+    "lastUpdated": "2026-09-17T09:35:12.429148Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 23,
     "window": 8,
@@ -13,12 +13,12 @@
   },
   "home": [
     {
-      "teamName": "Napoli",
+      "teamName": "Udinese",
       "gp": 5,
-      "w": 3,
-      "d": 0,
+      "w": 1,
+      "d": 1,
       "l": 2,
-      "gf": 7,
+      "gf": 5,
       "ga": 5
     },
     {
@@ -31,22 +31,31 @@
       "ga": 6
     },
     {
-      "teamName": "Udinese",
+      "teamName": "Lecce",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 1,
       "l": 2,
       "gf": 5,
-      "ga": 5
+      "ga": 9
     },
     {
-      "teamName": "Fiorentina",
-      "gp": 5,
+      "teamName": "Frosinone",
+      "gp": 2,
       "w": 1,
-      "d": 2,
-      "l": 2,
+      "d": 0,
+      "l": 1,
       "gf": 3,
-      "ga": 7
+      "ga": 3
+    },
+    {
+      "teamName": "Cagliari",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 4,
+      "ga": 5
     },
     {
       "teamName": "Monza",
@@ -58,58 +67,31 @@
       "ga": 3
     },
     {
-      "teamName": "Verona",
+      "teamName": "Pisa",
       "gp": 5,
-      "w": 0,
-      "d": 1,
+      "w": 1,
+      "d": 0,
       "l": 4,
-      "gf": 1,
-      "ga": 6
-    },
-    {
-      "teamName": "Lecce",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 5,
+      "gf": 4,
       "ga": 9
     },
     {
-      "teamName": "Como",
+      "teamName": "Napoli",
       "gp": 5,
       "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 10,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
       "ga": 5
     },
     {
-      "teamName": "Frosinone",
-      "gp": 2,
-      "w": 1,
-      "d": 0,
-      "l": 1,
-      "gf": 3,
-      "ga": 3
-    },
-    {
-      "teamName": "Lazio",
+      "teamName": "Fiorentina",
       "gp": 5,
-      "w": 2,
+      "w": 1,
       "d": 2,
-      "l": 1,
-      "gf": 7,
+      "l": 2,
+      "gf": 3,
       "ga": 7
-    },
-    {
-      "teamName": "Genoa",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 5,
-      "ga": 10
     },
     {
       "teamName": "Parma",
@@ -121,58 +103,13 @@
       "ga": 6
     },
     {
-      "teamName": "Pisa",
+      "teamName": "Como",
       "gp": 5,
-      "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 4,
-      "ga": 9
-    },
-    {
-      "teamName": "Juventus",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 7,
-      "ga": 4
-    },
-    {
-      "teamName": "Cagliari",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
-    },
-    {
-      "teamName": "Venezia",
-      "gp": 2,
-      "w": 0,
-      "d": 0,
-      "l": 2,
-      "gf": 2,
-      "ga": 6
-    },
-    {
-      "teamName": "As Roma",
-      "gp": 5,
-      "w": 4,
+      "w": 3,
       "d": 1,
-      "l": 0,
-      "gf": 13,
-      "ga": 3
-    },
-    {
-      "teamName": "Sassuolo",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
       "l": 1,
       "gf": 10,
-      "ga": 7
+      "ga": 5
     },
     {
       "teamName": "Inter Milan",
@@ -184,6 +121,24 @@
       "ga": 8
     },
     {
+      "teamName": "Torino",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Juventus",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 7,
+      "ga": 4
+    },
+    {
       "teamName": "Cremonese",
       "gp": 5,
       "w": 1,
@@ -191,6 +146,24 @@
       "l": 3,
       "gf": 4,
       "ga": 9
+    },
+    {
+      "teamName": "Lazio",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Genoa",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 10
     },
     {
       "teamName": "Bologna",
@@ -202,12 +175,30 @@
       "ga": 7
     },
     {
-      "teamName": "Torino",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
+      "teamName": "Venezia",
+      "gp": 2,
+      "w": 0,
+      "d": 0,
       "l": 2,
-      "gf": 7,
+      "gf": 2,
+      "ga": 6
+    },
+    {
+      "teamName": "Verona",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 1,
+      "ga": 6
+    },
+    {
+      "teamName": "Sassuolo",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 10,
       "ga": 7
     },
     {
@@ -218,17 +209,26 @@
       "l": 2,
       "gf": 7,
       "ga": 5
+    },
+    {
+      "teamName": "As Roma",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 13,
+      "ga": 3
     }
   ],
   "away": [
     {
-      "teamName": "Napoli",
+      "teamName": "Udinese",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
-      "gf": 8,
-      "ga": 6
+      "gf": 11,
+      "ga": 10
     },
     {
       "teamName": "AC Milan",
@@ -240,22 +240,31 @@
       "ga": 6
     },
     {
-      "teamName": "Udinese",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 11,
-      "ga": 10
-    },
-    {
-      "teamName": "Fiorentina",
+      "teamName": "Lecce",
       "gp": 5,
       "w": 2,
       "d": 0,
       "l": 2,
-      "gf": 8,
-      "ga": 10
+      "gf": 5,
+      "ga": 5
+    },
+    {
+      "teamName": "Frosinone",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
+    },
+    {
+      "teamName": "Cagliari",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 6
     },
     {
       "teamName": "Monza",
@@ -267,22 +276,40 @@
       "ga": 8
     },
     {
-      "teamName": "Verona",
+      "teamName": "Pisa",
       "gp": 5,
-      "w": 1,
+      "w": 0,
       "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 9
+      "l": 4,
+      "gf": 1,
+      "ga": 12
     },
     {
-      "teamName": "Lecce",
+      "teamName": "Napoli",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Fiorentina",
       "gp": 5,
       "w": 2,
       "d": 0,
       "l": 2,
-      "gf": 5,
-      "ga": 5
+      "gf": 8,
+      "ga": 10
+    },
+    {
+      "teamName": "Parma",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 3,
+      "ga": 7
     },
     {
       "teamName": "Como",
@@ -294,13 +321,40 @@
       "ga": 4
     },
     {
-      "teamName": "Frosinone",
-      "gp": 2,
+      "teamName": "Inter Milan",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 11,
+      "ga": 5
+    },
+    {
+      "teamName": "Torino",
+      "gp": 5,
       "w": 1,
       "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
+      "l": 3,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "Juventus",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Cremonese",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 3,
+      "ga": 8
     },
     {
       "teamName": "Lazio",
@@ -321,40 +375,13 @@
       "ga": 4
     },
     {
-      "teamName": "Parma",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 3,
-      "ga": 7
-    },
-    {
-      "teamName": "Pisa",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 1,
-      "ga": 12
-    },
-    {
-      "teamName": "Juventus",
+      "teamName": "Bologna",
       "gp": 5,
       "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 8,
-      "ga": 6
-    },
-    {
-      "teamName": "Cagliari",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 6
+      "d": 0,
+      "l": 3,
+      "gf": 4,
+      "ga": 5
     },
     {
       "teamName": "Venezia",
@@ -366,13 +393,13 @@
       "ga": 5
     },
     {
-      "teamName": "As Roma",
+      "teamName": "Verona",
       "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 11,
-      "ga": 5
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 4,
+      "ga": 9
     },
     {
       "teamName": "Sassuolo",
@@ -384,42 +411,6 @@
       "ga": 8
     },
     {
-      "teamName": "Inter Milan",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 11,
-      "ga": 5
-    },
-    {
-      "teamName": "Cremonese",
-      "gp": 5,
-      "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 3,
-      "ga": 8
-    },
-    {
-      "teamName": "Bologna",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 4,
-      "ga": 5
-    },
-    {
-      "teamName": "Torino",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 8
-    },
-    {
       "teamName": "Atalanta",
       "gp": 5,
       "w": 2,
@@ -427,6 +418,15 @@
       "l": 2,
       "gf": 8,
       "ga": 7
+    },
+    {
+      "teamName": "As Roma",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 11,
+      "ga": 5
     }
   ]
 }

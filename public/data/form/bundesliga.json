@@ -4,7 +4,7 @@
     "leagueId": "bundesliga",
     "leagueName": "Germany",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-16T09:25:13.750820Z",
+    "lastUpdated": "2026-09-17T09:35:04.179527Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 21,
     "window": 8,
@@ -13,103 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Heidenheim",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 11
-    },
-    {
-      "teamName": "Leverkusen",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 14,
-      "ga": 4
-    },
-    {
-      "teamName": "Hoffenheim",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 7
-    },
-    {
-      "teamName": "RB Leipzig",
-      "gp": 5,
-      "w": 4,
+      "teamName": "Schalke 04",
+      "gp": 1,
+      "w": 0,
       "d": 1,
       "l": 0,
-      "gf": 15,
-      "ga": 3
-    },
-    {
-      "teamName": "Union Berlin",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 11
-    },
-    {
-      "teamName": "Augsburg",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 11,
-      "ga": 6
-    },
-    {
-      "teamName": "FC Koln",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "Elversberg",
-      "gp": 2,
-      "w": 1,
-      "d": 0,
-      "l": 1,
-      "gf": 4,
-      "ga": 4
-    },
-    {
-      "teamName": "Bayern Munich",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 19,
-      "ga": 7
-    },
-    {
-      "teamName": "Fsv Mainz",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
-    },
-    {
-      "teamName": "Werder Bremen",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 8
+      "gf": 0,
+      "ga": 0
     },
     {
       "teamName": "Freiburg",
@@ -121,21 +31,12 @@
       "ga": 5
     },
     {
-      "teamName": "E. Frankfurt",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 10
-    },
-    {
-      "teamName": "Hamburger SV",
+      "teamName": "Heidenheim",
       "gp": 5,
       "w": 1,
-      "d": 2,
+      "d": 1,
       "l": 2,
-      "gf": 6,
+      "gf": 8,
       "ga": 11
     },
     {
@@ -148,6 +49,24 @@
       "ga": 8
     },
     {
+      "teamName": "Elversberg",
+      "gp": 2,
+      "w": 1,
+      "d": 0,
+      "l": 1,
+      "gf": 4,
+      "ga": 4
+    },
+    {
+      "teamName": "Fsv Mainz",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
+    },
+    {
       "teamName": "Monchengladbach",
       "gp": 5,
       "w": 2,
@@ -157,13 +76,13 @@
       "ga": 8
     },
     {
-      "teamName": "Sankt Pauli",
+      "teamName": "Stuttgart",
       "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 5,
-      "ga": 9
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 12,
+      "ga": 3
     },
     {
       "teamName": "Paderborn",
@@ -175,12 +94,48 @@
       "ga": 1
     },
     {
-      "teamName": "Stuttgart",
+      "teamName": "Hamburger SV",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 11
+    },
+    {
+      "teamName": "Union Berlin",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 11
+    },
+    {
+      "teamName": "Werder Bremen",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Leverkusen",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 14,
+      "ga": 4
+    },
+    {
+      "teamName": "RB Leipzig",
       "gp": 5,
       "w": 4,
-      "d": 0,
+      "d": 1,
       "l": 0,
-      "gf": 12,
+      "gf": 15,
       "ga": 3
     },
     {
@@ -193,16 +148,79 @@
       "ga": 4
     },
     {
-      "teamName": "Schalke 04",
-      "gp": 1,
-      "w": 0,
+      "teamName": "FC Koln",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Hoffenheim",
+      "gp": 5,
+      "w": 2,
       "d": 1,
+      "l": 2,
+      "gf": 9,
+      "ga": 7
+    },
+    {
+      "teamName": "E. Frankfurt",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 10
+    },
+    {
+      "teamName": "Sankt Pauli",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 5,
+      "ga": 9
+    },
+    {
+      "teamName": "Augsburg",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
       "l": 0,
-      "gf": 0,
-      "ga": 0
+      "gf": 11,
+      "ga": 6
+    },
+    {
+      "teamName": "Bayern Munich",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 19,
+      "ga": 7
     }
   ],
   "away": [
+    {
+      "teamName": "Schalke 04",
+      "gp": 2,
+      "w": 1,
+      "d": 0,
+      "l": 1,
+      "gf": 3,
+      "ga": 4
+    },
+    {
+      "teamName": "Freiburg",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 5,
+      "ga": 8
+    },
     {
       "teamName": "Heidenheim",
       "gp": 5,
@@ -210,6 +228,87 @@
       "d": 1,
       "l": 3,
       "gf": 7,
+      "ga": 9
+    },
+    {
+      "teamName": "Wolfsburg",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 11
+    },
+    {
+      "teamName": "Elversberg",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 4,
+      "ga": 3
+    },
+    {
+      "teamName": "Fsv Mainz",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 11,
+      "ga": 4
+    },
+    {
+      "teamName": "Monchengladbach",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 3,
+      "ga": 14
+    },
+    {
+      "teamName": "Stuttgart",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 3,
+      "gf": 10,
+      "ga": 14
+    },
+    {
+      "teamName": "Paderborn",
+      "gp": 2,
+      "w": 0,
+      "d": 1,
+      "l": 1,
+      "gf": 0,
+      "ga": 3
+    },
+    {
+      "teamName": "Hamburger SV",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 4,
+      "ga": 12
+    },
+    {
+      "teamName": "Union Berlin",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 4,
+      "ga": 13
+    },
+    {
+      "teamName": "Werder Bremen",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
       "ga": 9
     },
     {
@@ -222,15 +321,6 @@
       "ga": 9
     },
     {
-      "teamName": "Hoffenheim",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 13
-    },
-    {
       "teamName": "RB Leipzig",
       "gp": 5,
       "w": 2,
@@ -238,141 +328,6 @@
       "l": 2,
       "gf": 7,
       "ga": 10
-    },
-    {
-      "teamName": "Union Berlin",
-      "gp": 5,
-      "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 4,
-      "ga": 13
-    },
-    {
-      "teamName": "Augsburg",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "FC Koln",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 5,
-      "ga": 13
-    },
-    {
-      "teamName": "Elversberg",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 4,
-      "ga": 3
-    },
-    {
-      "teamName": "Bayern Munich",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 10,
-      "ga": 5
-    },
-    {
-      "teamName": "Fsv Mainz",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 11,
-      "ga": 4
-    },
-    {
-      "teamName": "Werder Bremen",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 5,
-      "ga": 9
-    },
-    {
-      "teamName": "Freiburg",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 5,
-      "ga": 8
-    },
-    {
-      "teamName": "E. Frankfurt",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 1,
-      "gf": 10,
-      "ga": 9
-    },
-    {
-      "teamName": "Hamburger SV",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 12
-    },
-    {
-      "teamName": "Wolfsburg",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 11
-    },
-    {
-      "teamName": "Monchengladbach",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 3,
-      "ga": 14
-    },
-    {
-      "teamName": "Sankt Pauli",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 4,
-      "ga": 10
-    },
-    {
-      "teamName": "Paderborn",
-      "gp": 2,
-      "w": 0,
-      "d": 1,
-      "l": 1,
-      "gf": 0,
-      "ga": 3
-    },
-    {
-      "teamName": "Stuttgart",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 3,
-      "gf": 10,
-      "ga": 14
     },
     {
       "teamName": "Dortmund",
@@ -384,13 +339,58 @@
       "ga": 6
     },
     {
-      "teamName": "Schalke 04",
-      "gp": 2,
+      "teamName": "FC Koln",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 3,
+      "gf": 5,
+      "ga": 13
+    },
+    {
+      "teamName": "E. Frankfurt",
+      "gp": 5,
       "w": 1,
-      "d": 0,
+      "d": 2,
       "l": 1,
-      "gf": 3,
-      "ga": 4
+      "gf": 10,
+      "ga": 9
+    },
+    {
+      "teamName": "Hoffenheim",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
+      "ga": 13
+    },
+    {
+      "teamName": "Sankt Pauli",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 4,
+      "ga": 10
+    },
+    {
+      "teamName": "Augsburg",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Bayern Munich",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 10,
+      "ga": 5
     }
   ]
 }
