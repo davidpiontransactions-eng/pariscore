@@ -171,25 +171,38 @@ async function main() {
 
   // 1. Scraper les matchs du jour
   let allMatches = [];
+  let todayStr = new Date().toISOString().slice(0, 10);
+  let tomorrowStr = "";
+  {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    tomorrowStr = d.toISOString().slice(0, 10);
+  }
 
   if (bothDays) {
     // Scraper aujourd'hui + demain
     console.log("[FlashScore] Mode --both : scrape aujourd'hui + demain");
     const todayMatches = await scrapeMatches(page, liveOnly ? SNOOKER_LIVE_URL : SNOOKER_URL, "today");
+    for (const m of todayMatches) m.date = todayStr;
     allMatches.push(...todayMatches);
     console.log(`[FlashScore] Aujourd'hui: ${todayMatches.length} matchs`);
 
     const tmUrl = tomorrowUrl();
     const tomorrowMatches = await scrapeMatches(page, tmUrl, "tomorrow");
+    for (const m of tomorrowMatches) m.date = tomorrowStr;
     allMatches.push(...tomorrowMatches);
     console.log(`[FlashScore] Demain: ${tomorrowMatches.length} matchs`);
   } else if (tomorrowOnly) {
     const tmUrl = tomorrowUrl();
     console.log(`[FlashScore] Mode --tomorrow : ${tmUrl}`);
-    allMatches = await scrapeMatches(page, tmUrl, "tomorrow");
+    const matches = await scrapeMatches(page, tmUrl, "tomorrow");
+    for (const m of matches) m.date = tomorrowStr;
+    allMatches = matches;
   } else {
     const url = liveOnly ? SNOOKER_LIVE_URL : SNOOKER_URL;
-    allMatches = await scrapeMatches(page, url, liveOnly ? "live" : "today");
+    const matches = await scrapeMatches(page, url, liveOnly ? "live" : "today");
+    for (const m of matches) m.date = todayStr;
+    allMatches = matches;
   }
 
   const matches = allMatches;

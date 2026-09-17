@@ -186,13 +186,16 @@ function readOddsportalData(): OddsportalFile | null {
 
 async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<SnookerMatch> {
   let scheduledAt: string | null = null;
-  const baseDate = new Date(scrapedAt);
+
+  // Utiliser le champ date du scraper si disponible (pour --both / --tomorrow)
+  const matchDate = (m as Record<string, unknown>).date as string | undefined;
+  const baseDate = matchDate ? new Date(matchDate + "T12:00:00") : new Date(scrapedAt);
+
   if (m.time && m.time !== "-" && m.time !== "") {
     const [hours, minutes] = m.time.split(":").map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
       scheduledAt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hours, minutes).toISOString();
     } else if (m.isLive || (m.scoreHome !== "-" && m.scoreAway !== "-" && m.scoreHome && m.scoreAway)) {
-      // Live ou finished avec heure non parsable (ex: "LiveFrame 2") → utiliser scraped_at
       scheduledAt = baseDate.toISOString();
     }
   }
