@@ -42,6 +42,8 @@ export type HandballStrategyEntry = {
   ev?: number | null;
   /** Edge = P(model) - P(market) */
   trend?: number | null;
+  /** Ligne Over/Under (ex: 57.5) */
+  bestLine?: number;
 };
 
 export type HandballStrategyResult = {
@@ -252,7 +254,7 @@ function scoreMatch(
   key: HandballStrategyKey,
   formStore: FormStore,
   match: HandballMatch,
-): { value: number; pick: HandballSide | null; probPct?: number; ev?: number | null; trend?: number | null } | null {
+): { value: number; pick: HandballSide | null; probPct?: number; ev?: number | null; trend?: number | null; bestLine?: number } | null {
   const hForm = formStore.get(String(match.home.id));
   const aForm = formStore.get(String(match.away.id));
   const hasForm = hForm != null && aForm != null;
@@ -310,7 +312,7 @@ function scoreMatch(
         }
       }
       const ev = match.odds?.home && match.odds?.away ? bestProb * (match.odds.home + match.odds.away) / 2 - 1 : null;
-      return { value: bestProb * 100, pick: null, probPct: bestProb * 100, ev };
+      return { value: bestProb * 100, pick: null, probPct: bestProb * 100, ev, bestLine };
     }
 
     case "under62": {
@@ -429,6 +431,7 @@ export function computeHandballStrategyTop8(
         probPct: scored.probPct,
         ev: scored.ev,
         trend: scored.trend,
+        bestLine: scored.bestLine,
       });
     }
 

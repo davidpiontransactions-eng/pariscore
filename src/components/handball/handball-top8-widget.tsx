@@ -24,7 +24,7 @@ const STRATEGY_META: Record<
 > = {
   bestTeam: { label: "Meilleure équipe", emoji: "🏆", metric: "PPG", unit: "" },
   bestTeam1x2: { label: "1X2 Favori", emoji: "📊", metric: "Prob", unit: "%" },
-  over55: { label: "Over 55.5", emoji: "⬆️", metric: "Prob", unit: "%" },
+  over55: { label: "Over Total", emoji: "⬆️", metric: "Prob", unit: "%" },
   under62: { label: "Under 62.5", emoji: "⬇️", metric: "Prob", unit: "%" },
   handicap: { label: "Handicap -4.5", emoji: "🎯", metric: "Prob", unit: "%" },
   btts30: { label: "BTTS 30+", emoji: "⚡", metric: "Prob", unit: "%" },
@@ -122,6 +122,16 @@ export function HandballTop8Widget({
               {e.value.toFixed(1)}
               {meta.unit}
             </span>
+
+            {/* Over pill */}
+            {strategy === "over55" && e.bestLine != null && (
+              <span
+                className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums"
+                style={{ backgroundColor: "rgba(0,152,95,0.12)", color: C.accent }}
+              >
+                O{e.bestLine} {e.probPct?.toFixed(0)}%
+              </span>
+            )}
 
             {/* Prob % */}
             {e.probPct != null && (

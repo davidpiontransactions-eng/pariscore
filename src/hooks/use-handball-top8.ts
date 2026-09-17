@@ -21,6 +21,7 @@ type StrategyEntry = {
   ev?: number | null;
   trend?: number | null;
   formSummary?: { home: string; away: string };
+  bestLine?: number;
 };
 
 type StrategyResponse = {
