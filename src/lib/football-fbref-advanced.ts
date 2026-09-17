@@ -10,9 +10,6 @@
  * Il ne doit être importé que côté serveur (API routes, server components).
  */
 
-import fs from "node:fs";
-import path from "node:path";
-
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface FbrefKeeperStats {
@@ -167,6 +164,10 @@ export function loadFbrefAdvanced(
   if (!fbrefSlug) return [];
 
   try {
+    // Dynamic import pour éviter les erreurs côté client
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+
     const dataDir = path.join(process.cwd(), "data", "fbref_advanced");
     const filePath = path.join(dataDir, `${fbrefSlug}_${season}.json`);
     const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
