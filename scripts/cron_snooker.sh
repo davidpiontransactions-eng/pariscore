@@ -39,4 +39,18 @@ else
   echo "[$TIMESTAMP] ⚠️ Oddsportal NIO échoué (non bloquant)" | tee -a "$LOG_FILE"
 fi
 
+# 3. CueTracker (stats joueurs — 1×/jour suffit)
+echo "[$TIMESTAMP] Scraping CueTracker..." | tee -a "$LOG_FILE"
+if python3 "$SCRIPT_DIR/scrape_cuetracker.py" >> "$LOG_FILE" 2>&1; then
+  echo "[$TIMESTAMP] ✅ CueTracker OK" | tee -a "$LOG_FILE"
+  # Copier vers le répertoire DATA_DIR du standalone (process.chdir fix)
+  STANDALONE_DATA="/opt/pariscorebis/data"
+  if [ -d "$STANDALONE_DATA" ]; then
+    cp "$PROJECT_DIR/data/cuetracker_matches.json" "$STANDALONE_DATA/" 2>/dev/null && \
+      echo "[$TIMESTAMP] ✅ Copié vers $STANDALONE_DATA" | tee -a "$LOG_FILE"
+  fi
+else
+  echo "[$TIMESTAMP] ⚠️ CueTracker échoué (non bloquant)" | tee -a "$LOG_FILE"
+fi
+
 echo "[$TIMESTAMP] === Fin du scraping snooker ===" | tee -a "$LOG_FILE"
