@@ -22,6 +22,16 @@ const OUT_FILE = join(OUT_DIR, "odds_flashscore_snooker.json");
 const SNOOKER_URL = "https://www.flashscore.com/snooker/";
 const SNOOKER_LIVE_URL = "https://www.flashscore.com/snooker/?live=true";
 
+// FlashScore date parameter: ?d1=YYYYMMDD
+function tomorrowUrl() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `https://www.flashscore.com/snooker/?d1=${y}${m}${day}`;
+}
+
 async function scrapeMatches(page, url, label) {
   console.log(`[FlashScore] Navigation → ${url}`);
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -146,6 +156,8 @@ async function scrapeOddsDetail(page, matchId) {
 async function main() {
   const liveOnly = process.argv.includes("--live");
   const noOdds = process.argv.includes("--no-odds");
+  const tomorrowOnly = process.argv.includes("--tomorrow");
+  const bothDays = process.argv.includes("--both");
 
   console.log("[FlashScore] Démarrage du navigateur...");
   const browser = await chromium.launch({ headless: true });
@@ -158,8 +170,29 @@ async function main() {
   const scrapedAt = new Date().toISOString();
 
   // 1. Scraper les matchs du jour
-  const url = liveOnly ? SNOOKER_LIVE_URL : SNOOKER_URL;
-  const matches = await scrapeMatches(page, url, liveOnly ? "live" : "today");
+  let allMatches = [];
+
+  if (bothDays) {
+    // Scraper aujourd'hui + demain
+    console.log("[FlashScore] Mode --both : scrape aujourd'hui + demain");
+    const todayMatches = await scrapeMatches(page, liveOnly ? SNOOKER_LIVE_URL : SNOOKER_URL, "today");
+    allMatches.push(...todayMatches);
+    console.log(`[FlashScore] Aujourd'hui: ${todayMatches.length} matchs`);
+
+    const tmUrl = tomorrowUrl();
+    const tomorrowMatches = await scrapeMatches(page, tmUrl, "tomorrow");
+    allMatches.push(...tomorrowMatches);
+    console.log(`[FlashScore] Demain: ${tomorrowMatches.length} matchs`);
+  } else if (tomorrowOnly) {
+    const tmUrl = tomorrowUrl();
+    console.log(`[FlashScore] Mode --tomorrow : ${tmUrl}`);
+    allMatches = await scrapeMatches(page, tmUrl, "tomorrow");
+  } else {
+    const url = liveOnly ? SNOOKER_LIVE_URL : SNOOKER_URL;
+    allMatches = await scrapeMatches(page, url, liveOnly ? "live" : "today");
+  }
+
+  const matches = allMatches;
 
   // 2. Optionnel : récupérer les cotes détaillées pour chaque match
   if (!noOdds && matches.length > 0) {
