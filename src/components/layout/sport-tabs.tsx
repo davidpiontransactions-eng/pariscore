@@ -19,6 +19,7 @@ import {
   BaseballPicto,
   CrosshairPicto,
   SnookerPicto,
+  HandballPicto,
 } from "@/components/ui/sport-pictograms";
 
 // ─── Définition d'un onglet sport ────────────────────────────────────────────
@@ -41,6 +42,7 @@ const SPORT_TABS: SportTab[] = [
   { id: "baseball", label: "Baseball", icon: BaseballPicto },
   { id: "cs2", label: "CS2", icon: CrosshairPicto },
   { id: "snooker", label: "Snooker", icon: SnookerPicto },
+  { id: "handball", label: "Handball", icon: HandballPicto },
 ] as const;
 
 // ─── Props du composant ──────────────────────────────────────────────────────
@@ -106,6 +108,7 @@ export function SportTabs({
       baseball: 0,
       cs2: 0,
       snooker: 0,
+      handball: 0,
     };
 
     // Tennis live — le hook expose directement les matchs en cours

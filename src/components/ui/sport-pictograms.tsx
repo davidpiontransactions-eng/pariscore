@@ -164,3 +164,14 @@ export function HockeyPicto(props: PictoProps) {
     </Base>
   );
 }
+
+/** Handball — ballon + joueur. */
+export function HandballPicto(props: PictoProps) {
+  return (
+    <Base {...props}>
+      <circle {...strokeProps} cx="12" cy="12" r="9" />
+      <path {...strokeProps} d="M12 7.2l3.6 2.6-1.4 4.2H9.8l-1.4-4.2L12 7.2Z" />
+      <path {...strokeProps} d="M8 16.5c2.5-1 6.5-1 8 0" opacity=".55" />
+    </Base>
+  );
+}
