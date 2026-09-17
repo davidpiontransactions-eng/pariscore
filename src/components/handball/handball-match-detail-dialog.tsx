@@ -25,6 +25,7 @@ export function HandballMatchDetailDialog({ match, open, onOpenChange }: Props) 
       month: "long",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Europe/Paris",
     });
 
   const isLive = match.status === "live" || match.status === "halftime";

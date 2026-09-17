@@ -197,13 +197,25 @@ function generateMockFixtures(): HandballMatch[] {
 
   const matches: HandballMatch[] = [];
   let id = 9000;
+  // Heures de match réalistes en France : 18h, 19h, 20h, 21h (UTC+2 été)
+  // En UTC : 16h, 17h, 18h, 19h
+  const matchHoursUtc = [16, 17, 18, 19];
+  let matchIdx = 0;
 
   for (const league of leagues) {
     const leagueTeams = teams[league.id] ?? [];
     for (let i = 0; i < leagueTeams.length - 1; i += 2) {
       const home = leagueTeams[i];
       const away = leagueTeams[i + 1];
-      const kickoff = new Date(now + (i + league.id) * 3600_000).toISOString();
+      // Créer une date aujourd'hui à l'heure de match
+      const matchDate = new Date(now);
+      matchDate.setUTCHours(matchHoursUtc[matchIdx % matchHoursUtc.length], 0, 0, 0);
+      // Si l'heure est déjà passée, mettre demain
+      if (matchDate.getTime() < now) {
+        matchDate.setUTCDate(matchDate.getUTCDate() + 1);
+      }
+      const kickoff = matchDate.toISOString();
+      matchIdx++;
       const homeGoals = 25 + Math.floor(Math.random() * 10);
       const awayGoals = 22 + Math.floor(Math.random() * 10);
 

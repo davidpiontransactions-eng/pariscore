@@ -13,6 +13,7 @@ export function HandballMatchCard({ match }: { match: HandballMatch }) {
             month: "short",
             hour: "2-digit",
             minute: "2-digit",
+            timeZone: "Europe/Paris",
           })}
         </span>
       </div>
