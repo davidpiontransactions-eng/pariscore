@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 206 components total (football: 14, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
+> extract pass. 218 components total (football: 14, handball: 12, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -137,6 +137,23 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
 | top-strategies-table | top-strategies-table.tsx | Tableau Top stratégies (badges confiance ≥70/60, cotes, EV, tendance) |
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
+
+## Handball (`src/components/handball/`) — 12 components
+
+| Component | File | Role |
+|-----------|------|------|
+| handball-tab-content | handball-tab-content.tsx | Conteneur onglet handball (toggle live/prematch, filtres ligues, grille) |
+| handball-match-card | handball-match-card.tsx | Carte match prematch (équipes, cotes 1X2, badge ligue) |
+| handball-live-card | handball-live-card.tsx | Carte match live (score temps réel, minute, MT, stats 7m/saves) |
+| handball-filters | handball-filters.tsx | Barre filtres ligues (pills horizontaux avec compteurs) |
+| handball-calendar | handball-calendar.tsx | Calendrier matchs groupés par date |
+| handball-top8-widget | handball-top8-widget.tsx | Top 8 matchs par stratégie (tableau avec prob/EV/trend) |
+| handball-strategy-bar | handball-strategy-bar.tsx | Sélecteur pills 8 stratégies (Équipe, 1X2, O55.5, U62.5, HC, BTTS, HT, EV+) |
+| handball-multi-sport-card | handball-multi-sport-card.tsx | Carte pour TopMultiSport dashboard |
+| handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail match (score, MT, stats live, cotes) |
+| handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
+| handball-rankings | handball-rankings.tsx | Classement ligue (V/N/D/BP/BC/Diff/Pts/PPG) |
+| handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
 
 ## Leagues (`src/components/leagues/`) — 12 components
 

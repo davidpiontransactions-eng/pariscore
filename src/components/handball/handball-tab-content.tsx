@@ -1,0 +1,86 @@
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import { useHandballMatches } from "@/hooks/use-handball-matches";
+import { useHandballLive } from "@/hooks/use-handball-live";
+import { HandballMatchCard } from "./handball-match-card";
+import { HandballLiveCard } from "./handball-live-card";
+import { HandballFilters } from "./handball-filters";
+
+export function HandballTabContent() {
+  const { matches: allMatches, isLoading } = useHandballMatches();
+  const { matches: liveMatches } = useHandballLive();
+  const [mode, setMode] = useState<"live" | "prematch">("prematch");
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+
+  const isLive = (m: { status: string }) =>
+    m.status === "live" || m.status === "halftime";
+
+  const live = useMemo(() => allMatches.filter(isLive), [allMatches]);
+  const prematch = useMemo(
+    () => allMatches.filter((m) => !isLive(m)),
+    [allMatches],
+  );
+  const displayed = mode === "live" ? live : prematch;
+  const filtered = selectedLeague
+    ? displayed.filter((m) => m.league.name === selectedLeague)
+    : displayed;
+
+  // Auto-switch prematch si aucun live
+  useEffect(() => {
+    if (mode === "live" && live.length === 0) setMode("prematch");
+  }, [mode, live.length]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode("live")}
+          className={
+            mode === "live"
+              ? "bg-red-500 text-white px-3 py-1 rounded"
+              : "px-3 py-1 rounded border"
+          }
+        >
+          🔴 Live ({live.length})
+        </button>
+        <button
+          onClick={() => setMode("prematch")}
+          className={
+            mode === "prematch"
+              ? "bg-foreground text-background px-3 py-1 rounded"
+              : "px-3 py-1 rounded border"
+          }
+        >
+          📅 À venir
+        </button>
+      </div>
+
+      <HandballFilters
+        matches={displayed}
+        selected={selectedLeague}
+        onSelect={setSelectedLeague}
+      />
+
+      {isLoading ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Chargement...
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Aucun match handball
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filtered.map((m) =>
+            mode === "live" ? (
+              <HandballLiveCard key={m.id} match={m} />
+            ) : (
+              <HandballMatchCard key={m.id} match={m} />
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

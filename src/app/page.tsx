@@ -37,6 +37,7 @@ import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
 import { SnookerTabContent } from "@/components/snooker/snooker-tab-content";
 import { HockeyTabContent } from "@/components/hockey/hockey-tab-content";
+import { HandballTabContent } from "@/components/handball/handball-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { HeroSection } from "@/components/dashboard/hero-stats";
@@ -101,6 +102,7 @@ type SportTab =
   | "rugby"
   | "snooker"
   | "hockey"
+  | "handball"
   /** Vues nav mobile (bottom nav) — pas des sports : jamais synchronisées au store. */
   | "live"
   | "value"
@@ -120,6 +122,7 @@ const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
   "rugby",
   "snooker",
   "hockey",
+  "handball",
 ]);
 
 /** Vues nav (bottom nav mobile) + accueil : gérées par la page, hors store sport. */
@@ -245,7 +248,7 @@ function HomeInner() {
   }, []);
 
   // ── Swipe mobile pour changer de sport ──
-  const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball", "snooker", "hockey"];
+  const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball", "snooker", "hockey", "handball"];
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -389,8 +392,8 @@ function HomeInner() {
           </section>
         )}
 
-        {/* Hero Dashboard Section — Bento Grid layout (masqué sur football : FootballHeroHeader en haut) */}
-        {activeTab !== "football" && (
+        {/* Hero Dashboard Section — Bento Grid layout (masqué sur football et snooker : heroes dédiés) */}
+        {activeTab !== "football" && activeTab !== "snooker" && (
         <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
           <BentoGrid cols={4}>
             {/* Hero tile — 2×2 */}
@@ -480,6 +483,7 @@ function HomeInner() {
         {activeTab === "rugby" && <RugbyTabContent />}
         {activeTab === "snooker" && <SnookerTabContent />}
         {activeTab === "hockey" && <HockeyTabContent />}
+        {activeTab === "handball" && <HandballTabContent />}
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}

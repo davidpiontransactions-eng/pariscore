@@ -37,7 +37,9 @@ export type StrategyFilter =
   | "topConf"
   | "over65corners"
   | "balanced"
-  | "starred";
+  | "starred"
+  | "over55"
+  | "under62";
 
 /** Labels d'affichage pour chaque filtre (i18n-friendly). */
 export const STRATEGY_FILTER_LABELS: Record<StrategyFilter, string> = {
@@ -52,12 +54,15 @@ export const STRATEGY_FILTER_LABELS: Record<StrategyFilter, string> = {
   over65corners: "Over 6.5 Corners",
   balanced: "Équilibrés",
   starred: "Favoris (étoilés)",
+  over55: "Over 55.5",
+  under62: "Under 62.5",
 };
 
 /** Filtres disponibles par sport. */
 export const STRATEGY_FILTERS_BY_SPORT: Record<string, StrategyFilter[]> = {
   football: ["all", "today", "value", "topConf", "corners", "over65corners", "btts"],
   tennis: ["all", "favorites", "balanced", "starred", "confidence"],
+  handball: ["all", "today", "value", "topConf", "over55", "under62"],
 };
 
 /**

@@ -112,7 +112,8 @@ export type SportType =
   | "cycling"
   | "fiba"
   | "baseball"
-  | "rugby";
+  | "rugby"
+  | "handball";
 
 /** Valeurs SportType en tant que chaîne (pour utilisation runtime). */
 export const SPORT_TYPES: SportType[] = [
@@ -127,6 +128,7 @@ export const SPORT_TYPES: SportType[] = [
   "fiba",
   "baseball",
   "rugby",
+  "handball",
 ];
 
 export interface SportAdapter {
@@ -149,6 +151,7 @@ const LIVE_STATUS_PATTERNS: Record<string, RegExp[]> = {
   f1:       [], // value bets uniquement
   baseball: [/^live$/i, /^in_progress$/i, /^bottom$/i, /^top$/i, /^mid$/i],
   rugby:    [/^live$/i, /^in_progress$/i, /^1st$/i, /^2nd$/i, /^ht$/i],
+  handball: [/^live$/i, /^in_progress$/i, /^halftime$/i, /^ht$/i, /^1st$/i, /^2nd$/i],
 };
 
 /**

@@ -25,7 +25,7 @@ import {
 
 export const MAX_LEVEL4_MATCHES = 8;
 
-export const SPORT_META: Record<SportTabId, { name: string; icon: string }> & { [k in "hockey"]?: { name: string; icon: string } } = {
+export const SPORT_META: Record<SportTabId, { name: string; icon: string }> & { [k in "hockey" | "handball"]?: { name: string; icon: string } } = {
   home: { name: "Accueil", icon: "Home" },
   football: { name: "Football", icon: "Trophy" },
   tennis: { name: "Tennis", icon: "Activity" },
@@ -38,6 +38,7 @@ export const SPORT_META: Record<SportTabId, { name: string; icon: string }> & { 
   rugby: { name: "Rugby", icon: "Shield" },
   snooker: { name: "Snooker", icon: "Target" },
   hockey: { name: "Hockey", icon: "Puck" },
+  handball: { name: "Handball", icon: "Circle" },
 };
 
 // ---------------------------------------------------------------------------
@@ -432,6 +433,40 @@ export function applyStatusFilter(
 export function emptySportNode(sportId: SportTabId): SportNode {
   const meta = SPORT_META[sportId];
   return { id: sportId, name: meta.name, icon: meta.icon, totalMatches: 0, liveMatches: 0, todayMatches: 0, countries: [] };
+}
+
+// ---------------------------------------------------------------------------
+// Normaliseur handball
+// ---------------------------------------------------------------------------
+
+type MinimalHandballMatch = {
+  id: string | number;
+  kickoff?: string | null;
+  league?: { id?: string | number; name?: string | null; country?: string | null; countryCode?: string | null } | null;
+  home?: { name?: string | null } | null;
+  away?: { name?: string | null } | null;
+  status?: string | null;
+  minute?: number | null;
+  odds?: { home?: number | null; draw?: number | null; away?: number | null } | null;
+};
+
+export function handballToRaw(matches: MinimalHandballMatch[] | undefined | null): RawTreeMatch[] {
+  if (!Array.isArray(matches)) return [];
+  return matches.map((m) => ({
+    id: String(m.id ?? ""),
+    homeName: m.home?.name ?? "Dom.",
+    awayName: m.away?.name ?? "Ext.",
+    scheduledAt: m.kickoff ?? null,
+    isLive: m.status === "live" || m.status === "halftime",
+    leagueId: `handball:${m.league?.id ?? "unknown"}`,
+    leagueName: m.league?.name ?? "Handball",
+    countryName: m.league?.country ?? "International",
+    countryCode: m.league?.countryCode ?? "INT",
+    oddsH: m.odds?.home ?? undefined,
+    oddsD: m.odds?.draw ?? undefined,
+    oddsA: m.odds?.away ?? undefined,
+    liveMinute: m.minute ?? undefined,
+  }));
 }
 
 // ---------------------------------------------------------------------------

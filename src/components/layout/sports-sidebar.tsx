@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
+  Circle,
   Clock,
   Eye,
   EyeOff,
@@ -86,6 +87,7 @@ const SPORT_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Volleyball: BaseballPicto,
   Shield: RugbyPicto,
   Puck: HockeyPicto,
+  Circle: Circle,
 };
 
 /** Couleurs de fond par sport pour les badges de la sidebar réduite. */
@@ -100,6 +102,7 @@ const SPORT_COLORS: Record<string, { bg: string; text: string }> = {
   baseball: { bg: "bg-[#FF6D00]/15", text: "text-[#FF6D00]" },
   rugby: { bg: "bg-[#14B8A6]/15", text: "text-[#14B8A6]" },
   hockey: { bg: "bg-[#0EA5E9]/15", text: "text-[#0EA5E9]" },
+  handball: { bg: "bg-[#00897B]/15", text: "text-[#00897B]" },
 };
 
 /** Favoris par défaut tant que l'utilisateur n'a pas personnalisé. */
