@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Search, Trophy } from "lucide-react";
+import { FastestLeagues } from "@/components/leagues/fastest-leagues";
 import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
+import { LateDrama } from "@/components/leagues/late-drama";
 import type { CountryGroup, LeagueIndexEntry } from "@/lib/leagues-stats/types";
 
 type IndexResponse = {
@@ -109,6 +111,12 @@ export default function LeaguesIndexPage() {
       {/* Goals Map */}
       <div className="mb-6">
         <GoalsMapScatter />
+      </div>
+
+      {/* Timing widgets */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <FastestLeagues limit={12} />
+        <LateDrama limit={12} />
       </div>
 
       {/* Contenu */}

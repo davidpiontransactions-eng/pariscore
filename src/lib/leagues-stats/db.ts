@@ -147,6 +147,27 @@ export type GoalsMapPoint = {
   slug: string;
   goalsPerGame: number;
   drawRate: number;
+  bttsRate: number;       // % BTTS (les 2 marquent)
+  gamesPlayed: number;
+};
+
+/** Stat de timing par ligue (proxy via données halves). */
+export type LeagueTimingStat = {
+  league: string;
+  country: string;
+  slug: string;
+  over05_1hPct: number;   // % matchs avec ≥1 but en 1ère mi-temps (proxy "fast start")
+  lateGoalsPct: number;    // % buts marqués en 2ème mi-temps (proxy "late drama")
+  gamesPlayed: number;
+};
+
+/** Indicateur de compétitivité par ligue. */
+export type LeagueCompetitiveness = {
+  league: string;
+  country: string;
+  slug: string;
+  homeWinPct: number;       // % victoires domicile (= écart de niveau)
+  drawPct: number;          // % matchs nuls
   gamesPlayed: number;
 };
 
@@ -178,6 +199,11 @@ export function getGoalsMapData(): GoalsMapPoint[] {
     const goalsPerGame = gpItem?.value ?? gpItem?.avg ?? null;
     const draws = drawsItem?.value ?? null;
 
+    // BTTS rate
+    const bttsSection = sections.find((s) => s.id === "btts");
+    const bttsItem = bttsSection?.items.find((i) => i.key === "btts");
+    const bttsRate = bttsItem?.pct ?? null;
+
     if (goalsPerGame === null || draws === null || gp === 0) continue;
 
     points.push({
@@ -186,8 +212,106 @@ export function getGoalsMapData(): GoalsMapPoint[] {
       slug: String(row.slug),
       goalsPerGame: Number(goalsPerGame),
       drawRate: (Number(draws) / gp) * 100,
+      bttsRate: bttsRate !== null ? Number(bttsRate) : 50,
       gamesPlayed: gp,
     });
   }
   return points;
+}
+
+/**
+ * Extrait les stats de timing (proxy via halves) pour toutes les ligues.
+ * - over05_1hPct: % matchs avec ≥1 but en 1H (proxy "fast start")
+ * - lateGoalsPct: % buts en 2H (proxy "late drama")
+ */
+export function getTimingStats(): LeagueTimingStat[] {
+  const db = getDb();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT leagueName, country, slug, gamesPlayed, statsJson
+       FROM league_season_stats
+       WHERE gamesPlayed > 10 AND statsJson IS NOT NULL
+       ORDER BY leagueName ASC`
+    )
+    .all() as Record<string, unknown>[];
+
+  const stats: LeagueTimingStat[] = [];
+  for (const row of rows) {
+    const sections = parseJsonSafe<StatsSection[]>(row.statsJson as string, []);
+    const halves = sections.find((s) => s.id === "halves");
+    if (!halves) continue;
+
+    const gp = Number(row.gamesPlayed || 0);
+    if (gp === 0) continue;
+
+    const over05Item = halves.items.find((i) => i.key === "over_0_5_1h_goals");
+    const goals1hItem = halves.items.find((i) => i.key === "1h_goals");
+    const goals2hItem = halves.items.find((i) => i.key === "2h_goals");
+
+    const over05Pct = over05Item?.pct ?? null;
+    const g1h = goals1hItem?.value ?? null;
+    const g2h = goals2hItem?.value ?? null;
+
+    if (over05Pct === null || g1h === null || g2h === null) continue;
+
+    const totalGoals = g1h + g2h;
+    const latePct = totalGoals > 0 ? (g2h / totalGoals) * 100 : 50;
+
+    stats.push({
+      league: String(row.leagueName),
+      country: String(row.country),
+      slug: String(row.slug),
+      over05_1hPct: Number(over05Pct),
+      lateGoalsPct: Math.round(latePct * 10) / 10,
+      gamesPlayed: gp,
+    });
+  }
+  return stats;
+}
+
+/**
+ * Calcule la compétitivité de chaque ligue (home win %, draw %).
+ * Home win % élevé = écart important entre équipes (moins compétitif).
+ * Draw % élevé = équipes de niveau similaire (plus compétitif).
+ */
+export function getCompetitiveness(): LeagueCompetitiveness[] {
+  const db = getDb();
+  if (!db) return [];
+  const rows = db
+    .prepare(
+      `SELECT leagueName, country, slug, gamesPlayed, statsJson
+       FROM league_season_stats
+       WHERE gamesPlayed > 10 AND statsJson IS NOT NULL
+       ORDER BY leagueName ASC`
+    )
+    .all() as Record<string, unknown>[];
+
+  const result: LeagueCompetitiveness[] = [];
+  for (const row of rows) {
+    const sections = parseJsonSafe<StatsSection[]>(row.statsJson as string, []);
+    const general = sections.find((s) => s.id === "general");
+    if (!general) continue;
+
+    const gp = Number(row.gamesPlayed || 0);
+    if (gp === 0) continue;
+
+    const hwItem = general.items.find((i) => i.key === "home_wins");
+    const drawsItem = general.items.find((i) => i.key === "draws");
+
+    const hw = hwItem?.value ?? null;
+    const draws = drawsItem?.value ?? null;
+
+    if (hw === null || draws === null) continue;
+
+    result.push({
+      league: String(row.leagueName),
+      country: String(row.country),
+      slug: String(row.slug),
+      homeWinPct: Math.round((Number(hw) / gp) * 1000) / 10,
+      drawPct: Math.round((Number(draws) / gp) * 1000) / 10,
+      gamesPlayed: gp,
+    });
+  }
+  return result;
 }

@@ -21,7 +21,10 @@ import { StandingsTable, type StandingRow } from "@/components/leagues/league-st
 import { PlayerStatsFilters, type GameRange, type Position, type ScaleMode } from "@/components/leagues/player-stats-filters";
 import { PlayerStatsTable } from "@/components/leagues/player-stats-table";
 import { per90 } from "@/lib/football-understat-types";
+import { FastestLeagues } from "@/components/leagues/fastest-leagues";
 import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
+import { LateDrama } from "@/components/leagues/late-drama";
+import { TightTablesIndicator } from "@/components/leagues/tight-tables-indicator";
 import type { LeagueDetail } from "@/lib/leagues-stats/types";
 
 const fetcher = async (url: string) => {
@@ -258,10 +261,55 @@ export default function LeagueDetailPage() {
             </section>
           )}
 
-          {/* ── Tab: Trends (placeholder) ── */}
+          {/* ── Tab: Trends ── */}
           {activeTab === "trends" && (
-            <section className="py-10 text-center text-sm text-muted-foreground">
-              Tendances — bientôt disponible.
+            <section className="space-y-4">
+              {/* Tendances depuis les stats OddAlerts */}
+              {league.sections.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {(() => {
+                    const general = league.sections.find((s) => s.id === "general");
+                    const btts = league.sections.find((s) => s.id === "btts");
+                    const overUnder = league.sections.find((s) => s.id === "over_under");
+                    const halves = league.sections.find((s) => s.id === "halves");
+
+                    const items = [
+                      general?.items.find((i) => i.key === "goals_per_game"),
+                      btts?.items.find((i) => i.key === "btts"),
+                      overUnder?.items.find((i) => i.key === "over_2_5"),
+                      overUnder?.items.find((i) => i.key === "under_2_5"),
+                      halves?.items.find((i) => i.key === "over_0_5_1h_goals"),
+                      halves?.items.find((i) => i.key === "most_goals_in_2h"),
+                    ].filter(Boolean);
+
+                    return items.map((item) => (
+                      <div
+                        key={item!.key}
+                        className="rounded-lg border bg-card p-3"
+                      >
+                        <p className="text-[11px] text-muted-foreground">{item!.label}</p>
+                        <p className="mt-1 text-2xl font-bold tabular-nums">
+                          {item!.value ?? "—"}
+                          {item!.pct !== null && (
+                            <span className="ml-1 text-sm font-semibold text-emerald-600">
+                              {item!.pct}%
+                            </span>
+                          )}
+                        </p>
+                        {item!.avg !== null && (
+                          <p className="text-[11px] text-muted-foreground">
+                            moy. {item!.avg}
+                          </p>
+                        )}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  Pas encore de tendances pour cette compétition.
+                </p>
+              )}
             </section>
           )}
 
@@ -285,6 +333,17 @@ export default function LeagueDetailPage() {
           {/* Goals Map */}
           <div className="mt-8">
             <GoalsMapScatter />
+          </div>
+
+          {/* Timing widgets */}
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FastestLeagues limit={8} />
+            <LateDrama limit={8} />
+          </div>
+
+          {/* Compétitivité */}
+          <div className="mt-4">
+            <TightTablesIndicator leagueSlug={slug} />
           </div>
 
           {/* Sections stats OddAlerts */}
