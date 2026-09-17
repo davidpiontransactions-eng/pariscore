@@ -21,6 +21,7 @@ import { StandingsTable, type StandingRow } from "@/components/leagues/league-st
 import { PlayerStatsFilters, type GameRange, type Position, type ScaleMode } from "@/components/leagues/player-stats-filters";
 import { PlayerStatsTable } from "@/components/leagues/player-stats-table";
 import { per90 } from "@/lib/football-understat-types";
+import { AttackDefenseScatter } from "@/components/leagues/attack-defense-scatter";
 import { FastestLeagues } from "@/components/leagues/fastest-leagues";
 import { GoalsMapScatter } from "@/components/leagues/goals-map-scatter";
 import { LateDrama } from "@/components/leagues/late-drama";
@@ -345,6 +346,21 @@ export default function LeagueDetailPage() {
           <div className="mt-4">
             <TightTablesIndicator leagueSlug={slug} />
           </div>
+
+          {/* Attack vs Defense scatter */}
+          {full?.standings?.length ? (
+            <div className="mt-6">
+              <AttackDefenseScatter
+                teams={full.standings.map((s) => ({
+                  team: s.team,
+                  gfPg: s.played > 0 ? s.goalsFor / s.played : 0,
+                  gaPg: s.played > 0 ? s.goalsAgainst / s.played : 0,
+                  gp: s.played,
+                }))}
+                leagueName={league?.name}
+              />
+            </div>
+          ) : null}
 
           {/* Sections stats OddAlerts */}
           {league.gamesPlayed === 0 && league.sections.length === 0 ? null : (

@@ -70,16 +70,24 @@ export default function LeaguesIndexPage() {
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
-          <Trophy className="h-5 w-5 text-emerald-500" />
-          Championnats
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {data
-            ? `${data.total} compétitions · stats buts, cartons, corners, BTTS et cotes`
-            : "Chargement…"}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+            <Trophy className="h-5 w-5 text-emerald-500" />
+            Championnats
+          </h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {data
+              ? `${data.total} compétitions · stats buts, cartons, corners, BTTS et cotes`
+              : "Chargement…"}
+          </p>
+        </div>
+        <Link
+          href="/ligues/compare"
+          className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-emerald-500/40 hover:text-emerald-600"
+        >
+          Comparer
+        </Link>
       </div>
 
       {/* Filtres */}
