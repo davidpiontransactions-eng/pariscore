@@ -209,8 +209,8 @@ async function main() {
 
   // 2. Optionnel : récupérer les cotes détaillées pour chaque match
   if (!noOdds && matches.length > 0) {
-    console.log(`[FlashScore] Récupération des cotes pour ${Math.min(matches.length, 10)} matchs...`);
-    const toCheck = matches.slice(0, 10); // limiter pour éviter le rate limiting
+    console.log(`[FlashScore] Récupération des cotes pour ${Math.min(matches.length, 20)} matchs...`);
+    const toCheck = matches.slice(0, 20); // 20 matchs pour couvrir today+tomorrow
     for (const m of toCheck) {
       if (m.odds) continue; // déjà des cotes
       const detailedOdds = await scrapeOddsDetail(page, m.id);
