@@ -202,6 +202,64 @@ function generateMockFixtures(): HandballMatch[] {
   const matchHoursUtc = [16, 17, 18, 19];
   let matchIdx = 0;
 
+  // Matchs terminés récents (forme des équipes) — 5 derniers par ligue
+  const finishedResults: Record<number, { homeId: number; awayId: number; hg: number; ag: number }[]> = {
+    1: [
+      { homeId: 101, awayId: 103, hg: 32, ag: 26 },
+      { homeId: 102, awayId: 105, hg: 28, ag: 27 },
+      { homeId: 103, awayId: 104, hg: 30, ag: 24 },
+      { homeId: 105, awayId: 101, hg: 22, ag: 35 },
+      { homeId: 106, awayId: 102, hg: 25, ag: 29 },
+    ],
+    2: [
+      { homeId: 201, awayId: 203, hg: 34, ag: 28 },
+      { homeId: 202, awayId: 204, hg: 29, ag: 30 },
+      { homeId: 203, awayId: 201, hg: 27, ag: 31 },
+      { homeId: 204, awayId: 202, hg: 33, ag: 26 },
+      { homeId: 201, awayId: 204, hg: 35, ag: 25 },
+    ],
+    3: [
+      { homeId: 301, awayId: 302, hg: 38, ag: 22 },
+      { homeId: 302, awayId: 303, hg: 27, ag: 26 },
+      { homeId: 303, awayId: 301, hg: 20, ag: 36 },
+      { homeId: 301, awayId: 303, hg: 40, ag: 19 },
+      { homeId: 302, awayId: 301, hg: 24, ag: 33 },
+    ],
+    4: [
+      { homeId: 401, awayId: 402, hg: 30, ag: 28 },
+      { homeId: 403, awayId: 404, hg: 33, ag: 29 },
+      { homeId: 402, awayId: 403, hg: 25, ag: 34 },
+      { homeId: 404, awayId: 401, hg: 31, ag: 27 },
+      { homeId: 401, awayId: 403, hg: 29, ag: 32 },
+    ],
+  };
+
+  // Générer matchs terminés (dates passées)
+  for (const league of leagues) {
+    const results = finishedResults[league.id] ?? [];
+    for (const r of results) {
+      const home = (teams[league.id] ?? []).find(t => t.id === r.homeId);
+      const away = (teams[league.id] ?? []).find(t => t.id === r.awayId);
+      if (!home || !away) continue;
+      const kickoff = new Date(now - (id - 8990) * 86400_000).toISOString();
+      matches.push({
+        id: id++,
+        league,
+        home: { id: home.id, name: home.name, shortName: home.shortName },
+        away: { id: away.id, name: away.name, shortName: away.shortName },
+        kickoff,
+        status: "finished",
+        score: {
+          home: r.hg,
+          away: r.ag,
+          homeHalf: Math.floor(r.hg * 0.45),
+          awayHalf: Math.floor(r.ag * 0.45),
+        },
+      });
+    }
+  }
+
+  // Matchs à venir
   for (const league of leagues) {
     const leagueTeams = teams[league.id] ?? [];
     for (let i = 0; i < leagueTeams.length - 1; i += 2) {
