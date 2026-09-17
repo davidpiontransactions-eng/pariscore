@@ -171,6 +171,12 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | player-stats-table | player-stats-table.tsx | Table joueurs heatmap + pagination 50/page |
 | dynamic-columns | dynamic-columns.tsx | Logique colonnes dynamiques par catégorie |
 | league-id-bridge | league-id-bridge.ts | Bridge 4 systèmes IDs (OddAlerts↔BSD↔FBref↔Understat) |
+| goals-map-scatter | goals-map-scatter.tsx | Scatter SVG Goals Map (4 clusters, regression line, tooltip) |
+| fastest-leagues | fastest-leagues.tsx | Widget démarrages rapides (% buts 1ère MT) |
+| late-drama | late-drama.tsx | Widget drame tardif (% buts 2ème MT) |
+| tight-tables-indicator | tight-tables-indicator.tsx | Indicateur compétitivité (draw %, home win %, percentile) |
+| attack-defense-scatter | attack-defense-scatter.tsx | Scatter SVG Attack vs Defense par équipe (quadrants) |
+| clean-sheets-widget | clean-sheets-widget.tsx | Widget Clean Sheets (% sans encaisser, barres horizontales) |
 
 ## F1 (`src/components/f1/`) — 2 components
 

@@ -1,0 +1,204 @@
+openapi: "3.0.3"
+info:
+  title: Pariscore Football API
+  description: API REST pour les données football de Pariscore — prédictions, classements, stats de ligues, odds.
+  version: "1.0.0"
+  contact:
+    name: Pariscore
+    url: https://pariscore.fr
+servers:
+  - url: https://pariscore.fr
+    description: Production
+  - url: http://localhost:3000
+    description: Local
+
+paths:
+  /api/football/matches:
+    get:
+      summary: Matchs du jour
+      description: Liste des matchs football avec prédictions et cotes.
+      tags: [Football]
+      responses:
+        "200":
+          description: Liste de matchs
+
+  /api/football/live:
+    get:
+      summary: Matchs en direct
+      description: Matchs en cours avec score, xG et stats live.
+      tags: [Football]
+      responses:
+        "200":
+          description: Matchs live
+
+  /api/football/rankings:
+    get:
+      summary: Classements par ligue
+      description: Classements PPG, GF, GA, xG par équipe.
+      tags: [Football]
+      parameters:
+        - name: league
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Classements
+
+  /api/football/calendar:
+    get:
+      summary: Calendrier des matchs
+      description: Matchs à venir par date.
+      tags: [Football]
+      responses:
+        "200":
+          description: Calendrier
+
+  /api/football/matches/{id}/stats:
+    get:
+      summary: Stats d'un match
+      description: Statistiques détaillées d'un match (pressure index, xG, timeline).
+      tags: [Football]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Stats du match
+
+  /api/v1/leagues-stats:
+    get:
+      summary: Index des ligues
+      description: Liste des ligues scrapées depuis OddAlerts (1500+ ligues).
+      tags: [Leagues]
+      parameters:
+        - name: country
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste de ligues
+
+  /api/v1/leagues-stats/{country}/{slug}:
+    get:
+      summary: Détail d'une ligue
+      description: Stats complètes d'une ligue (sections, fixtures, saisons).
+      tags: [Leagues]
+      parameters:
+        - name: country
+          in: path
+          required: true
+          schema: { type: string }
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Détail de la ligue
+
+  /api/v1/leagues-stats/goals-map:
+    get:
+      summary: Goals Map data
+      description: Buts/match et taux de nul par ligue pour le scatter plot.
+      tags: [Leagues]
+      responses:
+        "200":
+          description: Points pour le scatter plot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  points:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        league: { type: string }
+                        country: { type: string }
+                        slug: { type: string }
+                        goalsPerGame: { type: number }
+                        drawRate: { type: number }
+                        bttsRate: { type: number }
+                        gamesPlayed: { type: integer }
+
+  /api/v1/leagues-stats/timing:
+    get:
+      summary: Stats de timing
+      description: Proxy "démarrages rapides" (% buts 1H) et "drame tardif" (% buts 2H) par ligue.
+      tags: [Leagues]
+      responses:
+        "200":
+          description: Stats de timing
+
+  /api/v1/leagues-stats/competitiveness:
+    get:
+      summary: Compétitivité des ligues
+      description: % victoires domicile et % nuls par ligue.
+      tags: [Leagues]
+      responses:
+        "200":
+          description: Compétitivité
+
+  /api/v1/odds-archive:
+    get:
+      summary: Historique odds
+      description: Snapshots odds persistés (best odds + consensus par bookmaker).
+      tags: [Odds]
+      parameters:
+        - name: matchId
+          in: query
+          schema: { type: string }
+        - name: market
+          in: query
+          schema: { type: string, enum: [1X2, BTTS, OU25] }
+        - name: league
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: source
+          in: query
+          schema: { type: string, default: "bsd-compare" }
+      responses:
+        "200":
+          description: Snapshots odds
+
+  /api/v1/export:
+    get:
+      summary: Export CSV
+      description: Export CSV des stats de ligues.
+      tags: [Export]
+      parameters:
+        - name: league
+          in: query
+          required: true
+          schema: { type: string }
+        - name: country
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Fichier CSV
+          content:
+            text/csv:
+              schema:
+                type: string
+
+tags:
+  - name: Football
+    description: Matchs, prédictions, stats live
+  - name: Leagues
+    description: Championnats et stats de ligues
+  - name: Odds
+    description: Cotes et historique odds
+  - name: Export
+    description: Export de données

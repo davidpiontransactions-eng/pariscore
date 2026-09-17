@@ -485,5 +485,21 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    // ── Odds archive diagnostic (Phase 3 — Football Charts) ──
+    {
+      name: 'pariscore-cron-odds',
+      script: 'scripts/cron_collect_odds.ts',
+      interpreter: 'bun',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 */6 * * *', // toutes les 6h
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '128M',
+      error_file: 'logs/cron-odds.err.log',
+      out_file: 'logs/cron-odds.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };
