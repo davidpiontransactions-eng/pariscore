@@ -649,7 +649,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         )
       ) : loading ? (
         <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
-      ) : filteredGroups.length === 0 ? (
+      ) : !loading && filteredGroups.length === 0 ? (
         <div className="text-center py-10 text-slate-400 text-sm">Aucun match top disponible.</div>
       ) : timeFilter === "all" ? (
         /* Regroupement par jour quand filtre "Tous" */
