@@ -7,6 +7,37 @@ export const dynamic = "force-dynamic";
 
 const CACHE_TTL = 60 * 60_000;
 
+// Essayer de charger Betexplorer d'abord, puis fallback Annabet
+function loadFromFile(source: "betexplorer" | "annabet"): PrematchPayload | null {
+  try {
+    const filePath = join(process.cwd(), "..", "..", "data", "annabet_hockey_prematch.json");
+    if (!existsSync(filePath)) return null;
+    const data = JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
+
+    // Si la source est betexplorer et qu'il y a des données, les utiliser
+    if (source === "betexplorer" && data.updatedAt) return data;
+
+    // Vérifier si c'est des données Annabet (ancien format avec "annabet.com" source)
+    const isAnnabet = data.source?.includes("annabet");
+    if (isAnnabet && source === "annabet") return data;
+
+    // Si source demandée mais format incompatible, retourner null pour fallback
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Charger Betexplorer data (généré par scrape-betexplorer-hockey.mjs)
+function loadBetexplorer(): PrematchPayload | null {
+  return loadFromFile("betexplorer");
+}
+
+// Charger Annabet data (l'ancien format)
+function loadAnnabet(): PrematchPayload | null {
+  return loadFromFile("annabet");
+}
+
 type StatBlock = {
   oneXtwo?: {
     homeWins: number;
@@ -37,7 +68,6 @@ type OverUnderLine = {
   overOdds: number | null;
   underOddsHome: number | null;
   underOddsAway: number | null;
-  underOddsAll: number | null;
   overOddsHome: number | null;
   overOddsAway: number | null;
   overOddsAll: number | null;
@@ -85,26 +115,30 @@ type PrematchPayload = {
 
 const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 
-function loadFromFile(): PrematchPayload | null {
-  try {
-    const filePath = join(process.cwd(), "..", "..", "data", "annabet_hockey_prematch.json");
-    if (!existsSync(filePath)) return null;
-    return JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET() {
   cache.invalidate();
-  const data = loadFromFile();
+
+  // Essayer d'abord Betexplorer (nouvelle source), puis fallback Annabet
+  let data = loadBetexplorer();
+  let sourceName = "betexplorer";
+
+  if (!data) {
+    data = loadAnnabet();
+    sourceName = "annabet";
+  }
+
   if (!data) {
     return NextResponse.json(
-      { error: "Prematch data not available. Run scrape-annabet-hockey-prematch.mjs first." },
+      {
+        error: "Prematch data not available. Run scrape-betexplorer-hockey.mjs first.",
+        hint: "Data source: annabet (blocked) → betexplorer (new)",
+      },
       { status: 503 }
     );
   }
 
+  // Ajouter/mettre à jour la source dans la réponse
+  data.source = sourceName;
   cache.set(data);
   return NextResponse.json(data);
 }
