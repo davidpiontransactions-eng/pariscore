@@ -277,6 +277,13 @@ export function SnookerHero({
                   color="border-sky-500/30 text-sky-400 hover:bg-sky-500/10 hover:border-sky-500/50"
                   href="#strategies"
                 />
+                <QuickLink
+                  icon={Target}
+                  label="Comparer"
+                  count={0}
+                  color="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50"
+                  href="/snooker/compare"
+                />
               </motion.div>
             </div>
 

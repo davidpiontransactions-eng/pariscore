@@ -550,6 +550,21 @@ export function SnookerPlayerPopup({
               </div>
             </div>
 
+            {/* Lien Comparer */}
+            <a
+              href={`/snooker/compare?search=${encodeURIComponent(player.name)}`}
+              className="group flex items-center justify-center gap-2 rounded-2xl border border-[#00985f]/20 py-2.5 text-[11px] font-semibold text-[#00985f] transition-all hover:-translate-y-0.5 hover:border-[#00985f]/50 hover:shadow-lg"
+              style={{
+                background: "linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 100%)",
+                boxShadow: "2px 2px 8px rgba(0,152,95,.08), -1px -1px 4px rgba(255,255,255,.8)",
+              }}
+            >
+              <svg className="h-3.5 w-3.5 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+              </svg>
+              Comparer avec un autre joueur
+            </a>
+
             {/* Lien CueTracker */}
             <a
               href={player.cuetrackerUrl}
