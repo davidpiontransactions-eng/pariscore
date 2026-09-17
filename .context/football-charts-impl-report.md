@@ -186,14 +186,45 @@
 
 ---
 
-## PHASE 2 COMPLETE — ✅
+## PHASE 3 — Deploy & Polish
 
-**Tâches réalisées**: 6/6
-**Quality gates**: lint ✅ | typecheck ✅
-**Fichiers créés**: 4 (clean-sheets route, clean-sheets-widget, cron_collect_odds, odds-persistence existait déjà)
-**Fichiers modifiés**: 4 (server.js, league-id-bridge, football-historical-standings, league detail page)
-**Ligues couvertes**: 30+ (était ~23)
-**Odds persistence**: server.js → odds_snapshots (SQLite direct)### T14: OpenAPI documentation — ✅ TERMINÉ
+### P3-1: Update COMPONENTS.md — ✅ TERMINÉ
+- **Fichier modifié**: COMPONENTS.md (+6 composants Leagues: goals-map-scatter, fastest-leagues, late-drama, tight-tables-indicator, attack-defense-scatter, clean-sheets-widget)
+
+### P3-2: Add pm2 odds cron — ✅ TERMINÉ
+- **Fichier modifié**: ecosystem.config.js (+1 cron: pariscore-cron-odds, `30 */6 * * *`)
+
+### P3-3: Quality gate — ✅ PASS
+- **Lint**: 0 erreur (6 warnings pré-existants)
+- **Typecheck**: ✅ 0 erreur
+- **Fix bonus**: snooker/accuracy/route.ts (redeclared variables + type error)
+
+### P3-4: Git commit — ✅ TERMINÉ
+- **Commits**: 3 commits (feat(leagues) + fix(snooker) + fix(fbref-advanced revert))
+
+### P3-5: Deploy VPS — ✅ TERMINÉ
+- **Deploy 1**: FAIL (Turbopack node:fs in client bundle — caused by fbref-advanced static imports)
+- **Root cause**: `import fs from "node:fs"` dans fbref-advanced.ts traçé par Turbopack dans le bundle client via bsd-football-fetcher.ts
+- **Fix**: Revert vers `require()` dynamique + eslint-disable comments
+- **Deploy 2**: DEPLOY-OK (4ed9e3c2)
+- **Deploy 3**: DEPLOY-OK (7175ea37) — fix clean-sheets slug mapping
+
+### P3-6: Post-deploy QA — ✅ VERIFIED
+- `/api/v1/status` → `{"status":"ok"}` ✅
+- `/api/v1/leagues-stats/goals-map` → `{"points":[],"total":0}` ✅ (empty = DB VPS pas alimentée)
+- `/api/v1/leagues-stats/timing` → JSON response ✅ (données présentes)
+- `/api/v1/leagues-stats/competitiveness` → JSON response ✅ (données présentes)
+- `/api/v1/export?country=france&slug=ligue-1` → CSV download ✅ (27 matchs, fixtures incluses)
+- `/api/v1/leagues-stats/france/ligue-1/clean-sheets` → JSON response ✅ (18 équipes, Lille/Lyon/PSG 41%)
+
+---
+
+## PHASE 3 COMPLETE — ✅
+
+**Tâches**: 6/6
+**Deploy**: DEPLOY-OK (7175ea37)
+**Endpoints vérifiés**: 6/6
+**Fix turbopack**: fbref-advanced revert vers require() dynamique### T14: OpenAPI documentation — ✅ TERMINÉ
 - **Date**: 2026-09-17
 - **Fichier créé**: `docs/openapi.yaml` — 15 endpoints documentés (Football, Leagues, Odds, Export)
 - **Vérification**: YAML valide
