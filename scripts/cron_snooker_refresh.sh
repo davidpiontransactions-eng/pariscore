@@ -21,6 +21,11 @@ LOG_FILE="$LOG_DIR/snooker-refresh.log"
 echo "[$TIMESTAMP] FlashScore refresh..." | tee -a "$LOG_FILE"
 
 if node "$SCRIPT_DIR/scrape_flashscore_snooker.mjs" >> "$LOG_FILE" 2>&1; then
+  # Copier les données vers /opt/pariscorebis (cwd pm2)
+  PM2_DATA="/opt/pariscorebis/data"
+  if [ -d "$PM2_DATA" ]; then
+    cp "$PROJECT_DIR/data/odds_flashscore_snooker.json" "$PM2_DATA/" 2>/dev/null || true
+  fi
   MATCHES=$(node -e "const d=require('$PROJECT_DIR/data/snooker_matches.json'); console.log(d.length || 0)")
   echo "[$TIMESTAMP] ✅ OK — $MATCHES matchs" | tee -a "$LOG_FILE"
 else

@@ -46,4 +46,11 @@ fi
 # Nettoyer les backups de +30 jours
 find "$BACKUP_DIR" -name "cuetracker_matches_*.json" -mtime +30 -delete 2>/dev/null || true
 
+# Copier les données vers /opt/pariscorebis (cwd pm2)
+PM2_DATA="/opt/pariscorebis/data"
+if [ -d "$PM2_DATA" ]; then
+  cp "$DATA_DIR/cuetracker_matches.json" "$PM2_DATA/" 2>/dev/null || true
+  echo "Données copiées vers $PM2_DATA" | tee -a "$LOG_FILE"
+fi
+
 echo "=== Refresh terminé ===" | tee -a "$LOG_FILE"
