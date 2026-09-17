@@ -49,6 +49,14 @@ const ODDALERTS_TO_SLUG: Record<string, string> = {
   "australia/a-league-men": "australia_a_league",
   "austria/admiral-bundesliga": "austria_bundesliga",
   "russia/premier-league": "russian_premier",
+  "japan/j2-league": "j2_league",
+  "sweden/superettan": "superettan",
+  "czech-republic/chance-liga": "first_league_cze",
+  "scotland/championship": "scot_champ",
+  "switzerland/challenge-league": "challenge_swiss",
+  "chile/primera-division": "chile_primera",
+  "ecuador/liga-pro": "ecuador_serie_a",
+  "paraguay/division-1": "paraguay_primera",
 };
 
 // ── PariScore slug → FBref soccerdata format ──

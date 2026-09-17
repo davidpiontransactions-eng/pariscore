@@ -75,6 +75,15 @@ const LEAGUE_SST_MAP: Record<string, { ss: string; histYear: number | null }> = 
   // ── Océanie / Autriche ──
   australia_a_league:{ ss: "australia",   histYear: null },
   austria_bundesliga:{ ss: "austria",     histYear: 2026 },
+  // ── Phase 2 extensions ──
+  j2_league:         { ss: "japan2",      histYear: null },
+  superettan:        { ss: "sweden2",     histYear: null },
+  first_league_cze:  { ss: "czech",       histYear: null },
+  scot_champ:        { ss: "scotland2",   histYear: null },
+  challenge_swiss:   { ss: "switzerland2",histYear: null },
+  chile_primera:     { ss: "chile",       histYear: null },
+  ecuador_serie_a:   { ss: "ecuador",     histYear: null },
+  paraguay_primera:  { ss: "paraguay",    histYear: null },
 };
 
 // ── Normalisation noms d'équipes ────────────────────────────────────────────
