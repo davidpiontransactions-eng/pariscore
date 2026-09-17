@@ -49,9 +49,9 @@ interface TopMatch {
 interface TopLeague { league: string; leagueIcon: string; leagueColor: string; sport: string; country?: string; matches: TopMatch[]; }
 interface TopMatchResponse { groups: TopLeague[]; generated_at: string; }
 
-const CACHE_MS = 60_000;
-const POLL_NORMAL_MS = 120_000;
-const POLL_LIVE_MS = 20_000;
+const CACHE_MS = 15_000;
+const POLL_NORMAL_MS = 30_000;
+const POLL_LIVE_MS = 10_000;
 
 type TimeFilter = 'live' | '1h' | '2h' | '4h' | '8h' | 'today' | 'tomorrow' | 'all';
 const TIME_FILTERS: { id: TimeFilter; label: string; icon?: string }[] = [
