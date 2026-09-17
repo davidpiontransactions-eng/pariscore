@@ -12,6 +12,7 @@ type GoalsMapPoint = {
   slug: string;
   goalsPerGame: number;
   drawRate: number;
+  bttsRate: number;
   gamesPlayed: number;
 };
 
@@ -337,7 +338,7 @@ export function GoalsMapScatter() {
           >
             <p className="font-semibold">{hovered.league}</p>
             <p className="text-muted-foreground">
-              {hovered.goalsPerGame.toFixed(2)} buts/m · {hovered.drawRate.toFixed(1)}% nuls · {hovered.gamesPlayed} matchs
+              {hovered.goalsPerGame.toFixed(2)} buts/m · {hovered.drawRate.toFixed(1)}% nuls · {hovered.bttsRate}% BTTS · {hovered.gamesPlayed} matchs
             </p>
             <p className="text-emerald-600">{classify(hovered.goalsPerGame, hovered.drawRate)}</p>
           </div>
