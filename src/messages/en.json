@@ -264,7 +264,8 @@
       "f1": "Formula 1",
       "baseball": "Baseball",
       "rugby": "Rugby",
-      "hockey": "Hockey"
+      "hockey": "Hockey",
+      "handball": "Handball"
     },
     "selectionAdd": "Add match to selection",
     "selectionRemove": "Remove match from selection",

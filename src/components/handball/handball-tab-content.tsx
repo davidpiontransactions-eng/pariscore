@@ -6,12 +6,19 @@ import { useHandballLive } from "@/hooks/use-handball-live";
 import { HandballMatchCard } from "./handball-match-card";
 import { HandballLiveCard } from "./handball-live-card";
 import { HandballFilters } from "./handball-filters";
+import { HandballStrategyBar } from "./handball-strategy-bar";
+import { HandballTop8Widget } from "./handball-top8-widget";
+import { HandballBanker } from "./handball-banker";
+import { HandballCalendar } from "./handball-calendar";
+import { HandballRankings } from "./handball-rankings";
+import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 
 export function HandballTabContent() {
   const { matches: allMatches, isLoading } = useHandballMatches();
   const { matches: liveMatches } = useHandballLive();
   const [mode, setMode] = useState<"live" | "prematch">("prematch");
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
 
   const isLive = (m: { status: string }) =>
     m.status === "live" || m.status === "halftime";
@@ -32,7 +39,8 @@ export function HandballTabContent() {
   }, [mode, live.length]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header live/prematch */}
       <div className="flex gap-2">
         <button
           onClick={() => setMode("live")}
@@ -56,12 +64,28 @@ export function HandballTabContent() {
         </button>
       </div>
 
+      {/* Banker du jour */}
+      <HandballBanker />
+
+      {/* Stratégie selector + Top 8 */}
+      <div className="space-y-3">
+        <HandballStrategyBar active={strategy} onChange={setStrategy} />
+        <HandballTop8Widget strategy={strategy} />
+      </div>
+
+      {/* Filtres ligues */}
       <HandballFilters
         matches={displayed}
         selected={selectedLeague}
         onSelect={setSelectedLeague}
       />
 
+      {/* Calendrier (prematch seulement) */}
+      {mode === "prematch" && filtered.length > 0 && (
+        <HandballCalendar matches={filtered} />
+      )}
+
+      {/* Grille de matchs */}
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">
           Chargement...
