@@ -13,7 +13,9 @@ import { SnookerPlayerPopup } from "@/components/snooker/snooker-player-popup";
 import { SnookerVideoPopup } from "@/components/snooker/snooker-video-popup";
 import { BetTrackerPanel } from "@/components/snooker/bet-tracker-panel";
 import { SnookerAccuracyDashboard } from "@/components/snooker/snooker-accuracy-dashboard";
+import { BankrollSimulator } from "@/components/snooker/bankroll-simulator";
 import { addBet, isTracked } from "@/lib/snooker/bet-tracker";
+import { kellyCriterion, verdictColor } from "@/lib/snooker/kelly";
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -1312,6 +1314,19 @@ export function SnookerTabContent() {
                           +{edge.toFixed(1)}%
                         </span>
                       )}
+                      {(() => {
+                        const k = kellyCriterion(prob / 100, m.odds?.player1 ?? 2);
+                        if (k.fullKelly <= 0) return null;
+                        return (
+                          <span
+                            className="hidden sm:inline-flex items-center rounded-full px-1.5 py-0.5 text-[8px] font-bold text-white"
+                            style={{ backgroundColor: verdictColor(k.verdict) }}
+                            title={`Kelly: ${k.fullKelly.toFixed(1)}% (half: ${k.halfKelly.toFixed(1)}%)`}
+                          >
+                            K {k.halfKelly.toFixed(0)}%
+                          </span>
+                        );
+                      })()}
                       {confidence === "high" && (
                         <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
                           ★
@@ -1515,6 +1530,11 @@ export function SnookerTabContent() {
       {/* ======== PRÉCISION DU MODÈLE ======== */}
       <section className="px-0 sm:px-0">
         <SnookerAccuracyDashboard />
+      </section>
+
+      {/* ======== SIMULATION KELLY ======== */}
+      <section className="px-0 sm:px-0">
+        <BankrollSimulator />
       </section>
 
       {/* ======== POPUP VIDEO HIGHLIGHTS ======== */}
