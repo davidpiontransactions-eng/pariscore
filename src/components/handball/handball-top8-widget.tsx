@@ -86,8 +86,8 @@ export function HandballTop8Widget({
             {/* Équipes */}
             <div className="flex-1 min-w-0">
               <span
-                className={e.pick === "home" ? "font-semibold" : "font-medium"}
-                style={{ color: C.team }}
+                className={e.pick === "home" ? "font-bold" : "font-medium"}
+                style={{ color: e.pick === "home" ? C.accent : C.team }}
               >
                 {e.home.shortName ?? e.home.name}
               </span>
@@ -95,8 +95,8 @@ export function HandballTop8Widget({
                 vs
               </span>
               <span
-                className={e.pick === "away" ? "font-semibold" : "font-medium"}
-                style={{ color: C.team }}
+                className={e.pick === "away" ? "font-bold" : "font-medium"}
+                style={{ color: e.pick === "away" ? C.accent : C.team }}
               >
                 {e.away.shortName ?? e.away.name}
               </span>
