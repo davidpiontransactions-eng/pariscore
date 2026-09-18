@@ -10,6 +10,7 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import type { RugbyTopStratTag } from "@/lib/top10-rugby-calendar-link";
 
 /* ─── Teintes FotMob clair (identiques au foot) ─── */
 const C = {
@@ -113,10 +114,12 @@ type RugbyCalendarTableProps = {
   matches: RugbyCalMatch[];
   loading?: boolean;
   onMatchClick?: (matchId: string) => void;
+  /** Tags Top stratégies par id match (pill verte). */
+  topTagsFor?: (id: string) => RugbyTopStratTag[];
 };
 
 /* ─── Composant principal ─── */
-export function RugbyCalendarTable({ matches, loading, onMatchClick }: RugbyCalendarTableProps) {
+export function RugbyCalendarTable({ matches, loading, onMatchClick, topTagsFor }: RugbyCalendarTableProps) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   // Grouper par compétition
@@ -248,6 +251,7 @@ export function RugbyCalendarTable({ matches, loading, onMatchClick }: RugbyCale
                     match={m}
                     isLast={idx === g.matches.length - 1}
                     onClick={() => onMatchClick?.(m.id)}
+                    topTags={topTagsFor?.(m.id)}
                   />
                 ))}
               </div>
@@ -259,20 +263,57 @@ export function RugbyCalendarTable({ matches, loading, onMatchClick }: RugbyCale
   );
 }
 
+/* ─── Pastille "Top Stratégie" (pill verte) : visible bureau + mobile ─── */
+function TopStratPills({ tags, onSelect }: { tags: RugbyTopStratTag[]; onSelect?: () => void }) {
+  if (tags.length === 0) return null;
+  const shown = tags.slice(0, 2);
+  const extra = tags.length - shown.length;
+  return (
+    <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5" style={{ backgroundColor: C.card }}>
+      {shown.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+          title={`Top 10 · ${t.label} · ${t.value}`}
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-transform active:scale-95"
+          style={{ backgroundColor: "#00985f", color: "#ffffff" }}
+        >
+          <span aria-hidden="true">{t.emoji}</span>
+          <span>Top {t.label}</span>
+          <span className="font-mono tabular-nums opacity-90">{t.value}</span>
+        </button>
+      ))}
+      {extra > 0 && (
+        <span
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
+          style={{ backgroundColor: "#00985f1a", color: "#007a4c" }}
+          title={tags.slice(2).map((t) => `Top ${t.label} · ${t.value}`).join(" · ")}
+        >
+          +{extra}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /* ─── Ligne de match (grille 5 colonnes FotMob) ─── */
 function RugbyMatchRow({
   match: m,
   isLast,
   onClick,
+  topTags,
 }: {
   match: RugbyCalMatch;
   isLast: boolean;
   onClick?: () => void;
+  topTags?: RugbyTopStratTag[];
 }) {
   const live = isLive(m.status);
   const finished = isFinished(m.status);
 
   return (
+    <div style={{ backgroundColor: live ? C.live + "08" : C.card, borderBottom: isLast ? "none" : `1px solid ${C.rowSep}` }}>
     <button
       type="button"
       onClick={onClick}
@@ -381,6 +422,9 @@ function RugbyMatchRow({
         )}
       </div>
     </button>
+    {/* Pills Top stratégies */}
+    <TopStratPills tags={topTags ?? []} onSelect={onClick} />
+    </div>
   );
 }
 

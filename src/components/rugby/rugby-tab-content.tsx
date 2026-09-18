@@ -31,6 +31,9 @@ import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { RugbyTopStrategiesWidget } from "./rugby-top-strategies-widget";
+import { useRugbyTopStrategies } from "@/hooks/use-rugby-top-strategies";
+import { buildRugbyTopTags, rugbyTopTagsForMatch } from "@/lib/top10-rugby-calendar-link";
+import type { RugbyStrategyKey } from "@/lib/rugby-strategy-top";
 
 type View = "predictions" | "standings" | "markets";
 
@@ -271,6 +274,39 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
 
   const displayMatches = mode === "live" ? live : visiblePrematch;
 
+  // Top10 stratégies — fetch pour toutes les stratégies (pour pills calendrier)
+  const { matches: topHomeWin } = useRugbyTopStrategies("homeWin", 10);
+  const { matches: topAwayWin } = useRugbyTopStrategies("awayWin", 10);
+  const { matches: topOver415 } = useRugbyTopStrategies("over415", 10);
+  const { matches: topUnder515 } = useRugbyTopStrategies("under515", 10);
+  const { matches: topHandicapHome } = useRugbyTopStrategies("handicapHome", 10);
+  const { matches: topHandicapAway } = useRugbyTopStrategies("handicapAway", 10);
+  const { matches: topBttsYes } = useRugbyTopStrategies("bttsYes", 10);
+  const { matches: topMarginBand } = useRugbyTopStrategies("marginBand", 10);
+  const { matches: topBestAttack } = useRugbyTopStrategies("bestAttack", 10);
+  const { matches: topBestDefense } = useRugbyTopStrategies("bestDefense", 10);
+
+  const topIdx = useMemo(() => buildRugbyTopTags({
+    homeWin: topHomeWin,
+    awayWin: topAwayWin,
+    over415: topOver415,
+    under515: topUnder515,
+    handicapHome: topHandicapHome,
+    handicapAway: topHandicapAway,
+    bttsYes: topBttsYes,
+    marginBand: topMarginBand,
+    bestAttack: topBestAttack,
+    bestDefense: topBestDefense,
+  }), [topHomeWin, topAwayWin, topOver415, topUnder515, topHandicapHome, topHandicapAway, topBttsYes, topMarginBand, topBestAttack, topBestDefense]);
+
+  const topTagsFor = useCallback(
+    (id: string) => {
+      const m = displayMatches.find((c) => c.id === id);
+      return m ? rugbyTopTagsForMatch(topIdx, m) : [];
+    },
+    [displayMatches, topIdx],
+  );
+
   if (calendarLoading && !matches.length) {
     return (
       <div className="space-y-3">
@@ -311,6 +347,7 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
           matches={displayMatches}
           loading={calendarLoading}
           onMatchClick={onOpenMatch}
+          topTagsFor={topTagsFor}
         />
       </div>
     </div>
