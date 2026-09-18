@@ -169,7 +169,7 @@ fi
 # Vérifie que les CSS/JS référencés par le HTML sont servis en 200 (et pas 404
 # depuis un alias nginx périmé). Incident 2026-09-18 : 1 CSS en 404 = site cassé.
 log_info "4b/6 Assets statiques servis (CSS/JS du HTML)"
-ASSET_URLS=$(grep -o '/_next/[^"]*' /tmp/pariscore-qa.html 2>/dev/null | sort -u | head -12)
+ASSET_URLS=$(grep -o '/_next/[^"\\]*' /tmp/pariscore-qa.html 2>/dev/null | sort -u | head -12)
 ASSET_OK=0
 ASSET_TOTAL=0
 for asset in $ASSET_URLS; do
