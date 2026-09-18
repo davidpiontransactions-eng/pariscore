@@ -39,8 +39,9 @@ const TUTORIALS: Record<MarketKey, { title: string; lines: string[] }> = {
   matchWinner: {
     title: "Gagnant — vainqueur du match",
     lines: [
-      "Pari gagné si le joueur recommandé remporte le match.",
-      "Probabilité = moyenne des 5 modèles : Elo, Forme, Scoring, Clutch et cotes déviggées.",
+      "Pari gagné si le joueur recommandé remporte le match (toujours le favori, jamais < 50 %).",
+      "Probabilité = moyenne pondérée : Elo 35 %, Forme 25 %, Scoring 20 %, Clutch 10 %, cotes 10 % (ancre minoritaire, renormalisée si absentes).",
+      "En live, la proba est recalculée selon le score (binomiale négative). Le badge Kelly ne s'affiche que sur cote réelle.",
     ],
   },
   overTotal: {
@@ -152,14 +153,42 @@ function logBinomPMF(k: number, n: number, p: number): number {
   return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
 }
 
-/** P(P1 gagne le match) — best-of-(2N-1). */
+/** P(P1 gagne le match) — best-of-N (P(Bin(N) ≥ manches requises)). */
 function matchWinProb(pFrame: number, bestOf: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
   let pWin = 0;
   for (let i = 0; i < winsNeeded; i++) {
-    pWin += Math.exp(logBinomPMF(i, bestOf - 1, pFrame));
+    pWin += Math.exp(logBinomPMF(i, bestOf, pFrame));
   }
   return (1 - pWin) * 100;
+}
+
+/** Inverse matchWinProb : retrouve p_frame depuis une proba match (bissection). */
+function frameProbFromMatchProb(matchProb: number, bestOf: number): number {
+  const target = Math.min(0.999, Math.max(0.001, matchProb));
+  let lo = 0.001;
+  let hi = 0.999;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    if (matchWinProb(mid, bestOf) / 100 < target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/** P(P1 remporte le match) sachant le score (a,b) — frames iid de proba p. */
+function liveMatchWinProb(pFrame: number, bestOf: number, scoreA: number, scoreB: number): number {
+  const need = Math.ceil(bestOf / 2);
+  const ra = need - scoreA;
+  const rb = need - scoreB;
+  if (ra <= 0) return 100;
+  if (rb <= 0) return 0;
+  // Binomiale négative : P1 obtient sa ra-ième frame avant les rb de P2
+  let pWin = 0;
+  for (let i = 0; i < rb; i++) {
+    pWin += Math.exp(logBinomPMF(i, ra - 1 + i, 1 - pFrame) + Math.log(pFrame));
+  }
+  return Math.min(100, Math.max(0, pWin * 100));
 }
 
 /** P(total frames > threshold) — lo best-of. */
@@ -365,6 +394,12 @@ function resolvePlayers(
   return [find(m.player1), find(m.player2)];
 }
 
+// Poids explicites du composite "vainqueur du match".
+// Les cotes ne sont qu'une ancre minoritaire (10 %) : le modèle doit expliquer
+// le marché, pas le recopier — sinon l'edge mesuré contre ces mêmes cotes
+// s'effondre (circularité modèle ↔ marché).
+const MODEL_WEIGHTS = { elo: 0.35, form: 0.25, scoring: 0.2, clutch: 0.1, odds: 0.1 };
+
 /** Score composite multi-modèle (pondéré) → probabilité finale % */
 function computeCompositeProb(
   m: ApiMatch,
@@ -376,37 +411,40 @@ function computeCompositeProb(
   const [p1, p2] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
   const noDb = p1.id === "" && p2.id === "";
 
-  const probs: number[] = [];
+  // [proba, poids] — seuls les modèles disposant de données participent,
+  // les poids sont renormalisés sur les modèles disponibles.
+  const parts: Array<[number, number]> = [];
 
   // 1. Modèle Elo (si ratings > defaults)
   if (p1.eloRating !== 1500 || p2.eloRating !== 1500) {
-    probs.push(eloWinProb(p1.eloRating, p2.eloRating));
+    parts.push([eloWinProb(p1.eloRating, p2.eloRating), MODEL_WEIGHTS.elo]);
   }
 
   // 2. Modèle Forme
   if (p1.winPct !== 50 || p2.winPct !== 50) {
-    probs.push(formWinProb(p1, p2));
+    parts.push([formWinProb(p1, p2), MODEL_WEIGHTS.form]);
   }
 
   // 3. Modèle Scoring
   if ((p1.centuryRate ?? 0) > 0 || (p2.centuryRate ?? 0) > 0) {
-    probs.push(scoringWinProb(p1, p2));
+    parts.push([scoringWinProb(p1, p2), MODEL_WEIGHTS.scoring]);
   }
 
   // 4. Modèle Clutch
   if (p1.deciderWinPct !== 50 || p2.deciderWinPct !== 50) {
-    probs.push(clutchWinProb(p1, p2));
+    parts.push([clutchWinProb(p1, p2), MODEL_WEIGHTS.clutch]);
   }
 
-  // 5. Modèle Cotes (toujours disponible si odds existent)
+  // 5. Modèle Cotes (ancre minoritaire, seulement si cotes réelles)
   if (m.odds && m.odds.player1 > 0 && m.odds.player2 > 0) {
-    probs.push(oddsWinProb(m.odds.player1, m.odds.player2));
+    parts.push([oddsWinProb(m.odds.player1, m.odds.player2), MODEL_WEIGHTS.odds]);
   }
 
-  if (probs.length === 0) return null;
+  if (parts.length === 0) return null;
 
-  // Moyenne simple
-  const prob1 = probs.reduce((a, b) => a + b, 0) / probs.length;
+  // Moyenne pondérée renormalisée
+  const wSum = parts.reduce((a, [, w]) => a + w, 0);
+  const prob1 = parts.reduce((a, [p, w]) => a + p * w, 0) / wSum;
 
   return { prob1: Math.round(prob1), prob2: 100 - Math.round(prob1) };
 }
@@ -559,11 +597,26 @@ export function SnookerTabContent() {
       let prob: number;
       let label: string;
       let sub: string;
+      // Côté recommandé ("p1"/"p2"/null) — sert l'edge et le Kelly du bon côté
+      let side: "p1" | "p2" | null = null;
 
       switch (activeMarket) {
         case "matchWinner": {
-          prob = baseProb.prob1;
-          label = p1.name;
+          // Pari recommandé = toujours le favori (jamais < 50 %)
+          const favIsP1 = baseProb.prob1 >= 50;
+          side = favIsP1 ? "p1" : "p2";
+          const favProb = favIsP1 ? baseProb.prob1 : baseProb.prob2;
+          label = favIsP1 ? p1.name : p2.name;
+          if (m.status === "live" && m.scoreA + m.scoreB > 0) {
+            // Match en cours : on conditionne par le score (frames iid).
+            // On inverse le modèle match → proba frame, puis binomiale négative.
+            const pFrameLive = frameProbFromMatchProb(favProb / 100, bo);
+            const a = favIsP1 ? m.scoreA : m.scoreB;
+            const b = favIsP1 ? m.scoreB : m.scoreA;
+            prob = liveMatchWinProb(pFrameLive, bo, a, b);
+          } else {
+            prob = favProb;
+          }
           sub = `${baseProb.prob1}% / ${baseProb.prob2}%`;
           break;
         }
@@ -614,7 +667,7 @@ export function SnookerTabContent() {
       if (hasOdds) {
         const implied = oddsWinProb(m.odds!.player1, m.odds!.player2);
         edge = activeMarket === "matchWinner"
-          ? prob - implied
+          ? prob - (side === "p2" ? 100 - implied : implied)
           : prob - implied * (prob / baseProb.prob1); // adjust for non-winner markets
       }
       const roi = hasOdds && edge > 0 ? (edge / (100 - prob)) * 100 : 0;
@@ -626,12 +679,13 @@ export function SnookerTabContent() {
       else if (!hasOdds && prob > 70) confidence = "medium";
 
       return {
-        match: m, prob, label, sub, edge, roi, hasOdds, confidence,
+        match: m, prob, label, sub, edge, roi, hasOdds, confidence, side,
         p1, p2, pFrame, bestOf: bo,
       };
     }).filter(Boolean) as Array<{
       match: ApiMatch; prob: number; label: string; sub: string;
       edge: number; roi: number; hasOdds: boolean; confidence: "high" | "medium" | "low";
+      side: "p1" | "p2" | null;
       p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
     }>;
 
@@ -1188,6 +1242,16 @@ export function SnookerTabContent() {
             >
               {top10.length}
             </span>
+            {/* Bouton "i" : tutoriel de la stratégie affichée */}
+            <button
+              type="button"
+              onClick={() => setTutorialMarket(activeMarket)}
+              aria-label="Tutoriel de la stratégie"
+              title="Tutoriel de la stratégie"
+              className="ml-auto flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#00985f] hover:text-[#00985f]"
+            >
+              i
+            </button>
           </div>
 
           {/* Column headers — desktop */}
@@ -1219,7 +1283,7 @@ export function SnookerTabContent() {
             /* Match rows */
             <div>
               {top10.map((row, i) => {
-                const { match: m, prob, label, sub, edge, roi, hasOdds, confidence, p1, p2, bestOf: bo } = row;
+                const { match: m, prob, label, sub, edge, roi, hasOdds, confidence, side, p1, p2, bestOf: bo } = row;
                 const datetime = m.scheduled_at
                   ? new Intl.DateTimeFormat("fr-FR", {
                       weekday: "short",
@@ -1312,7 +1376,10 @@ export function SnookerTabContent() {
                         </span>
                       )}
                       {(() => {
-                        const k = kellyCriterion(prob / 100, m.odds?.player1 ?? 2);
+                        // Kelly uniquement sur cote réelle du côté recommandé (jamais de cote fictive)
+                        const sideOdds = side === "p2" ? m.odds?.player2 : m.odds?.player1;
+                        if (!sideOdds || sideOdds <= 1) return null;
+                        const k = kellyCriterion(prob / 100, sideOdds);
                         if (k.fullKelly <= 0) return null;
                         return (
                           <span

@@ -56,7 +56,7 @@ function matchWinProb(pFrame: number, bestOf: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
   let pWin = 0;
   for (let i = 0; i < winsNeeded; i++) {
-    pWin += Math.exp(logBinomPMF(i, bestOf - 1, pFrame));
+    pWin += Math.exp(logBinomPMF(i, bestOf, pFrame));
   }
   return (1 - pWin) * 100;
 }
