@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, memo, lazy, Suspense, Component, useRef, type ReactNode } from "react";
 import Link from "next/link";
-import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3, X, ChevronRight } from "lucide-react";
+import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3, X, ChevronRight, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
@@ -758,6 +758,10 @@ return [...matches, ...synthetic];
                 <Link href="/tennis/stats" title={tStatsLb("title")} className="inline-flex items-center gap-1 rounded text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <BarChart3 className="h-3.5 w-3.5" />
                   {tStatsLb("title")}
+                </Link>
+                <Link href="/tennis/markets" title="Marchés tennis" className="inline-flex items-center gap-1 rounded text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Target className="h-3.5 w-3.5" />
+                  Marchés
                 </Link>
                 {pip.supported && (
                   <button
