@@ -43,11 +43,24 @@ export async function GET(request: Request) {
   let profile: TeamProfile | null = null;
   try {
     profile = buildTeamProfile(league, team, venue, market);
-  } catch {
-    return NextResponse.json({ error: "calcul indisponible" }, { status: 500 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "calcul indisponible", detail: msg }, { status: 500 });
   }
   if (!profile) {
     return NextResponse.json({ error: "équipe ou ligue introuvable" }, { status: 404 });
   }
-  return NextResponse.json({ profile, meta: { computedAt: new Date().toISOString() } });
+  // Debug temporaire — retirer après diagnostic.
+  return NextResponse.json({
+    profile,
+    meta: { computedAt: new Date().toISOString() },
+    _debug: {
+      elo: profile.elo,
+      sos: profile.sos,
+      discipline: profile.discipline,
+      referee: profile.referee,
+      congestion: profile.congestion,
+      clv: profile.clv,
+    },
+  });
 }
