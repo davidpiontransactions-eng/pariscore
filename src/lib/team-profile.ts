@@ -352,21 +352,8 @@ export function buildTeamProfile(
 
   const inj = teamInjuries(leagueId, fdName);
 
-  // Discipline L5 saison courante (comptes équipe home/away, pas nominatif).
-  const last5 = teamLastMatches(leagueId, season, fdName, 5);
-  let yellows = 0, reds = 0, redLastMatch = false;
-  last5.forEach((m, i) => {
-    const isHome = normTeam(m.home) === fdKey;
-    yellows += (isHome ? m.hy : m.ay) ?? 0;
-    const r = (isHome ? m.hr : m.ar) ?? 0;
-    reds += r;
-    if (i === 0 && r > 0) redLastMatch = true;
-  });
-  const discipline = last5.length > 0 ? { yellows, reds, redLastMatch, sample: last5.length } : null;
-
-  // Congestion + steam : historique brut de la saison (joués + à venir).
-  // Fallback saison précédente si la saison courante n'a pas encore d'historique
-  // (début de saison, CSV scrapés avant ajout clé history).
+  // Historique brut de la saison — fallback saison précédente si la saison
+  // courante n'a pas encore de clé `history` (début de saison).
   const todayISO = new Date().toISOString().slice(0, 10);
   const in14d = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
   const prevSeason = fdSeasons(leagueId).find((s) => s !== season);
@@ -377,6 +364,20 @@ export function buildTeamProfile(
   const teamRows = allRows.filter(
     (r) => normTeam(r.home) === fdKey || normTeam(r.away) === fdKey,
   );
+
+  // Discipline L5 (comptes équipe home/away, pas nominatif).
+  const last5 = teamRows.slice(-5).reverse();
+  let yellows = 0, reds = 0, redLastMatch = false;
+  last5.forEach((m, i) => {
+    const isHome = normTeam(m.home) === fdKey;
+    yellows += (isHome ? m.hy : m.ay) ?? 0;
+    const r = (isHome ? m.hr : m.ar) ?? 0;
+    reds += r;
+    if (i === 0 && r > 0) redLastMatch = true;
+  });
+  const discipline = last5.length > 0 ? { yellows, reds, redLastMatch, sample: last5.length } : null;
+
+  // Congestion + steam
   // Debug temporaire — retirer après diagnostic.
   if (allRows.length === 0) {
     console.error("[team-profile] history empty:", { leagueId, season, teamRows: teamRows.length });
