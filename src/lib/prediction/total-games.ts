@@ -16,6 +16,7 @@
 
 import {
   expectedRemainingGames,
+  expectedRemainingSets,
   setScoreDistribution,
   setOverUnder,
   clearAllMemos,
@@ -431,6 +432,103 @@ function adjustLambdaLive(
     lambdaRestant: Math.max(2, lambdaRestant),
     setOver75: Math.round(over75 * 100),
     setUnder125: Math.round(under125 * 100),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// T2 : Marchés supplémentaires (Player Total Games, Sets, Straight Sets)
+// ---------------------------------------------------------------------------
+
+/**
+ * Espérance du nombre de jeux gagnés par un joueur donné.
+ *
+ * Modèle : E[jeux A] = holdA × E[jeux A au service] + (1-holdB) × E[jeux B au service]
+ * où E[jeux au service] ≈ 4.5 × E[sets] (chaque joueur sert ~la moitié des jeux).
+ *
+ * @param pHoldA - Hold de A
+ * @param pHoldB - Hold de B
+ * @param pWinSetA - P(A gagne un set)
+ * @param bestOf - Format
+ * @returns { gamesA, gamesB } - Espérance de jeux pour chaque joueur
+ */
+export function playerTotalGames(
+  pHoldA: number,
+  pHoldB: number,
+  pWinSetA: number,
+  bestOf: 3 | 5,
+): { gamesA: number; gamesB: number } {
+  const expectedSets = expectedRemainingSets(0, 0, pWinSetA, bestOf === 3);
+  // Chaque set ≈ 9.5 jeux, chaque joueur sert ~la moitié
+  const gamesPerSet = 9.5;
+  // A gagne holdA% de ses jeux au service + (1-holdB)% des jeux de B au service
+  const aPerSet = pHoldA * (gamesPerSet / 2) + (1 - pHoldB) * (gamesPerSet / 2);
+  const bPerSet = pHoldB * (gamesPerSet / 2) + (1 - pHoldA) * (gamesPerSet / 2);
+  return {
+    gamesA: Math.round(aPerSet * expectedSets * 10) / 10,
+    gamesB: Math.round(bPerSet * expectedSets * 10) / 10,
+  };
+}
+
+/**
+ * Nombre attendu de sets dans le match.
+ *
+ * @param pWinSetA - P(A gagne un set)
+ * @param bestOf - Format
+ * @returns Espérance du nombre de sets joués
+ */
+export function totalSets(
+  pWinSetA: number,
+  bestOf: 3 | 5,
+): number {
+  return expectedRemainingSets(0, 0, pWinSetA, bestOf === 3);
+}
+
+/**
+ * Probabilité que le match se termine en sets directs (pas de set décisif).
+ *
+ * BO3 : P(2-0) = p² + q²
+ * BO5 : P(3-0) = p³ + q³
+ *
+ * @param pWinSetA - P(A gagne un set)
+ * @param bestOf - Format
+ * @returns { aWins, bWins } - Probabilités de victoire en sets directs
+ */
+export function straightSets(
+  pWinSetA: number,
+  bestOf: 3 | 5,
+): { aWins: number; bWins: number } {
+  const p = pWinSetA;
+  const q = 1 - p;
+  if (bestOf === 3) {
+    return { aWins: p * p, bWins: q * q };
+  }
+  return { aWins: p * p * p, bWins: q * q * q };
+}
+
+/**
+ * Probabilité qu'un joueur gagne au moins un set.
+ *
+ * P(A ≥1 set) = 1 − P(A perd tous les sets)
+ * BO3 : P(A 0 set) = q² (A perd 2-0)
+ * BO5 : P(A 0 set) = q³ (A perd 3-0)
+ *
+ * @param pWinSetA - P(A gagne un set)
+ * @param bestOf - Format
+ * @returns { aWins, bWins } - Probabilités de gagner ≥1 set
+ */
+export function atLeastOneSet(
+  pWinSetA: number,
+  bestOf: 3 | 5,
+): { aWinsAtLeast1: number; bWinsAtLeast1: number } {
+  const p = pWinSetA;
+  const q = 1 - p;
+  const setsToWin = bestOf === 3 ? 2 : 3;
+  // P(A perd 2-0 ou 3-0) = q^setsToWin
+  const aLosesAll = Math.pow(q, setsToWin);
+  const bLosesAll = Math.pow(p, setsToWin);
+  return {
+    aWinsAtLeast1: 1 - aLosesAll,
+    bWinsAtLeast1: 1 - bLosesAll,
   };
 }
 

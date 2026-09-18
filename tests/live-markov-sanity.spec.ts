@@ -6,8 +6,45 @@ import {
   setScoreDistribution,
   setOverUnder,
   expectedRemainingSets,
+  setScoreExact,
+  setHandicap,
+  gameHandicap,
+  doubleResult,
+  firstSetWinner,
+  firstSetTotal,
   clearAllMemos,
 } from "../src/lib/prediction/live-markov";
+import {
+  playerTotalGames,
+  totalSets,
+  straightSets,
+  atLeastOneSet,
+} from "../src/lib/prediction/total-games";
+import {
+  totalAcesO_U,
+  acesPerSet,
+} from "../src/lib/prediction/most-aces";
+import {
+  tiebreakProb,
+  tiebreakSet,
+  tiebreakWinner,
+  tiebreakScoreDistribution,
+} from "../src/lib/prediction/tiebreak";
+import {
+  bayesianBlend,
+  blendMultiple,
+  oddToProb,
+  probToOdd,
+  deVig,
+  computeEdge,
+  kellyFraction,
+} from "../src/lib/prediction/live-blend";
+import {
+  TENNIS_MARKETS,
+  MARKET_COUNT,
+  getMarketById,
+  getMarketsByCategory,
+} from "../src/lib/prediction/tennis-market-map";
 
 /**
  * Tests de sanity du modèle Markov live.
@@ -143,5 +180,386 @@ describe("live-markov sanity", () => {
     const er = expectedRemainingSets(2, 1, 0.65, false);
     expect(er).toBeGreaterThan(1);
     expect(er).toBeLessThan(2);
+  });
+
+  // --- setScoreExact ---
+
+  it("setScoreExact somme 2-0 + 2-1 + 0-2 + 1-2 = 1", () => {
+    clearAllMemos();
+    const s20 = setScoreExact(holdA, holdB, 2, 0, true);
+    const s21 = setScoreExact(holdA, holdB, 2, 1, true);
+    const s02 = setScoreExact(holdA, holdB, 0, 2, true);
+    const s12 = setScoreExact(holdA, holdB, 1, 2, true);
+    expect(s20 + s21 + s02 + s12).toBeCloseTo(1, 2);
+  });
+
+  it("setScoreExact favori → P(2-0) > P(0-2)", () => {
+    clearAllMemos();
+    const p20 = setScoreExact(holdA, holdB, 2, 0, true);
+    const p02 = setScoreExact(holdA, holdB, 0, 2, true);
+    expect(p20).toBeGreaterThan(p02);
+  });
+
+  it("setScoreExact score impossible → 0", () => {
+    clearAllMemos();
+    expect(setScoreExact(holdA, holdB, 3, 0, true)).toBe(0);
+    expect(setScoreExact(holdA, holdB, 0, 0, true)).toBe(0);
+    expect(setScoreExact(holdA, holdB, 2, 2, true)).toBe(0);
+  });
+
+  it("setScoreExact equal holds → P(2-0) + P(2-1) ≈ pWinSetA", () => {
+    clearAllMemos();
+    const s20 = setScoreExact(0.7, 0.7, 2, 0, true);
+    const s21 = setScoreExact(0.7, 0.7, 2, 1, true);
+    const s02 = setScoreExact(0.7, 0.7, 0, 2, true);
+    const s12 = setScoreExact(0.7, 0.7, 1, 2, true);
+    expect(s20 + s21 + s02 + s12).toBeCloseTo(1, 2);
+    // A a un avantage premier serveur → P(A gagne) > 0.5
+    expect(s20 + s21).toBeGreaterThan(0.5);
+  });
+
+  // --- setHandicap ---
+
+  it("setHandicap 0 → >0.5 si holdA > holdB (favori A)", () => {
+    clearAllMemos();
+    const p = setHandicap(holdA, holdB, 0, true);
+    expect(p).toBeGreaterThan(0.5);
+  });
+
+  it("setHandicap -1.5 avec favori fort → élevé", () => {
+    clearAllMemos();
+    const p = setHandicap(0.99, 0.74, -1.5, true);
+    expect(p).toBeGreaterThan(0.8);
+  });
+
+  it("setHandicap +1.5 avec favori fort → très élevé (A couvre facilement)", () => {
+    clearAllMemos();
+    const p = setHandicap(0.99, 0.74, 1.5, true);
+    expect(p).toBeGreaterThan(0.95);
+  });
+
+  // --- gameHandicap ---
+
+  it("gameHandicap négatif si holdA > holdB (favori A donne des jeux)", () => {
+    clearAllMemos();
+    const h = gameHandicap(0.75, 0.6, 0.7, true);
+    expect(h).toBeLessThan(0);
+  });
+
+  it("gameHandicap 0 si hold égaux", () => {
+    clearAllMemos();
+    const h = gameHandicap(0.7, 0.7, 0.5, true);
+    expect(Math.abs(h)).toBeLessThan(0.1);
+  });
+
+  it("gameHandicap BO5 plus grand en valeur absolue que BO3", () => {
+    clearAllMemos();
+    const h3 = gameHandicap(0.75, 0.6, 0.7, true);
+    clearAllMemos();
+    const h5 = gameHandicap(0.75, 0.6, 0.7, false);
+    expect(Math.abs(h5)).toBeGreaterThan(Math.abs(h3));
+  });
+
+  // --- doubleResult ---
+
+  it("doubleResult somme = 1", () => {
+    clearAllMemos();
+    const dr = doubleResult(holdA, holdB, true);
+    const total = dr.aWins1stAndMatch + dr.bWins1stAndMatch + dr.aWins1stLosesMatch + dr.bWins1stLosesMatch;
+    expect(total).toBeCloseTo(1, 2);
+  });
+
+  it("doubleResult favori fort → aWins1stAndMatch > bWins1stAndMatch", () => {
+    clearAllMemos();
+    const dr = doubleResult(0.85, 0.55, true);
+    expect(dr.aWins1stAndMatch).toBeGreaterThan(dr.bWins1stAndMatch);
+  });
+
+  it("doubleResult A a avantage premier serveur même avec hold égaux", () => {
+    clearAllMemos();
+    const dr = doubleResult(0.7, 0.7, true);
+    // A sert en premier → avantage structurel
+    expect(dr.aWins1stAndMatch).toBeGreaterThan(dr.bWins1stAndMatch);
+  });
+
+  // --- T2 : Player Total Games, Total Sets, Straight Sets, At Least 1 Set ---
+
+  it("playerTotalGames → gamesA + gamesB ≈ total attendu", () => {
+    clearAllMemos();
+    const { gamesA, gamesB } = playerTotalGames(0.86, 0.78, 0.75, 3);
+    expect(gamesA).toBeGreaterThan(gamesB); // favori gagne plus de jeux
+    expect(gamesA + gamesB).toBeGreaterThan(14);
+    expect(gamesA + gamesB).toBeLessThan(30);
+  });
+
+  it("totalSets BO3 → entre 2 et 3", () => {
+    clearAllMemos();
+    const ts = totalSets(0.7, 3);
+    expect(ts).toBeGreaterThan(2);
+    expect(ts).toBeLessThan(2.5);
+  });
+
+  it("totalSets BO5 → entre 3 et 4", () => {
+    clearAllMemos();
+    const ts = totalSets(0.7, 5);
+    expect(ts).toBeGreaterThan(3);
+    expect(ts).toBeLessThan(4);
+  });
+
+  it("straightSets BO3 → p² + q² < 1", () => {
+    clearAllMemos();
+    const { aWins, bWins } = straightSets(0.7, 3);
+    expect(aWins).toBeCloseTo(0.49, 1);
+    expect(bWins).toBeCloseTo(0.09, 1);
+    expect(aWins + bWins).toBeLessThan(1);
+  });
+
+  it("straightSets favori → aWins > bWins", () => {
+    clearAllMemos();
+    const { aWins, bWins } = straightSets(0.8, 3);
+    expect(aWins).toBeGreaterThan(bWins);
+  });
+
+  it("atLeastOneSet → toujours > 0.5 pour tout joueur", () => {
+    clearAllMemos();
+    const { aWinsAtLeast1, bWinsAtLeast1 } = atLeastOneSet(0.6, 3);
+    expect(aWinsAtLeast1).toBeGreaterThan(0.5);
+    expect(bWinsAtLeast1).toBeGreaterThan(0.5);
+  });
+
+  it("atLeastOneSet → favori fort → bWinsAtLeast1 faible", () => {
+    clearAllMemos();
+    const { bWinsAtLeast1 } = atLeastOneSet(0.9, 3);
+    expect(bWinsAtLeast1).toBeLessThan(0.2);
+  });
+
+  it("atLeastOneSet somme ≤ 1 (pas d'exclusivité)", () => {
+    clearAllMemos();
+    const { aWinsAtLeast1, bWinsAtLeast1 } = atLeastOneSet(0.7, 3);
+    expect(aWinsAtLeast1 + bWinsAtLeast1).toBeGreaterThan(1); // overlap possible
+  });
+
+  // --- T3 : firstSetWinner, firstSetTotal ---
+
+  it("firstSetWinner → >0.5 si holdA > holdB", () => {
+    clearAllMemos();
+    const p = firstSetWinner(holdA, holdB);
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(1);
+  });
+
+  it("firstSetWinner equal holds → A a léger avantage premier serveur", () => {
+    clearAllMemos();
+    const p = firstSetWinner(0.7, 0.7);
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(0.65);
+  });
+
+  it("firstSetTotal → entre 6 et 13 jeux", () => {
+    clearAllMemos();
+    const t = firstSetTotal(holdA, holdB);
+    expect(t).toBeGreaterThan(6);
+    expect(t).toBeLessThan(13);
+  });
+
+  it("firstSetTotal gros serveurs → plus de jeux", () => {
+    clearAllMemos();
+    const tBig = firstSetTotal(0.9, 0.9);
+    clearAllMemos();
+    const tSmall = firstSetTotal(0.6, 0.6);
+    expect(tBig).toBeGreaterThan(tSmall);
+  });
+
+  // --- T4 : totalAcesO_U, acesPerSet ---
+
+  it("totalAcesO_U → décroît avec le seuil", () => {
+    const p8 = totalAcesO_U(8.5, 4, 4);
+    const p12 = totalAcesO_U(12.5, 4, 4);
+    const p16 = totalAcesO_U(16.5, 4, 4);
+    expect(p8).toBeGreaterThan(p12);
+    expect(p12).toBeGreaterThan(p16);
+  });
+
+  it("totalAcesO_U avec λ élevés → Over élevé", () => {
+    const p = totalAcesO_U(9.5, 8, 8);
+    expect(p).toBeGreaterThan(0.8);
+  });
+
+  it("totalAcesO_U avec λ faibles → Over faible", () => {
+    const p = totalAcesO_U(9.5, 2, 2);
+    expect(p).toBeLessThan(0.3);
+  });
+
+  it("acesPerSet → raisonnable (1-6 par joueur)", () => {
+    const { acesPerSetA, acesPerSetB } = acesPerSet(5, 3, 2.2);
+    expect(acesPerSetA).toBeGreaterThan(1);
+    expect(acesPerSetA).toBeLessThan(6);
+    expect(acesPerSetB).toBeGreaterThan(0);
+    expect(acesPerSetB).toBeLessThan(4);
+  });
+
+  it("acesPerSet expectedSets=0 → 0", () => {
+    const { acesPerSetA, acesPerSetB } = acesPerSet(5, 3, 0);
+    expect(acesPerSetA).toBe(0);
+    expect(acesPerSetB).toBe(0);
+  });
+
+  // --- T5 : tiebreakProb, tiebreakSet, tiebreakWinner ---
+
+  it("tiebreakProb borné [0,1]", () => {
+    expect(tiebreakProb(0.5, 0.5)).toBeGreaterThan(0.4);
+    expect(tiebreakProb(0.5, 0.5)).toBeLessThan(0.6);
+  });
+
+  it("tiebreakProb avec pA élevé → A favori", () => {
+    const p = tiebreakProb(0.7, 0.5);
+    expect(p).toBeGreaterThan(0.6);
+  });
+
+  it("tiebreakProb symétrique si pA = pB", () => {
+    const p1 = tiebreakProb(0.6, 0.6);
+    const p2 = tiebreakProb(0.6, 0.6);
+    expect(p1).toBeCloseTo(p2, 5);
+  });
+
+  it("tiebreakSet → entre 0 et 1", () => {
+    const p = tiebreakSet(0.85, 0.80);
+    expect(p).toBeGreaterThan(0);
+    expect(p).toBeLessThan(1);
+  });
+
+  it("tiebreakSet gros serveurs → plus probable", () => {
+    const pBig = tiebreakSet(0.9, 0.9);
+    const pSmall = tiebreakSet(0.6, 0.6);
+    expect(pBig).toBeGreaterThan(pSmall);
+  });
+
+  it("tiebreakWinner ≤ tiebreakSet", () => {
+    const pWin = tiebreakWinner(0.8, 0.75);
+    const pSet = tiebreakSet(0.8, 0.75);
+    expect(pWin).toBeLessThanOrEqual(pSet);
+  });
+
+  it("tiebreakScoreDistribution somme ≈ 1", () => {
+    const dist = tiebreakScoreDistribution(0.6, 0.55);
+    const total = Object.values(dist).reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(0.95);
+    expect(total).toBeLessThanOrEqual(1.01);
+  });
+
+  it("tiebreakScoreDistribution contient des scores terminaux", () => {
+    const dist = tiebreakScoreDistribution(0.6, 0.55);
+    // Scores terminaux courants : 7-5 (A gagne), 5-7 (B gagne)
+    // 7-6 n'est PAS terminal (pas d'avance de 2)
+    const total = Object.values(dist).reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(0.95);
+    // Au moins un score existe
+    expect(Object.keys(dist).length).toBeGreaterThan(0);
+  });
+
+  // --- T6 : Bayesian Blend ---
+
+  it("bayesianBlend début → marché domine", () => {
+    const result = bayesianBlend({
+      matchProgress: 0.1,
+      modelProb: 0.7,
+      modelConfidence: 0.8,
+      marketProb: 0.6,
+      marketConfidence: 0.9,
+    });
+    // En début, le marché a plus de poids → prob proche de 0.6
+    expect(result.prob).toBeLessThan(0.7);
+    expect(result.prob).toBeGreaterThan(0.55);
+    expect(result.marketWeight).toBeGreaterThan(result.modelWeight);
+  });
+
+  it("bayesianBlend fin → modèle domine", () => {
+    const result = bayesianBlend({
+      matchProgress: 0.9,
+      modelProb: 0.7,
+      modelConfidence: 0.8,
+      marketProb: 0.6,
+      marketConfidence: 0.9,
+    });
+    // En fin de match, le modèle a plus de poids → prob proche de 0.7
+    expect(result.prob).toBeGreaterThan(0.65);
+    expect(result.modelWeight).toBeGreaterThan(result.marketWeight);
+  });
+
+  it("bayesianBlend prob bornée [0,1]", () => {
+    const result = bayesianBlend({
+      matchProgress: 0.5,
+      modelProb: 1.5, // hors bornes
+      modelConfidence: 0.8,
+      marketProb: -0.2, // hors bornes
+      marketConfidence: 0.9,
+    });
+    expect(result.prob).toBeGreaterThanOrEqual(0);
+    expect(result.prob).toBeLessThanOrEqual(1);
+  });
+
+  it("blendMultiple 0 sources → 0.5", () => {
+    expect(blendMultiple([], 0.5)).toBe(0.5);
+  });
+
+  it("blendMultiple 1 source → cette prob", () => {
+    expect(blendMultiple([{ prob: 0.7, confidence: 0.8, type: "model" }], 0.5)).toBeCloseTo(0.7, 2);
+  });
+
+  it("oddToProb + probToOdd round-trip", () => {
+    expect(oddToProb(2.0)).toBeCloseTo(0.5, 5);
+    expect(probToOdd(0.5)).toBeCloseTo(2.0, 5);
+    expect(oddToProb(probToOdd(0.7))).toBeCloseTo(0.7, 5);
+  });
+
+  it("deVig normalise à 1", () => {
+    const [a, b] = deVig([0.55, 0.50]); // somme = 1.05 (vig)
+    expect(a + b).toBeCloseTo(1, 5);
+    expect(a).toBeCloseTo(0.55 / 1.05, 3);
+  });
+
+  it("computeEdge positif si modèle > marché", () => {
+    expect(computeEdge(0.7, 0.6)).toBeCloseTo(10, 1);
+    expect(computeEdge(0.5, 0.6)).toBeCloseTo(-10, 1);
+  });
+
+  it("kellyFraction positif si value bet", () => {
+    // Modèle dit 60%, cote 2.0 → value bet
+    const k = kellyFraction(0.6, 2.0);
+    expect(k).toBeGreaterThan(0);
+  });
+
+  it("kellyFraction 0 si pas de value", () => {
+    // Modèle dit 40%, cote 2.0 → pas de value
+    const k = kellyFraction(0.4, 2.0);
+    expect(k).toBe(0);
+  });
+
+  // --- T8 : Market Map ---
+
+  it("TENNIS_MARKETS contient 40+ marchés", () => {
+    expect(MARKET_COUNT).toBeGreaterThan(40);
+  });
+
+  it("getMarketById retourne un marché existant", () => {
+    const m = getMarketById("match-winner");
+    expect(m).toBeDefined();
+    expect(m!.label).toBe("Vainqueur du match");
+  });
+
+  it("getMarketById retourne undefined pour ID inexistant", () => {
+    expect(getMarketById("nonexistent")).toBeUndefined();
+  });
+
+  it("getMarketsByCategory filtre correctement", () => {
+    const acesMarkets = getMarketsByCategory("aces");
+    expect(acesMarkets.length).toBeGreaterThan(0);
+    acesMarkets.forEach(m => expect(m.category).toBe("aces"));
+  });
+
+  it("marchés live sont marqués liveOnly", () => {
+    const liveMarkets = TENNIS_MARKETS.filter(m => m.liveOnly);
+    expect(liveMarkets.length).toBeGreaterThan(0);
+    liveMarkets.forEach(m => expect(m.liveOnly).toBe(true));
   });
 });

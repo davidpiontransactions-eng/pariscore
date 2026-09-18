@@ -308,6 +308,54 @@ function probOverAces(halfThreshold: number, lambda: number): number {
   return clamp(1 - cumulative, 0, 1);
 }
 
+// ---------------------------------------------------------------------------
+// T4 : Marchés Aces supplémentaires
+// ---------------------------------------------------------------------------
+
+/**
+ * P(Over X.5 aces totaux) pour un seuil donné.
+ *
+ * @param threshold - Seuil (ex: 8.5, 10.5, 20.5)
+ * @param lambdaA - E[aces joueur A]
+ * @param lambdaB - E[aces joueur B]
+ * @returns Probabilité Over (0-1)
+ */
+export function totalAcesO_U(
+  threshold: number,
+  lambdaA: number,
+  lambdaB: number,
+): number {
+  const lambdaTotal = lambdaA + lambdaB;
+  const kMax = Math.floor(threshold);
+  let cumulative = 0;
+  for (let k = 0; k <= kMax; k++) cumulative += poissonPMF(k, lambdaTotal);
+  return clamp(1 - cumulative, 0, 1);
+}
+
+/**
+ * Espérance d'aces par set pour chaque joueur.
+ *
+ * @param lambdaA - E[aces total joueur A]
+ * @param lambdaB - E[aces total joueur B]
+ * @param expectedSets - Nombre attendu de sets dans le match
+ * @returns { acesPerSetA, acesPerSetB }
+ */
+export function acesPerSet(
+  lambdaA: number,
+  lambdaB: number,
+  expectedSets: number,
+): { acesPerSetA: number; acesPerSetB: number } {
+  if (expectedSets <= 0) return { acesPerSetA: 0, acesPerSetB: 0 };
+  return {
+    acesPerSetA: Math.round((lambdaA / expectedSets) * 10) / 10,
+    acesPerSetB: Math.round((lambdaB / expectedSets) * 10) / 10,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------
+
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }

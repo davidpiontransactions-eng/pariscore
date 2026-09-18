@@ -104,3 +104,110 @@ export function computeBacktestAccuracy(
     bucket,
   };
 }
+
+// ---------------------------------------------------------------------------
+// T11 : Validation des marchés (Brier score, calibration)
+// ---------------------------------------------------------------------------
+
+/**
+ * Brier score : mesure la qualité des prédictions probabilistes.
+ *
+ * BS = (1/N) Σ (prediction - outcome)²
+ * 
+ * Plus c'est bas, mieux c'est :
+ *   - 0 = parfait
+ *   - 0.25 = aléatoire (50/50)
+ *   - 1 = toujours faux
+ *
+ * @param predictions - Liste de { predicted: probabilité [0-1], actual: 0 ou 1 }
+ * @returns Brier score [0-1]
+ */
+export function brierScore(
+  predictions: Array<{ predicted: number; actual: number }>,
+): number {
+  if (predictions.length === 0) return 0.25; // défaut aléatoire
+  let sum = 0;
+  for (const { predicted, actual } of predictions) {
+    sum += (predicted - actual) ** 2;
+  }
+  return sum / predictions.length;
+}
+
+/**
+ * Calibration : vérifie si les probabilités prédites correspondent
+ * aux fréquences observées.
+ *
+ * Groupe les prédictions en buckets de 10% et compare la moyenne
+ * prédite vs la fréquence réelle.
+ *
+ * @param predictions - Liste de { predicted: prob [0-1], actual: 0 ou 1 }
+ * @returns Calibration par bucket { bucket: string, predicted: number, observed: number, count: number }
+ */
+export function calibrationCurve(
+  predictions: Array<{ predicted: number; actual: number }>,
+): Array<{ bucket: string; predicted: number; observed: number; count: number }> {
+  const buckets = new Map<number, { sumPred: number; sumActual: number; count: number }>();
+
+  for (const { predicted, actual } of predictions) {
+    const bucketKey = Math.floor(predicted * 10) / 10; // 0.0, 0.1, 0.2, ...
+    const existing = buckets.get(bucketKey) ?? { sumPred: 0, sumActual: 0, count: 0 };
+    existing.sumPred += predicted;
+    existing.sumActual += actual;
+    existing.count++;
+    buckets.set(bucketKey, existing);
+  }
+
+  return Array.from(buckets.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([key, { sumPred, sumActual, count }]) => ({
+      bucket: `${Math.round(key * 100)}-${Math.round((key + 0.1) * 100)}%`,
+      predicted: Math.round((sumPred / count) * 100) / 100,
+      observed: Math.round((sumActual / count) * 100) / 100,
+      count,
+    }));
+}
+
+/**
+ * ROI : retour sur investissement simulé.
+ *
+ * @param bets - Liste de { odds: cote décimale, predicted: prob [0-1], actual: 0 ou 1, stake: mise }
+ * @returns ROI en pourcentage
+ */
+export function computeROI(
+  bets: Array<{ odds: number; predicted: number; actual: number; stake: number }>,
+): { roi: number; totalStaked: number; totalReturned: number; bets: number } {
+  let totalStaked = 0;
+  let totalReturned = 0;
+
+  for (const { odds, actual, stake } of bets) {
+    totalStaked += stake;
+    if (actual === 1) {
+      totalReturned += stake * odds;
+    }
+  }
+
+  const roi = totalStaked > 0 ? ((totalReturned - totalStaked) / totalStaked) * 100 : 0;
+
+  return {
+    roi: Math.round(roi * 100) / 100,
+    totalStaked: Math.round(totalStaked * 100) / 100,
+    totalReturned: Math.round(totalReturned * 100) / 100,
+    bets: bets.length,
+  };
+}
+
+/**
+ * Seuils de qualité pour les métriques de backtest.
+ */
+export const BACKTEST_THRESHOLDS = {
+  /** Brier score < 0.20 = bon modèle. */
+  BRIER_GOOD: 0.20,
+  /** Brier score < 0.15 = excellent modèle. */
+  BRIER_EXCELLENT: 0.15,
+  /** Calibration error < 5% = bien calibré. */
+  CALIBRATION_GOOD: 0.05,
+  /** ROI > 0% = profitable. */
+  ROI_PROFITABLE: 0,
+  /** ROI > 5% = très profitable. */
+  ROI_VERY_PROFITABLE: 5,
+} as const;

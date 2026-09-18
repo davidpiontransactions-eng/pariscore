@@ -151,10 +151,12 @@ export function setWinProb(
   }
   // Récursion classique
   else {
-    const pi = serverNext === "A" ? holdA : holdB;
+    // pi = probabilité que A GAGNE le jeu en cours
+    //   si A sert : holdA
+    //   si B sert : 1 - holdB (break)
+    const pi = serverNext === "A" ? holdA : 1 - holdB;
     const nextServer: Player = serverNext === "A" ? "B" : "A";
 
-    // Si A gagne le point → gamesA + 1, si B gagne → gamesB + 1
     const winA = setWinProb(holdA, holdB, _setsA, _setsB, _currentSet, gamesA + 1, gamesB, nextServer);
     const winB = setWinProb(holdA, holdB, _setsA, _setsB, _currentSet, gamesA, gamesB + 1, nextServer);
 
@@ -347,7 +349,10 @@ export function expectedRemainingGames(
     return result;
   }
 
-  const pi = serverFirst === "A" ? holdA : holdB;
+  // pi = probabilité que A GAGNE le jeu en cours
+  //   si A sert : holdA
+  //   si B sert : 1 - holdB (break)
+  const pi = serverFirst === "A" ? holdA : 1 - holdB;
   const nextServer: Player = serverFirst === "A" ? "B" : "A";
 
   const restAfterWin = expectedRemainingGames(holdA, holdB, nextServer, gamesA + 1, gamesB);
@@ -439,6 +444,247 @@ export function matchWinProb(pWinSetA: number, bo3: boolean = true): number {
   }
 
   return dp(0, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Utilitaires
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Score exact de set
+// ---------------------------------------------------------------------------
+
+/**
+ * Probabilité d'un score exact de match en sets (ex: 2-0, 2-1, 0-2, 1-2).
+ *
+ * DP sur les états (setsA, setsB) avec pWinSetA constant.
+ *
+ * @param holdA - Hold de A (gameWinProb(pServeA))
+ * @param holdB - Hold de B (gameWinProb(pServeB))
+ * @param targetA - Sets finaux pour A (ex: 2)
+ * @param targetB - Sets finaux pour B (ex: 0)
+ * @param bo3 - true si best-of-3
+ * @returns Probabilité du score exact (0-1)
+ */
+export function setScoreExact(
+  holdA: number,
+  holdB: number,
+  targetA: number,
+  targetB: number,
+  bo3: boolean = true
+): number {
+  const setsToWin = bo3 ? 2 : 3;
+
+  // Validation : un joueur doit atteindre setsToWin, l'autre < setsToWin
+  if (targetA < 0 || targetB < 0) return 0;
+  if (targetA > setsToWin || targetB > setsToWin) return 0;
+  if (Math.max(targetA, targetB) !== setsToWin) return 0;
+  if (targetA === setsToWin && targetB === setsToWin) return 0;
+
+  // Calculer P(A gagne un set) via Markov
+  clearSetWinMemo();
+  const pWinSetA = setWinProb(holdA, holdB, 0, 0, 1, 0, 0, "A");
+
+  // DP
+  const memo = new Map<string, number>();
+
+  function dp(sA: number, sB: number): number {
+    if (sA === targetA && sB === targetB) return 1;
+    if (sA > targetA || sB > targetB) return 0;
+    if (sA >= setsToWin || sB >= setsToWin) return 0;
+
+    const key = `${sA},${sB}`;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+
+    const result = pWinSetA * dp(sA + 1, sB) + (1 - pWinSetA) * dp(sA, sB + 1);
+    memo.set(key, result);
+    return result;
+  }
+
+  return dp(0, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Handicap de sets
+// ---------------------------------------------------------------------------
+
+/**
+ * Probabilité que A gagne avec un handicap de sets donné.
+ *
+ * Convention 1xBet : handicap = -1.5 signifie que A donne 1.5 sets.
+ *   → A doit gagner 2-0 (BO3) pour couvrir.
+ *   → A doit gagner 3-0 ou 3-1 (BO5) pour couvrir.
+ *
+ * @param holdA - Hold de A
+ * @param holdB - Hold de B
+ * @param handicap - Handicap (négatif = favori donne)
+ * @param bo3 - true si best-of-3
+ * @returns Probabilité que A couvre le handicap (0-1)
+ */
+export function setHandicap(
+  holdA: number,
+  holdB: number,
+  handicap: number,
+  bo3: boolean = true
+): number {
+  const setsToWin = bo3 ? 2 : 3;
+
+  // Calculer P(A gagne un set) via Markov
+  clearSetWinMemo();
+  const pWinSetA = setWinProb(holdA, holdB, 0, 0, 1, 0, 0, "A");
+
+  // DP
+  const memo = new Map<string, number>();
+
+  function dp(sA: number, sB: number): number {
+    // Match terminé
+    if (sA >= setsToWin) {
+      const diff = sA - sB;
+      return diff + handicap > 0 ? 1 : 0;
+    }
+    if (sB >= setsToWin) {
+      const diff = sA - sB;
+      return diff + handicap > 0 ? 1 : 0;
+    }
+
+    const key = `${sA},${sB}`;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+
+    const result = pWinSetA * dp(sA + 1, sB) + (1 - pWinSetA) * dp(sA, sB + 1);
+    memo.set(key, result);
+    return result;
+  }
+
+  return dp(0, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Handicap de jeux (résultat attendu)
+// ---------------------------------------------------------------------------
+
+/**
+ * Handicap théorique en jeux basé sur le gap de hold.
+ *
+ * Calcule le nombre attendu de jeux gagnés par A minus B.
+ * Convention bookmaker : négatif = A est favori (donne des jeux).
+ *
+ * @param holdA - Hold de A
+ * @param holdB - Hold de B
+ * @param pWinSetA - P(A gagne un set)
+ * @param bo3 - true si best-of-3
+ * @returns Handicap en jeux (négatif = favori A)
+ */
+export function gameHandicap(
+  holdA: number,
+  holdB: number,
+  pWinSetA: number,
+  bo3: boolean = true
+): number {
+  const expectedSets = expectedRemainingSets(0, 0, pWinSetA, bo3);
+
+  // A gagne ~(holdA × 4.5) jeux par set au service
+  // B gagne ~(holdB × 4.5) jeux par set au service
+  // Convention : négatif = A donne des jeux (favori)
+  const deltaPerSet = (holdA - holdB) * 4.5 * 2;
+  return -deltaPerSet * expectedSets;
+}
+
+// ---------------------------------------------------------------------------
+// Double résultat (1er set + match)
+// ---------------------------------------------------------------------------
+
+/**
+ * Probabilité que A gagne le 1er set ET le match.
+ *
+ * @param holdA - Hold de A
+ * @param holdB - Hold de B
+ * @param bo3 - true si best-of-3
+ * @returns Probabilités du double résultat (0-1)
+ */
+export function doubleResult(
+  holdA: number,
+  holdB: number,
+  bo3: boolean = true
+): { aWins1stAndMatch: number; bWins1stAndMatch: number; aWins1stLosesMatch: number; bWins1stLosesMatch: number } {
+  // P(A gagne set1) via Markov set
+  clearSetWinMemo();
+  const pASet1 = setWinProb(holdA, holdB, 0, 0, 1, 0, 0, "A");
+
+  // P(A gagne match | A mène 1-0)
+  const pAMatchGiven10 = matchWinProbFromState(1, 0, pASet1, bo3);
+
+  // P(B gagne set1)
+  const pBSet1 = 1 - pASet1;
+
+  // P(A gagne match | A mène 0-1)
+  const pAMatchGiven01 = matchWinProbFromState(0, 1, pASet1, bo3);
+
+  return {
+    aWins1stAndMatch: pASet1 * pAMatchGiven10,
+    bWins1stAndMatch: pBSet1 * (1 - pAMatchGiven01),
+    aWins1stLosesMatch: pASet1 * (1 - pAMatchGiven10),
+    bWins1stLosesMatch: pBSet1 * pAMatchGiven01,
+  };
+}
+
+/**
+ * P(A gagne match) depuis un état (sA, sB) avec pWinSetA constant.
+ */
+function matchWinProbFromState(
+  sA: number,
+  sB: number,
+  pWinSetA: number,
+  bo3: boolean
+): number {
+  const setsToWin = bo3 ? 2 : 3;
+  const memo = new Map<string, number>();
+
+  function dp(a: number, b: number): number {
+    if (a >= setsToWin) return 1;
+    if (b >= setsToWin) return 0;
+    const key = `${a},${b}`;
+    const c = memo.get(key);
+    if (c !== undefined) return c;
+    const r = pWinSetA * dp(a + 1, b) + (1 - pWinSetA) * dp(a, b + 1);
+    memo.set(key, r);
+    return r;
+  }
+
+  return dp(sA, sB);
+}
+
+// ---------------------------------------------------------------------------
+// T3 : Marchés Premier Set
+// ---------------------------------------------------------------------------
+
+/**
+ * Probabilité que A gagne le premier set.
+ *
+ * Wrapper sur setWinProb avec état initial (0-0, set 1, A sert).
+ *
+ * @param holdA - Hold de A
+ * @param holdB - Hold de B
+ * @returns Probabilité que A gagne le 1er set (0-1)
+ */
+export function firstSetWinner(holdA: number, holdB: number): number {
+  clearSetWinMemo();
+  return setWinProb(holdA, holdB, 0, 0, 1, 0, 0, "A");
+}
+
+/**
+ * Nombre attendu de jeux dans le premier set.
+ *
+ * Wrapper sur expectedRemainingGames avec état initial (0-0).
+ *
+ * @param holdA - Hold de A
+ * @param holdB - Hold de B
+ * @returns Espérance du nombre de jeux dans le 1er set
+ */
+export function firstSetTotal(holdA: number, holdB: number): number {
+  clearGamesMemo();
+  return expectedRemainingGames(holdA, holdB, "A", 0, 0);
 }
 
 // ---------------------------------------------------------------------------
