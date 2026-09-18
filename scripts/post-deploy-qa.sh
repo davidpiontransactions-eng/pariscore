@@ -165,6 +165,30 @@ else
   log_fail "HTTP ${HTTP_CODE} (attendu 200)"
 fi
 
+# ─── 4b. Assets statiques SERVIS (anti-régression split-brain) ──
+# Vérifie que les CSS/JS référencés par le HTML sont servis en 200 (et pas 404
+# depuis un alias nginx périmé). Incident 2026-09-18 : 1 CSS en 404 = site cassé.
+log_info "4b/6 Assets statiques servis (CSS/JS du HTML)"
+ASSET_URLS=$(grep -o '/_next/[^"]*' /tmp/pariscore-qa.html 2>/dev/null | sort -u | head -12)
+ASSET_OK=0
+ASSET_TOTAL=0
+for asset in $ASSET_URLS; do
+  ASSET_TOTAL=$((ASSET_TOTAL+1))
+  ASSET_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "${PROD_URL}${asset}" 2>/dev/null)
+  if [ "$ASSET_CODE" = "200" ]; then
+    ASSET_OK=$((ASSET_OK+1))
+  else
+    log_warn "Asset servi en échec : $asset (HTTP $ASSET_CODE)"
+  fi
+done
+if [ "$ASSET_TOTAL" -eq 0 ]; then
+  log_fail "Aucun asset détecté dans le HTML — SSR suspect"
+elif [ "$ASSET_OK" = "$ASSET_TOTAL" ]; then
+  log_pass "Assets servis OK (${ASSET_OK}/${ASSET_TOTAL})"
+else
+  log_fail "Assets servis manquants (${ASSET_OK}/${ASSET_TOTAL}) — alias nginx ou build incomplet"
+fi
+
 # ─── 5. Vérification présence composants tennis dans HTML ─────
 log_info "5/6 Vérification composants tennis dans HTML rendu"
 

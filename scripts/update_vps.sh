@@ -115,9 +115,12 @@ if [ "$NEED_BUILD" = "1" ]; then
     echo "  [fix] installing missing debug in $DEBUG_FIX"
     cd "$DEBUG_FIX" && bun add debug --no-save 2>/dev/null && cd -
   fi
-  # Mise à jour des aliases nginx pour pointer vers le standalone OPT (dir prod pariscore-next).
-  sudo sed -i 's|alias /home/ubuntu/pariscore/.next/static/;|alias /opt/pariscorebis/.next/standalone/.next/static/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
-  sudo sed -i 's|alias /home/ubuntu/pariscore/public/;|alias /opt/pariscorebis/.next/standalone/public/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
+  # 2026-09-18 : NE PLUS réécrire les alias nginx vers /opt (incident : HTML frais
+  # depuis ~/pariscore + statics périmés depuis /opt = site cassé). Le serving est
+  # ~/pariscore (pm2 cwd + alias nginx) ; /opt ne sert que les données (DATA_DIR).
+  # Anciennes lignes neutralisées :
+  # sudo sed -i 's|alias /home/ubuntu/pariscore/.next/static/;|alias /opt/pariscorebis/.next/standalone/.next/static/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
+  # sudo sed -i 's|alias /home/ubuntu/pariscore/public/;|alias /opt/pariscorebis/.next/standalone/public/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
   sudo nginx -t 2>/dev/null && sudo systemctl reload nginx 2>/dev/null || true
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
@@ -160,11 +163,11 @@ else
 fi
 pm2 save 2>/dev/null || true
 
-# FlashScore refresh toutes les 20 min (cron système, pas pm2)
-CRON_LINE="*/20 * * * * cd $OPT_DIR && bash scripts/cron_snooker_refresh.sh >> logs/snooker-refresh.log 2>&1"
+# FlashScore refresh toutes les 15 min (cron système, pas pm2)
+CRON_LINE="*/15 * * * * cd $OPT_DIR && bash scripts/cron_snooker_refresh.sh >> logs/snooker-refresh.log 2>&1"
 if ! crontab -l 2>/dev/null | grep -q "cron_snooker_refresh"; then
   (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-  echo "  ✅ cron snooker-refresh ajouté (*/20)"
+  echo "  ✅ cron snooker-refresh ajouté (*/15)"
 else
   echo "  cron snooker-refresh déjà présent"
 fi
