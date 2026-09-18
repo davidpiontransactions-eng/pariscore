@@ -7,7 +7,7 @@ import {
 } from "./football-fd";
 import { footballElo, footballEloTotal, footballEloMean, normTeam } from "./football-elo";
 import { teamInjuries, type InjuryEntry } from "./football-injuries";
-import { teamLastMatches, fdHistory } from "./football-history";
+import { fdHistory } from "./football-history";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import type { TeamAttackDefenseLeague } from "./football-data";
@@ -338,10 +338,6 @@ export function buildTeamProfile(
   // Compléments classement : PPG contexte et Elo.
   const eloEntry = footballElo(leagueId, fdName);
   const sos = footballEloMean(leagueId, fdName);
-  // Debug temporaire — retirer après diagnostic.
-  if (eloEntry == null && sos == null) {
-    console.error("[team-profile] elo/sos null:", { leagueId, fdName, fdKey, teamKey });
-  }
   const ppmAjuste =
     sos == null ? null : Math.round((standing.ppg + (sos - 1500) / 400) * 100) / 100;
   if (standing.rank <= 3) strengths.unshift(`PPG ${scopeLabel(scope)} (#${standing.rank}/${N})`);
@@ -378,10 +374,6 @@ export function buildTeamProfile(
   const discipline = last5.length > 0 ? { yellows, reds, redLastMatch, sample: last5.length } : null;
 
   // Congestion + steam
-  // Debug temporaire — retirer après diagnostic.
-  if (allRows.length === 0) {
-    console.error("[team-profile] history empty:", { leagueId, season, teamRows: teamRows.length });
-  }
   const playedRows = teamRows.filter((r) => r.hg != null);
   const lastPlayed = playedRows.length > 0 ? playedRows[playedRows.length - 1].date : null;
   const restDays =

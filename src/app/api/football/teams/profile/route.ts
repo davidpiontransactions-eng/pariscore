@@ -50,17 +50,5 @@ export async function GET(request: Request) {
   if (!profile) {
     return NextResponse.json({ error: "équipe ou ligue introuvable" }, { status: 404 });
   }
-  // Debug temporaire — retirer après diagnostic.
-  return NextResponse.json({
-    profile,
-    meta: { computedAt: new Date().toISOString() },
-    _debug: {
-      elo: profile.elo,
-      sos: profile.sos,
-      discipline: profile.discipline,
-      referee: profile.referee,
-      congestion: profile.congestion,
-      clv: profile.clv,
-    },
-  });
+  return NextResponse.json({ profile, meta: { computedAt: new Date().toISOString() } });
 }
