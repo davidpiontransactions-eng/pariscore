@@ -198,26 +198,28 @@ useEffect(() => {
   // Charger Flashscore uniquement si ESPN est vieux (>6h) OU s'il n'y a pas de matchs
   const checkAndLoadFlashscore = async () => {
     try {
-      const { data: flashData } = await fetch('/api/rugby/flashscore?slug=top-14');
+      const res = await fetch('/api/rugby/flashscore?slug=top-14');
+      if (!res.ok) return;
+      const flashData = await res.json();
       if (flashData && flashData.matches && flashData.matches.length > 0) {
-        const formatted = flashData.matches.map((m: any) => ({
-          id: m.matchId || m.id,
-          scheduledAt: m.scheduledAt || '',
-          home: { name: m.home || 'Inconnu', logo: m.logo },
-          away: { name: m.away || 'Inconnu', logo: m.logo },
-          status: m.status || 'scheduled',
-          homeScore: m.homeScore,
-          awayScore: m.awayScore,
-          minute: m.minute,
-          competition: m.competition || 'top-14',
-          competitionName: m.competitionName || 'Top 14',
-          probPct: m.probPct,
-          confLabel: m.confLabel,
-          verdict: m.verdict,
-          expectedHomeScore: m.expectedHomeScore,
-          expectedAwayScore: m.expectedAwayScore,
-          expectedMargin: m.expectedMargin,
-          mostLikelyScore: m.mostLikelyScore,
+        const formatted = flashData.matches.map((m: Record<string, unknown>) => ({
+          id: (m.matchId || m.id) as string,
+          scheduledAt: (m.scheduledAt || '') as string,
+          home: { name: (m.home || 'Inconnu') as string, logo: m.logo as string },
+          away: { name: (m.away || 'Inconnu') as string, logo: m.logo as string },
+          status: (m.status || 'scheduled') as string,
+          homeScore: m.homeScore as number | null,
+          awayScore: m.awayScore as number | null,
+          minute: m.minute as number | null,
+          competition: (m.competition || 'top-14') as string,
+          competitionName: (m.competitionName || 'Top 14') as string,
+          probPct: m.probPct as number | null,
+          confLabel: m.confLabel as string | null,
+          verdict: m.verdict as string | null,
+          expectedHomeScore: m.expectedHomeScore as number | null,
+          expectedAwayScore: m.expectedAwayScore as number | null,
+          expectedMargin: m.expectedMargin as number | null,
+          mostLikelyScore: m.mostLikelyScore as string | null,
         }));
         setFlashscoreMatches(formatted);
         setFlashscoreLoaded(true);
@@ -227,12 +229,9 @@ useEffect(() => {
     }
   };
 
-  const cs = useRugbyCalendar.getState?.() || {};
-  const espenAge = Date.now() - (cs.lastSyncAt ?? 0);
   const hasMatches = allMatches?.length > 0;
-  const isESPNStale = espenAge > 6 * 60 * 60 * 1000;
 
-  if (!hasMatches || isESPNStale) {
+  if (!hasMatches) {
     checkAndLoadFlashscore();
   }
 }, [allMatches, calendarLoading]);

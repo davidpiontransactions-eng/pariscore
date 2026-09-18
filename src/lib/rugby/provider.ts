@@ -117,6 +117,12 @@ export async function getPredictionsPayload(slug: string): Promise<PredictionsPa
   };
 }
 
+/** Charger les matchs Flashscore pour une compétition (fallback/alternative). */
+export async function getFlashscorePayload(_slug: string): Promise<null> {
+  // Flashscore fallback désactivé — le script Node n'est pas disponible dans le runtime Next.js
+  return null;
+}
+
 /** Classement + chances de titre d'une compétition. */
 export async function getStandingsPayload(slug: string): Promise<StandingsPayload | null> {
   const def = COMPETITION_BY_SLUG.get(slug);
