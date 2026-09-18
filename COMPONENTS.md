@@ -105,6 +105,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournament-draw-view | tournament-draw-view.tsx | Conteneur principal draw tournoi (header, toggle forecast/bracket, loading/error/empty states) |
 | tournament-view | tournament-view.tsx | Vue `/tennis/tournament/[slug]` (wrapper vers tournament-draw-view) |
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
+| tennis-market-grid | tennis-market-grid.tsx | Grille de marchés tennis 1xBet avec probabilités, color-coding value bets, edge/kelly |
+| tennis-market-filters | tennis-market-filters.tsx | Filtres marchés tennis (catégorie, probabilité min, live/prematch) |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
 ## Football (`src/components/football/`) — 14 components
@@ -115,6 +117,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
 | football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
+| team-profile-dialog | team-profile-dialog.tsx | Fiche équipe au clic (classement contexte, PowerScores A/D + rangs, Elo, infirmerie) |
 | football-strategy-top5-widget | football-strategy-top5-widget.tsx | Composants partagés du top matchs par stratégie (STRATEGIES, MatchRow, TeamName) — l'ancien widget sidebar a été remplacé par le top10 central |
 | football-top10-widget | football-top10-widget.tsx | Widget central « Top 10 matchs par stratégie » — global ou par championnat (sélecteur ligue + stratégie, règle ≥60 % sur la sélection) |
 | top5-backtest-strip | top5-backtest-strip.tsx | Bandeau backtest des widgets Top 5 foot+tennis (WR/ROI par stratégie + 10 derniers picks dépliables) |
