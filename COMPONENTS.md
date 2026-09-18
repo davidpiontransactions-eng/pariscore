@@ -213,7 +213,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | cs2-map-pool-analytics | CS2MapPoolAnalytics.tsx | Map pool winrates 3m/6m + pistol index + H2H |
 | cs2-markets-panel | Cs2MarketsPanel.tsx | Marchés calibrés (winner/map/over/handicap) + EV/Kelly + gate ≥65% |
 
-## Snooker (`src/components/snooker/`) — 7 components
+## Snooker (`src/components/snooker/`) — 8 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -224,6 +224,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | snooker-calendar | snooker-calendar.tsx | Calendrier des matchs snooker |
 | snooker-match-card | snooker-match-card.tsx | Carte de match snooker (joueurs, score BoX, Elo, probabilités, edge) |
 | snooker-live-tracker | snooker-live-tracker.tsx | Suivi live frame par frame (points, breaks, progression) |
+| snooker-live-popup | snooker-live-popup.tsx | Popup live interactif : scoreboard + 3 bets prédictifs (vainqueur, O/U frames, handicap ≥65 %), refresh 15 min |
 | snooker-player-card | snooker-player-card.tsx | Carte profil joueur (stats, forme, Win Rate, Century Rate) |
 
 ## NBA (`src/components/nba/`) — 1 component

@@ -11,6 +11,7 @@ import { SnookerBetsPanel } from "@/components/snooker/snooker-bets-panel";
 import { SnookerHero } from "@/components/snooker/snooker-hero";
 import { SnookerPlayerPopup } from "@/components/snooker/snooker-player-popup";
 import { SnookerVideoPopup } from "@/components/snooker/snooker-video-popup";
+import { SnookerLivePopup } from "@/components/snooker/snooker-live-popup";
 import { BetTrackerPanel } from "@/components/snooker/bet-tracker-panel";
 import { SnookerAccuracyDashboard } from "@/components/snooker/snooker-accuracy-dashboard";
 import { BankrollSimulator } from "@/components/snooker/bankroll-simulator";
@@ -520,6 +521,8 @@ export function SnookerTabContent() {
   const [videoQuery, setVideoQuery] = useState<string | null>(null);
   // Marché affiché dans le popup tutoriel (null = fermé)
   const [tutorialMarket, setTutorialMarket] = useState<MarketKey | null>(null);
+  // Match live ouvert dans le popup live (id — les données suivent le refresh SWR)
+  const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
 
   // Détection live pour refresh fréquent
   const [hasLive, setHasLive] = useState(false);
@@ -570,6 +573,24 @@ export function SnookerTabContent() {
       matches_played: 80,
     })),
   [players]);
+
+  // Données du popup live — résolues à chaque render pour suivre le refresh SWR
+  const livePopupData = useMemo(() => {
+    if (!liveMatchId) return null;
+    const lm = matches.find((x) => x.id === liveMatchId);
+    if (!lm) return null;
+    const [lpa, lpb] = resolvePlayers(lm, players, playerIndex, allPlayerLikes);
+    const comp = computeCompositeProb(lm, players, playerIndex, allPlayerLikes, "all");
+    const preP1 = comp?.prob1 ?? 50;
+    const fav = Math.max(comp?.prob1 ?? 50, comp?.prob2 ?? 50);
+    return {
+      player1: lpa.name || lm.player1,
+      player2: lpb.name || lm.player2,
+      pFrame: frameProbFromMatchProb(fav / 100, lm.bestOf || 7),
+      preP1,
+      match: lm,
+    };
+  }, [liveMatchId, matches, players, playerIndex, allPlayerLikes]);
 
   // Tri : live d'abord, puis programmés, puis terminés
   const sorted = useMemo(() => {
@@ -907,16 +928,25 @@ export function SnookerTabContent() {
                         </svg>
                       </button>
 
-                      {/* Heure / LIVE */}
+                      {/* Heure / LIVE (clic = popup live) */}
                       <div className="w-[52px] shrink-0 text-center">
                         {live ? (
-                          <span className="inline-flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setLiveMatchId(m.id);
+                            }}
+                            aria-label={`Ouvrir le live : ${m.player1} contre ${m.player2}`}
+                            title="Ouvrir le live"
+                            className="inline-flex cursor-pointer items-center gap-0.5 rounded px-0.5 py-0.5"
+                          >
                             <span className="relative flex h-1.5 w-1.5">
                               <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-rose-500 opacity-75" />
                               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
                             </span>
                             <span className="text-[9px] font-bold uppercase text-rose-500">LIVE</span>
-                          </span>
+                          </button>
                         ) : (
                           <span className="text-[12px] tabular-nums text-gray-500">{timeStr}</span>
                         )}
@@ -1525,7 +1555,9 @@ export function SnookerTabContent() {
       {/* ======== LIVE TRACKER ======== */}
       {liveMatches.length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">En direct</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "#00985f" }}>
+            En direct
+          </h3>
           <div className="space-y-4">
             {liveMatches.map((m) => {
               const frames: Array<{ frameNumber: number; winner: "A" | "B"; scoreA: number; scoreB: number }> = [];
@@ -1540,7 +1572,7 @@ export function SnookerTabContent() {
                 frames.push({ frameNumber: frames.length + 1, winner: "B", scoreA: fa, scoreB: fb });
               }
               return (
-                <LiquidGlass key={m.id} tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
+                <div key={m.id} className="rounded-xl border border-gray-200 bg-white p-4">
                   <SnookerLiveTracker
                     frames={frames}
                     bestOf={m.bestOf}
@@ -1548,7 +1580,7 @@ export function SnookerTabContent() {
                     playerBName={m.player2}
                     isLive
                   />
-                </LiquidGlass>
+                </div>
               );
             })}
           </div>
@@ -1645,6 +1677,27 @@ export function SnookerTabContent() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ======== POPUP LIVE ======== */}
+      {livePopupData && (
+        <SnookerLivePopup
+          data={{
+            player1: livePopupData.player1,
+            player2: livePopupData.player2,
+            bestOf: livePopupData.match.bestOf || 7,
+            scoreA: livePopupData.match.scoreA,
+            scoreB: livePopupData.match.scoreB,
+            tournament: livePopupData.match.tournament || "Northern Ireland Open",
+            pFrame: livePopupData.pFrame,
+            preP1: livePopupData.preP1,
+            syncedAt: matchesRes.data?.scraped_at ?? null,
+          }}
+          onClose={() => setLiveMatchId(null)}
+          onRefresh={() => {
+            matchesRes.mutate();
+          }}
+        />
       )}
 
       {/* ======== BET TRACKER ======== */}
