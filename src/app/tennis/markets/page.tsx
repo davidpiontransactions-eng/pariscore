@@ -215,13 +215,3 @@ export default function TennisMarketsPage() {
     </main>
   );
 }
-
-export function generateMetadata() {
-  return {
-    title: "Marchés Tennis — Probabilités 1xBet | PariScore",
-    description:
-      "Calculateur de probabilités pour 45+ marchés tennis : vainqueur, score exact, " +
-      "handicap, total jeux, aces, tiebreak. Modèle Markov + Poisson.",
-    robots: { index: true, follow: true },
-  };
-}
