@@ -164,6 +164,11 @@ async function main() {
   };
 
   mkdirSync(OUT_DIR, { recursive: true });
+  if (matches.length === 0) {
+    // Garde-fou : ne jamais écraser de bonnes données avec un scrape vide (WAF / DOM changé / page vide)
+    console.error("[OddsPortal NIO] ⚠️ 0 match extrait — fichier existant conservé");
+    process.exit(1);
+  }
   writeFileSync(OUT_FILE, JSON.stringify(output, null, 2), "utf-8");
   console.log(`\n[OddsPortal NIO] ✅ ${matches.length} matchs (${liveCount} live, ${finishedCount} terminés, ${withOdds} avec cotes) → ${OUT_FILE}`);
 }
