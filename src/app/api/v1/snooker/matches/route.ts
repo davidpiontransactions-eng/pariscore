@@ -364,7 +364,11 @@ export async function GET(req: Request) {
 
   // Collecter les tournois uniques
   const tournaments = [...new Set(matches.map((m) => m.tournament).filter(Boolean))];
-  const scrapedAt = nioData?.scraped_at || data?.scraped_at || null;
+  // Horodatage le plus récent (le popup live affiche la fraîcheur réelle des scores)
+  const scrapedAt = [nioData?.scraped_at, data?.scraped_at]
+    .filter((s): s is string => !!s)
+    .sort()
+    .reverse()[0] ?? null;
 
   return NextResponse.json(
     {

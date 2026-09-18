@@ -8,7 +8,7 @@
 #
 # Cron VPS (ajouter à crontab -e):
 #   0 8 * * * cd /home/ubuntu/pariscore && bash scripts/cron_snooker.sh >> logs/snooker-cron.log 2>&1
-#   (FlashScore refresh toutes les 20 min géré par cron_snooker_refresh.sh)
+#   (FlashScore refresh toutes les 15 min géré par cron_snooker_refresh.sh)
 
 set -euo pipefail
 

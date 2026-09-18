@@ -1,11 +1,11 @@
 #!/bin/bash
 # cron_snooker_refresh.sh
 #
-# Scrape FlashScore toutes les 20 min pour scores live à jour.
+# Scrape FlashScore toutes les 15 min pour scores live à jour.
 # Plus léger que cron_snooker.sh : FlashScore SEUL (pas Oddsportal).
 #
 # Cron VPS (ajouter à crontab -e):
-#   */20 * * * * cd /home/ubuntu/pariscore && bash scripts/cron_snooker_refresh.sh >> logs/snooker-refresh.log 2>&1
+#   */15 * * * * cd /home/ubuntu/pariscore && bash scripts/cron_snooker_refresh.sh >> logs/snooker-refresh.log 2>&1
 
 set -euo pipefail
 
@@ -26,7 +26,9 @@ if node "$SCRIPT_DIR/scrape_flashscore_snooker.mjs" --both >> "$LOG_FILE" 2>&1; 
   if [ -d "$PM2_DATA" ]; then
     cp "$PROJECT_DIR/data/odds_flashscore_snooker.json" "$PM2_DATA/" 2>/dev/null || true
   fi
-  MATCHES=$(node -e "const d=require('$PROJECT_DIR/data/snooker_matches.json'); console.log(d.length || 0)")
+  # Compter les matchs dans le JSON FlashScore venant d'être scrapé
+  # (l'historique snooker_matches.json n'existe plus, repli silencieux en "?")
+  MATCHES=$(node -e "const d=require('$PROJECT_DIR/data/odds_flashscore_snooker.json'); console.log(d.matches_count || (d.matches||[]).length || 0)" 2>/dev/null || MATCHES="?")
   echo "[$TIMESTAMP] ✅ OK — $MATCHES matchs" | tee -a "$LOG_FILE"
 else
   echo "[$TIMESTAMP] ⚠️ Échec FlashScore" | tee -a "$LOG_FILE"
