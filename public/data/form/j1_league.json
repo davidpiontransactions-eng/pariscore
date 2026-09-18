@@ -4,7 +4,7 @@
     "leagueId": "j1_league",
     "leagueName": "Japan",
     "season": "2026/27",
-    "lastUpdated": "2026-09-17T09:35:59.542286Z",
+    "lastUpdated": "2026-09-18T09:08:22.258042Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -22,15 +22,6 @@
       "ga": 1
     },
     {
-      "teamName": "Machida Zelvia",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 6,
-      "ga": 3
-    },
-    {
       "teamName": "K. Frontale",
       "gp": 3,
       "w": 2,
@@ -38,6 +29,15 @@
       "l": 0,
       "gf": 9,
       "ga": 5
+    },
+    {
+      "teamName": "Vissel Kobe",
+      "gp": 4,
+      "w": 3,
+      "d": 1,
+      "l": 0,
+      "gf": 8,
+      "ga": 4
     },
     {
       "teamName": "S. Hiroshima",
@@ -49,16 +49,25 @@
       "ga": 2
     },
     {
-      "teamName": "Vissel Kobe",
-      "gp": 4,
-      "w": 3,
+      "teamName": "Machida Zelvia",
+      "gp": 3,
+      "w": 2,
       "d": 1,
       "l": 0,
-      "gf": 8,
-      "ga": 4
+      "gf": 6,
+      "ga": 3
     }
   ],
   "away": [
+    {
+      "teamName": "Yokohama M.",
+      "gp": 4,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 6,
+      "ga": 4
+    },
     {
       "teamName": "Vissel Kobe",
       "gp": 3,
@@ -67,15 +76,6 @@
       "l": 1,
       "gf": 3,
       "ga": 1
-    },
-    {
-      "teamName": "Machida Zelvia",
-      "gp": 4,
-      "w": 3,
-      "d": 1,
-      "l": 0,
-      "gf": 13,
-      "ga": 3
     },
     {
       "teamName": "Kashiwa Reysol",
@@ -96,13 +96,13 @@
       "ga": 3
     },
     {
-      "teamName": "Yokohama M.",
+      "teamName": "Machida Zelvia",
       "gp": 4,
-      "w": 2,
+      "w": 3,
       "d": 1,
-      "l": 1,
-      "gf": 6,
-      "ga": 4
+      "l": 0,
+      "gf": 13,
+      "ga": 3
     }
   ]
 }
