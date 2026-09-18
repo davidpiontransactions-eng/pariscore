@@ -365,9 +365,15 @@ export function buildTeamProfile(
   const discipline = last5.length > 0 ? { yellows, reds, redLastMatch, sample: last5.length } : null;
 
   // Congestion + steam : historique brut de la saison (joués + à venir).
+  // Fallback saison précédente si la saison courante n'a pas encore d'historique
+  // (début de saison, CSV scrapés avant ajout clé history).
   const todayISO = new Date().toISOString().slice(0, 10);
   const in14d = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
-  const allRows = fdHistory(leagueId, season) ?? [];
+  const prevSeason = fdSeasons(leagueId).find((s) => s !== season);
+  const allRowsRaw = fdHistory(leagueId, season) ?? [];
+  const allRows = allRowsRaw.length > 0
+    ? allRowsRaw
+    : (prevSeason ? fdHistory(leagueId, prevSeason) ?? [] : []);
   const teamRows = allRows.filter(
     (r) => normTeam(r.home) === fdKey || normTeam(r.away) === fdKey,
   );
@@ -385,16 +391,8 @@ export function buildTeamProfile(
   const congestion = { restDays, next14d, congested: next14d >= 3 };
 
   // Steam : (clôture − ouverture) / ouverture sur les 10 derniers joués du contexte.
-  // Pinnacle absent de la saison en cours → backfill saison précédente (documenté).
-  const prevSeason = fdSeasons(leagueId).find((s) => s !== season);
-  const steamPool = [
-    ...teamRows,
-    ...(prevSeason
-      ? (fdHistory(leagueId, prevSeason) ?? []).filter(
-          (r) => normTeam(r.home) === fdKey || normTeam(r.away) === fdKey,
-        )
-      : []),
-  ];
+  // allRows inclut déjà le fallback saison précédente (voir plus haut).
+  const steamPool = teamRows;
   const steamRows = steamPool
     .filter((r) => {
       if (r.hg == null) return false;
