@@ -8,7 +8,7 @@
  * Données : API publique ESPN, moteur Elo + Poisson + marqueurs d'essai.
  */
 
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   useRugbyCompetitions,
@@ -21,12 +21,16 @@ import { RugbyMatchCard } from "./RugbyMatchCard";
 import { RugbyMatchDetailModal } from "./RugbyMatchDetailModal";
 import { RugbyMethodology } from "./RugbyMethodology";
 import { RugbyStandingsTable } from "./RugbyStandingsTable";
+import { RugbyCalendarTable, type RugbyCalMatch } from "./rugby-calendar-table";
+import { useRugbyCalendar } from "@/hooks/use-rugby-calendar";
 import { Card, SectionHeading, fmtDateLong } from "./rugby-ui";
+import { getFlashscorePayload } from "@/lib/rugby/provider";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { RugbyTopStrategiesWidget } from "./rugby-top-strategies-widget";
 
 type View = "predictions" | "standings" | "markets";
 
@@ -184,86 +188,111 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
 /* ------------------------------------------------------------------ */
 
 function PredictionsView({ slug, onOpenMatch }: { slug: string; onOpenMatch: (id: string) => void }) {
-  const { data, isLoading } = useRugbyPredictions(slug);
-  const tabsId = useId();
-  // keepPreviousData peut renvoyer les matchs de la compétition précédente
-  // pendant le re-fetch : on n'affiche que les données de la compétition active.
-  const matches = data?.competition?.slug === slug ? data.matches : [];
+  const { matches: allMatches, loading: calendarLoading } = useRugbyCalendar();
 
-  // Live / Pre-match : statut ESPN "inprogress" vs "scheduled" (+ fenêtre
-  // horaire de début sur le pre-match).
-  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+// Intégrer les données Flashscore comme fallback si les données ESPN sont anciennes
+const [flashscoreMatches, setFlashscoreMatches] = useState<RugbyCalMatch[]>([]);
+const [flashscoreLoaded, setFlashscoreLoaded] = useState(false);
+
+useEffect(() => {
+  // Charger Flashscore uniquement si ESPN est vieux (>6h) OU s'il n'y a pas de matchs
+  const checkAndLoadFlashscore = async () => {
+    try {
+      const { data: flashData } = await fetch('/api/rugby/flashscore?slug=top-14');
+      if (flashData && flashData.matches && flashData.matches.length > 0) {
+        const formatted = flashData.matches.map((m: any) => ({
+          id: m.matchId || m.id,
+          scheduledAt: m.scheduledAt || '',
+          home: { name: m.home || 'Inconnu', logo: m.logo },
+          away: { name: m.away || 'Inconnu', logo: m.logo },
+          status: m.status || 'scheduled',
+          homeScore: m.homeScore,
+          awayScore: m.awayScore,
+          minute: m.minute,
+          competition: m.competition || 'top-14',
+          competitionName: m.competitionName || 'Top 14',
+          probPct: m.probPct,
+          confLabel: m.confLabel,
+          verdict: m.verdict,
+          expectedHomeScore: m.expectedHomeScore,
+          expectedAwayScore: m.expectedAwayScore,
+          expectedMargin: m.expectedMargin,
+          mostLikelyScore: m.mostLikelyScore,
+        }));
+        setFlashscoreMatches(formatted);
+        setFlashscoreLoaded(true);
+      }
+    } catch (err) {
+      console.error('[rugby] Flashscore fallback failed:', err);
+    }
+  };
+
+  const cs = useRugbyCalendar.getState?.() || {};
+  const espenAge = Date.now() - (cs.lastSyncAt ?? 0);
+  const hasMatches = allMatches?.length > 0;
+  const isESPNStale = espenAge > 6 * 60 * 60 * 1000;
+
+  if (!hasMatches || isESPNStale) {
+    checkAndLoadFlashscore();
+  }
+}, [allMatches, calendarLoading]);
+
+// Utiliser les matches Flashscore comme complément ou remplacement
+const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allMatches;
+  const tabsId = useId();
+
+  // Filtrer par compétition sélectionnée
+  const matches = useMemo(
+    () => allMatches.filter((m) => m.competition === slug),
+    [allMatches, slug]
+  );
+
+  // Live / Pre-match
   const mode = useSportsSidebarStore((s) => s.modes.rugby ?? "live");
   const setMode = useCallback(
     (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("rugby", m),
     [],
   );
-  // Fenêtre horaire : partagée avec la sidebar (store unique, modèle 1xBet).
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
   const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
 
   const { live, prematch } = useMemo(
-    () => splitLivePrematch(matches, (m) => m.match.status === "inprogress"),
+    () => splitLivePrematch(matches, (m) => m.status === "inprogress"),
     [matches],
   );
 
   const visiblePrematch = useMemo(() => {
-    const scoped = timeToday ? filterByToday(prematch, (m) => m.match.date) : prematch;
-    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.match.date);
+    const scoped = timeToday ? filterByToday(prematch, (m) => m.scheduledAt) : prematch;
+    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.scheduledAt);
     return [...inWindow].sort(
-      (a, b) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime(),
+      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
     );
   }, [prematch, timeRange, timeToday]);
 
   const displayMatches = mode === "live" ? live : visiblePrematch;
 
-  const groups = useMemo(() => {
-    const map = new Map<string, PredictedMatch[]>();
-    for (const m of displayMatches) {
-      // Regroupement par journée dans le fuseau de l'utilisateur (Paris),
-      // cohérent avec fmtDateLong — pas en UTC.
-      const key = new Date(m.match.date).toLocaleDateString("fr-CA", {
-        timeZone: "Europe/Paris",
-      });
-      const arr = map.get(key) ?? [];
-      arr.push(m);
-      map.set(key, arr);
-    }
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  }, [displayMatches]);
-
-  if (isLoading && !matches.length) {
+  if (calendarLoading && !matches.length) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-40 animate-pulse rounded-2xl bg-[#12151f]" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-2xl"
+            style={{ height: 120, backgroundColor: "#f5f5f5" }}
+          />
         ))}
       </div>
     );
   }
 
   if (!matches.length) {
-    return (
-      <Card className="p-10 text-center">
-        <p className="text-3xl" aria-hidden>🏉</p>
-        <p className="mt-3 font-semibold text-white">Pas de fixtures à venir</p>
-        <p className="mt-1 text-sm text-slate-400">
-          Le calendrier de cette compétition n&apos;est pas encore publié — revenez bientôt.
-        </p>
-      </Card>
-    );
+    return <RugbyTopStrategiesWidget />;
   }
 
   return (
-    <div className="space-y-7">
-      {data?.degraded && (
-        <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-          Données partielles : la source ESPN n&apos;a pas répondu entièrement. Les prédictions affichées proviennent du dernier cache valide.
-        </p>
-      )}
-
-      {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
+    <div className="space-y-5">
+      {/* Sous-onglets Live | Pre-match */}
       <MatchViewTabs
         idBase={tabsId}
         active={mode}
@@ -272,32 +301,19 @@ function PredictionsView({ slug, onOpenMatch }: { slug: string; onOpenMatch: (id
         prematchCount={prematch.length}
       />
 
-      {/* Filtre par heure de début — uniquement sur le pre-match */}
+      {/* Filtre par heure — uniquement sur le pre-match */}
       {mode === "prematch" && (
         <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-4" />
       )}
 
-      {groups.length === 0 ? (
-        <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
-          <MatchEmptyState mode={mode} />
-        </div>
-      ) : (
-        <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
-          {groups.map(([day, rows]) => (
-            <section key={day} className="first:mt-4">
-              <h3 className="mb-3 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
-                <span className="h-px w-6 bg-teal-500/60" aria-hidden />
-                {fmtDateLong(rows[0].match.date)}
-              </h3>
-              <div className="grid gap-3 lg:grid-cols-2">
-                {rows.map((r) => (
-                  <RugbyMatchCard key={r.match.id} row={r} onOpen={onOpenMatch} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+      {/* Calendrier style FotMob */}
+      <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
+        <RugbyCalendarTable
+          matches={displayMatches}
+          loading={calendarLoading}
+          onMatchClick={onOpenMatch}
+        />
+      </div>
     </div>
   );
 }

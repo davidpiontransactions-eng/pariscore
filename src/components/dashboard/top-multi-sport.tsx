@@ -11,6 +11,8 @@ import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
 import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
 import { buildTopTags, topTagsForMatch } from "@/lib/top10-calendar-link";
 import { useFootballTopN } from "@/hooks/use-football-top5";
+import { RugbyCalendarTable } from "@/components/rugby/rugby-calendar-table";
+import { useRugbyCalendar } from "@/hooks/use-rugby-calendar";
 
 /* ─── État filtres calendrier depuis l'URL (F2 : deep-link ?date=&h=&live=&top=&q=) ─── */
 function readCalUrl(): { date: string | null; hours: number | null; live: boolean; top: boolean; q: string } {
@@ -320,6 +322,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   // l'onglet actif est football — remplace les top-picks (vides hors edges).
   const [calMatches, setCalMatches] = useState<FotmobCalMatch[]>([]);
   const [calLoading, setCalLoading] = useState(false);
+  // Calendrier rugby : même style FotMob, données /api/rugby/*/predictions
+  const { matches: rugbyCalMatches, loading: rugbyCalLoading } = useRugbyCalendar();
   // Filtres barre FotMob (remplacent pills masquées en mode foot).
   // État initial lu depuis l'URL (F2 : ?date=&h=&live=&top=&q=) — deep-link.
   const [calDate, setCalDate] = useState<string>(() => readCalUrl().date ?? parisTodayKey());
@@ -519,8 +523,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         </button>
       </div>
 
-      {/* Time filters (masqués en mode calendrier foot : barre FotMob) */}
-      {activeSport !== "football" && (
+      {/* Time filters (masqués en mode calendrier foot/rugby : barre FotMob) */}
+      {activeSport !== "football" && activeSport !== "rugby" && (
       <div className="flex gap-1 mb-3 overflow-x-auto scrollbar-none">
         {TIME_FILTERS.map((tf) => (
           <button
@@ -542,8 +546,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       </div>
       )}
 
-      {/* Sport filters (masqués en mode calendrier foot : barre FotMob) */}
-      {activeSport !== "football" && (
+      {/* Sport filters (masqués en mode calendrier foot/rugby : barre FotMob) */}
+      {activeSport !== "football" && activeSport !== "rugby" && (
       <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-none">
         {SPORT_FILTERS.map((sf) => {
           const count = sportCounts[sf.id] || 0;
@@ -647,6 +651,63 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
             </div>
           </>
         )
+      ) : activeSport === "rugby" ? (
+        /* Content — onglet rugby : tableau calendrier style FotMob + filtres */
+        (() => {
+          // Filtrer les matchs rugby par date/heure/live
+          const now = new Date();
+          const filteredRugby = rugbyCalMatches.filter((m) => {
+            // Filtre live
+            if (calLiveOnly && m.status !== "inprogress") return false;
+            // Filtre par heure (fenêtre glissante)
+            if (calHours != null) {
+              const kickoff = new Date(m.scheduledAt);
+              const diffH = (kickoff.getTime() - now.getTime()) / 3600_000;
+              if (diffH < 0 && m.status === "scheduled") return false;
+              if (diffH > calHours) return false;
+            }
+            // Filtre par date
+            if (calDate) {
+              const matchDay = new Date(m.scheduledAt).toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
+              if (matchDay !== calDate) return false;
+            }
+            // Filtre recherche
+            if (calQuery.trim()) {
+              const q = calQuery.trim().toLowerCase();
+              if (!m.home.name.toLowerCase().includes(q) && !m.away.name.toLowerCase().includes(q)) return false;
+            }
+            return true;
+          });
+
+          return (
+            <>
+              <FotmobFilterBar
+                dateKey={calDate}
+                todayKey={parisTodayKey()}
+                onPrevDay={() => setCalDate((k) => shiftDateKey(k, -1))}
+                onNextDay={() => setCalDate((k) => shiftDateKey(k, 1))}
+                onPickDate={setCalDate}
+                liveOnly={calLiveOnly}
+                onToggleLive={() => setCalLiveOnly((v) => !v)}
+                hours={calHours}
+                onHours={setCalHours}
+                query={calQuery}
+                onQuery={setCalQuery}
+                count={filteredRugby.length}
+                topOnly={false}
+                onToggleTop={() => {}}
+              />
+              <p className="mt-1.5 text-[11px] tabular-nums" style={{ color: "#717171" }} aria-live="polite">
+                {filteredRugby.length === 0
+                  ? `Aucun match${calHours != null ? ` dans les ${calHours}h` : calDate ? ` le ${calDate}` : ""} — élargissez la fenêtre.`
+                  : `${filteredRugby.length} match${filteredRugby.length > 1 ? "s" : ""}${calHours != null ? ` · ≤${calHours}h` : ""}`}
+              </p>
+              <div className="mt-2">
+                <RugbyCalendarTable matches={filteredRugby} loading={rugbyCalLoading} />
+              </div>
+            </>
+          );
+        })()
       ) : loading ? (
         <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
       ) : !loading && filteredGroups.length === 0 ? (
