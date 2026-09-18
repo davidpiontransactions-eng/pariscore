@@ -310,17 +310,33 @@ export async function GET(req: Request) {
     matches.push(...nioMatches);
   }
 
-  // Dédupliquer par nom de joueurs + date — prioriser Oddsportal (a les cotes)
+  // Déduplication par paire de joueurs (sans date) — le mode --both scrape
+  // aujourd'hui + demain et le même fixture apparaît sur 2 dates (ven + sam).
+  // Clé insensible à l'ordre/casse, on garde le meilleur candidat : live > cotes > date la plus proche.
+  const normName = (s: string) => s.toLowerCase().trim().replace(/\s+/g, " ");
+  const pairKey = (a: string, b: string) => {
+    const [x, y] = [normName(a), normName(b)].sort();
+    return `${x}__vs__${y}`;
+  };
+  const scoreMatch = (m: SnookerMatch) =>
+    (m.status === "live" ? 100 : 0) + (m.odds ? 10 : 0) + (m.source === "oddsportal" && m.odds ? 5 : 0);
   const byKey = new Map<string, SnookerMatch>();
   for (const m of matches) {
-    const datePart = m.scheduled_at ? m.scheduled_at.slice(0, 10) : "nodate";
-    const key = `${m.player1.toLowerCase()}-${m.player2.toLowerCase()}-${datePart}`;
+    const key = pairKey(m.player1, m.player2);
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, m);
-    } else if (m.source === "oddsportal" && m.odds) {
-      // Oddsportal a les cotes → écraser FlashScore
-      byKey.set(key, m);
+    } else {
+      const sNew = scoreMatch(m);
+      const sOld = scoreMatch(existing);
+      if (sNew > sOld) {
+        byKey.set(key, m);
+      } else if (sNew === sOld) {
+        // Même score → garder la date la plus proche (évite le doublon ven/sam)
+        const dNew = m.scheduled_at ?? "";
+        const dOld = existing.scheduled_at ?? "";
+        if (dNew && (!dOld || dNew < dOld)) byKey.set(key, m);
+      }
     }
   }
   matches = Array.from(byKey.values());

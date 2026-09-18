@@ -586,7 +586,17 @@ export function SnookerTabContent() {
       if (b.hasOdds) return 1;
       return b.prob - a.prob;
     });
-    return scored.slice(0, 10);
+    // Déduplication défensive par paire de joueurs (si l'API renvoie le même
+    // fixture sur 2 dates via --both, on garde le meilleur score = le premier trié)
+    const seen = new Set<string>();
+    const deduped = scored.filter((s) => {
+      const [x, y] = [s.match.player1.toLowerCase().trim(), s.match.player2.toLowerCase().trim()].sort();
+      const k = `${x}__vs__${y}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    return deduped.slice(0, 10);
   }, [sorted, activeMarket, players, handicapVal, overLine]);
 
   // ── Calendrier FlashScore : filtrage par onglet + date ──────────────────
