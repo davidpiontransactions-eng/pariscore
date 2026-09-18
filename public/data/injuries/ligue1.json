@@ -1,0 +1,436 @@
+{
+ "meta": {
+  "leagueId": "ligue1",
+  "source": "rotowire",
+  "sourceUrl": "https://www.rotowire.com/soccer/tables/injury-report.php?league=FRAN",
+  "updatedAt": "2026-09-18T10:51:15.884531+00:00",
+  "playerCount": 56,
+  "hasReturnDates": false
+ },
+ "teams": {
+  "Lens": [
+   {
+    "player": "Saud Abdulhamid",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Samson Baidoo",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jhoanner Chavez",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Maik Nawrocki",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Yacine Titraoui",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Nice": [
+   {
+    "player": "Laurent Abergel",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Moise Bombito",
+    "position": "D",
+    "injury": "Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Antoine Mendy",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Morgan Sanson",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Paris FC": [
+   {
+    "player": "Otavio",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Thibault De Smet",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Emmanuel Mbemba",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nhoa Sangui",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Brest": [
+   {
+    "player": "Mama Balde",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Romain Cagnon",
+    "position": "G",
+    "injury": "Shoulder",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Brendan Chardonnet",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mamady Diambou",
+    "position": "M",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Noah Edjouma",
+    "position": "F",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Monaco": [
+   {
+    "player": "Folarin Balogun",
+    "position": "F",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Mamadou Coulibaly",
+    "position": "M",
+    "injury": "Quadriceps",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ansu Fati",
+    "position": "F",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Stanis Idumbo Muzambo",
+    "position": "F/M",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Anis Soubeir",
+    "position": "M",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jordan Teze",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Troyes": [
+   {
+    "player": "Ismael Boura",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Paolo Gozzi",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Merwan Ifnaoui",
+    "position": "F",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alexandre Phliponeau",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Yvann Titi",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Le Mans": [
+   {
+    "player": "Lucas Buades",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Auxerre": [
+   {
+    "player": "Assane Diousse",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sekou Fofana",
+    "position": "D",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Bryan Ikemefuna Okoh",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Marvin Senaya",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Telli Siwe",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Toulouse": [
+   {
+    "player": "Aron Donnum",
+    "position": "F/M",
+    "injury": "Personal",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Abu Francis",
+    "position": "M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Rasmus Nicolaisen",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Lorient": [
+   {
+    "player": "Bandiougou Fadiga",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Noah Mbamba",
+    "position": "M/D",
+    "injury": "Hamstring",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Aiyegun Tosin",
+    "position": "F",
+    "injury": "Illness",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Strasbourg": [
+   {
+    "player": "Martial Godo",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Joaquin Panichelli",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Paris SG": [
+   {
+    "player": "Achraf Hakimi",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Lille": [
+   {
+    "player": "Hamza Igamane",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ethan Mbappe",
+    "position": "M",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   }
+  ],
+  "Marseille": [
+   {
+    "player": "Geoffrey Kondogbia",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Tochukwu Nnadi",
+    "position": "M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Le Havre": [
+   {
+    "player": "Felix Mambimbi",
+    "position": "F",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Lionel Mpasi",
+    "position": "G",
+    "injury": "Achilles",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Junior Mwanga",
+    "position": "M/D",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Rassoul Ndiaye",
+    "position": "M",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Timothee Pembele",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Paul Argney",
+    "position": "G",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Stephan Zagadou",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Lyon": [
+   {
+    "player": "Nicolas Tagliafico",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ]
+ }
+}

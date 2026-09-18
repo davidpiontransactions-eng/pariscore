@@ -1,0 +1,631 @@
+{
+ "meta": {
+  "leagueId": "seriea",
+  "source": "rotowire",
+  "sourceUrl": "https://www.rotowire.com/soccer/tables/injury-report.php?league=SERI",
+  "updatedAt": "2026-09-18T10:51:14.092331+00:00",
+  "playerCount": 83,
+  "hasReturnDates": false
+ },
+ "teams": {
+  "Torino": [
+   {
+    "player": "Che Adams",
+    "position": "F",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Cesare Casadei",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Franco Israel",
+    "position": "G",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Pietro Pellegri",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Como": [
+   {
+    "player": "Jayden Addai",
+    "position": "F/M",
+    "injury": "Achilles",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Venezia": [
+   {
+    "player": "Andrea Adorante",
+    "position": "F",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Toma Basic",
+    "position": "M",
+    "injury": "Foot",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Armel Bella-Kotchap",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Gianluca Busio",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Matteo Dagasso",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Bartol Franjic",
+    "position": "M/D",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Matias Moreno",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Marin Sverko",
+    "position": "D",
+    "injury": "Hip",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Genoa": [
+   {
+    "player": "Amorim",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Elias Havel",
+    "position": "F",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Leo Ostigard",
+    "position": "D",
+    "injury": "Illness",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Johan Vasquez",
+    "position": "D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Lorenzo Venturino",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Napoli": [
+   {
+    "player": "Frank Anguissa",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Alessandro Buongiorno",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alisson Santos",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luca Marianucci",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Scott McTominay",
+    "position": "M",
+    "injury": "Chest",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alex Meret",
+    "position": "G",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Giovane",
+    "position": "F",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Udinese": [
+   {
+    "player": "Juan Arizala",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Oumar Solet",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Matteo Palma",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jakub Piotrowski",
+    "position": "M",
+    "injury": "Chest",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nicolo Zaniolo",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Alessandro Zanoli",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Roma": [
+   {
+    "player": "Muhammed Bah",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Evan N'Dicka",
+    "position": "D",
+    "injury": "Illness",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Lecce": [
+   {
+    "player": "Medon Berisha",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Omri Gandelman",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Willem Geubbels",
+    "position": "F",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Juventus": [
+   {
+    "player": "Jeremie Boga",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Juan Cabal",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Andrea Cambiaso",
+    "position": "M/D",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jeff Ekhator",
+    "position": "F",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Manuel Locatelli",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Arkadiusz Milik",
+    "position": "F",
+    "injury": "Not Injury Related",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Khephren Thuram",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kenan Yildiz",
+    "position": "F/M",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Sassuolo": [
+   {
+    "player": "Daniel Boloca",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Fali Cande",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jay Idzes",
+    "position": "D",
+    "injury": "Quadriceps",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ismael Kone",
+    "position": "M",
+    "injury": "Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Edoardo Pieragnolo",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Cristian Volpato",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sebastian Walukiewicz",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Inter": [
+   {
+    "player": "Hakan Calhanoglu",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Djed Spence",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "John Stones",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Monza": [
+   {
+    "player": "Patrick Ciurria",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ricardo Mangas",
+    "position": "M/D",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Cyril Ngonge",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Matteo Pessina",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Idrissa Toure",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jan Ziolkowski",
+    "position": "D",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Cagliari": [
+   {
+    "player": "Ze Pedro",
+    "position": "D",
+    "injury": "Arm",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Mattia Felici",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Riyad Idrissi",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Daniel Maldini",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "M'Bala Nzola",
+    "position": "F",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Yael Trepy",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Lazio": [
+   {
+    "player": "Fisayo Dele-Bashiru",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Danilho Doekhi",
+    "position": "D",
+    "injury": "Hand",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Alessio Furlanetto",
+    "position": "G",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Patric",
+    "position": "M/D",
+    "injury": "Lower Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Adam Marusic",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Luca Pellegrini",
+    "position": "D",
+    "injury": "Not Injury Related",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nicolo Rovella",
+    "position": "M",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Parma": [
+   {
+    "player": "Ousmane Diallo",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Hans Nicolussi Caviglia",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Bologna": [
+   {
+    "player": "Artem Dovbyk",
+    "position": "F",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Oussama El Azzouzi",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Riccardo Orsolini",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Nadir Zortea",
+    "position": "M/D",
+    "injury": "Hip",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Frosinone": [
+   {
+    "player": "Florian Grillitsch",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Atalanta": [
+   {
+    "player": "Isak Hien",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kamaldeen Sulemana",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Fiorentina": [
+   {
+    "player": "Fabiano Parisi",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ]
+ }
+}

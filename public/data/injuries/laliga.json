@@ -1,0 +1,535 @@
+{
+ "meta": {
+  "leagueId": "laliga",
+  "source": "rotowire",
+  "sourceUrl": "https://www.rotowire.com/soccer/tables/injury-report.php?league=LIGA",
+  "updatedAt": "2026-09-18T10:51:12.300546+00:00",
+  "playerCount": 69,
+  "hasReturnDates": false
+ },
+ "teams": {
+  "Getafe": [
+   {
+    "player": "Abdelkabir Abqar",
+    "position": "D",
+    "injury": "Leg",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Kiko Femenia",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Juanmi",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mario Martin",
+    "position": "M",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Ramon Terrats",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Christantus Uche",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Ath Madrid": [
+   {
+    "player": "Julian Alvarez",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Pablo Barrios",
+    "position": "M",
+    "injury": "Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alexander Sorloth",
+    "position": "F",
+    "injury": "Tear",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Celta": [
+   {
+    "player": "Andres Antanon",
+    "position": "M",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Iago Aspas",
+    "position": "F",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Valencia": [
+   {
+    "player": "Copete",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sergi Canos",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mouctar Diakhaby",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Dimitri Foulquier",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Diego Lopez",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luis Rioja",
+    "position": "F/M",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Umar Sadiq",
+    "position": "F",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Cesar Tarrega",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Malaga": [
+   {
+    "player": "Adam Aznou",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jens Cajuste",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Calero",
+    "position": "D",
+    "injury": "Ribs",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Moussa Diarra",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Julen Lobete",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Diego Murillo",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Aaron Ochoa",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Barcelona": [
+   {
+    "player": "Roony Bardghji",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Frenkie de Jong",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Joan Garcia",
+    "position": "G",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Vallecano": [
+   {
+    "player": "Augusto Batalla",
+    "position": "G",
+    "injury": "Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luiz Felipe",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Randy Nteka",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Isi Palazon",
+    "position": "M",
+    "injury": "Strain",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jozhua Vertrouwd",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Ath Bilbao": [
+   {
+    "player": "Peio Canales",
+    "position": "M",
+    "injury": "Calf",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Unai Egiluz",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Dani Vivian",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Espanol": [
+   {
+    "player": "Jofre Carreras",
+    "position": "F/M",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Omar El Hilali",
+    "position": "D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Kike",
+    "position": "F",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Andoni Gorosabel",
+    "position": "D",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Javi Puado",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Villarreal": [
+   {
+    "player": "Santi Comesana",
+    "position": "M",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Juan Foyth",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Santander": [
+   {
+    "player": "Pedro Felipe",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Simon Eriksson",
+    "position": "G",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Andres Martin",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Elche": [
+   {
+    "player": "Yago Santiago",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Levante": [
+   {
+    "player": "Karl Etta",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alejandro Primo",
+    "position": "G",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Hugo Sotelo",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Alaves": [
+   {
+    "player": "Facundo Garces",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Aitor Manas",
+    "position": "F",
+    "injury": "Head",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mikel Rodriguez",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Osasuna": [
+   {
+    "player": "Moi Gomez",
+    "position": "F/M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jorge Herrando",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Aimar Oroz",
+    "position": "M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Valentin Rosier",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Betis": [
+   {
+    "player": "Diego Llorente",
+    "position": "D",
+    "injury": "Nose",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Aitor Ruibal",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Real Madrid": [
+   {
+    "player": "Ferland Mendy",
+    "position": "D",
+    "injury": "Hip",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Eder Militao",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Rodrygo",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Sociedad": [
+   {
+    "player": "Alvaro Odriozola",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Igor Zubeldia",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Sevilla": [
+   {
+    "player": "Kike Salas",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Lucas Stassin",
+    "position": "F",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ruben Vargas",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "La Coruna": [
+   {
+    "player": "Angelino",
+    "position": "M/D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   }
+  ]
+ }
+}

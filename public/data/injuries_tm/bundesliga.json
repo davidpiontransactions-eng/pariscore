@@ -1,0 +1,582 @@
+{
+ "meta": {
+  "leagueId": "bundesliga",
+  "source": "transfermarkt",
+  "sourceUrl": "https://www.transfermarkt.fr/bundesliga/verletztespieler/wettbewerb/L1/plus/1",
+  "updatedAt": "2026-09-18T13:12:44.147Z",
+  "fetchedAt": "2026-09-18T13:12:44.147Z",
+  "rowCount": 67,
+  "coveragePct": 100,
+  "withReturnDates": 6
+ },
+ "teams": {
+  "Union Berlin": [
+   {
+    "player": "Andrej Ilic",
+    "injury": "Intoxication alimentaire",
+    "since": "2026-07-27",
+    "sinceRaw": "27 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Marvin Friedrich",
+    "injury": "Blessure",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Oliver Burke",
+    "injury": "Problèmes au tendon d'Achille",
+    "since": "2026-07-20",
+    "sinceRaw": "20 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Stanley Nsoki",
+    "injury": "Blessure musculaire",
+    "since": "2026-07-15",
+    "sinceRaw": "15 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Andrik Markgraf",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-07-09",
+    "sinceRaw": "9 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Mekhi Gray",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Josip Juranovic",
+    "injury": "Malade",
+    "since": "2026-09-17",
+    "sinceRaw": "17 sept. 2026",
+    "returnDate": "2026-09-21",
+    "returnRaw": "21 sept. 2026"
+   }
+  ],
+  "Elversberg": [
+   {
+    "player": "Luis Seifert",
+    "injury": "Début de rupture du ligament syndesmotique",
+    "since": "2026-07-10",
+    "sinceRaw": "10 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Tom Zimmerschied",
+    "injury": "Problèmes dorsaux",
+    "since": "2026-07-18",
+    "sinceRaw": "18 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "FC Koln": [
+   {
+    "player": "Luca Waldschmidt",
+    "injury": "Problèmes musculaires",
+    "since": "2026-08-16",
+    "sinceRaw": "16 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Timo Hübers",
+    "injury": "Blessure au genou",
+    "since": "2025-10-26",
+    "sinceRaw": "26 oct. 2025",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Stuttgart": [
+   {
+    "player": "Nikolas Nartey",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-22",
+    "sinceRaw": "22 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Angelo Stiller",
+    "injury": "Contusion au genou",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Luca Jaquez",
+    "injury": "Manque d'entrainement",
+    "since": "2026-08-01",
+    "sinceRaw": "1 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Tiago Tomás",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jarzinho Malanga",
+    "injury": "Blessure musculaire abdominale",
+    "since": "2026-09-10",
+    "sinceRaw": "10 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Dan-Axel Zagadou",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-08",
+    "sinceRaw": "8 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Lorenz Assignon",
+    "injury": "Manque d'entrainement",
+    "since": "2026-09-03",
+    "sinceRaw": "3 sept. 2026",
+    "returnDate": "2026-09-21",
+    "returnRaw": "21 sept. 2026"
+   },
+   {
+    "player": "Justin Diehl",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-07-22",
+    "sinceRaw": "22 juil. 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Dennis Seimen",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-07-22",
+    "sinceRaw": "22 juil. 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   }
+  ],
+  "Werder Bremen": [
+   {
+    "player": "Jens Stage",
+    "injury": "Déchirure du tendon",
+    "since": "2026-08-29",
+    "sinceRaw": "29 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Felix Agu",
+    "injury": "Problèmes musculaires",
+    "since": "2026-07-26",
+    "sinceRaw": "26 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Justin Njinmah",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Moussa Ndiaye",
+    "injury": "Claquage à l'aine",
+    "since": "2026-09-11",
+    "sinceRaw": "11 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Keke Topp",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-03-26",
+    "sinceRaw": "26 mars 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Paderborn": [
+   {
+    "player": "Sven Michel",
+    "injury": "Blessure à l'aine",
+    "since": "2026-08-01",
+    "sinceRaw": "1 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Timur Gayret",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-18",
+    "sinceRaw": "18 avr. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Nyamekye Awortwie-Grant",
+    "injury": "Problèmes de ligament externe",
+    "since": "2026-07-14",
+    "sinceRaw": "14 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Lasse Eickel",
+    "injury": "Problèmes dorsaux",
+    "since": "2026-08-12",
+    "sinceRaw": "12 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Augsburg": [
+   {
+    "player": "Steve Mounié",
+    "injury": "Blessure inconnue",
+    "since": "2026-07-31",
+    "sinceRaw": "31 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Tim Breithaupt",
+    "injury": "Blessure à l'orteil",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Anton Kade",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Sima Suso",
+    "injury": "Fibre musculaire",
+    "since": "2026-09-05",
+    "sinceRaw": "5 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Faik Sakar",
+    "injury": "Problèmes à la cheville",
+    "since": "2026-09-10",
+    "sinceRaw": "10 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "RB Leipzig": [
+   {
+    "player": "Rocco Reitz",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-03",
+    "sinceRaw": "3 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Assan Ouédraogo",
+    "injury": "Blessure à l'épaule",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Marc Guiu",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-18",
+    "sinceRaw": "18 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Christoph Baumgartner",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-06-01",
+    "sinceRaw": "1 juin 2026",
+    "returnDate": "2026-10-31",
+    "returnRaw": "31 oct. 2026"
+   }
+  ],
+  "Dortmund": [
+   {
+    "player": "Filippo Mane",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-06",
+    "sinceRaw": "6 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Justin Lerma",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-26",
+    "sinceRaw": "26 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Giannis Konstantelias",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Emre Can",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-03-01",
+    "sinceRaw": "1 mars 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Ein Frankfurt": [
+   {
+    "player": "Oscar Højlund",
+    "injury": "Problèmes à la hanche",
+    "since": "2026-09-11",
+    "sinceRaw": "11 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jessic Ngankam",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-07",
+    "sinceRaw": "7 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Ansgar Knauff",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-27",
+    "sinceRaw": "27 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jeremiaha Maluze",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-13",
+    "sinceRaw": "13 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "M'gladbach": [
+   {
+    "player": "Jens Castrop",
+    "injury": "Blessure à l'épaule",
+    "since": "2026-08-06",
+    "sinceRaw": "6 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Yukhym Konoplya",
+    "injury": "Manque d'entrainement",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Enzo Leopold",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Nicolas Kühn",
+    "injury": "Déchirure musculaire",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Freiburg": [
+   {
+    "player": "Patrick Osterhage",
+    "injury": "Problèmes musculaires",
+    "since": "2026-08-27",
+    "sinceRaw": "27 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Florent Muslija",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-11",
+    "sinceRaw": "11 avr. 2026",
+    "returnDate": "2026-10-11",
+    "returnRaw": "11 oct. 2026"
+   }
+  ],
+  "Leverkusen": [
+   {
+    "player": "Kennet Eichhorn",
+    "injury": "Malade",
+    "since": "2026-08-01",
+    "sinceRaw": "1 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Montrell Culbreath",
+    "injury": "Blessure au pied",
+    "since": "2026-08-09",
+    "sinceRaw": "9 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Guéla Doué",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-15",
+    "sinceRaw": "15 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Nathan Tella",
+    "injury": "Problèmes dorsaux",
+    "since": "2026-08-29",
+    "sinceRaw": "29 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Schalke 04": [
+   {
+    "player": "Dejan Ljubicic",
+    "injury": "Blessure au genou",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Emil Højlund",
+    "injury": "Opération du tendon d'Achille",
+    "since": "2025-09-11",
+    "sinceRaw": "11 sept. 2025",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Mainz": [
+   {
+    "player": "Dominik Kohr",
+    "injury": "Blessure à la malléole",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Robin Zentner",
+    "injury": "Blessure à la main",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Silvan Widmer",
+    "injury": "Problèmes à la rotule",
+    "since": "2026-09-05",
+    "sinceRaw": "5 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Paul Nebel",
+    "injury": "Déchirure des adducteurs",
+    "since": "2026-08-06",
+    "sinceRaw": "6 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Silas",
+    "injury": "Tibia et peroné cassés",
+    "since": "2026-03-13",
+    "sinceRaw": "13 mars 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Hamburg": [
+   {
+    "player": "Alexander Røssing-Lelesiit",
+    "injury": "Blessure à la cheville",
+    "since": "2026-05-01",
+    "sinceRaw": "1 mai 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Fernando Dickes",
+    "injury": "Blessure à l'épaule",
+    "since": "2026-03-06",
+    "sinceRaw": "6 mars 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Miro Muheim",
+    "injury": "Manque d'entrainement",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Sebastiaan Bornauw",
+    "injury": "Problèmes musculaires",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ]
+ }
+}

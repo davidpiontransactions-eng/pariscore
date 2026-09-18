@@ -1,0 +1,528 @@
+{
+ "meta": {
+  "leagueId": "seriea",
+  "source": "transfermarkt",
+  "sourceUrl": "https://www.transfermarkt.fr/serie-a/verletztespieler/wettbewerb/IT1/plus/1",
+  "updatedAt": "2026-09-18T13:11:22.830Z",
+  "fetchedAt": "2026-09-18T13:11:22.830Z",
+  "rowCount": 60,
+  "coveragePct": 100,
+  "withReturnDates": 43
+ },
+ "teams": {
+  "Cagliari": [
+   {
+    "player": "Yael Trepy",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "M'Bala Nzola",
+    "injury": "Manque d'entrainement",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Zé Pedro",
+    "injury": "Blessure à la main",
+    "since": "2026-09-13",
+    "sinceRaw": "13 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Mattia Felici",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Riyad Idrissi",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-03-08",
+    "sinceRaw": "8 mars 2026",
+    "returnDate": "2026-10-30",
+    "returnRaw": "30 oct. 2026"
+   }
+  ],
+  "Monza": [
+   {
+    "player": "Cyril Ngonge",
+    "injury": "Manque d'entrainement",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Patrick Ciurria",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jan Ziolkowski",
+    "injury": "Blessure au pied",
+    "since": "2026-09-05",
+    "sinceRaw": "5 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Matteo Pessina",
+    "injury": "Blessure au genou",
+    "since": "2026-08-13",
+    "sinceRaw": "13 août 2026",
+    "returnDate": "2026-11-01",
+    "returnRaw": "1 nov. 2026"
+   }
+  ],
+  "Juventus": [
+   {
+    "player": "Juan Cabal",
+    "injury": "Problèmes à la cuisse",
+    "since": "2026-09-02",
+    "sinceRaw": "2 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jérémie Boga",
+    "injury": "Lésion du muscle fléchisseur de la jambe",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": "2026-10-07",
+    "returnRaw": "7 oct. 2026"
+   },
+   {
+    "player": "Jeff Ekhator",
+    "injury": "Claquage à la cuisse",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": "2026-11-02",
+    "returnRaw": "2 nov. 2026"
+   },
+   {
+    "player": "Kenan Yıldız",
+    "injury": "Fracture du pied",
+    "since": "2026-08-24",
+    "sinceRaw": "24 août 2026",
+    "returnDate": "2026-11-25",
+    "returnRaw": "25 nov. 2026"
+   },
+   {
+    "player": "Khéphren Thuram",
+    "injury": "Opération du genou",
+    "since": "2026-07-13",
+    "sinceRaw": "13 juil. 2026",
+    "returnDate": "2027-01-01",
+    "returnRaw": "1 janv. 2027"
+   },
+   {
+    "player": "Manuel Locatelli",
+    "injury": "Blessure au ménisque",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": "2027-01-07",
+    "returnRaw": "7 janv. 2027"
+   }
+  ],
+  "Sassuolo": [
+   {
+    "player": "Jay Idzes",
+    "injury": "Claquage à la cuisse",
+    "since": "2026-09-13",
+    "sinceRaw": "13 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Cristian Volpato",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Daniel Boloca",
+    "injury": "Arthroscopie",
+    "since": "2026-02-18",
+    "sinceRaw": "18 févr. 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Edoardo Pieragnolo",
+    "injury": "Blessure au ligament croisé",
+    "since": "2025-10-01",
+    "sinceRaw": "1 oct. 2025",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Ismaël Koné",
+    "injury": "Tibia et peroné cassés",
+    "since": "2026-06-19",
+    "sinceRaw": "19 juin 2026",
+    "returnDate": "2027-01-03",
+    "returnRaw": "3 janv. 2027"
+   }
+  ],
+  "Venezia": [
+   {
+    "player": "Gianluca Busio",
+    "injury": "Entorse",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Matías Moreno",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Andrea Adorante",
+    "injury": "Blessure au dos",
+    "since": "2026-07-25",
+    "sinceRaw": "25 juil. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Armel Bella-Kotchap",
+    "injury": "Déchirure des adducteurs",
+    "since": "2026-09-06",
+    "sinceRaw": "6 sept. 2026",
+    "returnDate": "2026-10-06",
+    "returnRaw": "6 oct. 2026"
+   },
+   {
+    "player": "Marin Šverko",
+    "injury": "Blessure inconnue",
+    "since": "2026-07-01",
+    "sinceRaw": "1 juil. 2026",
+    "returnDate": "2026-10-31",
+    "returnRaw": "31 oct. 2026"
+   },
+   {
+    "player": "Bartol Franjic",
+    "injury": "Blessure à l'épaule",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-12-07",
+    "returnRaw": "7 déc. 2026"
+   }
+  ],
+  "Lecce": [
+   {
+    "player": "Omri Gandelman",
+    "injury": "Blessure inconnue",
+    "since": "2026-09-10",
+    "sinceRaw": "10 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Willem Geubbels",
+    "injury": "Extension de la cheville",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Medon Berisha",
+    "injury": "Réaction au stress de l'os",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   }
+  ],
+  "Bologna": [
+   {
+    "player": "Ukko Happonen",
+    "injury": "Blessure aux adducteurs",
+    "since": "2026-09-11",
+    "sinceRaw": "11 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Oussama El Azzouzi",
+    "injury": "Lésion du muscle fléchisseur de la jambe",
+    "since": "2026-08-25",
+    "sinceRaw": "25 août 2026",
+    "returnDate": "2026-09-22",
+    "returnRaw": "22 sept. 2026"
+   },
+   {
+    "player": "Riccardo Orsolini",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-09-23",
+    "returnRaw": "23 sept. 2026"
+   },
+   {
+    "player": "Artem Dovbyk",
+    "injury": "Problèmes musculaires",
+    "since": "2026-09-11",
+    "sinceRaw": "11 sept. 2026",
+    "returnDate": "2026-10-05",
+    "returnRaw": "5 oct. 2026"
+   }
+  ],
+  "Lazio": [
+   {
+    "player": "Filipe Bordon",
+    "injury": "Fracture du métatarse",
+    "since": "2026-07-23",
+    "sinceRaw": "23 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Alessio Furlanetto",
+    "injury": "Opération des ligaments croisés",
+    "since": "2026-07-01",
+    "sinceRaw": "1 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Patric",
+    "injury": "Entorse",
+    "since": "2026-07-14",
+    "sinceRaw": "14 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Fisayo Dele-Bashiru",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-24",
+    "sinceRaw": "24 août 2026",
+    "returnDate": "2026-09-25",
+    "returnRaw": "25 sept. 2026"
+   },
+   {
+    "player": "Nicolò Rovella",
+    "injury": "Blessure au mollet",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   }
+  ],
+  "Udinese": [
+   {
+    "player": "Matteo Palma",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": "2026-09-28",
+    "returnRaw": "28 sept. 2026"
+   },
+   {
+    "player": "Oumar Solet",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Alessandro Zanoli",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-01-28",
+    "sinceRaw": "28 janv. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Juan Arizala",
+    "injury": "Lésion du muscle fléchisseur de la jambe",
+    "since": "2026-09-04",
+    "sinceRaw": "4 sept. 2026",
+    "returnDate": "2026-10-06",
+    "returnRaw": "6 oct. 2026"
+   },
+   {
+    "player": "Jakub Piotrowski",
+    "injury": "Blessure inconnue",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": "2026-10-30",
+    "returnRaw": "30 oct. 2026"
+   }
+  ],
+  "Atalanta": [
+   {
+    "player": "Isak Hien",
+    "injury": "Problèmes à la cuisse",
+    "since": "2026-06-30",
+    "sinceRaw": "30 juin 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Kamaldeen Sulemana",
+    "injury": "Blessure du ligament interne",
+    "since": "2026-08-09",
+    "sinceRaw": "9 août 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   }
+  ],
+  "Napoli": [
+   {
+    "player": "Scott McTominay",
+    "injury": "Problème de coeur",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Giovane",
+    "injury": "Hernie inguinale",
+    "since": "2026-09-03",
+    "sinceRaw": "3 sept. 2026",
+    "returnDate": "2026-10-08",
+    "returnRaw": "8 oct. 2026"
+   },
+   {
+    "player": "Alex Meret",
+    "injury": "Déchirure des adducteurs",
+    "since": "2026-09-10",
+    "sinceRaw": "10 sept. 2026",
+    "returnDate": "2026-10-08",
+    "returnRaw": "8 oct. 2026"
+   },
+   {
+    "player": "Luca Marianucci",
+    "injury": "Blessure du ligament interne",
+    "since": "2026-08-10",
+    "sinceRaw": "10 août 2026",
+    "returnDate": "2026-10-12",
+    "returnRaw": "12 oct. 2026"
+   },
+   {
+    "player": "Alisson Santos",
+    "injury": "Lésion du muscle fléchisseur de la jambe",
+    "since": "2026-09-10",
+    "sinceRaw": "10 sept. 2026",
+    "returnDate": "2026-10-15",
+    "returnRaw": "15 oct. 2026"
+   },
+   {
+    "player": "Alessandro Buongiorno",
+    "injury": "Opération du genou",
+    "since": "2026-07-17",
+    "sinceRaw": "17 juil. 2026",
+    "returnDate": "2026-10-31",
+    "returnRaw": "31 oct. 2026"
+   }
+  ],
+  "Torino": [
+   {
+    "player": "Pietro Pellegri",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-01-16",
+    "sinceRaw": "16 janv. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Ché Adams",
+    "injury": "Déchirure des adducteurs",
+    "since": "2026-09-13",
+    "sinceRaw": "13 sept. 2026",
+    "returnDate": "2026-10-11",
+    "returnRaw": "11 oct. 2026"
+   },
+   {
+    "player": "Franco Israel",
+    "injury": "Blessure à l'épaule",
+    "since": "2026-06-19",
+    "sinceRaw": "19 juin 2026",
+    "returnDate": "2026-12-04",
+    "returnRaw": "4 déc. 2026"
+   }
+  ],
+  "Como": [
+   {
+    "player": "Jayden Addai",
+    "injury": "Rupture du tendon d'achille",
+    "since": "2026-02-26",
+    "sinceRaw": "26 févr. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   }
+  ],
+  "Genoa": [
+   {
+    "player": "Elias Havel",
+    "injury": "Blessure aux adducteurs",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": "2026-10-10",
+    "returnRaw": "10 oct. 2026"
+   },
+   {
+    "player": "Lorenzo Venturino",
+    "injury": "Opération du genou",
+    "since": "2026-05-31",
+    "sinceRaw": "31 mai 2026",
+    "returnDate": "2026-10-30",
+    "returnRaw": "30 oct. 2026"
+   }
+  ],
+  "Inter": [
+   {
+    "player": "John Stones",
+    "injury": "Claquage à la cuisse",
+    "since": "2026-09-15",
+    "sinceRaw": "15 sept. 2026",
+    "returnDate": "2026-10-12",
+    "returnRaw": "12 oct. 2026"
+   }
+  ],
+  "Fiorentina": [
+   {
+    "player": "Fabiano Parisi",
+    "injury": "Blessure au ligament croisé",
+    "since": "2026-05-18",
+    "sinceRaw": "18 mai 2026",
+    "returnDate": "2026-10-19",
+    "returnRaw": "19 oct. 2026"
+   }
+  ],
+  "Parma": [
+   {
+    "player": "Hans Nicolussi Caviglia",
+    "injury": "Pubalgie",
+    "since": "2026-07-23",
+    "sinceRaw": "23 juil. 2026",
+    "returnDate": "2026-11-02",
+    "returnRaw": "2 nov. 2026"
+   }
+  ]
+ }
+}

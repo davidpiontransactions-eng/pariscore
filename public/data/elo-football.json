@@ -1,0 +1,1868 @@
+{
+ "meta": {
+  "source": "football-data.co.uk (calcul interne)",
+  "baseElo": 1500.0,
+  "kFactor": 22.0,
+  "homeAdvantage": 55.0,
+  "seasonCarryover": 0.7,
+  "updatedAt": "2026-09-18T10:53:07.479897+00:00"
+ },
+ "leagues": {
+  "epl": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Arsenal",
+     "elo": 1660,
+     "rank": 1,
+     "matches": 118
+    },
+    {
+     "team": "Man City",
+     "elo": 1643,
+     "rank": 2,
+     "matches": 118
+    },
+    {
+     "team": "Man United",
+     "elo": 1559,
+     "rank": 3,
+     "matches": 118
+    },
+    {
+     "team": "Liverpool",
+     "elo": 1551,
+     "rank": 4,
+     "matches": 118
+    },
+    {
+     "team": "Bournemouth",
+     "elo": 1542,
+     "rank": 5,
+     "matches": 118
+    },
+    {
+     "team": "Leeds",
+     "elo": 1533,
+     "rank": 6,
+     "matches": 42
+    },
+    {
+     "team": "Brighton",
+     "elo": 1531,
+     "rank": 7,
+     "matches": 118
+    },
+    {
+     "team": "Brentford",
+     "elo": 1528,
+     "rank": 8,
+     "matches": 118
+    },
+    {
+     "team": "Chelsea",
+     "elo": 1526,
+     "rank": 9,
+     "matches": 118
+    },
+    {
+     "team": "Hull",
+     "elo": 1524,
+     "rank": 10,
+     "matches": 4
+    },
+    {
+     "team": "Aston Villa",
+     "elo": 1521,
+     "rank": 11,
+     "matches": 118
+    },
+    {
+     "team": "Everton",
+     "elo": 1509,
+     "rank": 12,
+     "matches": 118
+    },
+    {
+     "team": "Sunderland",
+     "elo": 1507,
+     "rank": 13,
+     "matches": 42
+    },
+    {
+     "team": "Newcastle",
+     "elo": 1505,
+     "rank": 14,
+     "matches": 118
+    },
+    {
+     "team": "Nott'm Forest",
+     "elo": 1505,
+     "rank": 15,
+     "matches": 118
+    },
+    {
+     "team": "Fulham",
+     "elo": 1477,
+     "rank": 16,
+     "matches": 118
+    },
+    {
+     "team": "Crystal Palace",
+     "elo": 1472,
+     "rank": 17,
+     "matches": 118
+    },
+    {
+     "team": "Coventry",
+     "elo": 1465,
+     "rank": 18,
+     "matches": 4
+    },
+    {
+     "team": "Tottenham",
+     "elo": 1446,
+     "rank": 19,
+     "matches": 118
+    },
+    {
+     "team": "Ipswich",
+     "elo": 1445,
+     "rank": 20,
+     "matches": 42
+    }
+   ]
+  },
+  "championship": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Southampton",
+     "elo": 1595,
+     "rank": 1,
+     "matches": 99
+    },
+    {
+     "team": "Middlesbrough",
+     "elo": 1561,
+     "rank": 2,
+     "matches": 145
+    },
+    {
+     "team": "Millwall",
+     "elo": 1555,
+     "rank": 3,
+     "matches": 145
+    },
+    {
+     "team": "Swansea",
+     "elo": 1540,
+     "rank": 4,
+     "matches": 145
+    },
+    {
+     "team": "Burnley",
+     "elo": 1533,
+     "rank": 5,
+     "matches": 53
+    },
+    {
+     "team": "West Ham",
+     "elo": 1532,
+     "rank": 6,
+     "matches": 7
+    },
+    {
+     "team": "Wolves",
+     "elo": 1521,
+     "rank": 7,
+     "matches": 6
+    },
+    {
+     "team": "Wrexham",
+     "elo": 1517,
+     "rank": 8,
+     "matches": 53
+    },
+    {
+     "team": "Lincoln",
+     "elo": 1515,
+     "rank": 9,
+     "matches": 7
+    },
+    {
+     "team": "Birmingham",
+     "elo": 1515,
+     "rank": 10,
+     "matches": 99
+    },
+    {
+     "team": "West Brom",
+     "elo": 1513,
+     "rank": 11,
+     "matches": 145
+    },
+    {
+     "team": "Norwich",
+     "elo": 1512,
+     "rank": 12,
+     "matches": 145
+    },
+    {
+     "team": "Bristol City",
+     "elo": 1499,
+     "rank": 13,
+     "matches": 145
+    },
+    {
+     "team": "Sheffield United",
+     "elo": 1496,
+     "rank": 14,
+     "matches": 99
+    },
+    {
+     "team": "QPR",
+     "elo": 1494,
+     "rank": 15,
+     "matches": 145
+    },
+    {
+     "team": "Charlton",
+     "elo": 1484,
+     "rank": 16,
+     "matches": 53
+    },
+    {
+     "team": "Bolton",
+     "elo": 1476,
+     "rank": 17,
+     "matches": 7
+    },
+    {
+     "team": "Portsmouth",
+     "elo": 1476,
+     "rank": 18,
+     "matches": 98
+    },
+    {
+     "team": "Blackburn",
+     "elo": 1469,
+     "rank": 19,
+     "matches": 145
+    },
+    {
+     "team": "Derby",
+     "elo": 1463,
+     "rank": 20,
+     "matches": 99
+    },
+    {
+     "team": "Stoke",
+     "elo": 1462,
+     "rank": 21,
+     "matches": 145
+    },
+    {
+     "team": "Watford",
+     "elo": 1455,
+     "rank": 22,
+     "matches": 145
+    },
+    {
+     "team": "Cardiff",
+     "elo": 1437,
+     "rank": 23,
+     "matches": 99
+    },
+    {
+     "team": "Preston",
+     "elo": 1426,
+     "rank": 24,
+     "matches": 145
+    }
+   ]
+  },
+  "ligue1": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Paris SG",
+     "elo": 1618,
+     "rank": 1,
+     "matches": 106
+    },
+    {
+     "team": "Lille",
+     "elo": 1594,
+     "rank": 2,
+     "matches": 106
+    },
+    {
+     "team": "Monaco",
+     "elo": 1578,
+     "rank": 3,
+     "matches": 106
+    },
+    {
+     "team": "Rennes",
+     "elo": 1570,
+     "rank": 4,
+     "matches": 106
+    },
+    {
+     "team": "Lyon",
+     "elo": 1564,
+     "rank": 5,
+     "matches": 106
+    },
+    {
+     "team": "Lens",
+     "elo": 1554,
+     "rank": 6,
+     "matches": 106
+    },
+    {
+     "team": "Strasbourg",
+     "elo": 1550,
+     "rank": 7,
+     "matches": 106
+    },
+    {
+     "team": "Paris FC",
+     "elo": 1537,
+     "rank": 8,
+     "matches": 38
+    },
+    {
+     "team": "Marseille",
+     "elo": 1524,
+     "rank": 9,
+     "matches": 106
+    },
+    {
+     "team": "Lorient",
+     "elo": 1498,
+     "rank": 10,
+     "matches": 72
+    },
+    {
+     "team": "Troyes",
+     "elo": 1493,
+     "rank": 11,
+     "matches": 4
+    },
+    {
+     "team": "Le Mans",
+     "elo": 1491,
+     "rank": 12,
+     "matches": 4
+    },
+    {
+     "team": "Brest",
+     "elo": 1486,
+     "rank": 13,
+     "matches": 106
+    },
+    {
+     "team": "Toulouse",
+     "elo": 1484,
+     "rank": 14,
+     "matches": 106
+    },
+    {
+     "team": "Auxerre",
+     "elo": 1465,
+     "rank": 15,
+     "matches": 72
+    },
+    {
+     "team": "Nice",
+     "elo": 1454,
+     "rank": 16,
+     "matches": 106
+    },
+    {
+     "team": "Angers",
+     "elo": 1453,
+     "rank": 17,
+     "matches": 72
+    },
+    {
+     "team": "Le Havre",
+     "elo": 1448,
+     "rank": 18,
+     "matches": 106
+    }
+   ]
+  },
+  "ligue2": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "St Etienne",
+     "elo": 1569,
+     "rank": 1,
+     "matches": 78
+    },
+    {
+     "team": "Reims",
+     "elo": 1563,
+     "rank": 2,
+     "matches": 40
+    },
+    {
+     "team": "Metz",
+     "elo": 1547,
+     "rank": 3,
+     "matches": 40
+    },
+    {
+     "team": "Red Star",
+     "elo": 1540,
+     "rank": 4,
+     "matches": 73
+    },
+    {
+     "team": "Rodez",
+     "elo": 1536,
+     "rank": 5,
+     "matches": 112
+    },
+    {
+     "team": "Annecy",
+     "elo": 1533,
+     "rank": 6,
+     "matches": 112
+    },
+    {
+     "team": "Montpellier",
+     "elo": 1532,
+     "rank": 7,
+     "matches": 40
+    },
+    {
+     "team": "Sochaux",
+     "elo": 1510,
+     "rank": 8,
+     "matches": 6
+    },
+    {
+     "team": "Grenoble",
+     "elo": 1489,
+     "rank": 9,
+     "matches": 112
+    },
+    {
+     "team": "Dijon",
+     "elo": 1488,
+     "rank": 10,
+     "matches": 6
+    },
+    {
+     "team": "Dunkerque",
+     "elo": 1483,
+     "rank": 11,
+     "matches": 112
+    },
+    {
+     "team": "Guingamp",
+     "elo": 1476,
+     "rank": 12,
+     "matches": 112
+    },
+    {
+     "team": "Nantes",
+     "elo": 1470,
+     "rank": 13,
+     "matches": 6
+    },
+    {
+     "team": "Nancy",
+     "elo": 1466,
+     "rank": 14,
+     "matches": 40
+    },
+    {
+     "team": "Pau FC",
+     "elo": 1464,
+     "rank": 15,
+     "matches": 112
+    },
+    {
+     "team": "Boulogne",
+     "elo": 1461,
+     "rank": 16,
+     "matches": 40
+    },
+    {
+     "team": "Clermont",
+     "elo": 1453,
+     "rank": 17,
+     "matches": 74
+    },
+    {
+     "team": "Laval",
+     "elo": 1445,
+     "rank": 18,
+     "matches": 112
+    }
+   ]
+  },
+  "bundesliga": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Bayern Munich",
+     "elo": 1679,
+     "rank": 1,
+     "matches": 105
+    },
+    {
+     "team": "Dortmund",
+     "elo": 1620,
+     "rank": 2,
+     "matches": 105
+    },
+    {
+     "team": "Leverkusen",
+     "elo": 1566,
+     "rank": 3,
+     "matches": 105
+    },
+    {
+     "team": "RB Leipzig",
+     "elo": 1563,
+     "rank": 4,
+     "matches": 105
+    },
+    {
+     "team": "Stuttgart",
+     "elo": 1552,
+     "rank": 5,
+     "matches": 105
+    },
+    {
+     "team": "Freiburg",
+     "elo": 1539,
+     "rank": 6,
+     "matches": 105
+    },
+    {
+     "team": "Hoffenheim",
+     "elo": 1522,
+     "rank": 7,
+     "matches": 105
+    },
+    {
+     "team": "Augsburg",
+     "elo": 1519,
+     "rank": 8,
+     "matches": 105
+    },
+    {
+     "team": "Elversberg",
+     "elo": 1515,
+     "rank": 9,
+     "matches": 3
+    },
+    {
+     "team": "Schalke 04",
+     "elo": 1506,
+     "rank": 10,
+     "matches": 3
+    },
+    {
+     "team": "Ein Frankfurt",
+     "elo": 1504,
+     "rank": 11,
+     "matches": 105
+    },
+    {
+     "team": "Mainz",
+     "elo": 1502,
+     "rank": 12,
+     "matches": 105
+    },
+    {
+     "team": "Paderborn",
+     "elo": 1484,
+     "rank": 13,
+     "matches": 3
+    },
+    {
+     "team": "Werder Bremen",
+     "elo": 1462,
+     "rank": 14,
+     "matches": 105
+    },
+    {
+     "team": "Hamburg",
+     "elo": 1460,
+     "rank": 15,
+     "matches": 37
+    },
+    {
+     "team": "M'gladbach",
+     "elo": 1456,
+     "rank": 16,
+     "matches": 105
+    },
+    {
+     "team": "Union Berlin",
+     "elo": 1451,
+     "rank": 17,
+     "matches": 105
+    },
+    {
+     "team": "FC Koln",
+     "elo": 1449,
+     "rank": 18,
+     "matches": 71
+    }
+   ]
+  },
+  "bundesliga2": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Hertha",
+     "elo": 1558,
+     "rank": 1,
+     "matches": 107
+    },
+    {
+     "team": "Nurnberg",
+     "elo": 1547,
+     "rank": 2,
+     "matches": 107
+    },
+    {
+     "team": "Hannover",
+     "elo": 1529,
+     "rank": 3,
+     "matches": 107
+    },
+    {
+     "team": "Heidenheim",
+     "elo": 1529,
+     "rank": 4,
+     "matches": 5
+    },
+    {
+     "team": "St Pauli",
+     "elo": 1527,
+     "rank": 5,
+     "matches": 39
+    },
+    {
+     "team": "Kaiserslautern",
+     "elo": 1519,
+     "rank": 6,
+     "matches": 107
+    },
+    {
+     "team": "Wolfsburg",
+     "elo": 1513,
+     "rank": 7,
+     "matches": 5
+    },
+    {
+     "team": "Cottbus",
+     "elo": 1502,
+     "rank": 8,
+     "matches": 5
+    },
+    {
+     "team": "Bochum",
+     "elo": 1499,
+     "rank": 9,
+     "matches": 39
+    },
+    {
+     "team": "Magdeburg",
+     "elo": 1495,
+     "rank": 10,
+     "matches": 107
+    },
+    {
+     "team": "Karlsruhe",
+     "elo": 1483,
+     "rank": 11,
+     "matches": 107
+    },
+    {
+     "team": "Darmstadt",
+     "elo": 1482,
+     "rank": 12,
+     "matches": 73
+    },
+    {
+     "team": "Holstein Kiel",
+     "elo": 1479,
+     "rank": 13,
+     "matches": 73
+    },
+    {
+     "team": "Dresden",
+     "elo": 1474,
+     "rank": 14,
+     "matches": 39
+    },
+    {
+     "team": "Osnabruck",
+     "elo": 1467,
+     "rank": 15,
+     "matches": 39
+    },
+    {
+     "team": "Greuther Furth",
+     "elo": 1467,
+     "rank": 16,
+     "matches": 107
+    },
+    {
+     "team": "Bielefeld",
+     "elo": 1465,
+     "rank": 17,
+     "matches": 39
+    },
+    {
+     "team": "Braunschweig",
+     "elo": 1447,
+     "rank": 18,
+     "matches": 107
+    }
+   ]
+  },
+  "laliga": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Barcelona",
+     "elo": 1692,
+     "rank": 1,
+     "matches": 120
+    },
+    {
+     "team": "Real Madrid",
+     "elo": 1650,
+     "rank": 2,
+     "matches": 120
+    },
+    {
+     "team": "Betis",
+     "elo": 1589,
+     "rank": 3,
+     "matches": 120
+    },
+    {
+     "team": "Ath Madrid",
+     "elo": 1584,
+     "rank": 4,
+     "matches": 120
+    },
+    {
+     "team": "Villarreal",
+     "elo": 1546,
+     "rank": 5,
+     "matches": 120
+    },
+    {
+     "team": "Vallecano",
+     "elo": 1515,
+     "rank": 6,
+     "matches": 120
+    },
+    {
+     "team": "La Coruna",
+     "elo": 1510,
+     "rank": 7,
+     "matches": 6
+    },
+    {
+     "team": "Sevilla",
+     "elo": 1507,
+     "rank": 8,
+     "matches": 120
+    },
+    {
+     "team": "Ath Bilbao",
+     "elo": 1497,
+     "rank": 9,
+     "matches": 119
+    },
+    {
+     "team": "Santander",
+     "elo": 1496,
+     "rank": 10,
+     "matches": 6
+    },
+    {
+     "team": "Celta",
+     "elo": 1495,
+     "rank": 11,
+     "matches": 120
+    },
+    {
+     "team": "Alaves",
+     "elo": 1493,
+     "rank": 12,
+     "matches": 120
+    },
+    {
+     "team": "Valencia",
+     "elo": 1490,
+     "rank": 13,
+     "matches": 120
+    },
+    {
+     "team": "Levante",
+     "elo": 1490,
+     "rank": 14,
+     "matches": 43
+    },
+    {
+     "team": "Sociedad",
+     "elo": 1486,
+     "rank": 15,
+     "matches": 120
+    },
+    {
+     "team": "Getafe",
+     "elo": 1478,
+     "rank": 16,
+     "matches": 120
+    },
+    {
+     "team": "Malaga",
+     "elo": 1475,
+     "rank": 17,
+     "matches": 6
+    },
+    {
+     "team": "Espanol",
+     "elo": 1469,
+     "rank": 18,
+     "matches": 82
+    },
+    {
+     "team": "Osasuna",
+     "elo": 1466,
+     "rank": 19,
+     "matches": 120
+    },
+    {
+     "team": "Elche",
+     "elo": 1455,
+     "rank": 20,
+     "matches": 44
+    }
+   ]
+  },
+  "laliga2": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Castellon",
+     "elo": 1586,
+     "rank": 1,
+     "matches": 89
+    },
+    {
+     "team": "Las Palmas",
+     "elo": 1567,
+     "rank": 2,
+     "matches": 47
+    },
+    {
+     "team": "Eibar",
+     "elo": 1565,
+     "rank": 3,
+     "matches": 131
+    },
+    {
+     "team": "Burgos",
+     "elo": 1557,
+     "rank": 4,
+     "matches": 131
+    },
+    {
+     "team": "Almeria",
+     "elo": 1551,
+     "rank": 5,
+     "matches": 89
+    },
+    {
+     "team": "Oviedo",
+     "elo": 1548,
+     "rank": 6,
+     "matches": 89
+    },
+    {
+     "team": "Mallorca",
+     "elo": 1517,
+     "rank": 7,
+     "matches": 5
+    },
+    {
+     "team": "Sabadell",
+     "elo": 1515,
+     "rank": 8,
+     "matches": 5
+    },
+    {
+     "team": "Girona",
+     "elo": 1503,
+     "rank": 9,
+     "matches": 5
+    },
+    {
+     "team": "Celta B",
+     "elo": 1499,
+     "rank": 10,
+     "matches": 5
+    },
+    {
+     "team": "Sp Gijon",
+     "elo": 1499,
+     "rank": 11,
+     "matches": 131
+    },
+    {
+     "team": "Granada",
+     "elo": 1492,
+     "rank": 12,
+     "matches": 89
+    },
+    {
+     "team": "Tenerife",
+     "elo": 1489,
+     "rank": 13,
+     "matches": 89
+    },
+    {
+     "team": "Leganes",
+     "elo": 1489,
+     "rank": 14,
+     "matches": 89
+    },
+    {
+     "team": "Sociedad B",
+     "elo": 1488,
+     "rank": 15,
+     "matches": 47
+    },
+    {
+     "team": "Albacete",
+     "elo": 1481,
+     "rank": 16,
+     "matches": 131
+    },
+    {
+     "team": "Cordoba",
+     "elo": 1477,
+     "rank": 17,
+     "matches": 89
+    },
+    {
+     "team": "Ceuta",
+     "elo": 1469,
+     "rank": 18,
+     "matches": 47
+    },
+    {
+     "team": "Eldense",
+     "elo": 1468,
+     "rank": 19,
+     "matches": 89
+    },
+    {
+     "team": "Andorra",
+     "elo": 1465,
+     "rank": 20,
+     "matches": 89
+    },
+    {
+     "team": "Valladolid",
+     "elo": 1450,
+     "rank": 21,
+     "matches": 89
+    },
+    {
+     "team": "Cadiz",
+     "elo": 1424,
+     "rank": 22,
+     "matches": 89
+    }
+   ]
+  },
+  "seriea": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Inter",
+     "elo": 1666,
+     "rank": 1,
+     "matches": 118
+    },
+    {
+     "team": "Roma",
+     "elo": 1619,
+     "rank": 2,
+     "matches": 118
+    },
+    {
+     "team": "Como",
+     "elo": 1602,
+     "rank": 3,
+     "matches": 80
+    },
+    {
+     "team": "Napoli",
+     "elo": 1588,
+     "rank": 4,
+     "matches": 118
+    },
+    {
+     "team": "Juventus",
+     "elo": 1580,
+     "rank": 5,
+     "matches": 118
+    },
+    {
+     "team": "Milan",
+     "elo": 1578,
+     "rank": 6,
+     "matches": 118
+    },
+    {
+     "team": "Lazio",
+     "elo": 1561,
+     "rank": 7,
+     "matches": 118
+    },
+    {
+     "team": "Atalanta",
+     "elo": 1544,
+     "rank": 8,
+     "matches": 118
+    },
+    {
+     "team": "Cagliari",
+     "elo": 1504,
+     "rank": 9,
+     "matches": 118
+    },
+    {
+     "team": "Sassuolo",
+     "elo": 1499,
+     "rank": 10,
+     "matches": 80
+    },
+    {
+     "team": "Bologna",
+     "elo": 1498,
+     "rank": 11,
+     "matches": 118
+    },
+    {
+     "team": "Fiorentina",
+     "elo": 1489,
+     "rank": 12,
+     "matches": 118
+    },
+    {
+     "team": "Frosinone",
+     "elo": 1487,
+     "rank": 13,
+     "matches": 42
+    },
+    {
+     "team": "Udinese",
+     "elo": 1487,
+     "rank": 14,
+     "matches": 118
+    },
+    {
+     "team": "Torino",
+     "elo": 1468,
+     "rank": 15,
+     "matches": 118
+    },
+    {
+     "team": "Lecce",
+     "elo": 1462,
+     "rank": 16,
+     "matches": 118
+    },
+    {
+     "team": "Parma",
+     "elo": 1462,
+     "rank": 17,
+     "matches": 80
+    },
+    {
+     "team": "Genoa",
+     "elo": 1451,
+     "rank": 18,
+     "matches": 118
+    },
+    {
+     "team": "Venezia",
+     "elo": 1423,
+     "rank": 19,
+     "matches": 42
+    },
+    {
+     "team": "Monza",
+     "elo": 1399,
+     "rank": 20,
+     "matches": 80
+    }
+   ]
+  },
+  "serieb": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Palermo",
+     "elo": 1589,
+     "rank": 1,
+     "matches": 118
+    },
+    {
+     "team": "Pisa",
+     "elo": 1531,
+     "rank": 2,
+     "matches": 80
+    },
+    {
+     "team": "Mantova",
+     "elo": 1519,
+     "rank": 3,
+     "matches": 80
+    },
+    {
+     "team": "Cremonese",
+     "elo": 1517,
+     "rank": 4,
+     "matches": 80
+    },
+    {
+     "team": "Modena",
+     "elo": 1508,
+     "rank": 5,
+     "matches": 118
+    },
+    {
+     "team": "Catanzaro",
+     "elo": 1506,
+     "rank": 6,
+     "matches": 118
+    },
+    {
+     "team": "Avellino",
+     "elo": 1506,
+     "rank": 7,
+     "matches": 42
+    },
+    {
+     "team": "Arezzo",
+     "elo": 1505,
+     "rank": 8,
+     "matches": 4
+    },
+    {
+     "team": "Juve Stabia",
+     "elo": 1500,
+     "rank": 9,
+     "matches": 80
+    },
+    {
+     "team": "Ascoli",
+     "elo": 1499,
+     "rank": 10,
+     "matches": 42
+    },
+    {
+     "team": "Vicenza",
+     "elo": 1498,
+     "rank": 11,
+     "matches": 4
+    },
+    {
+     "team": "Padova",
+     "elo": 1495,
+     "rank": 12,
+     "matches": 42
+    },
+    {
+     "team": "Verona",
+     "elo": 1489,
+     "rank": 13,
+     "matches": 4
+    },
+    {
+     "team": "Sudtirol",
+     "elo": 1487,
+     "rank": 14,
+     "matches": 118
+    },
+    {
+     "team": "Benevento",
+     "elo": 1486,
+     "rank": 15,
+     "matches": 4
+    },
+    {
+     "team": "Cesena",
+     "elo": 1478,
+     "rank": 16,
+     "matches": 80
+    },
+    {
+     "team": "Empoli",
+     "elo": 1473,
+     "rank": 17,
+     "matches": 42
+    },
+    {
+     "team": "Virtus Entella",
+     "elo": 1470,
+     "rank": 18,
+     "matches": 42
+    },
+    {
+     "team": "Sampdoria",
+     "elo": 1457,
+     "rank": 19,
+     "matches": 118
+    },
+    {
+     "team": "Carrarese",
+     "elo": 1443,
+     "rank": 20,
+     "matches": 80
+    }
+   ]
+  },
+  "eredivisie": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "PSV Eindhoven",
+     "elo": 1683,
+     "rank": 1,
+     "matches": 108
+    },
+    {
+     "team": "Feyenoord",
+     "elo": 1615,
+     "rank": 2,
+     "matches": 108
+    },
+    {
+     "team": "Ajax",
+     "elo": 1589,
+     "rank": 3,
+     "matches": 108
+    },
+    {
+     "team": "Twente",
+     "elo": 1586,
+     "rank": 4,
+     "matches": 108
+    },
+    {
+     "team": "AZ Alkmaar",
+     "elo": 1580,
+     "rank": 5,
+     "matches": 108
+    },
+    {
+     "team": "Nijmegen",
+     "elo": 1531,
+     "rank": 6,
+     "matches": 108
+    },
+    {
+     "team": "Utrecht",
+     "elo": 1529,
+     "rank": 7,
+     "matches": 108
+    },
+    {
+     "team": "Heerenveen",
+     "elo": 1507,
+     "rank": 8,
+     "matches": 108
+    },
+    {
+     "team": "Groningen",
+     "elo": 1506,
+     "rank": 9,
+     "matches": 74
+    },
+    {
+     "team": "Go Ahead Eagles",
+     "elo": 1504,
+     "rank": 10,
+     "matches": 108
+    },
+    {
+     "team": "For Sittard",
+     "elo": 1491,
+     "rank": 11,
+     "matches": 108
+    },
+    {
+     "team": "Excelsior",
+     "elo": 1490,
+     "rank": 12,
+     "matches": 74
+    },
+    {
+     "team": "Telstar",
+     "elo": 1476,
+     "rank": 13,
+     "matches": 40
+    },
+    {
+     "team": "Cambuur",
+     "elo": 1472,
+     "rank": 14,
+     "matches": 6
+    },
+    {
+     "team": "Sparta Rotterdam",
+     "elo": 1469,
+     "rank": 15,
+     "matches": 108
+    },
+    {
+     "team": "Den Haag",
+     "elo": 1458,
+     "rank": 16,
+     "matches": 6
+    },
+    {
+     "team": "Zwolle",
+     "elo": 1453,
+     "rank": 17,
+     "matches": 108
+    },
+    {
+     "team": "Willem II",
+     "elo": 1419,
+     "rank": 18,
+     "matches": 40
+    }
+   ]
+  },
+  "primeira_liga": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Porto",
+     "elo": 1686,
+     "rank": 1,
+     "matches": 108
+    },
+    {
+     "team": "Benfica",
+     "elo": 1682,
+     "rank": 2,
+     "matches": 108
+    },
+    {
+     "team": "Sp Lisbon",
+     "elo": 1670,
+     "rank": 3,
+     "matches": 108
+    },
+    {
+     "team": "Sp Braga",
+     "elo": 1579,
+     "rank": 4,
+     "matches": 107
+    },
+    {
+     "team": "Santa Clara",
+     "elo": 1531,
+     "rank": 5,
+     "matches": 74
+    },
+    {
+     "team": "Famalicao",
+     "elo": 1524,
+     "rank": 6,
+     "matches": 108
+    },
+    {
+     "team": "Academico Viseu",
+     "elo": 1510,
+     "rank": 7,
+     "matches": 6
+    },
+    {
+     "team": "Arouca",
+     "elo": 1507,
+     "rank": 8,
+     "matches": 108
+    },
+    {
+     "team": "Gil Vicente",
+     "elo": 1495,
+     "rank": 9,
+     "matches": 107
+    },
+    {
+     "team": "Maritimo",
+     "elo": 1491,
+     "rank": 10,
+     "matches": 6
+    },
+    {
+     "team": "Moreirense",
+     "elo": 1482,
+     "rank": 11,
+     "matches": 108
+    },
+    {
+     "team": "Alverca",
+     "elo": 1475,
+     "rank": 12,
+     "matches": 40
+    },
+    {
+     "team": "Estrela",
+     "elo": 1473,
+     "rank": 13,
+     "matches": 108
+    },
+    {
+     "team": "Guimaraes",
+     "elo": 1464,
+     "rank": 14,
+     "matches": 108
+    },
+    {
+     "team": "Rio Ave",
+     "elo": 1452,
+     "rank": 15,
+     "matches": 108
+    },
+    {
+     "team": "Estoril",
+     "elo": 1448,
+     "rank": 16,
+     "matches": 108
+    },
+    {
+     "team": "Nacional",
+     "elo": 1428,
+     "rank": 17,
+     "matches": 74
+    },
+    {
+     "team": "Casa Pia",
+     "elo": 1419,
+     "rank": 18,
+     "matches": 108
+    }
+   ]
+  },
+  "jupiler": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "St. Gilloise",
+     "elo": 1667,
+     "rank": 1,
+     "matches": 126
+    },
+    {
+     "team": "Club Brugge",
+     "elo": 1655,
+     "rank": 2,
+     "matches": 126
+    },
+    {
+     "team": "Gent",
+     "elo": 1553,
+     "rank": 3,
+     "matches": 127
+    },
+    {
+     "team": "Genk",
+     "elo": 1548,
+     "rank": 4,
+     "matches": 127
+    },
+    {
+     "team": "Charleroi",
+     "elo": 1542,
+     "rank": 5,
+     "matches": 122
+    },
+    {
+     "team": "St Truiden",
+     "elo": 1540,
+     "rank": 6,
+     "matches": 122
+    },
+    {
+     "team": "Waregem",
+     "elo": 1524,
+     "rank": 7,
+     "matches": 42
+    },
+    {
+     "team": "Standard",
+     "elo": 1523,
+     "rank": 8,
+     "matches": 125
+    },
+    {
+     "team": "Anderlecht",
+     "elo": 1523,
+     "rank": 9,
+     "matches": 126
+    },
+    {
+     "team": "Beveren",
+     "elo": 1503,
+     "rank": 10,
+     "matches": 6
+    },
+    {
+     "team": "Lommel SK",
+     "elo": 1498,
+     "rank": 11,
+     "matches": 6
+    },
+    {
+     "team": "Westerlo",
+     "elo": 1492,
+     "rank": 12,
+     "matches": 125
+    },
+    {
+     "team": "Antwerp",
+     "elo": 1481,
+     "rank": 13,
+     "matches": 126
+    },
+    {
+     "team": "Cercle Brugge",
+     "elo": 1454,
+     "rank": 14,
+     "matches": 118
+    },
+    {
+     "team": "Mechelen",
+     "elo": 1452,
+     "rank": 15,
+     "matches": 126
+    },
+    {
+     "team": "RAAL La Louviere",
+     "elo": 1436,
+     "rank": 16,
+     "matches": 41
+    },
+    {
+     "team": "Oud-Heverlee Leuven",
+     "elo": 1414,
+     "rank": 17,
+     "matches": 126
+    },
+    {
+     "team": "Kortrijk",
+     "elo": 1414,
+     "rank": 18,
+     "matches": 78
+    }
+   ]
+  },
+  "super_lig": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Galatasaray",
+     "elo": 1665,
+     "rank": 1,
+     "matches": 113
+    },
+    {
+     "team": "Fenerbahce",
+     "elo": 1619,
+     "rank": 2,
+     "matches": 113
+    },
+    {
+     "team": "Besiktas",
+     "elo": 1586,
+     "rank": 3,
+     "matches": 113
+    },
+    {
+     "team": "Trabzonspor",
+     "elo": 1573,
+     "rank": 4,
+     "matches": 113
+    },
+    {
+     "team": "Buyuksehyr",
+     "elo": 1536,
+     "rank": 5,
+     "matches": 113
+    },
+    {
+     "team": "Amedspor",
+     "elo": 1523,
+     "rank": 6,
+     "matches": 5
+    },
+    {
+     "team": "Samsunspor",
+     "elo": 1516,
+     "rank": 7,
+     "matches": 113
+    },
+    {
+     "team": "Kasimpasa",
+     "elo": 1513,
+     "rank": 8,
+     "matches": 113
+    },
+    {
+     "team": "Rizespor",
+     "elo": 1509,
+     "rank": 9,
+     "matches": 113
+    },
+    {
+     "team": "Corum",
+     "elo": 1507,
+     "rank": 10,
+     "matches": 5
+    },
+    {
+     "team": "Goztep",
+     "elo": 1506,
+     "rank": 11,
+     "matches": 75
+    },
+    {
+     "team": "Alanyaspor",
+     "elo": 1498,
+     "rank": 12,
+     "matches": 113
+    },
+    {
+     "team": "Kocaelispor",
+     "elo": 1494,
+     "rank": 13,
+     "matches": 39
+    },
+    {
+     "team": "Erzurumspor",
+     "elo": 1487,
+     "rank": 14,
+     "matches": 5
+    },
+    {
+     "team": "Gaziantep",
+     "elo": 1479,
+     "rank": 15,
+     "matches": 113
+    },
+    {
+     "team": "Genclerbirligi",
+     "elo": 1479,
+     "rank": 16,
+     "matches": 39
+    },
+    {
+     "team": "Konyaspor",
+     "elo": 1465,
+     "rank": 17,
+     "matches": 113
+    },
+    {
+     "team": "Eyupspor",
+     "elo": 1446,
+     "rank": 18,
+     "matches": 75
+    }
+   ]
+  },
+  "superleague_greece": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "AEK",
+     "elo": 1632,
+     "rank": 1,
+     "matches": 104
+    },
+    {
+     "team": "PAOK",
+     "elo": 1615,
+     "rank": 2,
+     "matches": 104
+    },
+    {
+     "team": "Olympiakos",
+     "elo": 1615,
+     "rank": 3,
+     "matches": 104
+    },
+    {
+     "team": "Panathinaikos",
+     "elo": 1601,
+     "rank": 4,
+     "matches": 104
+    },
+    {
+     "team": "Aris",
+     "elo": 1543,
+     "rank": 5,
+     "matches": 104
+    },
+    {
+     "team": "OFI Crete",
+     "elo": 1505,
+     "rank": 6,
+     "matches": 101
+    },
+    {
+     "team": "Iraklis",
+     "elo": 1503,
+     "rank": 7,
+     "matches": 4
+    },
+    {
+     "team": "Levadeiakos",
+     "elo": 1493,
+     "rank": 8,
+     "matches": 71
+    },
+    {
+     "team": "Kalamata",
+     "elo": 1488,
+     "rank": 9,
+     "matches": 4
+    },
+    {
+     "team": "Atromitos",
+     "elo": 1476,
+     "rank": 10,
+     "matches": 105
+    },
+    {
+     "team": "Panetolikos",
+     "elo": 1475,
+     "rank": 11,
+     "matches": 108
+    },
+    {
+     "team": "Kifisia",
+     "elo": 1457,
+     "rank": 12,
+     "matches": 73
+    },
+    {
+     "team": "Asteras Tripolis",
+     "elo": 1442,
+     "rank": 13,
+     "matches": 105
+    },
+    {
+     "team": "Volos NFC",
+     "elo": 1425,
+     "rank": 14,
+     "matches": 104
+    }
+   ]
+  },
+  "scot_prem": {
+   "season": "2026/27",
+   "teams": [
+    {
+     "team": "Celtic",
+     "elo": 1668,
+     "rank": 1,
+     "matches": 120
+    },
+    {
+     "team": "Rangers",
+     "elo": 1607,
+     "rank": 2,
+     "matches": 120
+    },
+    {
+     "team": "Hearts",
+     "elo": 1594,
+     "rank": 3,
+     "matches": 120
+    },
+    {
+     "team": "Motherwell",
+     "elo": 1528,
+     "rank": 4,
+     "matches": 120
+    },
+    {
+     "team": "Hibernian",
+     "elo": 1511,
+     "rank": 5,
+     "matches": 120
+    },
+    {
+     "team": "Falkirk",
+     "elo": 1480,
+     "rank": 6,
+     "matches": 44
+    },
+    {
+     "team": "Dundee United",
+     "elo": 1469,
+     "rank": 7,
+     "matches": 82
+    },
+    {
+     "team": "Dundee",
+     "elo": 1467,
+     "rank": 8,
+     "matches": 120
+    },
+    {
+     "team": "St Mirren",
+     "elo": 1465,
+     "rank": 9,
+     "matches": 120
+    },
+    {
+     "team": "Aberdeen",
+     "elo": 1458,
+     "rank": 10,
+     "matches": 120
+    },
+    {
+     "team": "Kilmarnock",
+     "elo": 1450,
+     "rank": 11,
+     "matches": 120
+    },
+    {
+     "team": "St Johnstone",
+     "elo": 1448,
+     "rank": 12,
+     "matches": 82
+    }
+   ]
+  }
+ }
+}

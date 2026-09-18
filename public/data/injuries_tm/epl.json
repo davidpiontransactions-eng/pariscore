@@ -1,0 +1,502 @@
+{
+ "meta": {
+  "leagueId": "epl",
+  "source": "transfermarkt",
+  "sourceUrl": "https://www.transfermarkt.fr/premier-league/verletztespieler/wettbewerb/GB1/plus/1",
+  "updatedAt": "2026-09-18T13:11:07.513Z",
+  "fetchedAt": "2026-09-18T13:11:07.513Z",
+  "rowCount": 56,
+  "coveragePct": 100,
+  "withReturnDates": 20
+ },
+ "teams": {
+  "Brentford": [
+   {
+    "player": "Kaye Furo",
+    "injury": "Opération",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Nathan Collins",
+    "injury": "Blessure inconnue",
+    "since": "2026-09-05",
+    "sinceRaw": "5 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Benjamin Fredrick",
+    "injury": "Blessure au genou",
+    "since": "2025-11-20",
+    "sinceRaw": "20 nov. 2025",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Josh Dasilva",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-10-06",
+    "returnRaw": "6 oct. 2026"
+   },
+   {
+    "player": "Sepp van den Berg",
+    "injury": "Blessure à l'aine",
+    "since": "2026-07-31",
+    "sinceRaw": "31 juil. 2026",
+    "returnDate": "2026-10-06",
+    "returnRaw": "6 oct. 2026"
+   }
+  ],
+  "Newcastle": [
+   {
+    "player": "Dan Burn",
+    "injury": "Blessure à la malléole",
+    "since": "2026-08-22",
+    "sinceRaw": "22 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Joelinton",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-16",
+    "sinceRaw": "16 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "William Osula",
+    "injury": "Blessure au pied",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Tino Livramento",
+    "injury": "Blessure au genou",
+    "since": "2026-06-16",
+    "sinceRaw": "16 juin 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Arsenal": [
+   {
+    "player": "William Saliba",
+    "injury": "Blessure au dos",
+    "since": "2026-07-19",
+    "sinceRaw": "19 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Cristhian Mosquera",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Crystal Palace": [
+   {
+    "player": "Ismaïla Sarr",
+    "injury": "Blessure à l'aine",
+    "since": "2026-08-20",
+    "sinceRaw": "20 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jean-Philippe Mateta",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Chadi Riad",
+    "injury": "Opération du genou",
+    "since": "2026-08-22",
+    "sinceRaw": "22 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Man United": [
+   {
+    "player": "Manuel Ugarte",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-06-28",
+    "sinceRaw": "28 juin 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Amad Diallo",
+    "injury": "Coup",
+    "since": "2026-08-20",
+    "sinceRaw": "20 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Bournemouth": [
+   {
+    "player": "Junior Kroupi",
+    "injury": "Blessure au pied",
+    "since": "2026-07-29",
+    "sinceRaw": "29 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Brighton": [
+   {
+    "player": "Mats Wieffer",
+    "injury": "Blessure au genou",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Kaoru Mitoma",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-05-10",
+    "sinceRaw": "10 mai 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Georginio Rutter",
+    "injury": "Blessure au pied",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Evan Ferguson",
+    "injury": "Problèmes à la cheville",
+    "since": "2026-01-18",
+    "sinceRaw": "18 janv. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jack Hinshelwood",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-26",
+    "sinceRaw": "26 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Stefanos Tzimas",
+    "injury": "Rupture du ligament croisé",
+    "since": "2025-12-03",
+    "sinceRaw": "3 déc. 2025",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Yankuba Minteh",
+    "injury": "Blessure au pied",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Hull": [
+   {
+    "player": "Joe Gelhardt",
+    "injury": "Blessure à la malléole",
+    "since": "2026-08-15",
+    "sinceRaw": "15 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Darko Gyabi",
+    "injury": "Blessure à l'aine",
+    "since": "2026-01-13",
+    "sinceRaw": "13 janv. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Ilyas Ansah",
+    "injury": "Problèmes dorsaux",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Charlie Hughes",
+    "injury": "Hernie inguinale",
+    "since": "2026-05-24",
+    "sinceRaw": "24 mai 2026",
+    "returnDate": "2026-10-24",
+    "returnRaw": "24 oct. 2026"
+   },
+   {
+    "player": "Eliot Matazo",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-25",
+    "sinceRaw": "25 avr. 2026",
+    "returnDate": "2026-11-30",
+    "returnRaw": "30 nov. 2026"
+   }
+  ],
+  "Ipswich": [
+   {
+    "player": "Jaden Philogene",
+    "injury": "Blessure à la malléole",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Azor Matusiwa",
+    "injury": "Opération du genou",
+    "since": "2026-05-11",
+    "sinceRaw": "11 mai 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Florentino",
+    "injury": "Problèmes de mollet",
+    "since": "2026-08-19",
+    "sinceRaw": "19 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Jack Taylor",
+    "injury": "Opération du genou",
+    "since": "2026-05-11",
+    "sinceRaw": "11 mai 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Liverpool": [
+   {
+    "player": "Conor Bradley",
+    "injury": "Opération du genou",
+    "since": "2026-01-09",
+    "sinceRaw": "9 janv. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Federico Chiesa",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-19",
+    "sinceRaw": "19 août 2026",
+    "returnDate": "2026-09-27",
+    "returnRaw": "27 sept. 2026"
+   },
+   {
+    "player": "Vitezslav Jaros",
+    "injury": "Blessure au genou",
+    "since": "2026-02-20",
+    "sinceRaw": "20 févr. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Giovanni Leoni",
+    "injury": "Rupture du ligament croisé",
+    "since": "2025-09-24",
+    "sinceRaw": "24 sept. 2025",
+    "returnDate": "2026-10-31",
+    "returnRaw": "31 oct. 2026"
+   },
+   {
+    "player": "Hugo Ekitiké",
+    "injury": "Rupture du tendon d'achille",
+    "since": "2026-04-15",
+    "sinceRaw": "15 avr. 2026",
+    "returnDate": "2026-12-31",
+    "returnRaw": "31 déc. 2026"
+   }
+  ],
+  "Everton": [
+   {
+    "player": "Christian Nørgaard",
+    "injury": "Blessure à l'aine",
+    "since": "2026-08-20",
+    "sinceRaw": "20 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Aston Villa": [
+   {
+    "player": "Amadou Onana",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-07-07",
+    "sinceRaw": "7 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Brian Madjo",
+    "injury": "Blessure à la cheville",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Leon Goretzka",
+    "injury": "Blessure inconnue",
+    "since": "2026-09-07",
+    "sinceRaw": "7 sept. 2026",
+    "returnDate": "2026-10-06",
+    "returnRaw": "6 oct. 2026"
+   }
+  ],
+  "Chelsea": [
+   {
+    "player": "Jordan Henderson",
+    "injury": "Fracture de l'avant-bras",
+    "since": "2026-07-06",
+    "sinceRaw": "6 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Moisés Caicedo",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Marco Palestra",
+    "injury": "Blessure inconnue",
+    "since": "2026-08-22",
+    "sinceRaw": "22 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Fulham": [
+   {
+    "player": "Ryan Sessegnon",
+    "injury": "Claquage à l'aine",
+    "since": "2026-09-11",
+    "sinceRaw": "11 sept. 2026",
+    "returnDate": "2026-09-19",
+    "returnRaw": "19 sept. 2026"
+   },
+   {
+    "player": "Tom Cairney",
+    "injury": "Opération du genou",
+    "since": "2026-08-05",
+    "sinceRaw": "5 août 2026",
+    "returnDate": "2026-10-09",
+    "returnRaw": "9 oct. 2026"
+   }
+  ],
+  "Man City": [
+   {
+    "player": "Jérémy Doku",
+    "injury": "Blessure au mollet",
+    "since": "2026-08-16",
+    "sinceRaw": "16 août 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   }
+  ],
+  "Nott'm Forest": [
+   {
+    "player": "Nicolò Savona",
+    "injury": "Blessure au genou",
+    "since": "2026-01-31",
+    "sinceRaw": "31 janv. 2026",
+    "returnDate": "2026-10-11",
+    "returnRaw": "11 oct. 2026"
+   }
+  ],
+  "Sunderland": [
+   {
+    "player": "Habib Diarra",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-10-16",
+    "returnRaw": "16 oct. 2026"
+   }
+  ],
+  "Leeds": [
+   {
+    "player": "Joe Rodon",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": "2026-11-08",
+    "returnRaw": "8 nov. 2026"
+   },
+   {
+    "player": "Mateo Joseph",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-08",
+    "sinceRaw": "8 avr. 2026",
+    "returnDate": "2027-02-01",
+    "returnRaw": "1 févr. 2027"
+   }
+  ],
+  "Tottenham": [
+   {
+    "player": "Mykhaylo Mudryk",
+    "injury": "Blessure à la cheville",
+    "since": "2026-09-09",
+    "sinceRaw": "9 sept. 2026",
+    "returnDate": "2026-11-09",
+    "returnRaw": "9 nov. 2026"
+   },
+   {
+    "player": "Wilson Odobert",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-02-10",
+    "sinceRaw": "10 févr. 2026",
+    "returnDate": "2026-11-28",
+    "returnRaw": "28 nov. 2026"
+   },
+   {
+    "player": "Xavi Simons",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-25",
+    "sinceRaw": "25 avr. 2026",
+    "returnDate": "2027-02-20",
+    "returnRaw": "20 févr. 2027"
+   }
+  ],
+  "Coventry": [
+   {
+    "player": "Haji Wright",
+    "injury": "Problèmes à la cuisse",
+    "since": "2026-08-19",
+    "sinceRaw": "19 août 2026",
+    "returnDate": "2026-11-11",
+    "returnRaw": "11 nov. 2026"
+   }
+  ]
+ }
+}

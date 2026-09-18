@@ -1,0 +1,752 @@
+{
+ "meta": {
+  "leagueId": "epl",
+  "source": "rotowire",
+  "sourceUrl": "https://www.rotowire.com/soccer/tables/injury-report.php?league=EPL",
+  "updatedAt": "2026-09-18T10:51:10.272464+00:00",
+  "playerCount": 100,
+  "hasReturnDates": false
+ },
+ "teams": {
+  "Bournemouth": [
+   {
+    "player": "Amine Adli",
+    "position": "F/M",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Julian Araujo",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Junior Kroupi",
+    "position": "F",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Veljko Milosavljevic",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Sunderland": [
+   {
+    "player": "Omar Alderete",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Habib Diarra",
+    "position": "M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Reinildo",
+    "position": "D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Romaine Mundle",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Coventry": [
+   {
+    "player": "Aurele Amenda",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Taiwo Awoniyi",
+    "position": "F",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Josh Eccles",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kaine Kesler-Hayden",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luke Woolfenden",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Haji Wright",
+    "position": "F",
+    "injury": "Quadriceps",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Hull": [
+   {
+    "player": "Ilyas Ansah",
+    "position": "F",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jack Butland",
+    "position": "G",
+    "injury": "Elbow",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Darko Gyabi",
+    "position": "M",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Charlie Hughes",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Eliot Matazo",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nobel Mendy",
+    "position": "D",
+    "injury": "Concussion",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Hidemasa Morita",
+    "position": "M",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Matt Targett",
+    "position": "D",
+    "injury": "Ankle",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Everton": [
+   {
+    "player": "Harrison Armstrong",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Christian Norgaard",
+    "position": "M",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Merlin Rohl",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Brighton": [
+   {
+    "player": "Femi Azeez",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Evan Ferguson",
+    "position": "F",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jaouen Hadjam",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jack Hinshelwood",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Yankuba Minteh",
+    "position": "F",
+    "injury": "Leg",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kaoru Mitoma",
+    "position": "F/M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Michael Svoboda",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Stefanos Tzimas",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mats Wieffer",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Zadok Yohanna",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Man United": [
+   {
+    "player": "Carlos Baleba",
+    "position": "M",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Matthijs De Ligt",
+    "position": "D",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Amad Diallo",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Tom Heaton",
+    "position": "G",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luke Shaw",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Manuel Ugarte",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Aston Villa": [
+   {
+    "player": "Marco Bizot",
+    "position": "G",
+    "injury": "Back",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Matty Cash",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Brian Madjo",
+    "position": "F",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Joao Gomes",
+    "position": "M",
+    "injury": "Calf",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Leon Goretzka",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ian Maatsen",
+    "position": "D",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Amadou Onana",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Pau Torres",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Liverpool": [
+   {
+    "player": "Conor Bradley",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Federico Chiesa",
+    "position": "F/M",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Hugo Ekitike",
+    "position": "F",
+    "injury": "Achilles",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Giovanni Leoni",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Newcastle": [
+   {
+    "player": "Dan Burn",
+    "position": "D",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Joelinton",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Amar Dedic",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Anthony Elanga",
+    "position": "F/M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nico Gonzalez",
+    "position": "M",
+    "injury": "Head",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ewen Jaouen",
+    "position": "G",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Will Osula",
+    "position": "F",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jacob Ramsey",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Chelsea": [
+   {
+    "player": "Moises Caicedo",
+    "position": "M",
+    "injury": "Calf",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Emmanuel Emegha",
+    "position": "F",
+    "injury": "Hamstring",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jordan Henderson",
+    "position": "M",
+    "injury": "Wrist",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Reece James",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Joao Pedro",
+    "position": "F",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Marco Palestra",
+    "position": "M/D",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Fulham": [
+   {
+    "player": "Tom Cairney",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ryan Sessegnon",
+    "position": "D",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Kenny Tete",
+    "position": "D",
+    "injury": "Concussion",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Brentford": [
+   {
+    "player": "Nathan Collins",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Josh Dasilva",
+    "position": "M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kaye Furo",
+    "position": "F",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mathias Jensen",
+    "position": "M",
+    "injury": "Strain",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sepp van den Berg",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Ipswich": [
+   {
+    "player": "Emersonn",
+    "position": "F",
+    "injury": "Quadriceps",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Azor Matusiwa",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jack Taylor",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Nott'm Forest": [
+   {
+    "player": "Jair Cunha",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Nikola Milenkovic",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nicolo Savona",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Tottenham": [
+   {
+    "player": "Richarlison",
+    "position": "F",
+    "injury": "Not Injury Related",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Dejan Kulusevski",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Mykhailo Mudryk",
+    "position": "F/M",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Wilson Odobert",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Pedro Porro",
+    "position": "D",
+    "injury": "Strain",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Xavi Simons",
+    "position": "F/M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sandro Tonali",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Crystal Palace": [
+   {
+    "player": "Axel Disasi",
+    "position": "D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Dean Henderson",
+    "position": "G",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jean-Philippe Mateta",
+    "position": "F",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Chadi Riad",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Man City": [
+   {
+    "player": "Jeremy Doku",
+    "position": "F/M",
+    "injury": "Calf",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Phil Foden",
+    "position": "F/M",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   }
+  ],
+  "Arsenal": [
+   {
+    "player": "Piero Hincapie",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Cristhian Mosquera",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "William Saliba",
+    "position": "D",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ben White",
+    "position": "D",
+    "injury": "Groin",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Leeds": [
+   {
+    "player": "Mateo Joseph",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Joe Rodon",
+    "position": "D",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ]
+ }
+}

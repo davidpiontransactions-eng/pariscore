@@ -1,0 +1,314 @@
+{
+ "meta": {
+  "leagueId": "laliga",
+  "source": "transfermarkt",
+  "sourceUrl": "https://www.transfermarkt.fr/primera-division/verletztespieler/wettbewerb/ES1/plus/1",
+  "updatedAt": "2026-09-18T13:12:31.401Z",
+  "fetchedAt": "2026-09-18T13:12:31.401Z",
+  "rowCount": 34,
+  "coveragePct": 100,
+  "withReturnDates": 23
+ },
+ "teams": {
+  "Ath Madrid": [
+   {
+    "player": "Julián Alvarez",
+    "injury": "Problèmes musculaires",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Alexander Sørloth",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-12",
+    "sinceRaw": "12 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "La Coruna": [
+   {
+    "player": "Noé Carrillo",
+    "injury": "Blessure à la cheville",
+    "since": "2026-08-12",
+    "sinceRaw": "12 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Vallecano": [
+   {
+    "player": "Raúl de Tomás",
+    "injury": "Blessure inconnue",
+    "since": "2026-01-07",
+    "sinceRaw": "7 janv. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Augusto Batalla",
+    "injury": "Fracture du tibia",
+    "since": "2026-08-21",
+    "sinceRaw": "21 août 2026",
+    "returnDate": "2026-11-22",
+    "returnRaw": "22 nov. 2026"
+   }
+  ],
+  "Barcelona": [
+   {
+    "player": "Kike García",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-04",
+    "sinceRaw": "4 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Frenkie de Jong",
+    "injury": "Fissure du ligament intraarticulaire du genou",
+    "since": "2026-06-30",
+    "sinceRaw": "30 juin 2026",
+    "returnDate": "2026-11-30",
+    "returnRaw": "30 nov. 2026"
+   },
+   {
+    "player": "Roony Bardghji",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-08-10",
+    "sinceRaw": "10 août 2026",
+    "returnDate": "2027-05-10",
+    "returnRaw": "10 mai 2027"
+   }
+  ],
+  "Sevilla": [
+   {
+    "player": "Rubén Vargas",
+    "injury": "Problèmes de genou",
+    "since": "2026-09-03",
+    "sinceRaw": "3 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Lucas Stassin",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-17",
+    "sinceRaw": "17 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Arouna Sangante",
+    "injury": "Blessure à la cheville",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Real Madrid": [
+   {
+    "player": "Éder Militão",
+    "injury": "Blessure musculaire",
+    "since": "2026-04-21",
+    "sinceRaw": "21 avr. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Rodrygo",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-03-03",
+    "sinceRaw": "3 mars 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Ferland Mendy",
+    "injury": "Déchirure du tendon",
+    "since": "2026-05-03",
+    "sinceRaw": "3 mai 2026",
+    "returnDate": "2027-04-30",
+    "returnRaw": "30 avr. 2027"
+   }
+  ],
+  "Santander": [
+   {
+    "player": "Simon Eriksson",
+    "injury": "Tendinite",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Andrés Martín",
+    "injury": "Blessure au genou",
+    "since": "2026-08-29",
+    "sinceRaw": "29 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Alaves": [
+   {
+    "player": "Aitor Mañas",
+    "injury": "Blessure à la tête",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": "2026-09-19",
+    "returnRaw": "19 sept. 2026"
+   },
+   {
+    "player": "Facundo Garcés",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": "2027-05-01",
+    "returnRaw": "1 mai 2027"
+   },
+   {
+    "player": "Mikel Rodriguez",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-04",
+    "sinceRaw": "4 sept. 2026",
+    "returnDate": "2027-05-01",
+    "returnRaw": "1 mai 2027"
+   }
+  ],
+  "Villarreal": [
+   {
+    "player": "Juan Foyth",
+    "injury": "Problèmes musculaires",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": "2026-09-20",
+    "returnRaw": "20 sept. 2026"
+   }
+  ],
+  "Ath Bilbao": [
+   {
+    "player": "Peio Canales",
+    "injury": "Blessure au mollet",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": "2026-09-21",
+    "returnRaw": "21 sept. 2026"
+   },
+   {
+    "player": "Dani Vivian",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-08-16",
+    "sinceRaw": "16 août 2026",
+    "returnDate": "2026-10-05",
+    "returnRaw": "5 oct. 2026"
+   },
+   {
+    "player": "Unai Egiluz",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-06-06",
+    "sinceRaw": "6 juin 2026",
+    "returnDate": "2027-03-06",
+    "returnRaw": "6 mars 2027"
+   }
+  ],
+  "Malaga": [
+   {
+    "player": "Adam Aznou",
+    "injury": "Blessure aux adducteurs",
+    "since": "2026-09-08",
+    "sinceRaw": "8 sept. 2026",
+    "returnDate": "2026-09-30",
+    "returnRaw": "30 sept. 2026"
+   },
+   {
+    "player": "Fernando Calero",
+    "injury": "Côte fracturée",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Jens Cajuste",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-14",
+    "sinceRaw": "14 sept. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   },
+   {
+    "player": "Aarón Ochoa",
+    "injury": "Déchirure du ménisque",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": "2027-01-01",
+    "returnRaw": "1 janv. 2027"
+   },
+   {
+    "player": "Julen Lobete",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-04",
+    "sinceRaw": "4 sept. 2026",
+    "returnDate": "2027-06-30",
+    "returnRaw": "30 juin 2027"
+   }
+  ],
+  "Valencia": [
+   {
+    "player": "Mouctar Diakhaby",
+    "injury": "Blessure musculaire",
+    "since": "2026-09-09",
+    "sinceRaw": "9 sept. 2026",
+    "returnDate": "2026-10-09",
+    "returnRaw": "9 oct. 2026"
+   },
+   {
+    "player": "Sergi Canós",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-04",
+    "sinceRaw": "4 avr. 2026",
+    "returnDate": "2026-11-01",
+    "returnRaw": "1 nov. 2026"
+   },
+   {
+    "player": "Umar Sadiq",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-01",
+    "sinceRaw": "1 sept. 2026",
+    "returnDate": "2026-11-02",
+    "returnRaw": "2 nov. 2026"
+   },
+   {
+    "player": "Diego López",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-05-23",
+    "sinceRaw": "23 mai 2026",
+    "returnDate": "2027-03-01",
+    "returnRaw": "1 mars 2027"
+   }
+  ],
+  "Sociedad": [
+   {
+    "player": "Álvaro Odriozola",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-02-22",
+    "sinceRaw": "22 févr. 2026",
+    "returnDate": "2026-11-30",
+    "returnRaw": "30 nov. 2026"
+   }
+  ],
+  "Getafe": [
+   {
+    "player": "Christantus Uche",
+    "injury": "Blessure au genou",
+    "since": "2026-08-08",
+    "sinceRaw": "8 août 2026",
+    "returnDate": "2027-06-30",
+    "returnRaw": "30 juin 2027"
+   }
+  ]
+ }
+}

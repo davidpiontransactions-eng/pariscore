@@ -1,0 +1,520 @@
+{
+ "meta": {
+  "leagueId": "bundesliga",
+  "source": "rotowire",
+  "sourceUrl": "https://www.rotowire.com/soccer/tables/injury-report.php?league=BUND",
+  "updatedAt": "2026-09-18T10:51:17.631775+00:00",
+  "playerCount": 68,
+  "hasReturnDates": false
+ },
+ "teams": {
+  "Werder Bremen": [
+   {
+    "player": "Felix Agu",
+    "position": "M",
+    "injury": "Strain",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Senne Lynen",
+    "position": "M",
+    "injury": "Hip",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Moussa N'Diaye",
+    "position": "D",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Justin Njinmah",
+    "position": "F",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jens Stage",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Keke Maximilian Topp",
+    "position": "F",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Dortmund": [
+   {
+    "player": "Justin Lerma",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Emre Can",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mussa Kaba",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Konstantinos Karetsas",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Giannis Konstantelias",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Filippo Mane",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Stuttgart": [
+   {
+    "player": "Lorenz Assignon",
+    "position": "D",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Tiago Tomas",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Justin Diehl",
+    "position": "F",
+    "injury": "Quadriceps",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Luca Jaquez",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nikolas Nartey",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Dennis Seimen",
+    "position": "G",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Angelo Stiller",
+    "position": "M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Dan-Axel Zagadou",
+    "position": "D",
+    "injury": "Strain",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Paderborn": [
+   {
+    "player": "Nyamekye Awortwie-Grant",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Laurin Curda",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Lasse Eickel",
+    "position": "F",
+    "injury": "Back",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Timur Gayret",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Sven Michel",
+    "position": "F",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "RB Leipzig": [
+   {
+    "player": "Christoph Baumgartner",
+    "position": "M",
+    "injury": "Hamstring",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Assan Ouedraogo",
+    "position": "M",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Rocco Reitz",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Hamburg": [
+   {
+    "player": "Sebastiaan Bornauw",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Alexander Rossing-Lelesiit",
+    "position": "F",
+    "injury": "Ankle",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Mario Vuskovic",
+    "position": "D",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   }
+  ],
+  "Augsburg": [
+   {
+    "player": "Tim Breithaupt",
+    "position": "M/D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Anton Kade",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Steve Mounie",
+    "position": "F",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Bayern Munich": [
+   {
+    "player": "Tarek Buchmann",
+    "position": "D",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Union Berlin": [
+   {
+    "player": "Oliver Burke",
+    "position": "F",
+    "injury": "Achilles",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Marvin Friedrich",
+    "position": "D",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Andrej Ilic",
+    "position": "F",
+    "injury": "Illness",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kastriot Imeri",
+    "position": "M",
+    "injury": "Thigh",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Josip Juranovic",
+    "position": "D",
+    "injury": "Illness",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Andrik Markgraf",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Stanley Nsoki",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "M'gladbach": [
+   {
+    "player": "Jens Castrop",
+    "position": "M/D",
+    "injury": "Shoulder",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Tim Kleindienst",
+    "position": "F",
+    "injury": "Suspension",
+    "status": "SUS",
+    "returnDate": null
+   },
+   {
+    "player": "Yukhym Konoplya",
+    "position": "D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Nicolas Kuhn",
+    "position": "F/M",
+    "injury": "Strain",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Enzo Leopold",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Ein Frankfurt": [
+   {
+    "player": "Fares Chaibi",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Jeremiaha Maluze",
+    "position": "D",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Jessic Ngankam",
+    "position": "F/M",
+    "injury": "Thigh",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Leverkusen": [
+   {
+    "player": "Montrell Culbreath",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Guela Doue",
+    "position": "D",
+    "injury": "Calf",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Kennet Eichhorn",
+    "position": "M",
+    "injury": "Illness",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Ibrahim Maza",
+    "position": "F/M",
+    "injury": "Illness",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Nathan Tella",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "FC Koln": [
+   {
+    "player": "Timo Hubers",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Schalke 04": [
+   {
+    "player": "Loris Karius",
+    "position": "G",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Dejan Ljubicic",
+    "position": "M",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Moussa Sylla",
+    "position": "F",
+    "injury": "Not Injury Related",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ],
+  "Mainz": [
+   {
+    "player": "Silas",
+    "position": "M",
+    "injury": "Undisclosed",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Dominik Kohr",
+    "position": "D",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Eric Martel",
+    "position": "M",
+    "injury": "Knee",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Paul Nebel",
+    "position": "M",
+    "injury": "Groin",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Silvan Widmer",
+    "position": "M/D",
+    "injury": "Knee",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Robin Zentner",
+    "position": "G",
+    "injury": "Hand",
+    "status": "OUT",
+    "returnDate": null
+   }
+  ],
+  "Elversberg": [
+   {
+    "player": "Francis Onyeka",
+    "position": "F/M",
+    "injury": "Undisclosed",
+    "status": "GTD",
+    "returnDate": null
+   },
+   {
+    "player": "Luis Seifert",
+    "position": "D",
+    "injury": "Foot",
+    "status": "OUT",
+    "returnDate": null
+   },
+   {
+    "player": "Tom Zimmerschied",
+    "position": "F/M",
+    "injury": "Back",
+    "status": "GTD",
+    "returnDate": null
+   }
+  ]
+ }
+}

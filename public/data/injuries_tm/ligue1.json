@@ -1,0 +1,272 @@
+{
+ "meta": {
+  "leagueId": "ligue1",
+  "source": "transfermarkt",
+  "sourceUrl": "https://www.transfermarkt.fr/ligue-1/verletztespieler/wettbewerb/FR1/plus/1",
+  "updatedAt": "2026-09-18T13:11:30.162Z",
+  "fetchedAt": "2026-09-18T13:11:30.162Z",
+  "rowCount": 29,
+  "coveragePct": 100,
+  "withReturnDates": 4
+ },
+ "teams": {
+  "Le Havre": [
+   {
+    "player": "Felix Mambimbi",
+    "injury": "Rupture du tendon d'achille",
+    "since": "2026-07-18",
+    "sinceRaw": "18 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Stephan Zagadou",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-04-24",
+    "sinceRaw": "24 avr. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Lionel Mpasi-Nzau",
+    "injury": "Rupture du tendon d'achille",
+    "since": "2026-09-05",
+    "sinceRaw": "5 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Paris FC": [
+   {
+    "player": "Emmanuel Mbemba",
+    "injury": "Blessure à la cuisse",
+    "since": "2026-08-02",
+    "sinceRaw": "2 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Nhoa Sangui",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-21",
+    "sinceRaw": "21 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Otávio",
+    "injury": "Blessure à la cuisse",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Brest": [
+   {
+    "player": "Brendan Chardonnet",
+    "injury": "Blessure au mollet",
+    "since": "2026-08-17",
+    "sinceRaw": "17 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Angers": [
+   {
+    "player": "Haris Belkebla",
+    "injury": "Blessure à la cuisse",
+    "since": "2026-07-29",
+    "sinceRaw": "29 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Troyes": [
+   {
+    "player": "Yvann Titi",
+    "injury": "Blessure à la cuisse",
+    "since": "2026-08-23",
+    "sinceRaw": "23 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Ismaël Boura",
+    "injury": "Blessure à la hanche",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Lille": [
+   {
+    "player": "Hamza Igamane",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-01-19",
+    "sinceRaw": "19 janv. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Lens": [
+   {
+    "player": "Jhoanner Chávez",
+    "injury": "Problèmes à la cuisse",
+    "since": "2026-04-01",
+    "sinceRaw": "1 avr. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Saud Abdulhamid",
+    "injury": "Coup",
+    "since": "2026-08-27",
+    "sinceRaw": "27 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Maik Nawrocki",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Yacine Titraoui",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-09-06",
+    "sinceRaw": "6 sept. 2026",
+    "returnDate": "2026-09-21",
+    "returnRaw": "21 sept. 2026"
+   },
+   {
+    "player": "Samson Baidoo",
+    "injury": "Blessure à la cuisse",
+    "since": "2026-07-25",
+    "sinceRaw": "25 juil. 2026",
+    "returnDate": "2026-10-25",
+    "returnRaw": "25 oct. 2026"
+   }
+  ],
+  "Monaco": [
+   {
+    "player": "Takumi Minamino",
+    "injury": "Rupture du ligament croisé",
+    "since": "2025-12-22",
+    "sinceRaw": "22 déc. 2025",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Ansu Fati",
+    "injury": "Blessure au mollet",
+    "since": "2026-08-14",
+    "sinceRaw": "14 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Anis Soubeir",
+    "injury": "Blessure à la malléole",
+    "since": "2026-09-12",
+    "sinceRaw": "12 sept. 2026",
+    "returnDate": "2026-10-01",
+    "returnRaw": "1 oct. 2026"
+   }
+  ],
+  "Paris SG": [
+   {
+    "player": "Achraf Hakimi",
+    "injury": "Problèmes à la cuisse",
+    "since": "2026-09-13",
+    "sinceRaw": "13 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Nice": [
+   {
+    "player": "Antoine Mendy",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-09-06",
+    "sinceRaw": "6 sept. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Laurent Abergel",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-08-08",
+    "sinceRaw": "8 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Auxerre": [
+   {
+    "player": "Marvin Senaya",
+    "injury": "Blessure à l'ischio",
+    "since": "2026-07-04",
+    "sinceRaw": "4 juil. 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Sékou Fofana",
+    "injury": "Pubalgie",
+    "since": "2026-08-01",
+    "sinceRaw": "1 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Bryan Okoh",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-05-13",
+    "sinceRaw": "13 mai 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Assane Dioussé",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-08-16",
+    "sinceRaw": "16 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Marseille": [
+   {
+    "player": "Tochukwu Nnadi",
+    "injury": "Blessure au genou",
+    "since": "2026-08-31",
+    "sinceRaw": "31 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   },
+   {
+    "player": "Geoffrey Kondogbia",
+    "injury": "Blessure musculaire",
+    "since": "2026-08-30",
+    "sinceRaw": "30 août 2026",
+    "returnDate": null,
+    "returnRaw": null
+   }
+  ],
+  "Strasbourg": [
+   {
+    "player": "Joaquín Panichelli",
+    "injury": "Rupture du ligament croisé",
+    "since": "2026-03-27",
+    "sinceRaw": "27 mars 2026",
+    "returnDate": "2026-12-31",
+    "returnRaw": "31 déc. 2026"
+   }
+  ]
+ }
+}
