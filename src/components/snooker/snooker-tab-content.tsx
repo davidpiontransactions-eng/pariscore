@@ -34,6 +34,60 @@ const MARKETS: { key: MarketKey; label: string; desc: string }[] = [
   { key: "totalOverP2", label: "P2 Over", desc: "P2 total manches over" },
 ];
 
+// Tutoriels des stratégies (ouverts via le bouton "i" près des onglets)
+const TUTORIALS: Record<MarketKey, { title: string; lines: string[] }> = {
+  matchWinner: {
+    title: "Gagnant — vainqueur du match",
+    lines: [
+      "Pari gagné si le joueur recommandé remporte le match.",
+      "Probabilité = moyenne des 5 modèles : Elo, Forme, Scoring, Clutch et cotes déviggées.",
+    ],
+  },
+  overTotal: {
+    title: "Over total frames",
+    lines: [
+      "Pari gagné si le nombre total de frames dépasse la ligne (défaut : Bo − 1).",
+      "Calculée par loi binomiale depuis la proba de gagner une frame.",
+    ],
+  },
+  handicapP1: {
+    title: "Handicap P1",
+    lines: [
+      "Pari gagné si le favori gagne avec au moins m frames d'avance (m = HC).",
+      "Somme des probas de tous les scores exacts couvrant le handicap.",
+    ],
+  },
+  handicapP2: {
+    title: "Handicap P2",
+    lines: [
+      "Pari gagné si l'outsider couvre le handicap (complément du handicap P1).",
+      "Utile quand le favori est surcoté et le match attendu serré.",
+    ],
+  },
+  firstTo2: {
+    title: "1er à 2 frames",
+    lines: [
+      "Pari gagné si le joueur recommandé remporte 2 frames avant son adversaire.",
+      "On estime d'abord p = proba de gagner UNE frame (moyenne Elo, Forme, Scoring, Clutch, cotes), puis loi binomiale négative : P = p² × (3 − 2p).",
+      "Exemple : p = 65 % → 0,65² × 1,7 ≈ 72 %.",
+    ],
+  },
+  totalOverP1: {
+    title: "P1 Over frames",
+    lines: [
+      "Pari gagné si le favori remporte au moins k frames dans le match.",
+      "Somme des scénarios de fin de match via binomiale négative.",
+    ],
+  },
+  totalOverP2: {
+    title: "P2 Over frames",
+    lines: [
+      "Pari gagné si l'outsider remporte au moins k frames dans le match.",
+      "Couvre les matchs serrés même si l'outsider perd.",
+    ],
+  },
+};
+
 // Scoring helpers — basé sur les données DB (Elo, WinPct, CenturyRate, DeciderWinPct, AvgBreak)
 function normalize(val: number, min: number, max: number): number {
   if (max === min) return 50;
@@ -426,6 +480,8 @@ export function SnookerTabContent() {
   });
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [videoQuery, setVideoQuery] = useState<string | null>(null);
+  // Marché affiché dans le popup tutoriel (null = fermé)
+  const [tutorialMarket, setTutorialMarket] = useState<MarketKey | null>(null);
 
   // Détection live pour refresh fréquent
   const [hasLive, setHasLive] = useState(false);
@@ -1106,6 +1162,16 @@ export function SnookerTabContent() {
                 />
               </div>
             )}
+            {/* Bouton "i" : tutoriel de la stratégie active */}
+            <button
+              type="button"
+              onClick={() => setTutorialMarket(activeMarket)}
+              aria-label="Tutoriel de la stratégie"
+              title="Tutoriel de la stratégie"
+              className="flex min-h-[44px] w-8 items-center justify-center rounded-full border border-gray-200 text-[12px] font-bold text-gray-500 transition-colors hover:border-[#00985f] hover:text-[#00985f] sm:min-h-0 sm:h-6 sm:w-6"
+            >
+              i
+            </button>
           </div>
         </div>
 
@@ -1474,6 +1540,44 @@ export function SnookerTabContent() {
           query={videoQuery}
           onClose={() => setVideoQuery(null)}
         />
+      )}
+
+      {/* ======== POPUP TUTORIEL STRATÉGIE ======== */}
+      {tutorialMarket && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center"
+          onClick={() => setTutorialMarket(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tutoriel stratégie"
+        >
+          <div
+            className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl p-5 sm:mx-4 sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-[14px] font-bold" style={{ color: "#00985f" }}>
+                {TUTORIALS[tutorialMarket].title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setTutorialMarket(null)}
+                aria-label="Fermer le tutoriel"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {TUTORIALS[tutorialMarket].lines.map((line) => (
+                <li key={line.slice(0, 24)} className="text-[12px] leading-relaxed" style={{ color: "#444" }}>
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
 
       {/* ======== BET TRACKER ======== */}
