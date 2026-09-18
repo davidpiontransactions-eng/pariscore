@@ -1,5 +1,17 @@
 # PariScore — Journal des modifications
 
+## [Unreleased] — Fiche équipe v1.1-v1.3 (2026-09-18)
+
+### Ajouté — Fiche équipe au clic (football)
+- **Popup fiche équipe** : clic nom d'équipe → classement + PPG du contexte, PowerScores Attaque/Défense avec rangs intra-ligue, Elo interne, infirmerie (RotoWire + dates Transfermarkt)
+- **v1.1** : header verdict sticky, toggle Domicile/Extérieur/Général, heatmap des rangs, meta monitoring scrapers
+- **v1.2** : SOS + PPG ajusté, signal réversion xG, value detector modèle-vs-marché, alertes edge auto
+- **v1.3** : historique chronologique FD, discipline équipe L5, congestion + steam Pinnacle, arbitre fréquent
+- **APIs** : `GET /api/football/teams/profile` (+ params marché `fairH/D/A`, `oddsH/D/A`)
+- **Data** : `public/data/elo-football.json`, `public/data/injuries/*.json`, `public/data/injuries_tm/*.json`, clé `history` dans `fd/*.json`
+- **Crons** : `refresh-injuries.yml`, `refresh-tm-injuries.yml`, `refresh-football-elo.yml` (hebdo lundi)
+- **`tests/team-profile.spec.ts`** : recette E2E 3/3 (venues, verdict complet, value)
+
 ## [v13.01] — 2026-08-31 — Boucle ingénierie modèle prédictif football (6 marchés)
 
 ### Ajouté — Admin Dashboard
