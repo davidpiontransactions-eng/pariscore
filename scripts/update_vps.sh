@@ -134,6 +134,7 @@ if [ -d "$OPT_DIR/.git" ]; then
   cp -f ecosystem.config.js "$OPT_DIR/ecosystem.config.js" 2>/dev/null || true
   if [ "$BUILD_RAN" = "1" ]; then
     rm -rf "$OPT_DIR/.next/standalone" || { echo "ERR: purge standalone OPT"; exit 1; }
+    mkdir -p "$OPT_DIR/.next" || { echo "ERR: mkdir $OPT_DIR/.next"; exit 1; }
     cp -r .next/standalone "$OPT_DIR/.next/standalone" || { echo "ERR: copie build -> OPT"; exit 1; }
     cp -f "$OPT_DIR/.env" "$OPT_DIR/.next/standalone/.env" 2>/dev/null || true
   fi
