@@ -203,6 +203,53 @@ def compute_season(rows: List[Dict[str, str]]) -> Optional[Dict[str, Any]]:
     return {"nMatches": n_matches, "teams": out_teams}
 
 
+def _iso_date(raw: str, season_code: str) -> str:
+    """Date CSV (dd/mm/yy ou yyyy-mm-dd) -> ISO, repli fin de saison si invalide."""
+    raw = (raw or "").strip()
+    try:
+        if "/" in raw:
+            d, m, y = raw.split("/")
+            year = int(y) + 2000 if len(y) == 2 else int(y)
+            return f"{year:04d}-{int(m):02d}-{int(d):02d}"
+        if "-" in raw and len(raw) >= 8:
+            return raw[:10]
+    except ValueError:
+        pass
+    return f"20{int(season_code[:2]) + 1}-12-31"
+
+
+def _num(raw) -> Optional[float]:
+    try:
+        return float(raw) if raw not in (None, "") else None
+    except (ValueError, TypeError):
+        return None
+
+
+def _build_history(rows: List[Dict[str, str]], season_code: str) -> List[Dict[str, Any]]:
+    """Lignes par match triées par date (scores/cotes null si à venir). Sert T11-T13."""
+    out = []
+    for r in rows:
+        home, away = (r.get("HomeTeam") or "").strip(), (r.get("AwayTeam") or "").strip()
+        if not home or not away:
+            continue
+        hg, ag = _num(r.get("FTHG")), _num(r.get("FTAG"))
+        ftr = (r.get("FTR") or "").upper() or None
+        out.append({
+            "date": _iso_date(r.get("Date") or "", season_code),
+            "home": home, "away": away,
+            "hg": int(hg) if hg is not None and hg == int(hg) else None,
+            "ag": int(ag) if ag is not None and ag == int(ag) else None,
+            "ftr": ftr if ftr in ("H", "D", "A") else None,
+            "hy": _num(r.get("HY")), "ay": _num(r.get("AY")),
+            "hr": _num(r.get("HR")), "ar": _num(r.get("AR")),
+            "referee": (r.get("Referee") or "").strip() or None,
+            "avgH": _num(r.get("AvgH")), "avgD": _num(r.get("AvgD")), "avgA": _num(r.get("AvgA")),
+            "psH": _num(r.get("PSH")), "psD": _num(r.get("PSD")), "psA": _num(r.get("PSA")),
+        })
+    out.sort(key=lambda x: x["date"])
+    return out
+
+
 def scrape_league(slug: str, divisions: List[str]) -> Optional[Dict]:
     seasons_out = {}
     for season_code, season_label in SEASONS:
@@ -214,6 +261,7 @@ def scrape_league(slug: str, divisions: List[str]) -> Optional[Dict]:
             rows_all.extend(csv.DictReader(io.StringIO(text)))
         computed = compute_season(rows_all) if rows_all else None
         if computed:
+            computed["history"] = _build_history(rows_all, season_code)
             seasons_out[season_label] = computed
             print(f"[{slug}] {season_label}: {computed['nMatches']} matchs, {len(computed['teams'])} équipes", file=sys.stderr)
         else:
@@ -223,13 +271,18 @@ def scrape_league(slug: str, divisions: List[str]) -> Optional[Dict]:
         print(f"[{slug}] ERROR: aucune saison dispo", file=sys.stderr)
         return None
 
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return {
         "meta": {
             "schemaVersion": 1,
             "leagueId": slug,
             "source": "football-data.co.uk",
-            "lastUpdated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "lastUpdated": now,
             "divisions": divisions,
+            # Monitoring (Q12) : fraîcheur, volume, couverture saisons.
+            "fetchedAt": now,
+            "rowCount": sum(s["nMatches"] for s in seasons_out.values()),
+            "coveragePct": round(100 * len(seasons_out) / len(SEASONS)),
         },
         "seasons": seasons_out,
     }
