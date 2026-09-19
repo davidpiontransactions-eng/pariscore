@@ -22,6 +22,11 @@ import {
   type MatchContext,
 } from "@/lib/tennis-win-probability";
 import {
+  predictTotalGames,
+  type ServeStats,
+  type PredictionSurface,
+} from "@/lib/prediction/total-games";
+import {
   extractTournaments,
   filterByTournament,
   filterByTimeWindow,
@@ -142,11 +147,45 @@ function toTableRows(
         }
         break;
       }
-      case "over-games":
-        // Affiche "Over X.5 games / YY%" avec la ligne selon le format (bo3/bo5).
-        const matchLine = matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5;
-        display = prob != null ? `Over ${matchLine} · ${prob} %` : `Over ${matchLine}`;
+      case "over-games": {
+        // Calcule P(Over X.5) via Barnett-Clarke (2005) + Poisson.
+        const holdAVal = e.serveA ?? 0;
+        const holdBVal = e.serveB ?? 0;
+        const retAVal = e.retA ?? 0;
+        const retBVal = e.retB ?? 0;
+        const playerAServe: ServeStats = {
+          servePtsWonPct: holdAVal > 0 ? holdAVal / 100 : null,
+          returnPtsWonPct: retAVal > 0 ? retAVal / 100 : null,
+        };
+        const playerBServe: ServeStats = {
+          servePtsWonPct: holdBVal > 0 ? holdBVal / 100 : null,
+          returnPtsWonPct: retBVal > 0 ? retBVal / 100 : null,
+        };
+        const surface = (e.surface || "Hard") as PredictionSurface;
+        const bestOf = matchFormat === "bo5" ? 5 : 3;
+        const pred = predictTotalGames(
+          playerAServe,
+          playerBServe,
+          surface,
+          bestOf as 3 | 5,
+          e.playerA.value,
+          e.playerB.value,
+        );
+        // Récupère la proba pour le seuil sélectionné.
+        const threshold = matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5;
+        const thresholdKey = `over${threshold.replace(".", "_")}` as keyof typeof pred;
+        const prob = pred[thresholdKey] as number | undefined;
+        const probPct = prob != null ? Math.round(prob) : null;
+        // Affiche le meilleur Over ≥ 60%.
+        if (probPct != null && probPct >= 60) {
+          display = `Over ${threshold} · ${probPct}%`;
+        } else if (probPct != null) {
+          display = `Over ${threshold} · ${probPct}%`;
+        } else {
+          display = `Over ${threshold}`;
+        }
         break;
+      }
       case "most-aces":
         // Affiche le joueur avec le plus d'aces prédit.
         display = pickName && prob != null ? `${pickName} ${prob} %` : pickName ?? def?.format(e.value) ?? `${e.value}`;
