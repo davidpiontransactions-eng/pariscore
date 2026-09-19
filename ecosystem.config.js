@@ -51,7 +51,10 @@ module.exports = {
       name: 'pariscore-next',
       script: '/home/ubuntu/.bun/bin/bun',
       args: '.next/standalone/server.js',
-      cwd: '/opt/pariscorebis',
+      // Serving = ~/pariscore depuis 2026-09-18 (nginx + build HOME).
+      // Ne PAS remettre /opt : le runtime prod tourne ici (vérifié pm2)
+      // et un cwd /opt referait diverger HTML servi vs build statique.
+      cwd: '/home/ubuntu/pariscore',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
