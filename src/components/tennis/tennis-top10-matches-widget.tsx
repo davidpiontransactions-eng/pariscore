@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,13 @@ import {
   type TennisStrategyEntry,
   type TennisStrategyTop10Result,
 } from "@/lib/tennis-strategy-top10";
+import {
+  extractTournaments,
+  filterByTournament,
+  filterByTimeWindow,
+  TENNIS_TIME_WINDOWS,
+  type TennisTimeWindow,
+} from "@/lib/tennis-filters";
 import {
   TopStrategiesTable,
   type StrategyTableRow,
@@ -78,16 +86,30 @@ function toTableRows(
 }
 
 
-/** Lit strat/win depuis l'URL (?strat=&win=) pour le deep-link partageable. */
-function readInitialParams(): { strat: TennisStrategyKey; win: WinKey } {
-  const fallback = { strat: "surfaceEloGap" as TennisStrategyKey, win: "all" as WinKey };
+/** Lit strat/win/tournament depuis l'URL pour le deep-link partageable. */
+function readInitialParams(): {
+  strat: TennisStrategyKey;
+  win: WinKey;
+  tournament: string | null;
+  timeWin: TennisTimeWindow;
+} {
+  const fallback = {
+    strat: "surfaceEloGap" as TennisStrategyKey,
+    win: "all" as WinKey,
+    tournament: null as string | null,
+    timeWin: "all" as TennisTimeWindow,
+  };
   if (typeof window === "undefined") return fallback;
   const sp = new URLSearchParams(window.location.search);
   const s = sp.get("strat");
   const w = sp.get("win");
+  const t = sp.get("tournament");
+  const tw = sp.get("timeWin");
   return {
     strat: TENNIS_STRATEGY_DEFS.some((d) => d.key === s) ? (s as TennisStrategyKey) : fallback.strat,
     win: w === "today" || w === "tomorrow" ? w : "all",
+    tournament: t || null,
+    timeWin: (["all", "jour", "48h", "semaine"] as string[]).includes(tw ?? "") ? (tw as TennisTimeWindow) : fallback.timeWin,
   };
 }
 
@@ -104,6 +126,8 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const initial = useMemo(() => readInitialParams(), []);
   const [strat, setStrat] = useState<TennisStrategyKey>(initial.strat);
   const [win, setWin] = useState<WinKey>(initial.win);
+  const [tournament, setTournament] = useState<string | null>(initial.tournament);
+  const [timeWin, setTimeWin] = useState<TennisTimeWindow>(initial.timeWin);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [overMap, setOverMap] = useState<Map<string, number>>(new Map());
@@ -152,24 +176,75 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     return () => ac.abort();
   }, [strat, win, onEntries]);
 
-  // Deep-link : reflète strat/win dans l'URL (partageable, comme le foot).
+  // Deep-link : reflète strat/win/tournament/timeWin dans l'URL (partageable).
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     sp.set("strat", strat);
     sp.set("win", win);
-    window.history.replaceState(null, "", `${window.location.pathname}?${sp.toString()}`);
-  }, [strat, win]);
+    if (tournament) sp.set("tournament", tournament); else sp.delete("tournament");
+    if (timeWin !== "all") sp.set("timeWin", timeWin); else sp.delete("timeWin");
+    const qs = sp.toString();
+    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [strat, win, tournament, timeWin]);
 
   const activeDef = useMemo(
     () => TENNIS_STRATEGY_DEFS.find((d) => d.key === strat)!,
     [strat],
   );
 
-  const rows = useMemo(() => {
+  // Liste des tournois issue des données API.
+  const tournaments = useMemo(() => {
+    if (!data?.matches) return [];
+    return extractTournaments(data.matches);
+  }, [data]);
+
+  // Rows bruts depuis l'API (tous les matchs qualifiés pour la stratégie).
+  const rawRows = useMemo(() => {
     if (!data?.strategies) return [];
     const entries = data.strategies[strat] ?? [];
     return toTableRows(entries, strat, overMap);
   }, [data, strat, overMap]);
+
+  // Filtres appliqués côté client : tournoi + fenêtre temporelle.
+  const rows = useMemo(() => {
+    // D'abord filtrer par tournoi (sur les matchs API pour extraire les scheduledAt).
+    let filtered = rawRows;
+    if (tournament && data?.matches) {
+      const matchScheduled = new Map<string, string>();
+      for (const m of data.matches) {
+        matchScheduled.set(m.matchId, m.scheduledAt);
+      }
+      const matchTournament = new Map<string, string>();
+      for (const m of data.matches) {
+        matchTournament.set(m.matchId, m.tournament);
+      }
+      filtered = rawRows.filter((r) => {
+        const t = matchTournament.get(r.matchId);
+        return !t || t === tournament;
+      });
+    }
+    // Ensuite filtrer par fenêtre temporelle.
+    if (timeWin !== "all") {
+      const matchScheduled = new Map<string, string>();
+      if (data?.matches) {
+        for (const m of data.matches) {
+          matchScheduled.set(m.matchId, m.scheduledAt);
+        }
+      }
+      filtered = filterByTimeWindow(
+        filtered.map((r) => ({ ...r, scheduledAt: matchScheduled.get(r.matchId) ?? r.kickoff })),
+        timeWin,
+      );
+    }
+    return filtered;
+  }, [rawRows, tournament, timeWin, data]);
+
+  const handleTournamentChange = useCallback((v: string) => setTournament(v === "__all__" ? null : v), []);
+  const handleStratChange = useCallback((v: string) => {
+    setStrat(v as TennisStrategyKey);
+    setHighlightId(null);
+  }, []);
+  const handleTimeWinChange = useCallback((w: TennisTimeWindow) => () => setTimeWin(w), []);
 
   return (
     <section
@@ -177,17 +252,38 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
       style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
       aria-label="Top 10 matchs tennis par stratégie"
     >
-      <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <h2 className="text-[15px] font-semibold" style={{ color: C.headerText }}>
           Top 10 matchs par stratégie
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Sélecteur de tournoi */}
+          <Select
+            value={tournament ?? "__all__"}
+            onValueChange={handleTournamentChange}
+          >
+            <SelectTrigger
+              className="h-9 w-[180px] text-xs"
+              aria-label="Tournoi du Top 10"
+            >
+              <SelectValue placeholder="Tous les tournois" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__" className="text-xs">
+                Tous les tournois
+              </SelectItem>
+              {tournaments.map((t) => (
+                <SelectItem key={t} value={t} className="text-xs">
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Sélecteur de stratégie */}
           <Select
             value={strat}
-            onValueChange={(v) => {
-              setStrat(v as TennisStrategyKey);
-              setHighlightId(null);
-            }}
+            onValueChange={handleStratChange}
           >
             <SelectTrigger className="h-9 w-[200px] text-xs">
               <SelectValue placeholder="Stratégie" />
@@ -195,30 +291,34 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             <SelectContent>
               {TENNIS_STRATEGY_DEFS.map((d) => (
                 <SelectItem key={d.key} value={d.key} className="text-xs">
-                  {d.label}
+                  <span aria-hidden>{d.emoji}</span> {d.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Fenêtre temporelle (Jour / 48h / Sem / Tout) */}
           <div
             className="flex overflow-hidden rounded"
             style={{ border: `1px solid ${C.cardBorder}` }}
             role="group"
-            aria-label="Fenêtre"
+            aria-label="Période des matchs"
           >
-            {(["all", "today", "tomorrow"] as WinKey[]).map((w) => (
+            {TENNIS_TIME_WINDOWS.map((w) => (
               <button
-                key={w}
+                key={w.key}
                 type="button"
-                onClick={() => setWin(w)}
-                aria-pressed={win === w}
-                className="min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5"
-                style={{
-                  background: win === w ? `${C.accent}10` : "transparent",
-                  color: win === w ? C.accent : C.time,
-                }}
+                onClick={handleTimeWinChange(w.key)}
+                aria-pressed={timeWin === w.key}
+                title={w.title}
+                className={cn(
+                  "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
+                  timeWin === w.key
+                    ? "bg-[#00985f]/10 text-[#00985f]"
+                    : "bg-transparent text-[#717171] hover:text-[#222]",
+                )}
               >
-                {w === "all" ? "Tout" : w === "today" ? "Auj." : "Demain"}
+                {w.label}
               </button>
             ))}
           </div>
@@ -243,7 +343,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
           </div>
         ) : rows.length === 0 ? (
           <p className="py-3 text-xs" style={{ color: C.time }}>
-            Aucun match qualifié pour « {activeDef?.label} » ({win === "all" ? "toutes dates" : win === "today" ? "aujourd'hui" : "demain"}).
+            Aucun match qualifié pour « {activeDef?.label} »{tournament ? ` en ${tournament}` : ""}.
           </p>
         ) : (
           <TopStrategiesTable
