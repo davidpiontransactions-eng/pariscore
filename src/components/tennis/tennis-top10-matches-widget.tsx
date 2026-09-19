@@ -17,6 +17,11 @@ import {
   type TennisStrategyTop10Result,
 } from "@/lib/tennis-strategy-top10";
 import {
+  computeWinProbability,
+  type PlayerStats,
+  type MatchContext,
+} from "@/lib/tennis-win-probability";
+import {
   extractTournaments,
   filterByTournament,
   filterByTimeWindow,
@@ -91,10 +96,45 @@ function toTableRows(
     const prob = e.probPick != null ? Math.round(e.probPick) : null;
 
     switch (betType) {
-      case "winner":
-        // Affiche le nom du vainqueur prédit + proba.
-        display = pickName && prob != null ? `${pickName} ${prob} %` : def?.format(e.value) ?? `${e.value}`;
+      case "winner": {
+        // Calcule la probabilité de victoire via Sigmoid composite (Gao 2019).
+        const holdAVal = e.serveA ?? 0;
+        const holdBVal = e.serveB ?? 0;
+        const retAVal = e.retA ?? 0;
+        const retBVal = e.retB ?? 0;
+        const playerAStats: PlayerStats = {
+          elo: e.playerA.value,
+          eloSurface: e.playerA.value,
+          holdPct: holdAVal / 100,
+          breakPct: retAVal / 100,
+          formL5: 0, // pas disponible dans l'entrée
+          h2hWins: 0,
+          h2hTotal: 0,
+          matchesLast7d: 0,
+          acesPerMatch: 0,
+        };
+        const playerBStats: PlayerStats = {
+          elo: e.playerB.value,
+          eloSurface: e.playerB.value,
+          holdPct: holdBVal / 100,
+          breakPct: retBVal / 100,
+          formL5: 0,
+          h2hWins: 0,
+          h2hTotal: 0,
+          matchesLast7d: 0,
+          acesPerMatch: 0,
+        };
+        const ctx: MatchContext = {
+          surface: "hard", // TODO: récupérer la surface du match
+          tournamentCategory: e.tournament,
+          round: e.round ?? "",
+          isBo5: false,
+        };
+        const winProb = computeWinProbability(playerAStats, playerBStats, ctx);
+        const winnerName = winProb.pick === "A" ? e.playerA.shortName : e.playerB.shortName;
+        display = `${winnerName} ${winProb.probA >= winProb.probB ? winProb.probA : winProb.probB} %`;
         break;
+      }
       case "over-games":
         // Affiche "Over X.5 games / YY%" avec la ligne selon le format (bo3/bo5).
         const matchLine = matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5;
