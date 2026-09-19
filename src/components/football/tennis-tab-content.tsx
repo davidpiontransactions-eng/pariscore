@@ -605,7 +605,8 @@ return [...matches, ...synthetic];
   const subFiltered = useMemo(() => {
     if (subTab === "live") {
       const liveOnly = filtered.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
-      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      // Les lives ne sont PAS filtrés par le filtre temporel (time=2h) :
+      // un match commencé il y a 3h et toujours en cours doit rester visible.
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
@@ -619,12 +620,12 @@ return [...matches, ...synthetic];
   const restForGrid = useMemo(() => {
     if (subTab === "live") {
       const liveOnly = curation.rest.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
-      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      // Les lives ne sont PAS filtrés par le filtre temporel
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
     return scopeByTime(curation.rest);
-  }, [subTab, curation.rest, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
+  }, [subTab, curation.rest, liveStates, liveMatchIdSet, scopeByTime, timeToday]);
 
   // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
   // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
@@ -646,12 +647,12 @@ return [...matches, ...synthetic];
   const featuredForMarquee = useMemo(() => {
     if (subTab === "live") {
       const liveOnly = curation.featured.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
-      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      // Les lives ne sont PAS filtrés par le filtre temporel
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
     return scopeByTime(curation.featured);
-  }, [subTab, curation.featured, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
+  }, [subTab, curation.featured, liveStates, liveMatchIdSet, scopeByTime, timeToday]);
 
   // DEBUG: expose live data to window for test verification
   useEffect(() => {

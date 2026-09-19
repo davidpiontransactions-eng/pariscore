@@ -309,6 +309,7 @@ export function hydrateStoreFromUrl(): void {
   const time = params.get("time");
   const q = params.get("q");
   const view = params.get("view");
+  const liveParam = params.get("live");
 
   if (league) {
     patch.selectedLeagueId = league;
@@ -321,11 +322,13 @@ export function hydrateStoreFromUrl(): void {
     patch.selectedTimeFilter = time as TimeFilterKey;
   }
   if (q) patch.searchQuery = q;
-  if (view === "live" || view === "prematch") {
-    patch.treeStatus = view;
+  // live=1 équivaut à view=live
+  const effectiveView = view ?? (liveParam === "1" ? "live" : null);
+  if (effectiveView === "live" || effectiveView === "prematch") {
+    patch.treeStatus = effectiveView;
     const target = patch.selectedSportId ?? "football";
-    patch.modes = { ...useSportsSidebarStore.getState().modes, [target]: view };
-  } else if (view === "all") {
+    patch.modes = { ...useSportsSidebarStore.getState().modes, [target]: effectiveView };
+  } else if (effectiveView === "all") {
     patch.treeStatus = "all";
   }
   const ids = params.get("ids");

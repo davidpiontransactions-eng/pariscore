@@ -154,10 +154,11 @@ export function FootballTabContent() {
       const target = selectedCountryId.toLowerCase();
       list = list.filter((m) => m.league.country?.toLowerCase().replace(/\s+/g, "-") === target);
     }
-    if (timeRange !== null) list = filterLiveByWindow(list, timeRange, (m) => m.scheduledAt);
-    else if (timeToday) list = filterByToday(list, (m) => m.scheduledAt);
+    // Les lives ne sont PAS filtrés par le filtre temporel (time=2h) :
+    // un match commencé il y a 3h et toujours en cours doit rester visible.
+    if (timeToday) list = filterByToday(list, (m) => m.scheduledAt);
     return filterBySelection(list, selectedMatchIds, (m) => m.id);
-  }, [matches, selectedLeague, selectedCountryId, timeRange, timeToday, selectedMatchIds]);
+  }, [matches, selectedLeague, selectedCountryId, timeToday, selectedMatchIds]);
 
   const prematchMatches = useMemo(() => {
     let list = matches.filter((m) => !m.live || m.live.status === "FT" || m.live.status === "PEN");

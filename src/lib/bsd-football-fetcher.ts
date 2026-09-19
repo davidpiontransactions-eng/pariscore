@@ -391,7 +391,7 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
     homeScore: num(m.home_score) ?? 0,
     awayScore: num(m.away_score) ?? 0,
     minute: Math.max(0, Math.min(130, num(m.current_minute) ?? 0)),
-    status: m.status === "HT" || m.period === "HT" ? "HT" : "LIVE",
+    status: (m.status === "HT" || m.period === "HT" || m.status?.toLowerCase() === "ht" || m.period?.toLowerCase() === "ht") ? "HT" : "LIVE",
     period: m.period,
     homePossession: poss ?? (ls?.away?.ball_possession != null ? 100 - (clamp100(num(ls.away.ball_possession)) ?? 50) : 50),
     homeShots: num(ls?.home?.total_shots),
