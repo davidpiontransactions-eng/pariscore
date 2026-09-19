@@ -54,6 +54,8 @@ function toTableRows(
   entries: TennisStrategyEntry[],
   strat: TennisStrategyKey,
   overMap: Map<string, number>,
+  betType: TennisBetType,
+  gameLine: TennisGameLine,
 ): StrategyTableRow[] {
   const def = TENNIS_STRATEGY_DEFS.find((d) => d.key === strat);
   return entries.map((e) => {
@@ -74,6 +76,41 @@ function toTableRows(
       retA < 0 && retB < 0
         ? null
         : `R ${retA >= retB ? e.playerA.shortName : e.playerB.shortName} ${Math.round(Math.max(retA, retB))} %`;
+
+    // Display contextuel selon le bet type.
+    let display: string;
+    const pickName = e.pick === "A" ? e.playerA.shortName : e.pick === "B" ? e.playerB.shortName : null;
+    const prob = e.probPick != null ? Math.round(e.probPick) : null;
+
+    switch (betType) {
+      case "winner":
+        // Affiche le nom du vainqueur prédit + proba.
+        display = pickName && prob != null ? `${pickName} ${prob} %` : def?.format(e.value) ?? `${e.value}`;
+        break;
+      case "over-games":
+        // Affiche "Over X.5 games / YY%".
+        display = prob != null ? `Over ${gameLine} games · ${prob} %` : `Over ${gameLine} games`;
+        break;
+      case "most-aces":
+        // Affiche le joueur avec le plus d'aces prédit.
+        display = pickName && prob != null ? `${pickName} ${prob} %` : pickName ?? def?.format(e.value) ?? `${e.value}`;
+        break;
+      case "over-set":
+        // Affiche "Over X.5 / 1er set YY%".
+        display = prob != null ? `Over ${gameLine} · ${prob} %` : `Over ${gameLine}`;
+        break;
+      case "set-winner":
+        // Affiche le nom du joueur qui va gagner le set.
+        display = pickName && prob != null ? `${pickName} ${prob} %` : pickName ?? def?.format(e.value) ?? `${e.value}`;
+        break;
+      case "winner-live":
+        // Affiche le nom du vainqueur live.
+        display = pickName && prob != null ? `${pickName} ${prob} %` : pickName ?? def?.format(e.value) ?? `${e.value}`;
+        break;
+      default:
+        display = def?.format(e.value) ?? `${e.value}`;
+    }
+
     return {
       matchId: e.matchId,
       league: e.tournament,
@@ -82,7 +119,7 @@ function toTableRows(
       home: { teamName: e.playerA.name, logo: undefined },
       away: { teamName: e.playerB.name, logo: undefined },
       value: e.value,
-      display: def?.format(e.value) ?? `${e.value}`,
+      display,
       probPct: e.probPick,
       odds: null,
       oddsLabel: e.pick === "A" ? "1" : e.pick === "B" ? "2" : null,
@@ -259,7 +296,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   }, [data, strat, minEdge]);
 
   const rawRows = useMemo(() => {
-    return toTableRows(filteredEntries, strat, overMap);
+    return toTableRows(filteredEntries, strat, overMap, betType, gameLine);
   }, [filteredEntries, strat, overMap]);
 
   const rows = useMemo(() => {
