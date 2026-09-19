@@ -14,6 +14,8 @@ type Props = {
   hourOptions?: readonly number[];
   /** Masquer "Demain" (inutile pour le rugby week-end). */
   hideTomorrow?: boolean;
+  /** Ajouter "Ce week-end" (rugby : samedi + dimanche). */
+  showWeekend?: boolean;
 };
 
 /**
@@ -21,7 +23,7 @@ type Props = {
  * maintenant (tolérance arrière 15 min, cf. `filterByStartWindow`).
  * « today » / « tomorrow » couvrent les jours calendaires Europe/Paris.
  */
-export function TimeRangeFilter({ value, onChange, className, hourOptions, hideTomorrow }: Props) {
+export function TimeRangeFilter({ value, onChange, className, hourOptions, hideTomorrow, showWeekend }: Props) {
   const t = useTranslations("matchTabs");
   const hours = hourOptions ?? TIME_RANGE_OPTIONS;
 
@@ -33,6 +35,7 @@ export function TimeRangeFilter({ value, onChange, className, hourOptions, hideT
     })),
     { key: "today", label: t("timeToday") },
     ...(hideTomorrow ? [] : [{ key: "tomorrow" as TimeFilterKey, label: t("timeTomorrow") }]),
+    ...(showWeekend ? [{ key: "weekend" as TimeFilterKey, label: "Ce week-end" }] : []),
   ];
 
   return (

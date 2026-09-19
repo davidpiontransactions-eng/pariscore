@@ -24,19 +24,19 @@ import {
 
 describe("parseTimeFilter", () => {
   test("'all' → aucune fenêtre", () => {
-    expect(parseTimeFilter("all")).toEqual({ hours: null, today: false, tomorrow: false });
+    expect(parseTimeFilter("all")).toEqual({ hours: null, today: false, tomorrow: false, weekend: false });
   });
   test("'2h' → fenêtre 2 heures", () => {
-    expect(parseTimeFilter("2h")).toEqual({ hours: 2, today: false, tomorrow: false });
+    expect(parseTimeFilter("2h")).toEqual({ hours: 2, today: false, tomorrow: false, weekend: false });
   });
   test("'24h' → fenêtre 24 heures", () => {
-    expect(parseTimeFilter("24h")).toEqual({ hours: 24, today: false, tomorrow: false });
+    expect(parseTimeFilter("24h")).toEqual({ hours: 24, today: false, tomorrow: false, weekend: false });
   });
   test("'today' → jour calendaire", () => {
-    expect(parseTimeFilter("today")).toEqual({ hours: null, today: true, tomorrow: false });
+    expect(parseTimeFilter("today")).toEqual({ hours: null, today: true, tomorrow: false, weekend: false });
   });
   test("'tomorrow' → jour calendaire suivant", () => {
-    expect(parseTimeFilter("tomorrow")).toEqual({ hours: null, today: false, tomorrow: true });
+    expect(parseTimeFilter("tomorrow")).toEqual({ hours: null, today: false, tomorrow: true, weekend: false });
   });
 });
 

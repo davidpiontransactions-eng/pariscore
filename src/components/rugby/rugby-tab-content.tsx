@@ -28,9 +28,11 @@ import { getFlashscorePayload } from "@/lib/rugby/provider";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
-import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { splitLivePrematch, filterByStartWindow, filterByToday, filterByWeekend, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { useRugbyHighlightStore } from "@/stores/use-rugby-highlight-store";
 import { RugbyTopStrategiesWidget } from "./rugby-top-strategies-widget";
+import { RugbyMatchOfDay } from "./rugby-match-of-day";
 import { useRugbyTopStrategies } from "@/hooks/use-rugby-top-strategies";
 import { buildRugbyTopTags, rugbyTopTagsForMatch } from "@/lib/top10-rugby-calendar-link";
 import type { RugbyStrategyKey } from "@/lib/rugby-strategy-top";
@@ -299,6 +301,20 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
     bestDefense: topBestDefense,
   }), [topHomeWin, topAwayWin, topOver415, topUnder515, topHandicapHome, topHandicapAway, topBttsYes, topMarginBand, topBestAttack, topBestDefense]);
 
+  // Map matchId → nombre de stratégies Top10 (pour Match du Jour)
+  const top10MatchIds = useMemo(() => {
+    const allTop = [
+      ...topHomeWin, ...topAwayWin, ...topOver415, ...topUnder515,
+      ...topHandicapHome, ...topHandicapAway, ...topBttsYes, ...topMarginBand,
+      ...topBestAttack, ...topBestDefense,
+    ];
+    const counts = new Map<string, number>();
+    for (const m of allTop) {
+      counts.set(m.matchId, (counts.get(m.matchId) ?? 0) + 1);
+    }
+    return counts;
+  }, [topHomeWin, topAwayWin, topOver415, topUnder515, topHandicapHome, topHandicapAway, topBttsYes, topMarginBand, topBestAttack, topBestDefense]);
+
   const topTagsFor = useCallback(
     (id: string) => {
       const m = displayMatches.find((c) => c.id === id);
@@ -327,6 +343,21 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
 
   return (
     <div className="space-y-5">
+      {/* Match du Jour — seulement en mode prematch */}
+      {mode === "prematch" && (
+        <RugbyMatchOfDay
+          allTopMatches={[
+            ...topHomeWin, ...topAwayWin, ...topOver415, ...topUnder515,
+            ...topHandicapHome, ...topHandicapAway, ...topBttsYes, ...topMarginBand,
+            ...topBestAttack, ...topBestDefense,
+          ]}
+          onMatchClick={(id) => {
+            onOpenMatch(id);
+            useRugbyHighlightStore.getState().setHighlight(id);
+          }}
+        />
+      )}
+
       {/* Sous-onglets Live | Pre-match */}
       <MatchViewTabs
         idBase={tabsId}
@@ -346,7 +377,10 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
         <RugbyCalendarTable
           matches={displayMatches}
           loading={calendarLoading}
-          onMatchClick={onOpenMatch}
+          onMatchClick={(id) => {
+            onOpenMatch(id);
+            useRugbyHighlightStore.getState().setHighlight(id);
+          }}
           topTagsFor={topTagsFor}
         />
       </div>

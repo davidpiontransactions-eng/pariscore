@@ -19,7 +19,8 @@ export type TimeFilterKey =
   | "12h"
   | "24h"
   | "today"
-  | "tomorrow";
+  | "tomorrow"
+  | "weekend";
 
 /**
  * Filtres de stratégie unifiés (partagés entre football et tennis).
@@ -73,12 +74,14 @@ export function parseTimeFilter(key: TimeFilterKey): {
   hours: number | null;
   today: boolean;
   tomorrow: boolean;
+  weekend: boolean;
 } {
-  if (key === "all") return { hours: null, today: false, tomorrow: false };
-  if (key === "today") return { hours: null, today: true, tomorrow: false };
-  if (key === "tomorrow") return { hours: null, today: false, tomorrow: true };
+  if (key === "all") return { hours: null, today: false, tomorrow: false, weekend: false };
+  if (key === "today") return { hours: null, today: true, tomorrow: false, weekend: false };
+  if (key === "tomorrow") return { hours: null, today: false, tomorrow: true, weekend: false };
+  if (key === "weekend") return { hours: null, today: false, tomorrow: false, weekend: true };
   const hours = Number.parseInt(key, 10);
-  return { hours: Number.isFinite(hours) ? hours : null, today: false, tomorrow: false };
+  return { hours: Number.isFinite(hours) ? hours : null, today: false, tomorrow: false, weekend: false };
 }
 
 /**
@@ -120,6 +123,40 @@ export function filterByTomorrow<T>(
     if (!raw) return false;
     const ts = new Date(raw).getTime();
     return Number.isFinite(ts) && fmt.format(new Date(ts)) === day;
+  });
+}
+
+/**
+ * Filtre les matchs du week-end (samedi + dimanche Europe/Paris).
+ * Fenêtre principale du rugby : Top 14 samedi, Premiership samedi/dimanche.
+ */
+export function filterByWeekend<T>(
+  items: T[],
+  getScheduledAt: (match: T) => string | null | undefined,
+  now: Date = new Date(),
+): T[] {
+  const PARIS_TZ = "Europe/Paris";
+  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: PARIS_TZ, weekday: "short" }).format(now);
+
+  // Calculer samedi et dimanche de la semaine en cours
+  const nowDate = new Date(now);
+  const currentDay = nowDate.getDay(); // 0=dim, 6=sam
+  const saturday = new Date(nowDate);
+  saturday.setDate(nowDate.getDate() - ((currentDay + 1) % 7)); // reculer au samedi
+  const sunday = new Date(saturday);
+  sunday.setDate(saturday.getDate() + 1);
+
+  const satDay = fmt.format(saturday);
+  const sunDay = fmt.format(sunday);
+
+  return items.filter((match) => {
+    const raw = getScheduledAt(match);
+    if (!raw) return false;
+    const ts = new Date(raw).getTime();
+    if (!Number.isFinite(ts)) return false;
+    const matchDay = fmt.format(new Date(ts));
+    return matchDay === satDay || matchDay === sunDay;
   });
 }
 

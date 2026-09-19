@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRugbyTopStrategies } from "@/hooks/use-rugby-top-strategies";
 import { RUGBY_STRATEGIES, type RugbyStrategyKey } from "@/lib/rugby-strategy-top";
 import { RugbyTopStrategiesTable } from "./rugby-top-strategies-table";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { useRugbyHighlightStore } from "@/stores/use-rugby-highlight-store";
 import {
   filterByStartWindow,
   filterByToday,
   filterByTomorrow,
+  filterByWeekend,
   parseTimeFilter,
   type TimeFilterKey,
 } from "@/lib/match-view";
@@ -29,22 +31,46 @@ export function RugbyTopStrategiesWidget() {
   const [timeKey, setTimeKey] = useState<TimeFilterKey>("all");
   const def = RUGBY_STRATEGIES.find((s) => s.key === active) ?? RUGBY_STRATEGIES[0];
   const { matches: rawMatches, loading } = useRugbyTopStrategies(active, 10, timeKey);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Highlight bidirectionnel Calendar ↔ Top10
+  const highlightedMatchId = useRugbyHighlightStore((s) => s.highlightedMatchId);
+  const clearHighlight = useRugbyHighlightStore((s) => s.clearHighlight);
+
+  // Auto-clear highlight après 5 secondes
+  useEffect(() => {
+    if (!highlightedMatchId) return;
+    const timer = setTimeout(() => clearHighlight(), 5000);
+    return () => clearTimeout(timer);
+  }, [highlightedMatchId, clearHighlight]);
+
+  // Scroll-into-view quand un match est highlighté depuis le calendrier
+  useEffect(() => {
+    if (!highlightedMatchId || !containerRef.current) return;
+    const el = containerRef.current.querySelector(`[data-match-id="${highlightedMatchId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedMatchId]);
 
   // Filtre horaire & date (côté client, sur le kickoff)
-  const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
+  const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow, weekend: timeWeekend } = parseTimeFilter(timeKey);
   const matches = useMemo(() => {
     let filtered = rawMatches;
-    if (timeToday) {
+    if (timeWeekend) {
+      filtered = filterByWeekend(filtered, (m) => m.kickoff);
+    } else if (timeToday) {
       filtered = filterByToday(filtered, (m) => m.kickoff);
     } else if (timeTomorrow) {
       filtered = filterByTomorrow(filtered, (m) => m.kickoff);
     }
     filtered = filterByStartWindow(filtered, timeRange, (m) => m.kickoff);
     return filtered;
-  }, [rawMatches, timeRange, timeToday, timeTomorrow]);
+  }, [rawMatches, timeRange, timeToday, timeTomorrow, timeWeekend]);
 
   return (
     <div
+      ref={containerRef}
       className="rounded-2xl"
       style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
     >
@@ -81,7 +107,7 @@ export function RugbyTopStrategiesWidget() {
 
       {/* Filtre horaire & date */}
       <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.cardBorder}` }}>
-        <TimeRangeFilter value={timeKey} onChange={setTimeKey} hourOptions={[2, 4, 6, 12]} hideTomorrow />
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} hourOptions={[2, 4, 6, 12]} hideTomorrow showWeekend />
       </div>
 
       {/* Description stratégie */}
@@ -115,6 +141,7 @@ export function RugbyTopStrategiesWidget() {
             rows={matches}
             strategy={active}
             format={def.format}
+            highlightId={highlightedMatchId}
           />
         )}
       </div>
