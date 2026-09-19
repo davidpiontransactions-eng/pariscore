@@ -7,9 +7,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
-import { gameWinProb, setWinProb, setScoreExact, setHandicap, doubleResult, firstSetWinner, clearAllMemos } from "@/lib/prediction/live-markov";
-import { probOver } from "@/lib/prediction/total-games";
-import { totalAcesO_U } from "@/lib/prediction/most-aces";
+import { gameWinProb, setWinProb, setScoreExact, setHandicap, gameHandicap, doubleResult, firstSetWinner, firstSetTotal, clearAllMemos } from "@/lib/prediction/live-markov";
+import { probOver, playerTotalGames, totalSets, straightSets, atLeastOneSet } from "@/lib/prediction/total-games";
+import { totalAcesO_U, acesPerSet } from "@/lib/prediction/most-aces";
 import { tiebreakSet } from "@/lib/prediction/tiebreak";
 import { bayesianBlend, deVig, oddToProb, computeEdge, kellyFraction } from "@/lib/prediction/live-blend";
 
@@ -107,44 +107,92 @@ function computeMarketsFromLive(
     });
   }
 
-  // --- Match Winner (blendé) ---
-  addMarket("match-winner", "Vainqueur du match", "match-winner", blend.prob, 1 - blend.prob);
-
-  // --- Set Score ---
+  // --- Set Score (4 combinaisons BO3) ---
   clearAllMemos();
   addMarket("correct-score-2-0", "Score exact 2-0", "set-score", setScoreExact(holdA, holdB, 2, 0, true), 0);
   clearAllMemos();
   addMarket("correct-score-2-1", "Score exact 2-1", "set-score", setScoreExact(holdA, holdB, 2, 1, true), 0);
+  clearAllMemos();
+  addMarket("correct-score-0-2", "Score exact 0-2", "set-score", 0, setScoreExact(holdA, holdB, 0, 2, true));
+  clearAllMemos();
+  addMarket("correct-score-1-2", "Score exact 1-2", "set-score", 0, setScoreExact(holdA, holdB, 1, 2, true));
 
   // --- Set Handicap ---
   clearAllMemos();
   addMarket("set-handicap-1.5", "Handicap sets -1.5", "set-handicap", setHandicap(holdA, holdB, -1.5, true), 0);
+  clearAllMemos();
+  addMarket("set-handicap+1.5", "Handicap sets +1.5", "set-handicap", setHandicap(holdA, holdB, 1.5, true), 0);
 
-  // --- Total Games ---
+  // --- Game Handicap ---
+  clearAllMemos();
+  const gameH = gameHandicap(holdA, holdB, pWinSetA, true);
+  // Simuler P(A couvre handicap) via approximation
+  const gh25 = gameH < -2.5 ? 0.65 : 0.35;
+  const gh45 = gameH < -4.5 ? 0.60 : 0.40;
+  addMarket("game-handicap-2.5", "Handicap jeux -2.5", "game-handicap", gh25, 1 - gh25);
+  addMarket("game-handicap+2.5", "Handicap jeux +2.5", "game-handicap", 1 - gh25, gh25);
+  addMarket("game-handicap-4.5", "Handicap jeux -4.5", "game-handicap", gh45, 1 - gh45);
+  addMarket("game-handicap+4.5", "Handicap jeux +4.5", "game-handicap", 1 - gh45, gh45);
+
+  // --- Total Games (6 seuils) ---
   const lambda = 9.5 * 2.1;
-  const over18 = probOver(18.5, lambda);
-  addMarket("total-over-18.5", "Total Over 18.5", "total-games", over18, 1 - over18);
-  const over21 = probOver(21.5, lambda);
-  addMarket("total-over-21.5", "Total Over 21.5", "total-games", over21, 1 - over21);
+  for (const threshold of [18.5, 19.5, 20.5, 21.5, 22.5, 23.5]) {
+    const over = probOver(threshold, lambda);
+    addMarket(`total-over-${threshold}`, `Total Over ${threshold}`, "total-games", over, 1 - over);
+    addMarket(`total-under-${threshold}`, `Total Under ${threshold}`, "total-games", 1 - over, over);
+  }
 
-  // --- Aces ---
-  const overAces = totalAcesO_U(9.5, 4, 4);
-  addMarket("aces-over-9.5", "Total aces Over 9.5", "aces", overAces, 1 - overAces);
+  // --- Player Total Games ---
+  const ptg = playerTotalGames(holdA, holdB, pWinSetA, 3);
+  addMarket("player-a-over-12.5", "A Over 12.5 jeux", "total-games", ptg.gamesA > 12.5 ? 0.6 : 0.4, ptg.gamesA > 12.5 ? 0.4 : 0.6);
+  addMarket("player-b-over-12.5", "B Over 12.5 jeux", "total-games", ptg.gamesB > 12.5 ? 0.4 : 0.6, ptg.gamesB > 12.5 ? 0.6 : 0.4);
+
+  // --- Total Sets ---
+  const ts = totalSets(pWinSetA, 3);
+  addMarket("total-sets-2", "Total sets = 2", "total-games", ts < 2.5 ? 0.65 : 0.35, ts < 2.5 ? 0.35 : 0.65);
+  addMarket("total-sets-3", "Total sets = 3", "total-games", ts > 2.5 ? 0.60 : 0.40, ts > 2.5 ? 0.40 : 0.60);
+
+  // --- Straight Sets ---
+  const ss = straightSets(pWinSetA, 3);
+  addMarket("straight-sets-a", "A gagne 2-0", "set-score", ss.aWins, 0);
+  addMarket("straight-sets-b", "B gagne 2-0", "set-score", 0, ss.bWins);
+
+  // --- At Least One Set ---
+  const als = atLeastOneSet(pWinSetA, 3);
+  addMarket("at-least-one-set-a", "A gagne ≥1 set", "set-score", als.aWinsAtLeast1, 1 - als.aWinsAtLeast1);
+  addMarket("at-least-one-set-b", "B gagne ≥1 set", "set-score", als.bWinsAtLeast1, 1 - als.bWinsAtLeast1);
+
+  // --- Aces (3 seuils) ---
+  for (const threshold of [9.5, 12.5, 15.5]) {
+    const over = totalAcesO_U(threshold, 4, 4);
+    addMarket(`aces-over-${threshold}`, `Total aces Over ${threshold}`, "aces", over, 1 - over);
+    addMarket(`aces-under-${threshold}`, `Total aces Under ${threshold}`, "aces", 1 - over, over);
+  }
 
   // --- Tiebreak ---
   clearAllMemos();
   const pTB = tiebreakSet(holdA, holdB);
   addMarket("tiebreak-yes", "Tiebreak dans le match", "tiebreak", pTB, 1 - pTB);
+  addMarket("tiebreak-no", "Pas de tiebreak", "tiebreak", 1 - pTB, pTB);
 
   // --- First Set ---
   clearAllMemos();
   const pFirst = firstSetWinner(holdA, holdB);
   addMarket("first-set-winner-a", "1er set : A", "first-set", pFirst, 1 - pFirst);
+  addMarket("first-set-winner-b", "1er set : B", "first-set", 1 - pFirst, pFirst);
+
+  // --- First Set Total Games ---
+  clearAllMemos();
+  const fst = firstSetTotal(holdA, holdB);
+  addMarket("first-set-over-9.5", "1er set Over 9.5", "first-set", fst > 9.5 ? 0.6 : 0.4, fst > 9.5 ? 0.4 : 0.6);
 
   // --- Double Result ---
   clearAllMemos();
   const dr = doubleResult(holdA, holdB, true);
   addMarket("double-a-a", "A gagne 1er set + match", "double-result", dr.aWins1stAndMatch, dr.bWins1stAndMatch);
+  addMarket("double-b-b", "B gagne 1er set + match", "double-result", dr.bWins1stAndMatch, dr.aWins1stAndMatch);
+  addMarket("double-a-b", "A 1er set, B match", "double-result", dr.aWins1stLosesMatch, dr.bWins1stLosesMatch);
+  addMarket("double-b-a", "B 1er set, A match", "double-result", dr.bWins1stLosesMatch, dr.aWins1stLosesMatch);
 
   return {
     markets,
