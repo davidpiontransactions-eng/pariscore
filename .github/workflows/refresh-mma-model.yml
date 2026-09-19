@@ -1,0 +1,67 @@
+name: Refresh MMA Model
+
+# Retrain MMA prediction model weekly + refresh DRatings data.
+# Uses build_mma_model.js (Node) which reads .context/_mma_data/ CSVs
+# and outputs services/mma_model.json + services/mma_fighter_features.json.
+#
+# Triggers:
+#   - schedule: Sunday 05:00 UTC (after Saturday UFC events)
+#   - workflow_dispatch: manual trigger
+
+on:
+  schedule:
+    - cron: "0 5 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: refresh-mma-model
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Rebuild MMA model
+        run: node tools/build_mma_model.js
+        env:
+          NODE_ENV: production
+
+      - name: Verify model artifacts
+        run: |
+          if [ ! -f services/mma_model.json ]; then
+            echo "ERROR: mma_model.json not generated"
+            exit 1
+          fi
+          if [ ! -f services/mma_fighter_features.json ]; then
+            echo "ERROR: mma_fighter_features.json not generated"
+            exit 1
+          fi
+          echo "Model artifacts OK"
+          wc -c services/mma_model.json services/mma_fighter_features.json
+
+      - name: Commit updated model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add services/mma_model.json services/mma_fighter_features.json
+          if git diff --cached --quiet; then
+            echo "No model changes to commit"
+          else
+            git commit -m "chore(mma): retrain model $(date -u +%Y-%m-%d)"
+            git push
+          fi

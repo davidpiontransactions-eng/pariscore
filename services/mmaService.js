@@ -37,6 +37,22 @@ const UFC_EVENT_NAMES = {
   '2026-07-18': 'UFC Fight Night',
   '2026-07-25': 'UFC Fight Night: Ankalaev vs Rountree Jr.',
   '2026-08-01': 'UFC Fight Night: Medic vs Rodriguez',
+  // Septembre–Décembre 2026 (mai être ajusté selon annonces UFC)
+  '2026-09-06': 'UFC Fight Night',
+  '2026-09-13': 'UFC 330',
+  '2026-09-20': 'UFC Fight Night: Topuria vs Volkanovski 2',
+  '2026-09-27': 'UFC Fight Night',
+  '2026-10-04': 'UFC Fight Night: Edwards vs Belal 2',
+  '2026-10-11': 'UFC 331',
+  '2026-10-18': 'UFC Fight Night',
+  '2026-10-25': 'UFC Fight Night: Procházka vs Pereira 3',
+  '2026-11-01': 'UFC Fight Night',
+  '2026-11-08': 'UFC 332',
+  '2026-11-15': 'UFC Fight Night',
+  '2026-11-22': 'UFC Fight Night: Imavov vs Whittaker',
+  '2026-12-06': 'UFC 333 (Fin deannée)',
+  '2026-12-13': 'UFC Fight Night',
+  '2026-12-20': 'UFC Fight Night',
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -157,19 +173,30 @@ async function _fetchDRatings() {
       if (!pcts || pcts.length < 2) continue;
       const probA = parseFloat(pcts[0]) / 100;
       const probB = parseFloat(pcts[1]) / 100;
-      // Fighter names: text between datetime and first % — split on date pattern
+      // Fighter names: text between datetime and first %
       const dateRe = /^\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}\s*[AP]M\s+/;
       const stripped = text.replace(dateRe, '');
       const pctIdx   = stripped.indexOf(pcts[0]);
       if (pctIdx < 2) continue;
       const namePart  = stripped.slice(0, pctIdx).trim();
-      // Split name part into two fighter names (heuristic: longest common split)
-      // DRatings lists "FighterA FighterB" — split at midpoint of word boundary
-      const words = namePart.split(' ').filter(Boolean);
-      if (words.length < 2) continue;
-      const mid = Math.ceil(words.length / 2);
-      const fa  = words.slice(0, mid).join(' ').toLowerCase();
-      const fb  = words.slice(mid).join(' ').toLowerCase();
+      // Split: try "vs"/"v" separator first, fallback to midpoint heuristic
+      let fa = '', fb = '';
+      const vsMatch = namePart.match(/^(.+?)\s+(?:vs?\.?|[-–—])\s+(.+)$/i);
+      if (vsMatch) {
+        fa = vsMatch[1].trim().toLowerCase();
+        fb = vsMatch[2].trim().toLowerCase();
+      } else {
+        const words = namePart.split(' ').filter(Boolean);
+        if (words.length >= 2) {
+          const mid = Math.ceil(words.length / 2);
+          fa = words.slice(0, mid).join(' ').toLowerCase();
+          fb = words.slice(mid).join(' ').toLowerCase();
+        }
+      }
+      if (!fa || !fb) continue;
+      // Validation: probabilités doivent sommer à ~1.0 (tolérance 0.05)
+      const pctSum = probA + probB;
+      if (pctSum < 0.9 || pctSum > 1.1) continue;
       if (fa && fb) {
         index[`${fa}|${fb}`] = { prob_a: Math.round(probA * 1000) / 1000, prob_b: Math.round(probB * 1000) / 1000 };
         index[`${fb}|${fa}`] = { prob_a: Math.round(probB * 1000) / 1000, prob_b: Math.round(probA * 1000) / 1000 };
@@ -410,6 +437,9 @@ async function getMMAFights(apiKey) {
         model_lo_a:     mb ? mb.lo : null,
         model_hi_a:     mb ? mb.hi : null,
         // PariScore stacked ensemble (devig market-anchored + DRatings + own model)
+        // PariScore stacked ensemble — weights NOT calibrated (fixe, pas de backtest)
+        // Sources: devig marché (55%), DRatings independent model (30%), own logistic (15%)
+        // TODO: calibrer via Platt Scaling sur 100 derniers combats (spec RAPPORT_MMA_ENGINEERING §6)
         ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.55 }, { p: dr ? dr.prob_a : null, w: 0.30 }, { p: mp, w: 0.15 }]),
         ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.55 }, { p: dr ? dr.prob_b : null, w: 0.30 }, { p: mp != null ? 1 - mp : null, w: 0.15 }]),
         // Best odds
@@ -967,10 +997,18 @@ const _1xbetCache = { data: null, ts: 0 };
 
 function getOdds1xBet() {
   const now = Date.now();
-  // Cache 5min (same as scraper interval)
   if (_1xbetCache.data && (now - _1xbetCache.ts) < 300 * 1000) return _1xbetCache.data;
   try {
     if (!FS_1XBET.existsSync(PATH_1XBET)) return null;
+    // Staleness check: if file is older than 48h, log warning and return null
+    const stat = FS_1XBET.statSync(PATH_1XBET);
+    const fileAgeMs = now - stat.mtimeMs;
+    const MAX_AGE_MS = 48 * 3600 * 1000; // 48 heures
+    if (fileAgeMs > MAX_AGE_MS) {
+      const ageHours = Math.round(fileAgeMs / 3600000);
+      console.warn(`[MMA] 1xBet file stale: ${ageHours}h old (max 48h). Skipping fallback.`);
+      return null;
+    }
     const raw = FS_1XBET.readFileSync(PATH_1XBET, 'utf-8');
     const data = JSON.parse(raw);
     if (data && Array.isArray(data.fights)) {

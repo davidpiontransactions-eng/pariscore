@@ -21,19 +21,24 @@ type Props = {
 
 export function MmaFilters({ weightClass, onWeightClassChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div
+      role="group"
+      aria-label="Filtrer par catégorie de poids"
+      className="flex gap-2 overflow-x-auto pb-1 scrollbar-none"
+    >
       {WEIGHT_CLASSES.map((wc) => {
         const isActive = weightClass === wc.value;
         return (
           <button
             key={wc.value}
             type="button"
+            aria-pressed={isActive}
             onClick={() => onWeightClassChange(wc.value)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200",
+              "shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200",
               isActive
-                ? "bg-[#7B3FA0] text-white shadow-md"
-                : "bg-[#EDE8F5] text-[#6B5B8D] hover:bg-[#E0D8F0] hover:text-[#1A1145]"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             )}
           >
             {wc.label}

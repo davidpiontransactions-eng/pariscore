@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
+  <defs>
+    <pattern id="octagon-mesh" patternUnits="userSpaceOnUse" width="60" height="60" patternTransform="rotate(0)">
+      <!-- Chain-link fence pattern — octagonal cells -->
+      <path d="M30 0 L45 7.5 L52.5 22.5 L45 37.5 L30 45 L15 37.5 L7.5 22.5 L15 7.5 Z" fill="none" stroke="rgba(239,68,68,0.08)" stroke-width="0.5"/>
+      <path d="M0 30 L7.5 22.5 L15 7.5" fill="none" stroke="rgba(239,68,68,0.06)" stroke-width="0.5"/>
+      <path d="M45 37.5 L52.5 22.5 L60 30" fill="none" stroke="rgba(239,68,68,0.06)" stroke-width="0.5"/>
+      <path d="M15 37.5 L7.5 22.5 L0 30" fill="none" stroke="rgba(239,68,68,0.06)" stroke-width="0.5"/>
+      <path d="M45 37.5 L52.5 22.5 L60 30" fill="none" stroke="rgba(239,68,68,0.06)" stroke-width="0.5"/>
+      <!-- Diagonal cross-hatching for chain-link depth -->
+      <line x1="7.5" y1="22.5" x2="52.5" y2="22.5" stroke="rgba(239,68,68,0.04)" stroke-width="0.3"/>
+      <line x1="30" y1="0" x2="30" y2="45" stroke="rgba(239,68,68,0.04)" stroke-width="0.3"/>
+      <!-- Octagon vertex dots -->
+      <circle cx="30" cy="0" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="45" cy="7.5" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="52.5" cy="22.5" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="45" cy="37.5" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="30" cy="45" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="15" cy="37.5" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="7.5" cy="22.5" r="1" fill="rgba(239,68,68,0.1)"/>
+      <circle cx="15" cy="7.5" r="1" fill="rgba(239,68,68,0.1)"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#octagon-mesh)"/>
+</svg>

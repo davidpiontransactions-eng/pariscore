@@ -64,6 +64,7 @@ export const STRATEGY_FILTERS_BY_SPORT: Record<string, StrategyFilter[]> = {
   football: ["all", "today", "value", "topConf", "corners", "over65corners", "btts"],
   tennis: ["all", "favorites", "balanced", "starred", "confidence"],
   handball: ["all", "today", "value", "topConf", "over55", "under62"],
+  mma: ["all", "value", "favorites"],
 };
 
 /**
