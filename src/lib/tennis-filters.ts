@@ -41,6 +41,18 @@ export type TennisMarketCategory =
   | "double-result"
   | "live";
 
+/** Ligne de jeux Over/Under pour le marché total-games-per-set. */
+export type TennisGameLine = "6.5" | "7.5" | "8.5" | "9.5" | "10.5";
+
+/** Type de bet du joueur (prematch + live). */
+export type TennisBetType =
+  | "winner"           // Match winner prematch
+  | "over-games"       // Over games match prematch
+  | "most-aces"        // Player most aces prematch
+  | "over-set"         // Over games par set live
+  | "set-winner"       // Set winner live
+  | "winner-live";     // Match winner live
+
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 export const TENNIS_TIME_WINDOWS: readonly { key: TennisTimeWindow; label: string; title: string }[] = [
@@ -82,6 +94,25 @@ export const TENNIS_MARKET_CATEGORIES: readonly { key: TennisMarketCategory; lab
   { key: "first-set", label: "1er set", emoji: "1️⃣" },
   { key: "double-result", label: "Double", emoji: "🔀" },
   { key: "live", label: "Live", emoji: "🔴" },
+] as const;
+
+/** Lignes de jeux Over/Under disponibles (1xBet per-set). */
+export const TENNIS_GAME_LINES: readonly { key: TennisGameLine; label: string; overProb: string }[] = [
+  { key: "6.5", label: "Over 6.5", overProb: "~95%" },
+  { key: "7.5", label: "Over 7.5", overProb: "~77%" },
+  { key: "8.5", label: "Over 8.5", overProb: "~49%" },
+  { key: "9.5", label: "Over 9.5", overProb: "~24%" },
+  { key: "10.5", label: "Over 10.5", overProb: "~10%" },
+] as const;
+
+/** Types de bets du joueur. */
+export const TENNIS_BET_TYPES: readonly { key: TennisBetType; label: string; emoji: string; mode: "prematch" | "live" }[] = [
+  { key: "winner", label: "Vainqueur", emoji: "🏆", mode: "prematch" },
+  { key: "over-games", label: "Over Games", emoji: "📊", mode: "prematch" },
+  { key: "most-aces", label: "Most Aces", emoji: "🎾", mode: "prematch" },
+  { key: "over-set", label: "Over/Set", emoji: "📈", mode: "live" },
+  { key: "set-winner", label: "Set Winner", emoji: "🎯", mode: "live" },
+  { key: "winner-live", label: "Winner Live", emoji: "🔴", mode: "live" },
 ] as const;
 
 // ─── Extract tournaments ───────────────────────────────────────────────────

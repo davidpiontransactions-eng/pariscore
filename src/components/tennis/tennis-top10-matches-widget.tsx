@@ -25,9 +25,13 @@ import {
   TENNIS_TIME_WINDOWS,
   TENNIS_SURFACES,
   TENNIS_TOURNAMENT_CATEGORIES,
+  TENNIS_BET_TYPES,
+  TENNIS_GAME_LINES,
   type TennisTimeWindow,
   type TennisSurface,
   type TennisTournamentCategory,
+  type TennisBetType,
+  type TennisGameLine,
 } from "@/lib/tennis-filters";
 import {
   TopStrategiesTable,
@@ -92,7 +96,7 @@ function toTableRows(
 }
 
 
-/** Lit strat/win/tournament/surface/tourCat depuis l'URL pour le deep-link. */
+/** Lit strat/win/tournament/surface/tourCat/mode/betType/gameLine depuis l'URL. */
 function readInitialParams(): {
   strat: TennisStrategyKey;
   win: WinKey;
@@ -101,6 +105,9 @@ function readInitialParams(): {
   surface: TennisSurface;
   tourCat: TennisTournamentCategory;
   minEdge: number;
+  mode: "prematch" | "live";
+  betType: TennisBetType;
+  gameLine: TennisGameLine;
 } {
   const fallback = {
     strat: "surfaceEloGap" as TennisStrategyKey,
@@ -110,6 +117,9 @@ function readInitialParams(): {
     surface: "all" as TennisSurface,
     tourCat: "all" as TennisTournamentCategory,
     minEdge: 0,
+    mode: "prematch" as const,
+    betType: "winner" as TennisBetType,
+    gameLine: "7.5" as TennisGameLine,
   };
   if (typeof window === "undefined") return fallback;
   const sp = new URLSearchParams(window.location.search);
@@ -120,6 +130,9 @@ function readInitialParams(): {
   const sf = sp.get("surface");
   const tc = sp.get("tourCat");
   const me = sp.get("minEdge");
+  const md = sp.get("mode");
+  const bt = sp.get("betType");
+  const gl = sp.get("gameLine");
   return {
     strat: TENNIS_STRATEGY_DEFS.some((d) => d.key === s) ? (s as TennisStrategyKey) : fallback.strat,
     win: w === "today" || w === "tomorrow" ? w : "all",
@@ -128,6 +141,9 @@ function readInitialParams(): {
     surface: (["all", "hard", "clay", "grass", "indoor"] as string[]).includes(sf ?? "") ? (sf as TennisSurface) : fallback.surface,
     tourCat: (["all", "grand-slam", "atp-1000", "atp-500", "atp-250", "wta", "challenger", "itf"] as string[]).includes(tc ?? "") ? (tc as TennisTournamentCategory) : fallback.tourCat,
     minEdge: me != null && !isNaN(Number(me)) ? Number(me) : fallback.minEdge,
+    mode: md === "live" ? "live" : "prematch",
+    betType: (["winner", "over-games", "most-aces", "over-set", "set-winner", "winner-live"] as string[]).includes(bt ?? "") ? (bt as TennisBetType) : fallback.betType,
+    gameLine: (["6.5", "7.5", "8.5", "9.5", "10.5"] as string[]).includes(gl ?? "") ? (gl as TennisGameLine) : fallback.gameLine,
   };
 }
 
@@ -149,6 +165,9 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const [surface, setSurface] = useState<TennisSurface>(initial.surface);
   const [tourCat, setTourCat] = useState<TennisTournamentCategory>(initial.tourCat);
   const [minEdge, setMinEdge] = useState<number>(initial.minEdge);
+  const [mode, setMode] = useState<"prematch" | "live">(initial.mode);
+  const [betType, setBetType] = useState<TennisBetType>(initial.betType);
+  const [gameLine, setGameLine] = useState<TennisGameLine>(initial.gameLine);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [overMap, setOverMap] = useState<Map<string, number>>(new Map());
@@ -207,9 +226,12 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     if (surface !== "all") sp.set("surface", surface); else sp.delete("surface");
     if (tourCat !== "all") sp.set("tourCat", tourCat); else sp.delete("tourCat");
     if (minEdge > 0) sp.set("minEdge", String(minEdge)); else sp.delete("minEdge");
+    sp.set("mode", mode);
+    sp.set("betType", betType);
+    if (betType === "over-games" || betType === "over-set") sp.set("gameLine", gameLine); else sp.delete("gameLine");
     const qs = sp.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [strat, win, tournament, timeWin, surface, tourCat, minEdge]);
+  }, [strat, win, tournament, timeWin, surface, tourCat, minEdge, mode, betType, gameLine]);
 
   const activeDef = useMemo(
     () => TENNIS_STRATEGY_DEFS.find((d) => d.key === strat)!,
@@ -296,6 +318,12 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const handleTimeWinChange = useCallback((w: TennisTimeWindow) => () => setTimeWin(w), []);
   const handleSurfaceChange = useCallback((v: string) => setSurface(v as TennisSurface), []);
   const handleTourCatChange = useCallback((v: string) => setTourCat(v as TennisTournamentCategory), []);
+  const handleModeChange = useCallback((m: "prematch" | "live") => {
+    setMode(m);
+    setBetType(m === "prematch" ? "winner" : "over-set");
+  }, []);
+  const handleBetTypeChange = useCallback((v: string) => setBetType(v as TennisBetType), []);
+  const handleGameLineChange = useCallback((v: string) => setGameLine(v as TennisGameLine), []);
 
   return (
     <section
@@ -308,6 +336,73 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
           Top 10 matchs par stratégie
         </h2>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Toggle Prematch / Live */}
+          <div
+            className="flex overflow-hidden rounded"
+            style={{ border: `1px solid ${C.cardBorder}` }}
+            role="group"
+            aria-label="Mode"
+          >
+            {(["prematch", "live"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => handleModeChange(m)}
+                aria-pressed={mode === m}
+                className={cn(
+                  "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
+                  mode === m
+                    ? "bg-[#00985f]/10 text-[#00985f]"
+                    : "bg-transparent text-[#717171] hover:text-[#222]",
+                )}
+              >
+                {m === "prematch" ? "Pre" : "Live"}
+              </button>
+            ))}
+          </div>
+
+          {/* Sélecteur de bet type (filtre par mode) */}
+          <Select
+            value={betType}
+            onValueChange={handleBetTypeChange}
+          >
+            <SelectTrigger
+              className="h-9 w-[150px] text-xs"
+              aria-label="Type de bet"
+            >
+              <SelectValue placeholder="Type de bet" />
+            </SelectTrigger>
+            <SelectContent>
+              {TENNIS_BET_TYPES.filter((b) => b.mode === mode).map((b) => (
+                <SelectItem key={b.key} value={b.key} className="text-xs">
+                  <span aria-hidden>{b.emoji}</span> {b.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Sélecteur de ligne Over (uniquement pour over-games et over-set) */}
+          {(betType === "over-games" || betType === "over-set") && (
+            <Select
+              value={gameLine}
+              onValueChange={handleGameLineChange}
+            >
+              <SelectTrigger
+                className="h-9 w-[120px] text-xs"
+                aria-label="Ligne Over"
+              >
+                <SelectValue placeholder="Ligne" />
+              </SelectTrigger>
+              <SelectContent>
+                {TENNIS_GAME_LINES.map((g) => (
+                  <SelectItem key={g.key} value={g.key} className="text-xs">
+                    {g.label} <span className="text-[#717171] ml-1">{g.overProb}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           {/* Sélecteur de tournoi */}
           <Select
             value={tournament ?? "__all__"}
