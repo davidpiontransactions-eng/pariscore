@@ -195,7 +195,6 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
         `&fairH=${m.fair.home}&fairD=${m.fair.draw}&fairA=${m.fair.away}` +
         `&oddsH=${m.odds.home}&oddsD=${m.odds.draw}&oddsA=${m.odds.away}`;
     }
-    console.log("[DEBUG-team-profile]", { leagueId, team, scope, url });
     fetch(url, { signal: AbortSignal.timeout(15000) })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
