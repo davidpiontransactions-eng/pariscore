@@ -10,32 +10,29 @@ type Props = {
   value: TimeFilterKey;
   onChange: (key: TimeFilterKey) => void;
   className?: string;
+  /** Options de filtre horaire personnalisées (ex. rugby : [2, 4] au lieu de [1, 2, 4, 6, 12, 24]). */
+  hourOptions?: readonly number[];
+  /** Masquer "Demain" (inutile pour le rugby week-end). */
+  hideTomorrow?: boolean;
 };
 
 /**
- * TimeRangeFilter — filtre par heure de début (1h / 2h / 4h / 6h / 12h / 24h
- * / Aujourd'hui / Demain). Fenêtre glissante à partir de maintenant (tolérance
- * arrière 15 min, cf. `filterByStartWindow` dans src/lib/match-view.ts) ;
- * « today » / « tomorrow » couvrent les jours calendaires locaux
- * (`filterByToday` / `filterByTomorrow`).
- *
- * Source de vérité : le store sidebar (`useSportsSidebarStore.selectedTimeFilter`)
- * pour les onglets couplés — ce composant n'est qu'un contrôleur déporté.
- *
- * Accessibilité : group de boutons « chip » avec aria-pressed ; responsive
- * (wrap + scroll horizontal sur mobile).
+ * TimeRangeFilter — filtre par heure de début. Fenêtre glissante à partir de
+ * maintenant (tolérance arrière 15 min, cf. `filterByStartWindow`).
+ * « today » / « tomorrow » couvrent les jours calendaires Europe/Paris.
  */
-export function TimeRangeFilter({ value, onChange, className }: Props) {
+export function TimeRangeFilter({ value, onChange, className, hourOptions, hideTomorrow }: Props) {
   const t = useTranslations("matchTabs");
+  const hours = hourOptions ?? TIME_RANGE_OPTIONS;
 
   const options: Array<{ key: TimeFilterKey; label: string }> = [
     { key: "all", label: t("timeAll") },
-    ...TIME_RANGE_OPTIONS.map((hours) => ({
-      key: `${hours}h` as TimeFilterKey,
-      label: t("timeHour", { hours }),
+    ...hours.map((h) => ({
+      key: `${h}h` as TimeFilterKey,
+      label: t("timeHour", { hours: h }),
     })),
     { key: "today", label: t("timeToday") },
-    { key: "tomorrow", label: t("timeTomorrow") },
+    ...(hideTomorrow ? [] : [{ key: "tomorrow" as TimeFilterKey, label: t("timeTomorrow") }]),
   ];
 
   return (

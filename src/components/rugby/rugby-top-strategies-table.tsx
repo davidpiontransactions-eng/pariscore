@@ -104,7 +104,7 @@ function formatValue(value: number, strategy: RugbyStrategyKey): string {
   }
 }
 
-/** Pill over/under — ligne optimale ~60% proba */
+/** Pill over/under — ligne optimale ~60% proba (value pick) */
 function OverUnderPill({ row, strategy }: { row: RugbyStrategyMatch; strategy: RugbyStrategyKey }) {
   if (strategy === "over415" && row.bestOverLine) {
     const { line, prob } = row.bestOverLine;
@@ -112,12 +112,12 @@ function OverUnderPill({ row, strategy }: { row: RugbyStrategyMatch; strategy: R
       <span
         className="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
         style={{
-          background: "rgba(255, 109, 0, 0.08)",
-          color: "#FF6D00",
-          borderColor: "rgba(255, 109, 0, 0.20)",
+          background: "rgba(255, 109, 0, 0.15)",
+          color: "#E65100",
+          borderColor: "rgba(255, 109, 0, 0.30)",
         }}
       >
-        🔥 Over {line.toFixed(1)}
+        🎯 Over {line.toFixed(1)}
         <span className="font-medium opacity-75">→ {(prob * 100).toFixed(0)}%</span>
       </span>
     );
@@ -128,12 +128,12 @@ function OverUnderPill({ row, strategy }: { row: RugbyStrategyMatch; strategy: R
       <span
         className="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
         style={{
-          background: "rgba(96, 165, 250, 0.08)",
-          color: "#3B82F6",
-          borderColor: "rgba(96, 165, 250, 0.20)",
+          background: "rgba(96, 165, 250, 0.15)",
+          color: "#1D4ED8",
+          borderColor: "rgba(96, 165, 250, 0.30)",
         }}
       >
-        ❄️ Under {line.toFixed(1)}
+        🎯 Under {line.toFixed(1)}
         <span className="font-medium opacity-75">→ {(prob * 100).toFixed(0)}%</span>
       </span>
     );

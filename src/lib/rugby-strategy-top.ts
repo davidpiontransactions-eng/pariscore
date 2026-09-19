@@ -70,8 +70,8 @@ export const RUGBY_STRATEGIES: RugbyStrategyDef[] = [
   { key: "awayWin", label: "Victoire extérieur", emoji: "✈️", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "over415", label: "Over points", emoji: "🔥", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "under515", label: "Under points", emoji: "❄️", isProb: true, format: (v) => `${v.toFixed(0)}%` },
-  { key: "handicapHome", label: "Handicap -3,5 domicile", emoji: "📊", isProb: true, format: (v) => `${v.toFixed(0)}%` },
-  { key: "handicapAway", label: "Handicap +3,5 extérieur", emoji: "📊", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "handicapHome", label: "Handicap -3,5 domicile", emoji: "📉", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "handicapAway", label: "Handicap +3,5 extérieur", emoji: "📈", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "bttsYes", label: "Les 2 marquent", emoji: "🏉", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "marginBand", label: "Marge ≤ 7 points", emoji: "📏", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "bestAttack", label: "Meilleure attaque", emoji: "⚡", isProb: false, format: (v) => `${v.toFixed(1)} pts` },
@@ -179,18 +179,13 @@ function scoreRugbyMatch(
       return { value: btts, probPct: btts, pick: "yes" };
     }
     case "marginBand": {
-      const closeMargin = pred.marginBands.find((b) => b.label.includes("7") || b.label.includes("1-7"));
+      // Bandes : "1-6", "7-12", "13+" — on cherche la marge serrée = "1-6"
+      const closeMargin = pred.marginBands.find((b) => b.label === "1-6");
       if (closeMargin) {
         const p = (closeMargin.homeProb + closeMargin.awayProb) * 100;
         return { value: p, probPct: p, pick: "close" };
       }
-      const pClose = pred.marginBands
-        .filter((b) => {
-          const num = parseInt(b.label);
-          return !isNaN(num) && num <= 7;
-        })
-        .reduce((sum, b) => sum + b.homeProb + b.awayProb, 0);
-      return { value: pClose * 100, probPct: pClose * 100, pick: "close" };
+      return { value: 0, probPct: 0, pick: "close" };
     }
     case "bestAttack": {
       const total = pred.expectedHomeScore + pred.expectedAwayScore;

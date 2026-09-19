@@ -81,7 +81,7 @@ export function RugbyTopStrategiesWidget() {
 
       {/* Filtre horaire & date */}
       <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.cardBorder}` }}>
-        <TimeRangeFilter value={timeKey} onChange={setTimeKey} />
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} hourOptions={[2, 4, 6, 12]} hideTomorrow />
       </div>
 
       {/* Description stratégie */}

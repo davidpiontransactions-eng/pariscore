@@ -27,7 +27,7 @@ const CACHE_TTL = 10 * 60 * 1000;
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const strategy = (searchParams.get("strategy") ?? "homeWin") as RugbyStrategyKey;
-  const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 10), 1), 20);
+  const limit = Math.min(Math.max(Number(searchParams.get("limit") ?? 10), 1), 50);
 
   if (!VALID_STRATEGIES.has(strategy)) {
     return NextResponse.json(

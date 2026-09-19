@@ -243,10 +243,10 @@ useEffect(() => {
 const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allMatches;
   const tabsId = useId();
 
-  // Filtrer par compétition sélectionnée
+  // Filtrer par compétition sélectionnée (utilise effectiveMatches pour le fallback Flashscore)
   const matches = useMemo(
-    () => allMatches.filter((m) => m.competition === slug),
-    [allMatches, slug]
+    () => effectiveMatches.filter((m) => m.competition === slug),
+    [effectiveMatches, slug]
   );
 
   // Live / Pre-match
