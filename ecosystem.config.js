@@ -338,6 +338,29 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job Player Stats (football-data.org) ===
+      // Scrape les top buteurs/passeurs depuis football-data.org API
+      // pour 9 ligues (PL, PD, BL1, SA, FL1, CL, DED, PPL, BSA).
+      // Output: data/player-stats.json (~180 joueurs)
+      // Rate limit: 10 req/min → ~60s de run total
+      name: 'pariscore-cron-player-stats',
+      script: 'scripts/scrape-player-stats.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 5 * * *', // quotidien à 05:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+        FOOTBALL_DATA_KEY: 'fafba7e8f6574bb2a5ce7cab8d021f00',
+      },
+      error_file: 'logs/cron-player-stats.err.log',
+      out_file: 'logs/cron-player-stats.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job Flashscore Tennis (routine matinale) ===
       // Scrape le programme tennis Flashscore (feed interne J+0..J+7 :
       // ATP/WTA/Challengers/ITF) → data/flashscore-tennis.json, fusionné
