@@ -20,13 +20,11 @@ type DashboardData = {
 const Ctx = createContext<DashboardData | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const { data: tennisData, isLoading: tennisLoading, error: tennisError } =
+  const { data: tennisData, isLoading: tennisLoading, error: tennisError, isDegraded: tennisIsDegraded } =
     usePrematchMatches();
   const { data: footData, isLoading: footLoading, error: footError } =
     useFootballMatches();
-
-  const { isDegraded: tennisIsDegraded } = usePrematchMatches();
-  const { isLoading: footIsDegraded } = useFootballMatches();
+  const footIsDegraded = footError != null;
 
   // Default tennisError to null if SWR returns undefined (initial state)
   const fixedTennisError: TennisPrematchError | null =

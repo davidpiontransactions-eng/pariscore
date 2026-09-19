@@ -19,7 +19,12 @@ interface SyncResult {
  * /public/cache/baseball-teams/ — le composant <TeamLogo> les sert ensuite
  * localement avec fallback SVG aux couleurs de l'équipe.
  */
-export async function POST(_request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Authentification requise
+  const token = request.headers.get("x-cron-token") ?? request.nextUrl.searchParams.get("token");
+  if (!token || token !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
   try {
     if (!existsSync(CACHE_DIR)) {
       mkdirSync(CACHE_DIR, { recursive: true });

@@ -69,6 +69,11 @@ function buildDigestBody(bets: DigestBet[]): string {
 }
 
 export async function POST(request: Request) {
+  // Authentification requise
+  const token = request.headers.get("x-cron-token") ?? new URL(request.url).searchParams.get("token");
+  if (!token || token !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
   try {
     const body = await request.json().catch(() => null);
     if (!isDigestPayload(body)) {

@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
     /* body vide autorisé */
   }
 
-  // Autorisation : token cron si fourni, sinon requête authentifiée côté app (single-user)
+  // Autorisation : token cron obligatoire
   const token = req.nextUrl.searchParams.get("token");
-  if (token && token !== process.env.CRON_SECRET) {
+  if (!token || token !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Token invalide" }, { status: 401 });
   }
 

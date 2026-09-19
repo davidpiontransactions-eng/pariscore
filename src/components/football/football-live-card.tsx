@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,10 @@ import { FollowButton } from "@/components/shared/follow-button";
 type CumulPoint = { minute: number; homeCumul: number; awayCumul: number };
 
 function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; homeName: string; awayName: string }) {
+  const gradientId = useId();
+  const gradHomeId = `${gradientId}-xgGradHome`;
+  const gradAwayId = `${gradientId}-xgGradAway`;
+
   // Dimensions mini
   const W = 300;
   const H = 56;
@@ -88,11 +92,11 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" role="img" aria-label={`Évolution xG cumulé — ${homeName} vs ${awayName}`}>
         <defs>
-          <linearGradient id="xgGradHome" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradHomeId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#10b981" stopOpacity={0.22} />
             <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
           </linearGradient>
-          <linearGradient id="xgGradAway" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradAwayId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.18} />
             <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
           </linearGradient>
@@ -104,8 +108,8 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
         {/* Ligne de base */}
         <line x1={PAD_L} y1={y(0)} x2={W - PAD_R} y2={y(0)} stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} className="text-muted-foreground" />
         {/* Aires cumulatives (domination en surface) */}
-        {awayArea && <path d={awayArea} fill="url(#xgGradAway)" />}
-        {homeArea && <path d={homeArea} fill="url(#xgGradHome)" />}
+        {awayArea && <path d={awayArea} fill={`url(#${gradAwayId})`} />}
+        {homeArea && <path d={homeArea} fill={`url(#${gradHomeId})`} />}
         {/* Courbes */}
         {awayPath && <path d={awayPath} fill="none" stroke="#f43f5e" strokeWidth={1.5} strokeOpacity={0.7} strokeLinecap="round" strokeLinejoin="round" />}
         {homePath && <path d={homePath} fill="none" stroke="#10b981" strokeWidth={1.8} strokeOpacity={0.85} strokeLinecap="round" strokeLinejoin="round" />}

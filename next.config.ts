@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, proxy-revalidate" },
+          { key: "Cache-Control", value: "private, no-cache" },
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
@@ -124,7 +124,7 @@ const nextConfig: NextConfig = {
     ],
     // Formats modernes pour PWA légère
     formats: ["image/avif", "image/webp"],
-    unoptimized: true, // éviter bugs chargement images derrière reverse proxy
+    // unoptimized retiré — sharp optimise les images (AVIF/WebP)
   },
 };
 

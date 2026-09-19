@@ -312,7 +312,7 @@ function mapTeam(name: string, obj?: BSDTeamObj, jerseys?: BSDJerseys, side?: "h
     shortName: obj?.short_name || shortName(name),
     logo,
     color: jerseyColor ? `#${jerseyColor}` : generateColor(name),
-    form: ["W", "D", "W", "L", "W"],
+    form: [], // BSD ne fournit pas la forme réelle — vide = pas de données
     rank: 0,
   };
 }
