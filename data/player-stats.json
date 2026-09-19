@@ -1,0 +1,4759 @@
+{
+  "meta": {
+    "source": "football-data.org",
+    "scrapedAt": "2026-09-19T22:50:34.464Z",
+    "leagues": [
+      "epl",
+      "laliga",
+      "bundesliga",
+      "seriea",
+      "ligue1",
+      "champions_league",
+      "eredivisie",
+      "primeira_liga",
+      "brasileirao_a",
+      "mls"
+    ]
+  },
+  "leagues": {
+    "epl": {
+      "name": "Premier League",
+      "code": "PL",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 38101,
+            "name": "Erling Haaland",
+            "firstName": "Erling",
+            "lastName": "Haaland",
+            "dateOfBirth": "2000-07-21",
+            "nationality": "Norway",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 65,
+            "name": "Manchester City FC",
+            "shortName": "Man City",
+            "tla": "MCI",
+            "crest": "https://crests.football-data.org/65.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 99813,
+            "name": "Bukayo Saka",
+            "firstName": "Bukayo",
+            "lastName": "Saka",
+            "dateOfBirth": "2001-09-05",
+            "nationality": "England",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 57,
+            "name": "Arsenal FC",
+            "shortName": "Arsenal",
+            "tla": "ARS",
+            "crest": "https://crests.football-data.org/57.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 6396,
+            "name": "Marcus Tavernier",
+            "firstName": "Marcus",
+            "lastName": "Tavernier",
+            "dateOfBirth": "1999-03-22",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1044,
+            "name": "AFC Bournemouth",
+            "shortName": "Bournemouth",
+            "tla": "BOU",
+            "crest": "https://crests.football-data.org/bournemouth.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 103125,
+            "name": "João Pedro",
+            "firstName": "",
+            "lastName": "João Pedro",
+            "dateOfBirth": "2001-09-26",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 61,
+            "name": "Chelsea FC",
+            "shortName": "Chelsea",
+            "tla": "CHE",
+            "crest": "https://crests.football-data.org/61.png"
+          },
+          "goals": 3,
+          "assists": 3,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 82140,
+            "name": "Morgan Rogers",
+            "firstName": "Morgan",
+            "lastName": "Rogers",
+            "dateOfBirth": "2002-07-26",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 61,
+            "name": "Chelsea FC",
+            "shortName": "Chelsea",
+            "tla": "CHE",
+            "crest": "https://crests.football-data.org/61.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 6486,
+            "name": "Alexander Isak",
+            "firstName": "Alexander",
+            "lastName": "Isak",
+            "dateOfBirth": "1999-09-21",
+            "nationality": "Sweden",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 64,
+            "name": "Liverpool FC",
+            "shortName": "Liverpool",
+            "tla": "LIV",
+            "crest": "https://crests.football-data.org/64.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 8273,
+            "name": "Pascal Groß",
+            "firstName": "Pascal",
+            "lastName": "Groß",
+            "dateOfBirth": "1991-06-15",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 397,
+            "name": "Brighton & Hove Albion FC",
+            "shortName": "Brighton Hove",
+            "tla": "BHA",
+            "crest": "https://crests.football-data.org/397.png"
+          },
+          "goals": 3,
+          "assists": 3,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 123286,
+            "name": "Kevin Schade",
+            "firstName": "Kevin",
+            "lastName": "Schade",
+            "dateOfBirth": "2001-11-27",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 402,
+            "name": "Brentford FC",
+            "shortName": "Brentford",
+            "tla": "BRE",
+            "crest": "https://crests.football-data.org/402.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 3257,
+            "name": "Bruno Fernandes",
+            "firstName": "",
+            "lastName": "Bruno Fernandes",
+            "dateOfBirth": "1994-09-08",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 66,
+            "name": "Manchester United FC",
+            "shortName": "Man United",
+            "tla": "MUN",
+            "crest": "https://crests.football-data.org/66.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 171,
+            "name": "Kai Havertz",
+            "firstName": "Kai",
+            "lastName": "Havertz",
+            "dateOfBirth": "1999-06-11",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 57,
+            "name": "Arsenal FC",
+            "shortName": "Arsenal",
+            "tla": "ARS",
+            "crest": "https://crests.football-data.org/57.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 7427,
+            "name": "Martin Ødegaard",
+            "firstName": "Martin",
+            "lastName": "Ødegaard",
+            "dateOfBirth": "1998-12-17",
+            "nationality": "Norway",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 57,
+            "name": "Arsenal FC",
+            "shortName": "Arsenal",
+            "tla": "ARS",
+            "crest": "https://crests.football-data.org/57.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 176628,
+            "name": "Emersonn",
+            "firstName": "",
+            "lastName": "Emersonn",
+            "dateOfBirth": "2004-07-16",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 349,
+            "name": "Ipswich Town FC",
+            "shortName": "Ipswich Town",
+            "tla": "IPS",
+            "crest": "https://crests.football-data.org/349.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 171995,
+            "name": "Thierno Barry",
+            "firstName": "Thierno",
+            "lastName": "Barry",
+            "dateOfBirth": "2000-01-12",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 62,
+            "name": "Everton FC",
+            "shortName": "Everton",
+            "tla": "EVE",
+            "crest": "https://crests.football-data.org/62.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 10000,
+            "name": "Vitaly Janelt",
+            "firstName": "Vitaly",
+            "lastName": "Janelt",
+            "dateOfBirth": "1998-05-10",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 402,
+            "name": "Brentford FC",
+            "shortName": "Brentford",
+            "tla": "BRE",
+            "crest": "https://crests.football-data.org/402.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 190851,
+            "name": "Jack Hinshelwood",
+            "firstName": "Jack",
+            "lastName": "Hinshelwood",
+            "dateOfBirth": "2005-04-11",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 397,
+            "name": "Brighton & Hove Albion FC",
+            "shortName": "Brighton Hove",
+            "tla": "BHA",
+            "crest": "https://crests.football-data.org/397.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 166376,
+            "name": "Anthony Elanga",
+            "firstName": "Anthony",
+            "lastName": "Elanga",
+            "dateOfBirth": "2002-04-27",
+            "nationality": "Sweden",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 67,
+            "name": "Newcastle United FC",
+            "shortName": "Newcastle",
+            "tla": "NEW",
+            "crest": "https://crests.football-data.org/67.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 7798,
+            "name": "Joe Willock",
+            "firstName": "Joe",
+            "lastName": "Willock",
+            "dateOfBirth": "1999-08-20",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 67,
+            "name": "Newcastle United FC",
+            "shortName": "Newcastle",
+            "tla": "NEW",
+            "crest": "https://crests.football-data.org/67.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 246418,
+            "name": "Joshua King",
+            "firstName": "Joshua",
+            "lastName": "King",
+            "dateOfBirth": "2007-01-03",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 63,
+            "name": "Fulham FC",
+            "shortName": "Fulham",
+            "tla": "FUL",
+            "crest": "https://crests.football-data.org/63.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 144892,
+            "name": "Cole Palmer",
+            "firstName": "Cole",
+            "lastName": "Palmer",
+            "dateOfBirth": "2002-05-06",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 61,
+            "name": "Chelsea FC",
+            "shortName": "Chelsea",
+            "tla": "CHE",
+            "crest": "https://crests.football-data.org/61.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 133242,
+            "name": "Rayan Cherki",
+            "firstName": "Rayan",
+            "lastName": "Cherki",
+            "dateOfBirth": "2003-08-17",
+            "nationality": "France",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 65,
+            "name": "Manchester City FC",
+            "shortName": "Man City",
+            "tla": "MCI",
+            "crest": "https://crests.football-data.org/65.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "laliga": {
+      "name": "La Liga",
+      "code": "PD",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 37428,
+            "name": "Raphinha",
+            "firstName": "",
+            "lastName": "Raphinha",
+            "dateOfBirth": "1996-12-14",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 81,
+            "name": "FC Barcelona",
+            "shortName": "Barça",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/81.png"
+          },
+          "goals": 12,
+          "assists": 2,
+          "penalties": 3,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 115175,
+            "name": "Sergio Camello",
+            "firstName": "",
+            "lastName": "Sergio Camello",
+            "dateOfBirth": "2001-02-10",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 87,
+            "name": "Rayo Vallecano de Madrid",
+            "shortName": "Rayo Vallecano",
+            "tla": "RAY",
+            "crest": "https://crests.football-data.org/87.png"
+          },
+          "goals": 7,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 3374,
+            "name": "Kylian Mbappé",
+            "firstName": "Kylian",
+            "lastName": "Mbappé",
+            "dateOfBirth": "1998-12-20",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 86,
+            "name": "Real Madrid CF",
+            "shortName": "Real Madrid",
+            "tla": "RMA",
+            "crest": "https://crests.football-data.org/86.png"
+          },
+          "goals": 7,
+          "assists": 2,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 202283,
+            "name": "Lamine Yamal",
+            "firstName": "",
+            "lastName": "Lamine Yamal",
+            "dateOfBirth": "2007-07-13",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 81,
+            "name": "FC Barcelona",
+            "shortName": "Barça",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/81.png"
+          },
+          "goals": 7,
+          "assists": 4,
+          "penalties": 1,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 180218,
+            "name": "Roberto Fernández",
+            "firstName": "",
+            "lastName": "Roberto Fernández",
+            "dateOfBirth": "2002-07-03",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 80,
+            "name": "RCD Espanyol de Barcelona",
+            "shortName": "Espanyol",
+            "tla": "ESP",
+            "crest": "https://crests.football-data.org/80.png"
+          },
+          "goals": 6,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 265516,
+            "name": "Yassir Zabiri",
+            "firstName": "Yassir",
+            "lastName": "Zabiri",
+            "dateOfBirth": "2005-02-23",
+            "nationality": "Morocco",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5335,
+            "name": "Real Racing Club de Santander",
+            "shortName": "Santander",
+            "tla": "SAN",
+            "crest": "https://crests.football-data.org/5335.png"
+          },
+          "goals": 6,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 7801,
+            "name": "Pierre-Emerick Aubameyang",
+            "firstName": "Pierre-Emerick",
+            "lastName": "Aubameyang",
+            "dateOfBirth": "1989-06-18",
+            "nationality": "Gabon",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 560,
+            "name": "RC Deportivo La Coruña",
+            "shortName": "Deportivo",
+            "tla": "DEP",
+            "crest": "https://crests.football-data.org/560.png"
+          },
+          "goals": 5,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 2237,
+            "name": "Ante Budimir",
+            "firstName": "Ante",
+            "lastName": "Budimir",
+            "dateOfBirth": "1991-07-22",
+            "nationality": "Croatia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 79,
+            "name": "CA Osasuna",
+            "shortName": "Osasuna",
+            "tla": "OSA",
+            "crest": "https://crests.football-data.org/79.png"
+          },
+          "goals": 5,
+          "assists": 0,
+          "penalties": 3,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 214497,
+            "name": "Fer Niño",
+            "firstName": "",
+            "lastName": "Fer Niño",
+            "dateOfBirth": "2000-10-24",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 285,
+            "name": "Elche CF",
+            "shortName": "Elche",
+            "tla": "ELC",
+            "crest": "https://crests.football-data.org/285.png"
+          },
+          "goals": 5,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 213278,
+            "name": "Álex Baena",
+            "firstName": "",
+            "lastName": "Álex Baena",
+            "dateOfBirth": "2001-07-20",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 78,
+            "name": "Club Atlético de Madrid",
+            "shortName": "Atleti",
+            "tla": "ATL",
+            "crest": "https://crests.football-data.org/78.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 214533,
+            "name": "Fermín López",
+            "firstName": "",
+            "lastName": "Fermín López",
+            "dateOfBirth": "2003-05-11",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 81,
+            "name": "FC Barcelona",
+            "shortName": "Barça",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/81.png"
+          },
+          "goals": 4,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 11113,
+            "name": "Lucas Boyé",
+            "firstName": "Lucas",
+            "lastName": "Boyé",
+            "dateOfBirth": "1996-02-28",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 263,
+            "name": "Deportivo Alavés",
+            "shortName": "Alavés",
+            "tla": "ALA",
+            "crest": "https://crests.football-data.org/263.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 8474,
+            "name": "Mariano Díaz",
+            "firstName": "Mariano",
+            "lastName": "Díaz",
+            "dateOfBirth": "1993-08-01",
+            "nationality": "Dominican Republic",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 263,
+            "name": "Deportivo Alavés",
+            "shortName": "Alavés",
+            "tla": "ALA",
+            "crest": "https://crests.football-data.org/263.png"
+          },
+          "goals": 3,
+          "assists": 3,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 633,
+            "name": "Pape Gueye",
+            "firstName": "Pape",
+            "lastName": "Gueye",
+            "dateOfBirth": "1999-01-24",
+            "nationality": "Senegal",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 94,
+            "name": "Villarreal CF",
+            "shortName": "Villarreal",
+            "tla": "VIL",
+            "crest": "https://crests.football-data.org/94.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 125010,
+            "name": "Jude Bellingham",
+            "firstName": "Jude",
+            "lastName": "Bellingham",
+            "dateOfBirth": "2003-06-29",
+            "nationality": "England",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 86,
+            "name": "Real Madrid CF",
+            "shortName": "Real Madrid",
+            "tla": "RMA",
+            "crest": "https://crests.football-data.org/86.png"
+          },
+          "goals": 3,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 180282,
+            "name": "Brugui",
+            "firstName": "",
+            "lastName": "Roger Brugué",
+            "dateOfBirth": "1996-11-04",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 88,
+            "name": "Levante UD",
+            "shortName": "Levante",
+            "tla": "LEV",
+            "crest": "https://crests.football-data.org/88.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 32312,
+            "name": "Álvaro García",
+            "firstName": "",
+            "lastName": "Álvaro García",
+            "dateOfBirth": "1992-10-27",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 87,
+            "name": "Rayo Vallecano de Madrid",
+            "shortName": "Rayo Vallecano",
+            "tla": "RAY",
+            "crest": "https://crests.football-data.org/87.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 8412,
+            "name": "Nicolas Pépé",
+            "firstName": "Nicolas",
+            "lastName": "Pépé",
+            "dateOfBirth": "1995-05-29",
+            "nationality": "Ivory Coast",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 94,
+            "name": "Villarreal CF",
+            "shortName": "Villarreal",
+            "tla": "VIL",
+            "crest": "https://crests.football-data.org/94.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 213217,
+            "name": "Kang-in Lee",
+            "firstName": "Kang-in",
+            "lastName": "Lee",
+            "dateOfBirth": "2001-02-19",
+            "nationality": "South Korea",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 78,
+            "name": "Club Atlético de Madrid",
+            "shortName": "Atleti",
+            "tla": "ATL",
+            "crest": "https://crests.football-data.org/78.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 128731,
+            "name": "Rodrigo Riquelme",
+            "firstName": "",
+            "lastName": "Rodrigo Riquelme",
+            "dateOfBirth": "2000-04-02",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 90,
+            "name": "Real Betis Balompié",
+            "shortName": "Real Betis",
+            "tla": "BET",
+            "crest": "https://crests.football-data.org/90.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "bundesliga": {
+      "name": "Bundesliga",
+      "code": "BL1",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 113765,
+            "name": "Michael Olise",
+            "firstName": "Michael",
+            "lastName": "Olise",
+            "dateOfBirth": "2001-12-12",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5,
+            "name": "FC Bayern München",
+            "shortName": "Bayern",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/5.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 192207,
+            "name": "Younes Ebnoutalib",
+            "firstName": "Younes",
+            "lastName": "Ebnoutalib",
+            "dateOfBirth": "2003-09-13",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 19,
+            "name": "Eintracht Frankfurt",
+            "shortName": "Frankfurt",
+            "tla": "SGE",
+            "crest": "https://crests.football-data.org/19.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 145293,
+            "name": "Yuito Suzuki",
+            "firstName": "Yuito",
+            "lastName": "Suzuki",
+            "dateOfBirth": "2001-10-25",
+            "nationality": "Japan",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 17,
+            "name": "SC Freiburg",
+            "shortName": "Freiburg",
+            "tla": "SCF",
+            "crest": "https://crests.football-data.org/17.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 45593,
+            "name": "Phillip Tietz",
+            "firstName": "Phillip",
+            "lastName": "Tietz",
+            "dateOfBirth": "1997-07-09",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 15,
+            "name": "1. FSV Mainz 05",
+            "shortName": "Mainz",
+            "tla": "M05",
+            "crest": "https://crests.football-data.org/15.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 1826,
+            "name": "Patrik Schick",
+            "firstName": "Patrik",
+            "lastName": "Schick",
+            "dateOfBirth": "1996-01-24",
+            "nationality": "Czech Republic",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 3,
+            "name": "Bayer 04 Leverkusen",
+            "shortName": "Leverkusen",
+            "tla": "B04",
+            "crest": "https://crests.football-data.org/3.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 156629,
+            "name": "Igor Matanovic",
+            "firstName": "Igor",
+            "lastName": "Matanović",
+            "dateOfBirth": "2003-03-31",
+            "nationality": "Croatia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 17,
+            "name": "SC Freiburg",
+            "shortName": "Freiburg",
+            "tla": "SCF",
+            "crest": "https://crests.football-data.org/17.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 6661,
+            "name": "Michael Gregoritsch",
+            "firstName": "Michael",
+            "lastName": "Gregoritsch",
+            "dateOfBirth": "1994-04-18",
+            "nationality": "Austria",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 16,
+            "name": "FC Augsburg",
+            "shortName": "Augsburg",
+            "tla": "FCA",
+            "crest": "https://crests.football-data.org/16.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 304,
+            "name": "Niclas Füllkrug",
+            "firstName": "Niclas",
+            "lastName": "Füllkrug",
+            "dateOfBirth": "1993-02-09",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 12,
+            "name": "SV Werder Bremen",
+            "shortName": "Bremen",
+            "tla": "SVW",
+            "crest": "https://crests.football-data.org/12.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 183780,
+            "name": "Maurice Krattenmacher",
+            "firstName": "Maurice",
+            "lastName": "Krattenmacher",
+            "dateOfBirth": "2005-08-11",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 719,
+            "name": "SV 07 Elversberg",
+            "shortName": "Elversberg",
+            "tla": "ELV",
+            "crest": "https://crests.football-data.org/719.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 82404,
+            "name": "Jonathan Burkardt",
+            "firstName": "Jonathan",
+            "lastName": "Burkardt",
+            "dateOfBirth": "2000-07-11",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 19,
+            "name": "Eintracht Frankfurt",
+            "shortName": "Frankfurt",
+            "tla": "SGE",
+            "crest": "https://crests.football-data.org/19.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 8004,
+            "name": "Harry Kane",
+            "firstName": "Harry",
+            "lastName": "Kane",
+            "dateOfBirth": "1993-07-28",
+            "nationality": "England",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5,
+            "name": "FC Bayern München",
+            "shortName": "Bayern",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/5.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 6523,
+            "name": "Josha Vagnoman",
+            "firstName": "Josha",
+            "lastName": "Vagnoman",
+            "dateOfBirth": "2000-12-11",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 10,
+            "name": "VfB Stuttgart",
+            "shortName": "Stuttgart",
+            "tla": "VFB",
+            "crest": "https://crests.football-data.org/10.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 6634,
+            "name": "Ridle Baku",
+            "firstName": "Ridle",
+            "lastName": "Baku",
+            "dateOfBirth": "1998-04-08",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 721,
+            "name": "RB Leipzig",
+            "shortName": "RB Leipzig",
+            "tla": "RBL",
+            "crest": "https://crests.football-data.org/721.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 169295,
+            "name": "Antonio Nusa",
+            "firstName": "Antonio",
+            "lastName": "Nusa",
+            "dateOfBirth": "2005-04-17",
+            "nationality": "Norway",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 721,
+            "name": "RB Leipzig",
+            "shortName": "RB Leipzig",
+            "tla": "RBL",
+            "crest": "https://crests.football-data.org/721.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 7029,
+            "name": "Tim Skarke",
+            "firstName": "Tim",
+            "lastName": "Skarke",
+            "dateOfBirth": "1996-09-07",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 28,
+            "name": "1. FC Union Berlin",
+            "shortName": "Union Berlin",
+            "tla": "UNB",
+            "crest": "https://crests.football-data.org/28.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 213737,
+            "name": "David Mokwa Ntusu",
+            "firstName": "David",
+            "lastName": "Mokwa",
+            "dateOfBirth": "2004-05-03",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 719,
+            "name": "SV 07 Elversberg",
+            "shortName": "Elversberg",
+            "tla": "ELV",
+            "crest": "https://crests.football-data.org/719.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 274045,
+            "name": "Christian Kofane",
+            "firstName": "Christian",
+            "lastName": "Kofane",
+            "dateOfBirth": "2006-07-26",
+            "nationality": "Cameroon",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 3,
+            "name": "Bayer 04 Leverkusen",
+            "shortName": "Leverkusen",
+            "tla": "B04",
+            "crest": "https://crests.football-data.org/3.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 9848,
+            "name": "Thijs Dallinga",
+            "firstName": "Thijs",
+            "lastName": "Dallinga",
+            "dateOfBirth": "2000-08-03",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1,
+            "name": "1. FC Köln",
+            "shortName": "1. FC Köln",
+            "tla": "KOE",
+            "crest": "https://crests.football-data.org/1.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 211,
+            "name": "Sehrou Guirassy",
+            "firstName": "Serhou",
+            "lastName": "Guirassy",
+            "dateOfBirth": "1996-03-12",
+            "nationality": "Guinea",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 4,
+            "name": "Borussia Dortmund",
+            "shortName": "Dortmund",
+            "tla": "BVB",
+            "crest": "https://crests.football-data.org/4.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 61630,
+            "name": "Marco Grüll",
+            "firstName": "Marco",
+            "lastName": "Grüll",
+            "dateOfBirth": "1998-07-06",
+            "nationality": "Austria",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 12,
+            "name": "SV Werder Bremen",
+            "shortName": "Bremen",
+            "tla": "SVW",
+            "crest": "https://crests.football-data.org/12.png"
+          },
+          "goals": 2,
+          "assists": 3,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "seriea": {
+      "name": "Serie A",
+      "code": "SA",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 7457,
+            "name": "Donyell Malen",
+            "firstName": "Donyell",
+            "lastName": "Malen",
+            "dateOfBirth": "1999-01-19",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 100,
+            "name": "AS Roma",
+            "shortName": "Roma",
+            "tla": "ROM",
+            "crest": "https://crests.football-data.org/100.png"
+          },
+          "goals": 6,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 252836,
+            "name": "Gustavo Varela",
+            "firstName": "",
+            "lastName": "Gustavo Varela",
+            "dateOfBirth": "2005-01-30",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5911,
+            "name": "AC Monza",
+            "shortName": "Monza",
+            "tla": "MON",
+            "crest": "https://crests.football-data.org/5911.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 169216,
+            "name": "Antonio Raimondo",
+            "firstName": "Antonio",
+            "lastName": "Raimondo",
+            "dateOfBirth": "2004-03-18",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 470,
+            "name": "Frosinone Calcio",
+            "shortName": "Frosinone",
+            "tla": "FRO",
+            "crest": "https://crests.football-data.org/470.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 3220,
+            "name": "Lautaro Martínez",
+            "firstName": "Lautaro",
+            "lastName": "Martínez",
+            "dateOfBirth": "1997-08-22",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 108,
+            "name": "FC Internazionale Milano",
+            "shortName": "Inter",
+            "tla": "INT",
+            "crest": "https://crests.football-data.org/108.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 2200,
+            "name": "Davide Frattesi",
+            "firstName": "Davide",
+            "lastName": "Frattesi",
+            "dateOfBirth": "1999-09-22",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 110,
+            "name": "SS Lazio",
+            "shortName": "Lazio",
+            "tla": "LAZ",
+            "crest": "https://crests.football-data.org/110.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 183018,
+            "name": "Vasilije Adzic",
+            "firstName": "Vasilije",
+            "lastName": "Adžić",
+            "dateOfBirth": "2006-05-12",
+            "nationality": "Montenegro",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 471,
+            "name": "US Sassuolo Calcio",
+            "shortName": "Sassuolo",
+            "tla": "SAS",
+            "crest": "https://crests.football-data.org/471.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 136113,
+            "name": "Daniel Maldini",
+            "firstName": "Daniel",
+            "lastName": "Maldini",
+            "dateOfBirth": "2001-10-11",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 104,
+            "name": "Cagliari Calcio",
+            "shortName": "Cagliari",
+            "tla": "CAG",
+            "crest": "https://crests.football-data.org/104.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 250304,
+            "name": "Franco Mastantuono",
+            "firstName": "Franco",
+            "lastName": "Mastantuono",
+            "dateOfBirth": "2007-08-14",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 99,
+            "name": "ACF Fiorentina",
+            "shortName": "Fiorentina",
+            "tla": "FIO",
+            "crest": "https://crests.football-data.org/99.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 822,
+            "name": "Hassane Kamara",
+            "firstName": "Hassane",
+            "lastName": "Kamara",
+            "dateOfBirth": "1994-03-05",
+            "nationality": "Ivory Coast",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 115,
+            "name": "Udinese Calcio",
+            "shortName": "Udinese",
+            "tla": "UDI",
+            "crest": "https://crests.football-data.org/115.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 43285,
+            "name": "Anastasios Douvikas",
+            "firstName": "Anastasios",
+            "lastName": "Douvikas",
+            "dateOfBirth": "1999-08-02",
+            "nationality": "Greece",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 7397,
+            "name": "Como 1907",
+            "shortName": "Como 1907",
+            "tla": "COM",
+            "crest": "https://crests.football-data.org/7397.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 1754,
+            "name": "Hakan Çalhanoğlu",
+            "firstName": "Hakan",
+            "lastName": "Çalhanoğlu",
+            "dateOfBirth": "1994-02-08",
+            "nationality": "Turkey",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 108,
+            "name": "FC Internazionale Milano",
+            "shortName": "Inter",
+            "tla": "INT",
+            "crest": "https://crests.football-data.org/108.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 215433,
+            "name": "Francesco Esposito",
+            "firstName": "Francesco",
+            "lastName": "Esposito",
+            "dateOfBirth": "2005-06-28",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 108,
+            "name": "FC Internazionale Milano",
+            "shortName": "Inter",
+            "tla": "INT",
+            "crest": "https://crests.football-data.org/108.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 246341,
+            "name": "Tiago Gabriel",
+            "firstName": "",
+            "lastName": "Tiago Gabriel",
+            "dateOfBirth": "2004-12-26",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 5890,
+            "name": "US Lecce",
+            "shortName": "Lecce",
+            "tla": "USL",
+            "crest": "https://crests.football-data.org/5890.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 192142,
+            "name": "Alphadjo Cisse",
+            "firstName": "Alphadjo",
+            "lastName": "Cissè",
+            "dateOfBirth": "2006-10-22",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 98,
+            "name": "AC Milan",
+            "shortName": "Milan",
+            "tla": "MIL",
+            "crest": "https://crests.football-data.org/98.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 4119,
+            "name": "Che Adams",
+            "firstName": "Ché",
+            "lastName": "Adams",
+            "dateOfBirth": "1996-07-13",
+            "nationality": "Scotland",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 586,
+            "name": "Torino FC",
+            "shortName": "Torino",
+            "tla": "TOR",
+            "crest": "https://crests.football-data.org/586.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 192382,
+            "name": "Niccolo Pisilli",
+            "firstName": "Niccolò",
+            "lastName": "Pisilli",
+            "dateOfBirth": "2004-09-23",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 100,
+            "name": "AS Roma",
+            "shortName": "Roma",
+            "tla": "ROM",
+            "crest": "https://crests.football-data.org/100.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 7567,
+            "name": "Jurgen Ekkelenkamp",
+            "firstName": "Jurgen",
+            "lastName": "Ekkelenkamp",
+            "dateOfBirth": "2000-04-05",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 115,
+            "name": "Udinese Calcio",
+            "shortName": "Udinese",
+            "tla": "UDI",
+            "crest": "https://crests.football-data.org/115.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 156912,
+            "name": "Martin Baturina",
+            "firstName": "Martin",
+            "lastName": "Baturina",
+            "dateOfBirth": "2003-02-16",
+            "nationality": "Croatia",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 7397,
+            "name": "Como 1907",
+            "shortName": "Como 1907",
+            "tla": "COM",
+            "crest": "https://crests.football-data.org/7397.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 152770,
+            "name": "Rasmus Højlund",
+            "firstName": "Rasmus",
+            "lastName": "Højlund",
+            "dateOfBirth": "2003-02-04",
+            "nationality": "Denmark",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 113,
+            "name": "SSC Napoli",
+            "shortName": "Napoli",
+            "tla": "NAP",
+            "crest": "https://crests.football-data.org/113.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 171121,
+            "name": "Matias Soule",
+            "firstName": "Matías",
+            "lastName": "Soulé",
+            "dateOfBirth": "2003-04-15",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 100,
+            "name": "AS Roma",
+            "shortName": "Roma",
+            "tla": "ROM",
+            "crest": "https://crests.football-data.org/100.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "ligue1": {
+      "name": "Ligue 1",
+      "code": "FL1",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 8476,
+            "name": "Amine Gouiri",
+            "firstName": "Amine",
+            "lastName": "Gouiri",
+            "dateOfBirth": "2000-02-16",
+            "nationality": "Algeria",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 516,
+            "name": "Olympique de Marseille",
+            "shortName": "Marseille",
+            "tla": "MAR",
+            "crest": "https://crests.football-data.org/516.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 175942,
+            "name": "Kamory Doumbia",
+            "firstName": "Kamory",
+            "lastName": "Doumbia",
+            "dateOfBirth": "2003-02-18",
+            "nationality": "Mali",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 512,
+            "name": "Stade Brestois 29",
+            "shortName": "Brest",
+            "tla": "BRE",
+            "crest": "https://crests.football-data.org/512.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 552,
+            "name": "Lassine Sinayoko",
+            "firstName": "Lassine",
+            "lastName": "Sinayoko",
+            "dateOfBirth": "1999-12-08",
+            "nationality": "Mali",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1045,
+            "name": "Paris FC",
+            "shortName": "Paris FC",
+            "tla": "PFC",
+            "crest": "https://crests.football-data.org/1045.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 2,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 244696,
+            "name": "Paris Brunner",
+            "firstName": "Paris",
+            "lastName": "Brunner",
+            "dateOfBirth": "2006-02-15",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 548,
+            "name": "AS Monaco FC",
+            "shortName": "Monaco",
+            "tla": "ASM",
+            "crest": "https://crests.football-data.org/548.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 3370,
+            "name": "Florian Thauvin",
+            "firstName": "Florian",
+            "lastName": "Thauvin",
+            "dateOfBirth": "1993-01-26",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 546,
+            "name": "Racing Club de Lens",
+            "shortName": "RC Lens",
+            "tla": "RCL",
+            "crest": "https://crests.football-data.org/546.png"
+          },
+          "goals": 3,
+          "assists": 3,
+          "penalties": 3,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 124178,
+            "name": "Louis Mafouta",
+            "firstName": "Louis",
+            "lastName": "Mafouta",
+            "dateOfBirth": "1994-07-02",
+            "nationality": "Central African Republic",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 535,
+            "name": "Le Mans FC",
+            "shortName": "Le Mans",
+            "tla": "LMF",
+            "crest": "https://upload.wikimedia.org/wikipedia/en/5/57/Le_Mans_FC_logo.svg"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 149850,
+            "name": "Esteban Lepaul",
+            "firstName": "Esteban",
+            "lastName": "Lepaul",
+            "dateOfBirth": "2000-04-18",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 529,
+            "name": "Stade Rennais FC 1901",
+            "shortName": "Stade Rennais",
+            "tla": "REN",
+            "crest": "https://crests.football-data.org/529.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 33154,
+            "name": "Ferrán Torres",
+            "firstName": "",
+            "lastName": "Ferran Torres",
+            "dateOfBirth": "2000-02-29",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 524,
+            "name": "Paris Saint-Germain FC",
+            "shortName": "PSG",
+            "tla": "PSG",
+            "crest": "https://crests.football-data.org/524.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 184726,
+            "name": "Ernest Nuamah",
+            "firstName": "Ernest",
+            "lastName": "Nuamah",
+            "dateOfBirth": "2003-11-01",
+            "nationality": "Ghana",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 523,
+            "name": "Olympique Lyonnais",
+            "shortName": "Olympique Lyon",
+            "tla": "LYO",
+            "crest": "https://crests.football-data.org/523.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 292172,
+            "name": "Adil Bourabaa",
+            "firstName": "Adil",
+            "lastName": "Bourabaa",
+            "dateOfBirth": "2005-03-09",
+            "nationality": "Algeria",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 535,
+            "name": "Le Mans FC",
+            "shortName": "Le Mans",
+            "tla": "LMF",
+            "crest": "https://upload.wikimedia.org/wikipedia/en/5/57/Le_Mans_FC_logo.svg"
+          },
+          "goals": 3,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 129381,
+            "name": "Casper Tengstedt",
+            "firstName": "Casper",
+            "lastName": "Tengstedt",
+            "dateOfBirth": "2000-06-01",
+            "nationality": "Denmark",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 511,
+            "name": "Toulouse FC",
+            "shortName": "Toulouse",
+            "tla": "TOU",
+            "crest": "https://crests.football-data.org/511.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 183643,
+            "name": "Franjo Ivanovic",
+            "firstName": "Franjo",
+            "lastName": "Ivanović",
+            "dateOfBirth": "2003-10-01",
+            "nationality": "Austria",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 546,
+            "name": "Racing Club de Lens",
+            "shortName": "RC Lens",
+            "tla": "RCL",
+            "crest": "https://crests.football-data.org/546.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 188087,
+            "name": "Tiago Santos",
+            "firstName": "",
+            "lastName": "Tiago Santos",
+            "dateOfBirth": "2002-07-23",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 521,
+            "name": "Lille OSC",
+            "shortName": "Lille",
+            "tla": "LIL",
+            "crest": "https://crests.football-data.org/521.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 3225,
+            "name": "Marquinhos",
+            "firstName": "",
+            "lastName": "Marquinhos",
+            "dateOfBirth": "1994-05-14",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 524,
+            "name": "Paris Saint-Germain FC",
+            "shortName": "PSG",
+            "tla": "PSG",
+            "crest": "https://crests.football-data.org/524.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 245336,
+            "name": "Gessime Yassine",
+            "firstName": "Gessime",
+            "lastName": "Yassine",
+            "dateOfBirth": "2005-11-22",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 576,
+            "name": "RC Strasbourg Alsace",
+            "shortName": "Strasbourg",
+            "tla": "RC ",
+            "crest": "https://crests.football-data.org/576.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 215579,
+            "name": "Mbwana Samatta",
+            "firstName": "Ally",
+            "lastName": "Samatta",
+            "dateOfBirth": "1992-12-23",
+            "nationality": "Tanzania",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 533,
+            "name": "Le Havre AC",
+            "shortName": "Le Havre",
+            "tla": "HAC",
+            "crest": "https://crests.football-data.org/533.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 256424,
+            "name": "Zachary Athekame",
+            "firstName": "Zachary",
+            "lastName": "Athekame",
+            "dateOfBirth": "2004-12-13",
+            "nationality": "Switzerland",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 523,
+            "name": "Olympique Lyonnais",
+            "shortName": "Olympique Lyon",
+            "tla": "LYO",
+            "crest": "https://crests.football-data.org/523.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 128242,
+            "name": "Cameron Archer",
+            "firstName": "Cameron",
+            "lastName": "Archer",
+            "dateOfBirth": "2001-07-21",
+            "nationality": "England",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 519,
+            "name": "AJ Auxerre",
+            "shortName": "Auxerre",
+            "tla": "AJA",
+            "crest": "https://crests.football-data.org/519.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 2,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 206809,
+            "name": "Samuel Amo-Ameyaw",
+            "firstName": "Sam",
+            "lastName": "Amo-Ameyaw",
+            "dateOfBirth": "2006-07-18",
+            "nationality": "England",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 576,
+            "name": "RC Strasbourg Alsace",
+            "shortName": "Strasbourg",
+            "tla": "RC ",
+            "crest": "https://crests.football-data.org/576.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 215679,
+            "name": "Thomas Jørgensen",
+            "firstName": "Thomas",
+            "lastName": "Jørgensen",
+            "dateOfBirth": "2005-09-30",
+            "nationality": "Denmark",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 511,
+            "name": "Toulouse FC",
+            "shortName": "Toulouse",
+            "tla": "TOU",
+            "crest": "https://crests.football-data.org/511.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "champions_league": {
+      "name": "Champions League",
+      "code": "CL",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 33242,
+            "name": "Ermedin Demirovic",
+            "firstName": "Ermedin",
+            "lastName": "Demirović",
+            "dateOfBirth": "1998-03-25",
+            "nationality": "Bosnia-Herzegovina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 10,
+            "name": "VfB Stuttgart",
+            "shortName": "Stuttgart",
+            "tla": "VFB",
+            "crest": "https://crests.football-data.org/10.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 33154,
+            "name": "Ferrán Torres",
+            "firstName": "",
+            "lastName": "Ferran Torres",
+            "dateOfBirth": "2000-02-29",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 524,
+            "name": "Paris Saint-Germain FC",
+            "shortName": "PSG",
+            "tla": "PSG",
+            "crest": "https://crests.football-data.org/524.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 38101,
+            "name": "Erling Haaland",
+            "firstName": "Erling",
+            "lastName": "Haaland",
+            "dateOfBirth": "2000-07-21",
+            "nationality": "Norway",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 65,
+            "name": "Manchester City FC",
+            "shortName": "Man City",
+            "tla": "MCI",
+            "crest": "https://crests.football-data.org/65.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 211,
+            "name": "Sehrou Guirassy",
+            "firstName": "Serhou",
+            "lastName": "Guirassy",
+            "dateOfBirth": "1996-03-12",
+            "nationality": "Guinea",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 4,
+            "name": "Borussia Dortmund",
+            "shortName": "Dortmund",
+            "tla": "BVB",
+            "crest": "https://crests.football-data.org/4.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 33038,
+            "name": "Bartra",
+            "firstName": "",
+            "lastName": "Marc Bartra",
+            "dateOfBirth": "1991-01-15",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 90,
+            "name": "Real Betis Balompié",
+            "shortName": "Real Betis",
+            "tla": "BET",
+            "crest": "https://crests.football-data.org/90.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 37428,
+            "name": "Raphinha",
+            "firstName": "",
+            "lastName": "Raphinha",
+            "dateOfBirth": "1996-12-14",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 81,
+            "name": "FC Barcelona",
+            "shortName": "Barça",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/81.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 3373,
+            "name": "Ousmane Dembélé",
+            "firstName": "Ousmane",
+            "lastName": "Dembélé",
+            "dateOfBirth": "1997-05-15",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 524,
+            "name": "Paris Saint-Germain FC",
+            "shortName": "PSG",
+            "tla": "PSG",
+            "crest": "https://crests.football-data.org/524.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 113765,
+            "name": "Michael Olise",
+            "firstName": "Michael",
+            "lastName": "Olise",
+            "dateOfBirth": "2001-12-12",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5,
+            "name": "FC Bayern München",
+            "shortName": "Bayern",
+            "tla": "FCB",
+            "crest": "https://crests.football-data.org/5.png"
+          },
+          "goals": 2,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 183277,
+            "name": "Danijel Sturm",
+            "firstName": "Danijel",
+            "lastName": "Šturm",
+            "dateOfBirth": "1999-01-04",
+            "nationality": "Slovenia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 930,
+            "name": "SK Slavia Praha",
+            "shortName": "Slavia Praha",
+            "tla": "SLP",
+            "crest": "https://crests.football-data.org/930.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 34646,
+            "name": "John McGinn",
+            "firstName": "John",
+            "lastName": "McGinn",
+            "dateOfBirth": "1994-10-18",
+            "nationality": "Scotland",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 58,
+            "name": "Aston Villa FC",
+            "shortName": "Aston Villa",
+            "tla": "AVL",
+            "crest": "https://crests.football-data.org/58.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 38417,
+            "name": "Hugo Vetlesen",
+            "firstName": "Hugo",
+            "lastName": "Vetlesen",
+            "dateOfBirth": "2000-02-28",
+            "nationality": "Belgium",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 851,
+            "name": "Club Brugge KV",
+            "shortName": "Club Brugge",
+            "tla": "BRU",
+            "crest": "https://crests.football-data.org/851.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 31941,
+            "name": "Emiliano Buendía",
+            "firstName": "Emiliano",
+            "lastName": "Buendía",
+            "dateOfBirth": "1996-12-25",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 58,
+            "name": "Aston Villa FC",
+            "shortName": "Aston Villa",
+            "tla": "AVL",
+            "crest": "https://crests.football-data.org/58.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 152515,
+            "name": "Nicolas Jackson",
+            "firstName": "Nicolas",
+            "lastName": "Jackson",
+            "dateOfBirth": "2001-06-20",
+            "nationality": "Senegal",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 58,
+            "name": "Aston Villa FC",
+            "shortName": "Aston Villa",
+            "tla": "AVL",
+            "crest": "https://crests.football-data.org/58.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 177321,
+            "name": "Nicolo Tresoldi",
+            "firstName": "Nicolo",
+            "lastName": "Tresoldi",
+            "dateOfBirth": "2004-08-20",
+            "nationality": "Italy",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 851,
+            "name": "Club Brugge KV",
+            "shortName": "Club Brugge",
+            "tla": "BRU",
+            "crest": "https://crests.football-data.org/851.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 9237,
+            "name": "Răzvan Marin",
+            "firstName": "Răzvan",
+            "lastName": "Marin",
+            "dateOfBirth": "1996-05-23",
+            "nationality": "Romania",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1899,
+            "name": "PAE AEK",
+            "shortName": "PAE AEK",
+            "tla": "AEK",
+            "crest": "https://crests.football-data.org/1899.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 3374,
+            "name": "Kylian Mbappé",
+            "firstName": "Kylian",
+            "lastName": "Mbappé",
+            "dateOfBirth": "1998-12-20",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 86,
+            "name": "Real Madrid CF",
+            "shortName": "Real Madrid",
+            "tla": "RMA",
+            "crest": "https://crests.football-data.org/86.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 96,
+            "name": "Federico Valverde",
+            "firstName": "Federico",
+            "lastName": "Valverde",
+            "dateOfBirth": "1998-07-22",
+            "nationality": "Uruguay",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 86,
+            "name": "Real Madrid CF",
+            "shortName": "Real Madrid",
+            "tla": "RMA",
+            "crest": "https://crests.football-data.org/86.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 167689,
+            "name": "Carlos Augusto Lobaton",
+            "firstName": "",
+            "lastName": "Carlos Augusto",
+            "dateOfBirth": "1999-01-07",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 108,
+            "name": "FC Internazionale Milano",
+            "shortName": "Inter",
+            "tla": "INT",
+            "crest": "https://crests.football-data.org/108.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 212858,
+            "name": "Santiago Mouriño",
+            "firstName": "Santiago",
+            "lastName": "Mouriño",
+            "dateOfBirth": "2002-02-13",
+            "nationality": "Uruguay",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 94,
+            "name": "Villarreal CF",
+            "shortName": "Villarreal",
+            "tla": "VIL",
+            "crest": "https://crests.football-data.org/94.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 119460,
+            "name": "Ayase Ueda",
+            "firstName": "Ayase",
+            "lastName": "Ueda",
+            "dateOfBirth": "1998-08-28",
+            "nationality": "Japan",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 521,
+            "name": "Lille OSC",
+            "shortName": "Lille",
+            "tla": "LIL",
+            "crest": "https://crests.football-data.org/521.png"
+          },
+          "goals": 1,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 1,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "eredivisie": {
+      "name": "Eredivisie",
+      "code": "DED",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 121280,
+            "name": "Søren Tengstedt",
+            "firstName": "Søren",
+            "lastName": "Tengstedt",
+            "dateOfBirth": "2000-06-30",
+            "nationality": "Denmark",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 718,
+            "name": "Go Ahead Eagles",
+            "shortName": "Go Ahead",
+            "tla": "GOA",
+            "crest": "https://crests.football-data.org/718.png"
+          },
+          "goals": 5,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 243902,
+            "name": "Milan Zonneveld",
+            "firstName": "Milan",
+            "lastName": "Zonneveld",
+            "dateOfBirth": "2003-10-08",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 6806,
+            "name": "Sparta Rotterdam",
+            "shortName": "Sparta",
+            "tla": "SPA",
+            "crest": "https://crests.football-data.org/6806.png"
+          },
+          "goals": 5,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 265560,
+            "name": "Artem Stepanov",
+            "firstName": "Artem",
+            "lastName": "Stepanov",
+            "dateOfBirth": "2007-08-10",
+            "nationality": "Ukraine",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 676,
+            "name": "FC Utrecht",
+            "shortName": "Utrecht",
+            "tla": "UTR",
+            "crest": "https://crests.football-data.org/676.png"
+          },
+          "goals": 5,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 215554,
+            "name": "Gjivai Zechiël",
+            "firstName": "Gjivai",
+            "lastName": "Zechiël",
+            "dateOfBirth": "2004-06-01",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 675,
+            "name": "Feyenoord Rotterdam",
+            "shortName": "Feyenoord",
+            "tla": "FEY",
+            "crest": "https://crests.football-data.org/675.png"
+          },
+          "goals": 5,
+          "assists": 3,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 178402,
+            "name": "Ro-Zangelo Daal",
+            "firstName": "Ro-Zangelo",
+            "lastName": "Daal",
+            "dateOfBirth": "2004-02-10",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 682,
+            "name": "AZ",
+            "shortName": "AZ",
+            "tla": "AZ",
+            "crest": "https://crests.football-data.org/682.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 41302,
+            "name": "Brynjolfur Darri Willumsson",
+            "firstName": "Brynjólfur",
+            "lastName": "Willumsson",
+            "dateOfBirth": "2000-08-12",
+            "nationality": "Iceland",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 677,
+            "name": "FC Groningen",
+            "shortName": "Groningen",
+            "tla": "GRO",
+            "crest": "https://crests.football-data.org/677.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 188914,
+            "name": "Thom van Bergen",
+            "firstName": "Thom",
+            "lastName": "van Bergen",
+            "dateOfBirth": "2004-01-06",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 677,
+            "name": "FC Groningen",
+            "shortName": "Groningen",
+            "tla": "GRO",
+            "crest": "https://crests.football-data.org/677.png"
+          },
+          "goals": 4,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 148,
+            "name": "Julian Brandt",
+            "firstName": "Julian",
+            "lastName": "Brandt",
+            "dateOfBirth": "1996-05-02",
+            "nationality": "Germany",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 678,
+            "name": "AFC Ajax",
+            "shortName": "Ajax",
+            "tla": "AJA",
+            "crest": "https://crests.football-data.org/678.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 178013,
+            "name": "Rafik el Arguioui",
+            "firstName": "Rafik",
+            "lastName": "el Arguioui",
+            "dateOfBirth": "2005-07-31",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1909,
+            "name": "SC Cambuur-Leeuwarden",
+            "shortName": "Cambuur",
+            "tla": "CAM",
+            "crest": "https://crests.football-data.org/1909.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 115116,
+            "name": "Sven Mijnans",
+            "firstName": "Sven",
+            "lastName": "Mijnans",
+            "dateOfBirth": "2000-03-09",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 674,
+            "name": "PSV",
+            "shortName": "PSV",
+            "tla": "PSV",
+            "crest": "https://crests.football-data.org/674.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 214463,
+            "name": "David Garden",
+            "firstName": "David",
+            "lastName": "Garden",
+            "dateOfBirth": "2004-06-20",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 670,
+            "name": "SBV Excelsior",
+            "shortName": "Excelsior",
+            "tla": "EXC",
+            "crest": "https://crests.football-data.org/670.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 165131,
+            "name": "Devin Haen",
+            "firstName": "Devin",
+            "lastName": "Haen",
+            "dateOfBirth": "2004-06-18",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 672,
+            "name": "Willem II Tilburg",
+            "shortName": "Willem II",
+            "tla": "WII",
+            "crest": "https://crests.football-data.org/672.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 169190,
+            "name": "Luciano Valente",
+            "firstName": "Luciano",
+            "lastName": "Valente",
+            "dateOfBirth": "2003-10-04",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 675,
+            "name": "Feyenoord Rotterdam",
+            "shortName": "Feyenoord",
+            "tla": "FEY",
+            "crest": "https://crests.football-data.org/675.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 21733,
+            "name": "Tjaronn Chery",
+            "firstName": "Tjaronn",
+            "lastName": "Chery",
+            "dateOfBirth": "1988-06-04",
+            "nationality": "Suriname",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1915,
+            "name": "NEC",
+            "shortName": "NEC",
+            "tla": "NEC",
+            "crest": "https://crests.football-data.org/1915.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 2,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 119731,
+            "name": "Ricardo Pepi",
+            "firstName": "Ricardo",
+            "lastName": "Pepi",
+            "dateOfBirth": "2003-01-09",
+            "nationality": "USA",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 674,
+            "name": "PSV",
+            "shortName": "PSV",
+            "tla": "PSV",
+            "crest": "https://crests.football-data.org/674.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 167699,
+            "name": "Lequincio Zeefuik",
+            "firstName": "Lequincio",
+            "lastName": "Zeefuik",
+            "dateOfBirth": "2004-11-26",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1920,
+            "name": "Fortuna Sittard",
+            "shortName": "Sittard",
+            "tla": "SIT",
+            "crest": "https://crests.football-data.org/1920.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 119460,
+            "name": "Ayase Ueda",
+            "firstName": "Ayase",
+            "lastName": "Ueda",
+            "dateOfBirth": "1998-08-28",
+            "nationality": "Japan",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 675,
+            "name": "Feyenoord Rotterdam",
+            "shortName": "Feyenoord",
+            "tla": "FEY",
+            "crest": "https://crests.football-data.org/675.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 4,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 210841,
+            "name": "Jacob Trenskow",
+            "firstName": "Jacob",
+            "lastName": "Trenskow",
+            "dateOfBirth": "2000-11-26",
+            "nationality": "Denmark",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 673,
+            "name": "SC Heerenveen",
+            "shortName": "Heerenveen",
+            "tla": "HEE",
+            "crest": "https://crests.football-data.org/673.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 9701,
+            "name": "Koen Kostons",
+            "firstName": "Koen",
+            "lastName": "Kostons",
+            "dateOfBirth": "1999-09-18",
+            "nationality": "Netherlands",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 684,
+            "name": "PEC Zwolle",
+            "shortName": "Zwolle",
+            "tla": "ZWO",
+            "crest": "https://crests.football-data.org/684.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 144445,
+            "name": "Victor Edvardsen",
+            "firstName": "Victor",
+            "lastName": "Edvardsen",
+            "dateOfBirth": "1996-01-14",
+            "nationality": "Sweden",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 718,
+            "name": "Go Ahead Eagles",
+            "shortName": "Go Ahead",
+            "tla": "GOA",
+            "crest": "https://crests.football-data.org/718.png"
+          },
+          "goals": 3,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "primeira_liga": {
+      "name": "Primeira Liga",
+      "code": "PPL",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 67299,
+            "name": "Vangelis Pavlidis",
+            "firstName": "Vangelis",
+            "lastName": "Pavlidis",
+            "dateOfBirth": "1998-11-21",
+            "nationality": "Greece",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1903,
+            "name": "Sport Lisboa e Benfica",
+            "shortName": "SL Benfica",
+            "tla": "BEN",
+            "crest": "https://crests.football-data.org/1903.png"
+          },
+          "goals": 8,
+          "assists": 2,
+          "penalties": 2,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 32386,
+            "name": "Luis Suárez",
+            "firstName": "Luis",
+            "lastName": "Suárez",
+            "dateOfBirth": "1997-12-02",
+            "nationality": "Colombia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 498,
+            "name": "Sporting Clube de Portugal",
+            "shortName": "Sporting CP",
+            "tla": "SPO",
+            "crest": "https://crests.football-data.org/498.png"
+          },
+          "goals": 6,
+          "assists": 1,
+          "penalties": 2,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 146109,
+            "name": "Georgios Koutsias",
+            "firstName": "Georgios",
+            "lastName": "Koutsias",
+            "dateOfBirth": "2004-02-08",
+            "nationality": "Greece",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5531,
+            "name": "FC Famalicão",
+            "shortName": "Famalicão",
+            "tla": "FAM",
+            "crest": "https://crests.football-data.org/5531.png"
+          },
+          "goals": 5,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 182123,
+            "name": "Gianluca Prestianni",
+            "firstName": "Gianluca",
+            "lastName": "Prestianni",
+            "dateOfBirth": "2006-01-31",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1903,
+            "name": "Sport Lisboa e Benfica",
+            "shortName": "SL Benfica",
+            "tla": "BEN",
+            "crest": "https://crests.football-data.org/1903.png"
+          },
+          "goals": 5,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 15919,
+            "name": "Gonçalo Paciência",
+            "firstName": "",
+            "lastName": "Gonçalo Paciência",
+            "dateOfBirth": "1994-08-01",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5530,
+            "name": "CD Santa Clara",
+            "shortName": "Santa Clara",
+            "tla": "CD ",
+            "crest": "https://crests.football-data.org/5530.png"
+          },
+          "goals": 5,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 81391,
+            "name": "Barbero",
+            "firstName": "",
+            "lastName": "Iván Barbero",
+            "dateOfBirth": "1998-08-17",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 712,
+            "name": "FC Arouca",
+            "shortName": "Arouca",
+            "tla": "FCA",
+            "crest": "https://crests.football-data.org/712.png"
+          },
+          "goals": 4,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 182080,
+            "name": "Leandro Antonetti",
+            "firstName": "Leandro",
+            "lastName": "Antonetti",
+            "dateOfBirth": "2003-01-13",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 9136,
+            "name": "CF Estrela da Amadora",
+            "shortName": "Amadora",
+            "tla": "AMA",
+            "crest": "https://crests.football-data.org/9136.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 151113,
+            "name": "Abraham Marcus",
+            "firstName": "Abraham",
+            "lastName": "Marcus",
+            "dateOfBirth": "2000-01-02",
+            "nationality": "Nigeria",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 9136,
+            "name": "CF Estrela da Amadora",
+            "shortName": "Amadora",
+            "tla": "AMA",
+            "crest": "https://crests.football-data.org/9136.png"
+          },
+          "goals": 4,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 81357,
+            "name": "Ianis Stoica",
+            "firstName": "Ianis",
+            "lastName": "Stoica",
+            "dateOfBirth": "2002-12-08",
+            "nationality": "Romania",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 9136,
+            "name": "CF Estrela da Amadora",
+            "shortName": "Amadora",
+            "tla": "AMA",
+            "crest": "https://crests.football-data.org/9136.png"
+          },
+          "goals": 4,
+          "assists": 2,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 1760,
+            "name": "André Silva",
+            "firstName": "",
+            "lastName": "André Silva",
+            "dateOfBirth": "1995-11-06",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 503,
+            "name": "FC Porto",
+            "shortName": "Porto",
+            "tla": "FCP",
+            "crest": "https://crests.football-data.org/503.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 150519,
+            "name": "Gabriel Veiga",
+            "firstName": "",
+            "lastName": "Gabri Veiga",
+            "dateOfBirth": "2002-05-27",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 503,
+            "name": "FC Porto",
+            "shortName": "Porto",
+            "tla": "FCP",
+            "crest": "https://crests.football-data.org/503.png"
+          },
+          "goals": 3,
+          "assists": 3,
+          "penalties": 1,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 144579,
+            "name": "Pau Victor Delgado",
+            "firstName": "",
+            "lastName": "Pau Víctor",
+            "dateOfBirth": "2001-11-26",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5613,
+            "name": "Sporting Clube de Braga",
+            "shortName": "Braga",
+            "tla": "SCB",
+            "crest": "https://crests.football-data.org/5613.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 5,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 32309,
+            "name": "Héctor Hernández",
+            "firstName": "",
+            "lastName": "Héctor Hernández",
+            "dateOfBirth": "1995-09-14",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5533,
+            "name": "Gil Vicente FC",
+            "shortName": "Gil Vicente",
+            "tla": "GIL",
+            "crest": "https://crests.football-data.org/5533.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 2,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 280747,
+            "name": "Flávio Gonçalves",
+            "firstName": "",
+            "lastName": "Flávio Gonçalves",
+            "dateOfBirth": "2007-05-30",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 498,
+            "name": "Sporting Clube de Portugal",
+            "shortName": "Sporting CP",
+            "tla": "SPO",
+            "crest": "https://crests.football-data.org/498.png"
+          },
+          "goals": 3,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 127034,
+            "name": "Borja Sainz",
+            "firstName": "",
+            "lastName": "Borja Sainz",
+            "dateOfBirth": "2001-02-01",
+            "nationality": "Spain",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 503,
+            "name": "FC Porto",
+            "shortName": "Porto",
+            "tla": "FCP",
+            "crest": "https://crests.football-data.org/503.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 175723,
+            "name": "Dawda Camara",
+            "firstName": "Dawda",
+            "lastName": "Camara",
+            "dateOfBirth": "2002-11-04",
+            "nationality": "Mali",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 7822,
+            "name": "FC Alverca",
+            "shortName": "Alverca",
+            "tla": "ALV",
+            "crest": "https://crests.football-data.org/7822.png"
+          },
+          "goals": 3,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 3,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 553,
+            "name": "Yanis Begraoui",
+            "firstName": "Yanis",
+            "lastName": "Begraoui",
+            "dateOfBirth": "2001-07-04",
+            "nationality": "France",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 582,
+            "name": "GD Estoril Praia",
+            "shortName": "Estoril Praia",
+            "tla": "EST",
+            "crest": "https://crests.football-data.org/582.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 186459,
+            "name": "Fotis Ioannidis",
+            "firstName": "Fotis",
+            "lastName": "Ioannidis",
+            "dateOfBirth": "2000-01-10",
+            "nationality": "Greece",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 498,
+            "name": "Sporting Clube de Portugal",
+            "shortName": "Sporting CP",
+            "tla": "SPO",
+            "crest": "https://crests.football-data.org/498.png"
+          },
+          "goals": 2,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 45366,
+            "name": "André Clovis",
+            "firstName": "",
+            "lastName": "André Clovis",
+            "dateOfBirth": "1997-11-21",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 5527,
+            "name": "Académico de Viseu FC",
+            "shortName": "Acad. Viseu",
+            "tla": "ACV",
+            "crest": "https://crests.football-data.org/5527.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 6,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 204345,
+            "name": "Vivaldo Semedo",
+            "firstName": "",
+            "lastName": "Vivaldo Semedo",
+            "dateOfBirth": "2005-01-28",
+            "nationality": "Portugal",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 7822,
+            "name": "FC Alverca",
+            "shortName": "Alverca",
+            "tla": "ALV",
+            "crest": "https://crests.football-data.org/7822.png"
+          },
+          "goals": 2,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 7,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "brasileirao_a": {
+      "name": "Brasileirão",
+      "code": "BSA",
+      "scorers": [
+        {
+          "rank": 1,
+          "player": {
+            "id": 192070,
+            "name": "Kevin Viveros",
+            "firstName": "Kevin",
+            "lastName": "Viveros",
+            "dateOfBirth": "2000-04-26",
+            "nationality": "Colombia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1768,
+            "name": "CA Paranaense",
+            "shortName": "Paranaense",
+            "tla": "CAP",
+            "crest": "https://crests.football-data.org/1768.png"
+          },
+          "goals": 18,
+          "assists": 3,
+          "penalties": 4,
+          "playedMatches": 26,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 2,
+          "player": {
+            "id": 1077,
+            "name": "Pedro",
+            "firstName": "",
+            "lastName": "Pedro",
+            "dateOfBirth": "1997-06-20",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1783,
+            "name": "CR Flamengo",
+            "shortName": "Flamengo",
+            "tla": "FLA",
+            "crest": "https://crests.football-data.org/1783.png"
+          },
+          "goals": 15,
+          "assists": 6,
+          "penalties": 0,
+          "playedMatches": 27,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 3,
+          "player": {
+            "id": 37833,
+            "name": "Carlos Vinícius",
+            "firstName": "",
+            "lastName": "Carlos Vinícius",
+            "dateOfBirth": "1995-03-25",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Centre-Forward"
+          },
+          "team": {
+            "id": 1767,
+            "name": "Grêmio FBPA",
+            "shortName": "Grêmio",
+            "tla": "FBP",
+            "crest": "https://crests.football-data.org/1767.png"
+          },
+          "goals": 10,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 26,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 4,
+          "player": {
+            "id": 1327,
+            "name": "Gabriel Barbosa",
+            "firstName": "",
+            "lastName": "Gabriel Barbosa",
+            "dateOfBirth": "1996-08-30",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 6685,
+            "name": "Santos FC",
+            "shortName": "Santos",
+            "tla": "SAN",
+            "crest": "https://crests.football-data.org/6685.png"
+          },
+          "goals": 10,
+          "assists": 2,
+          "penalties": 2,
+          "playedMatches": 20,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 5,
+          "player": {
+            "id": 149704,
+            "name": "Danilo dos Santos de Oliveira",
+            "firstName": "",
+            "lastName": "Danilo",
+            "dateOfBirth": "2001-04-29",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1770,
+            "name": "Botafogo FR",
+            "shortName": "Botafogo",
+            "tla": "BOT",
+            "crest": "https://crests.football-data.org/1770.png"
+          },
+          "goals": 9,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 18,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 6,
+          "player": {
+            "id": 157533,
+            "name": "John Kennedy",
+            "firstName": "",
+            "lastName": "John Kennedy",
+            "dateOfBirth": "2002-05-18",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Centre-Forward"
+          },
+          "team": {
+            "id": 1765,
+            "name": "Fluminense FC",
+            "shortName": "Fluminense",
+            "tla": "FLU",
+            "crest": "https://crests.football-data.org/1765.png"
+          },
+          "goals": 9,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 19,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 7,
+          "player": {
+            "id": 140873,
+            "name": "Luciano Juba",
+            "firstName": "",
+            "lastName": "Luciano Juba",
+            "dateOfBirth": "1999-08-29",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Defence"
+          },
+          "team": {
+            "id": 1777,
+            "name": "EC Bahia",
+            "shortName": "Bahia",
+            "tla": "BAH",
+            "crest": "https://crests.football-data.org/1777.png"
+          },
+          "goals": 9,
+          "assists": 1,
+          "penalties": 4,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 8,
+          "player": {
+            "id": 178710,
+            "name": "Samuel Lino",
+            "firstName": "",
+            "lastName": "Samuel Lino",
+            "dateOfBirth": "1999-12-23",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Left Winger"
+          },
+          "team": {
+            "id": 1783,
+            "name": "CR Flamengo",
+            "shortName": "Flamengo",
+            "tla": "FLA",
+            "crest": "https://crests.football-data.org/1783.png"
+          },
+          "goals": 9,
+          "assists": 7,
+          "penalties": 0,
+          "playedMatches": 27,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 9,
+          "player": {
+            "id": 170698,
+            "name": "José Manuel López",
+            "firstName": "José Manuel",
+            "lastName": "López",
+            "dateOfBirth": "2000-12-06",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1769,
+            "name": "SE Palmeiras",
+            "shortName": "Palmeiras",
+            "tla": "PAL",
+            "crest": "https://crests.football-data.org/1769.png"
+          },
+          "goals": 8,
+          "assists": 4,
+          "penalties": 0,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 10,
+          "player": {
+            "id": 42901,
+            "name": "Luciano",
+            "firstName": "",
+            "lastName": "Luciano",
+            "dateOfBirth": "1993-05-18",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1776,
+            "name": "São Paulo FC",
+            "shortName": "São Paulo",
+            "tla": "PAU",
+            "crest": "https://crests.football-data.org/1776.png"
+          },
+          "goals": 8,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 22,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 11,
+          "player": {
+            "id": 45490,
+            "name": "Matheus Pereira",
+            "firstName": "",
+            "lastName": "Matheus Pereira",
+            "dateOfBirth": "1996-05-05",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1771,
+            "name": "Cruzeiro EC",
+            "shortName": "Cruzeiro",
+            "tla": "CRU",
+            "crest": "https://crests.football-data.org/1771.png"
+          },
+          "goals": 8,
+          "assists": 4,
+          "penalties": 0,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 12,
+          "player": {
+            "id": 169022,
+            "name": "Breno Lopes",
+            "firstName": "",
+            "lastName": "Breno Lopes",
+            "dateOfBirth": "1996-01-24",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 4241,
+            "name": "Coritiba FBC",
+            "shortName": "Coritiba",
+            "tla": "COR",
+            "crest": "https://crests.football-data.org/4241.png"
+          },
+          "goals": 8,
+          "assists": 2,
+          "penalties": 0,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 13,
+          "player": {
+            "id": 16154,
+            "name": "Pedro Rocha",
+            "firstName": "",
+            "lastName": "Pedro Rocha",
+            "dateOfBirth": "1994-10-01",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 4241,
+            "name": "Coritiba FBC",
+            "shortName": "Coritiba",
+            "tla": "COR",
+            "crest": "https://crests.football-data.org/4241.png"
+          },
+          "goals": 8,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 26,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 14,
+          "player": {
+            "id": 3137,
+            "name": "Jonathan Calleri",
+            "firstName": "Jonathan",
+            "lastName": "Calleri",
+            "dateOfBirth": "1993-09-23",
+            "nationality": "Argentina",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1776,
+            "name": "São Paulo FC",
+            "shortName": "São Paulo",
+            "tla": "PAU",
+            "crest": "https://crests.football-data.org/1776.png"
+          },
+          "goals": 7,
+          "assists": 1,
+          "penalties": 1,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 15,
+          "player": {
+            "id": 1723,
+            "name": "Arthur Cabral",
+            "firstName": "",
+            "lastName": "Arthur Cabral",
+            "dateOfBirth": "1998-04-25",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Centre-Forward"
+          },
+          "team": {
+            "id": 1770,
+            "name": "Botafogo FR",
+            "shortName": "Botafogo",
+            "tla": "BOT",
+            "crest": "https://crests.football-data.org/1770.png"
+          },
+          "goals": 7,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 25,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 16,
+          "player": {
+            "id": 119594,
+            "name": "Mauricio",
+            "firstName": null,
+            "lastName": "Mauricio",
+            "dateOfBirth": "2001-06-22",
+            "nationality": "Paraguay",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 1769,
+            "name": "SE Palmeiras",
+            "shortName": "Palmeiras",
+            "tla": "PAL",
+            "crest": "https://crests.football-data.org/1769.png"
+          },
+          "goals": 7,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 24,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 17,
+          "player": {
+            "id": 91310,
+            "name": "Kaio Jorge",
+            "firstName": "",
+            "lastName": "Kaio Jorge",
+            "dateOfBirth": "2002-01-24",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Centre-Forward"
+          },
+          "team": {
+            "id": 1771,
+            "name": "Cruzeiro EC",
+            "shortName": "Cruzeiro",
+            "tla": "CRU",
+            "crest": "https://crests.football-data.org/1771.png"
+          },
+          "goals": 7,
+          "assists": 0,
+          "penalties": 4,
+          "playedMatches": 21,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 18,
+          "player": {
+            "id": 22061,
+            "name": "Johan Carbonero",
+            "firstName": "Johan",
+            "lastName": "Carbonero",
+            "dateOfBirth": "1999-07-20",
+            "nationality": "Colombia",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 6684,
+            "name": "SC Internacional",
+            "shortName": "Internacional",
+            "tla": "SCI",
+            "crest": "https://crests.football-data.org/6684.png"
+          },
+          "goals": 7,
+          "assists": 4,
+          "penalties": 0,
+          "playedMatches": 26,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 19,
+          "player": {
+            "id": 276795,
+            "name": "Carlos Renê",
+            "firstName": "",
+            "lastName": "Carlos Renê",
+            "dateOfBirth": "2003-10-07",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Offence"
+          },
+          "team": {
+            "id": 1782,
+            "name": "EC Vitória",
+            "shortName": "Vitória",
+            "tla": "VIT",
+            "crest": "https://crests.football-data.org/1782.png"
+          },
+          "goals": 7,
+          "assists": 1,
+          "penalties": 0,
+          "playedMatches": 20,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        },
+        {
+          "rank": 20,
+          "player": {
+            "id": 183580,
+            "name": "Carlos Eduardo",
+            "firstName": "",
+            "lastName": "Carlos Eduardo",
+            "dateOfBirth": "1989-10-17",
+            "nationality": "Brazil",
+            "position": null,
+            "section": "Midfield"
+          },
+          "team": {
+            "id": 4364,
+            "name": "Mirassol FC",
+            "shortName": "Mirassol",
+            "tla": "MIR",
+            "crest": "https://crests.football-data.org/4364.png"
+          },
+          "goals": 6,
+          "assists": 0,
+          "penalties": 0,
+          "playedMatches": 20,
+          "minutesPlayed": 0,
+          "minutesPerGoal": null
+        }
+      ]
+    },
+    "mls": {
+      "name": "MLS",
+      "code": "MLS",
+      "scorers": []
+    }
+  }
+}

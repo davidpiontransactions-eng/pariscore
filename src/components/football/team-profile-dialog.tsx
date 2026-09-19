@@ -311,6 +311,10 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
   const [profile, setProfile] = useState<TeamProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scope, setScope] = useState<"home" | "away" | "overall">(venue);
+  const [playerStats, setPlayerStats] = useState<{
+    topScorers: { name: string; team: string; teamCrest?: string; goals: number; assists: number; playedMatches: number; position?: string; nationality?: string }[];
+    topAssisters: { name: string; team: string; teamCrest?: string; goals: number; assists: number; playedMatches: number; position?: string; nationality?: string }[];
+  } | null>(null);
   const loading = open && team !== null && profile === null && error === null;
   const marketKey = fair && odds ? JSON.stringify({ fair, odds }) : "";
 
@@ -319,6 +323,7 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
     let cancelled = false;
     setProfile(null);
     setError(null);
+    setPlayerStats(null);
 
     const fetchProfile = async () => {
       const baseParams = `league=${encodeURIComponent(leagueId)}&team=${encodeURIComponent(team)}&venue=${scope}`;
@@ -353,7 +358,21 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
       }
     };
 
+    const fetchPlayerStats = async () => {
+      try {
+        const url = `/api/football/players/stats?league=${encodeURIComponent(leagueId)}&team=${encodeURIComponent(team)}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setPlayerStats(data);
+        }
+      } catch {
+        // Silencieux — les stats joueurs sont optionnelles
+      }
+    };
+
     fetchProfile();
+    fetchPlayerStats();
     return () => { cancelled = true; };
   }, [open, leagueId, team, scope, marketKey]);
 
@@ -577,6 +596,89 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
                     Sources : FBref, BSD, StatsBomb. Metrics calculées selon les standards académiques (xG, SCA, PPDA).
                   </p>
                 </SectionCard>
+
+                {/* Top Buteurs & Passeurs */}
+                {playerStats && (playerStats.topScorers.length > 0 || playerStats.topAssisters.length > 0) && (
+                  <SectionCard title="Joueurs clés" icon="⭐">
+                    {/* Top Buteurs */}
+                    {playerStats.topScorers.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                          Top buteurs
+                        </h4>
+                        <div className="space-y-2">
+                          {playerStats.topScorers.slice(0, 5).map((p, i) => (
+                            <div key={p.name} className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-700">
+                                {i + 1}
+                              </div>
+                              {p.teamCrest && (
+                                <img src={p.teamCrest} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold">{p.name}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {p.position && `${p.position} · `}{p.playedMatches} matchs
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-black tabular-nums text-emerald-600">{p.goals}</div>
+                                <div className="text-[10px] text-muted-foreground">buts</div>
+                              </div>
+                              {p.assists > 0 && (
+                                <div className="text-right">
+                                  <div className="text-sm font-black tabular-nums text-sky-600">{p.assists}</div>
+                                  <div className="text-[10px] text-muted-foreground">passes</div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Top Passeurs */}
+                    {playerStats.topAssisters.length > 0 && (
+                      <div>
+                        <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-sky-600">
+                          Top passeurs
+                        </h4>
+                        <div className="space-y-2">
+                          {playerStats.topAssisters.slice(0, 5).map((p, i) => (
+                            <div key={p.name} className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500/20 text-xs font-bold text-sky-700">
+                                {i + 1}
+                              </div>
+                              {p.teamCrest && (
+                                <img src={p.teamCrest} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold">{p.name}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {p.position && `${p.position} · `}{p.playedMatches} matchs
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-black tabular-nums text-sky-600">{p.assists}</div>
+                                <div className="text-[10px] text-muted-foreground">passes</div>
+                              </div>
+                              {p.goals > 0 && (
+                                <div className="text-right">
+                                  <div className="text-sm font-black tabular-nums text-emerald-600">{p.goals}</div>
+                                  <div className="text-[10px] text-muted-foreground">buts</div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="mt-3 text-[10px] text-muted-foreground italic">
+                      Source : football-data.org · Mis à jour quotidiennement
+                    </p>
+                  </SectionCard>
+                )}
 
                 {/* Méta-données */}
                 <SectionCard title="Contexte" icon="ℹ️">
