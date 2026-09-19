@@ -651,8 +651,10 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
                 matches={filteredCal}
                 onSelectMatch={(m) => setDetailMatch(m as unknown as FootballMatch)}
                 onTeamClick={(team, venue, leagueId) => {
-                  // Convertir BSD ID numérique en slug pour l'API team profile
-                  const slug = leagueId ? (BSD_ID_TO_SLUG[Number(leagueId)] ?? leagueId) : undefined;
+                  // Convertir BSD ID (ex: "bsd-14" ou "14") en slug pour l'API team profile
+                  const rawId = leagueId?.replace("bsd-", "") ?? "";
+                  const numId = Number(rawId);
+                  const slug = numId > 0 ? (BSD_ID_TO_SLUG[numId] ?? rawId) : (leagueId ?? undefined);
                   setTeamProfile({ name: team.name, logo: team.logo, venue, leagueId: slug });
                 }}
                 topTagsFor={topTagsFor}
