@@ -28,7 +28,7 @@ export function RugbyTopStrategiesWidget() {
   const [active, setActive] = useState<RugbyStrategyKey>("homeWin");
   const [timeKey, setTimeKey] = useState<TimeFilterKey>("all");
   const def = RUGBY_STRATEGIES.find((s) => s.key === active) ?? RUGBY_STRATEGIES[0];
-  const { matches: rawMatches, loading } = useRugbyTopStrategies(active, 10);
+  const { matches: rawMatches, loading } = useRugbyTopStrategies(active, 10, timeKey);
 
   // Filtre horaire & date (côté client, sur le kickoff)
   const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);

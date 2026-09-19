@@ -36,10 +36,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Cache hit
+  // Cache hit — slice au limit demandé
   if (cache && Date.now() - cache.at < CACHE_TTL) {
     const data = cache.data as Record<string, unknown>;
-    return NextResponse.json({ matches: (data[strategy] as unknown[]) ?? [], strategy, limit });
+    const allMatches = (data[strategy] as unknown[]) ?? [];
+    return NextResponse.json({ matches: allMatches.slice(0, limit), strategy, limit });
   }
 
   try {
@@ -57,10 +58,11 @@ export async function GET(request: NextRequest) {
       .filter((r) => r.status === "fulfilled")
       .flatMap((r) => (r as PromiseFulfilledResult<PredictedMatch[]>).value);
 
-    // Calcule toutes les stratégies en une passe
+    // Calcule toutes les stratégies en une passe (max 50 pour le cache)
+    const MAX_CACHE_LIMIT = 50;
     const allStrategies: Record<string, unknown> = {};
     for (const key of VALID_STRATEGIES) {
-      allStrategies[key] = computeRugbyTopStrategies(flatMatches, key, limit);
+      allStrategies[key] = computeRugbyTopStrategies(flatMatches, key, MAX_CACHE_LIMIT);
     }
 
     cache = { at: Date.now(), data: allStrategies };
