@@ -4,15 +4,19 @@
 //
 // Mode prematch : paramètres manuels pServe A/B
 // Mode live : sélection d'un match live, auto-refresh 8s, blend bayésien
+//
+// Route : /tennis/markets?matchId=xxx (optionnel — active le mode live)
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Target, RefreshCw, Wifi, WifiOff, Zap } from "lucide-react";
+import { Target, RefreshCw, Wifi, WifiOff, Zap, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TennisMarketGrid } from "@/components/tennis/tennis-market-grid";
 import { TennisMarketFilters } from "@/components/tennis/tennis-market-filters";
 import { useTennisMarkets } from "@/hooks/use-tennis-markets";
+import { useLiveMatches } from "@/hooks/use-live-matches";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 
 type MarketCategory =
@@ -47,9 +51,11 @@ type ApiResponse = {
 
 export default function TennisMarketsPage() {
   const t = useTranslations("tennis.markets");
+  const searchParams = useSearchParams();
+  const urlMatchId = searchParams.get("matchId");
 
   // Mode
-  const [mode, setMode] = useState<"prematch" | "live">("prematch");
+  const [mode, setMode] = useState<"prematch" | "live">(urlMatchId ? "live" : "prematch");
 
   // Paramètres prematch
   const [pServeA, setPServeA] = useState(0.67);
@@ -67,8 +73,14 @@ export default function TennisMarketsPage() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // État live (placeholder — en production, utiliser use-live-matches)
-  const [liveState, setLiveState] = useState<LiveMatchState | null>(null);
+  // Live data (hook partagé — même source que l'onglet Live)
+  const { liveMatchList, liveStates } = useLiveMatches();
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(urlMatchId);
+
+  // Résoudre le liveState sélectionné
+  const liveState: LiveMatchState | null = selectedMatchId
+    ? (liveStates[selectedMatchId] ?? null)
+    : null;
 
   // Hook live
   const liveMarkets = useTennisMarkets(
@@ -119,6 +131,12 @@ export default function TennisMarketsPage() {
     return markets;
   }, [mode, liveMarkets.markets, data, selectedCategory, minProb, showLiveOnly]);
 
+  // Liste des matchs live
+  const liveMatches = useMemo(
+    () => liveMatchList.filter(m => m.isLive),
+    [liveMatchList],
+  );
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
       {/* Header */}
@@ -152,6 +170,53 @@ export default function TennisMarketsPage() {
           )}
         </div>
       </div>
+
+      {/* Sélecteur de match live */}
+      {mode === "live" && (
+        <div className="mb-4 p-4 rounded-lg border bg-card">
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+            {t("selectMatch", { defaultMessage: "Sélectionner un match live" })}
+          </label>
+          {liveMatches.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noLiveMatches", { defaultMessage: "Aucun match live pour le moment" })}</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {liveMatches.map(m => {
+                const st = liveStates[m.id];
+                const setsA = st?.scoreA.sets ?? [];
+                const setsB = st?.scoreB.sets ?? [];
+                const score = setsA.map((s, i) => `${s}-${setsB[i] ?? 0}`).join(" ");
+
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMatchId(m.id)}
+                    className={cn(
+                      "flex items-center justify-between p-2 rounded border text-left text-sm transition-colors",
+                      selectedMatchId === m.id
+                        ? "border-primary bg-primary/10"
+                        : "border-muted hover:bg-accent/50",
+                    )}
+                  >
+                    <div>
+                      <div className="font-medium">{m.playerA.name}</div>
+                      <div className="text-muted-foreground">vs {m.playerB.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">{m.tournamentName}</div>
+                      {st && (
+                        <div className="text-xs font-mono mt-1">
+                          {score || `${st.scoreA.games}-${st.scoreB.games}`}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Blend info (live) */}
       {mode === "live" && liveState && (
@@ -264,11 +329,15 @@ export default function TennisMarketsPage() {
       {mode === "live" ? (
         liveMarkets.markets.length > 0 ? (
           <TennisMarketGrid markets={filteredMarkets} />
+        ) : selectedMatchId ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <RefreshCw className="h-12 w-12 mx-auto mb-4 opacity-30 animate-spin" />
+            <p className="text-lg">{t("loading", { defaultMessage: "Chargement des données live..." })}</p>
+          </div>
         ) : (
           <div className="text-center py-16 text-muted-foreground">
             <Wifi className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-lg">{t("noLive", { defaultMessage: "Aucun match live sélectionné" })}</p>
-            <p className="text-sm mt-2">{t("liveHint", { defaultMessage: "Passez en mode live depuis un match tennis pour voir les marchés en temps réel" })}</p>
+            <p className="text-lg">{t("selectMatch", { defaultMessage: "Sélectionnez un match live ci-dessus" })}</p>
           </div>
         )
       ) : data ? (
