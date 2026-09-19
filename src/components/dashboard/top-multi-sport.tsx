@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { RefreshCw, Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { countryFlag, type LiveMatchScore } from "@/lib/top-matches/types";
-import { FotmobCalendarTable, type FotmobCalMatch } from "@/components/football/fotmob-calendar-table";
+import { FotmobCalendarTable, type FotmobCalMatch, type FotmobCalTeam } from "@/components/football/fotmob-calendar-table";
 import { FootballMatchDetailDialog } from "@/components/football/football-match-detail-dialog";
+import { TeamProfileDialog } from "@/components/football/team-profile-dialog";
 import type { FootballMatch } from "@/lib/football-data";
+import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
 import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
 import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
 import { buildTopTags, topTagsForMatch } from "@/lib/top10-calendar-link";
@@ -359,6 +361,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   // Match sélectionné (clic ligne calendrier → dialog d'analyse).
   // Les objets API sont des FootballMatch complets (typés subset côté UI).
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
+  // Équipe sélectionnée (clic nom équipe calendrier → dialog fiche équipe).
+  const [teamProfile, setTeamProfile] = useState<{ name: string; logo?: string | null; venue: "home" | "away"; leagueId?: string } | null>(null);
   const fetchCal = useCallback(async (key?: string) => {
     setCalLoading(true);
     try {
@@ -646,6 +650,11 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               <FotmobCalendarTable
                 matches={filteredCal}
                 onSelectMatch={(m) => setDetailMatch(m as unknown as FootballMatch)}
+                onTeamClick={(team, venue, leagueId) => {
+                  // Convertir BSD ID numérique en slug pour l'API team profile
+                  const slug = leagueId ? (BSD_ID_TO_SLUG[Number(leagueId)] ?? leagueId) : undefined;
+                  setTeamProfile({ name: team.name, logo: team.logo, venue, leagueId: slug });
+                }}
                 topTagsFor={topTagsFor}
               />
             </div>
@@ -793,6 +802,14 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         match={detailMatch}
         open={detailMatch !== null}
         onOpenChange={(o) => { if (!o) setDetailMatch(null); }}
+      />
+      {/* Fiche équipe — ouvert au clic d'un nom d'équipe dans le calendrier */}
+      <TeamProfileDialog
+        leagueId={teamProfile?.leagueId ?? null}
+        team={teamProfile?.name ?? null}
+        venue={teamProfile?.venue ?? "home"}
+        open={teamProfile !== null}
+        onOpenChange={(o) => { if (!o) setTeamProfile(null); }}
       />
     </div>
   );

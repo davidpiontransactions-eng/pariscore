@@ -157,7 +157,7 @@ function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: (ta
 }
 
 /* ─── Ligne match (clic → analyse, étoile isolée via stopPropagation) ─── */
-function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void; topTags?: TopStratTag[]; onTopPillSelect?: (tag: TopStratTag) => void }) {
+function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void; onTeamClick?: (team: FotmobCalTeam, venue: "home" | "away", leagueId?: string) => void; topTags?: TopStratTag[]; onTopPillSelect?: (tag: TopStratTag) => void }) {
   const st = m.live?.status ?? null;
   const live = isLiveStatus(st);
   const finished = st === "FT";
@@ -178,11 +178,27 @@ function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCa
       }}
     >
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
-        <span className="flex min-w-0 flex-col items-end">
-          <span className="truncate text-right text-[14px]" style={{ color: C.team }}>{m.home.name}</span>
-          {m.power?.home != null && <PowerScoreBar score={m.power.home} />}
-        </span>
-        <img src={teamLogo(m.home.name, m.home.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
+        {onTeamClick ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onTeamClick(m.home, "home", m.league?.id ? String(m.league.id) : undefined); }}
+            className="flex min-w-0 items-center gap-1.5 rounded-lg px-1 py-0.5 -mx-1 cursor-pointer transition-all duration-200 hover:bg-emerald-50 hover:shadow-[inset_0_-2px_0_0_#34d399] group/home"
+          >
+            <span className="flex min-w-0 flex-col items-end">
+              <span className="truncate text-right text-[14px] transition-colors duration-200 group-hover/home:text-emerald-700" style={{ color: C.team }}>{m.home.name}</span>
+              {m.power?.home != null && <PowerScoreBar score={m.power.home} />}
+            </span>
+            <img src={teamLogo(m.home.name, m.home.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0 transition-transform duration-200 group-hover/home:scale-110" />
+          </button>
+        ) : (
+          <>
+            <span className="flex min-w-0 flex-col items-end">
+              <span className="truncate text-right text-[14px]" style={{ color: C.team }}>{m.home.name}</span>
+              {m.power?.home != null && <PowerScoreBar score={m.power.home} />}
+            </span>
+            <img src={teamLogo(m.home.name, m.home.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
+          </>
+        )}
       </div>
       <span
         className="w-7 shrink-0 text-center text-[12px] font-medium tabular-nums"
@@ -212,11 +228,27 @@ function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCa
         )}
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
-        <span className="flex min-w-0 flex-col items-start">
-          <span className="truncate text-[14px]" style={{ color: C.team }}>{m.away.name}</span>
-          {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
-        </span>
+        {onTeamClick ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onTeamClick(m.away, "away", m.league?.id ? String(m.league.id) : undefined); }}
+            className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-1 py-0.5 -mx-1 cursor-pointer transition-all duration-200 hover:bg-emerald-50 hover:shadow-[inset_0_-2px_0_0_#34d399] group/away"
+          >
+            <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0 transition-transform duration-200 group-hover/away:scale-110" />
+            <span className="flex min-w-0 flex-col items-start">
+              <span className="truncate text-[14px] transition-colors duration-200 group-hover/away:text-emerald-700" style={{ color: C.team }}>{m.away.name}</span>
+              {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
+            </span>
+          </button>
+        ) : (
+          <>
+            <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
+            <span className="flex min-w-0 flex-col items-start">
+              <span className="truncate text-[14px]" style={{ color: C.team }}>{m.away.name}</span>
+              {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
+            </span>
+          </>
+        )}
       </div>
       <FotmobFollowStar id={m.id} name={label} />
     </div>
@@ -227,13 +259,15 @@ function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCa
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueId, leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor, onTopPillSelect,
+  leagueId, leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, onTeamClick, topTagsFor, onTopPillSelect,
 }: {
   leagueId?: string; leagueName: string; country?: string | null; logo?: string | null;
   /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
   icon?: ReactNode;
   matches: FotmobCalMatch[]; collapsed: boolean; onToggle: () => void;
   onSelectMatch?: (m: FotmobCalMatch) => void;
+  /** Clic sur un nom d'équipe → ouvre la fiche équipe. */
+  onTeamClick?: (team: FotmobCalTeam, venue: "home" | "away", leagueId?: string) => void;
   /** Tags Top stratégies par id match (E pill). */
   topTagsFor?: (id: string) => TopStratTag[];
   /** Clic pill Top (si absent : la pill ouvre le détail comme la ligne). */
@@ -294,7 +328,7 @@ function FotmobLeagueSection({
         style={{ transitionDuration: "300ms" }}
       >
         <div className="min-h-0 overflow-hidden">
-          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} topTags={topTagsFor?.(m.id)} onTopPillSelect={onTopPillSelect ? (tag) => onTopPillSelect(m, tag) : undefined} />)}
+          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} onTeamClick={onTeamClick} topTags={topTagsFor?.(m.id)} onTopPillSelect={onTopPillSelect ? (tag) => onTopPillSelect(m, tag) : undefined} />)}
         </div>
       </div>
     </div>
@@ -314,11 +348,14 @@ function FotmobStarIcon() {
 export function FotmobCalendarTable({
   matches,
   onSelectMatch,
+  onTeamClick,
   topTagsFor,
   onTopPillSelect,
 }: {
   matches: FotmobCalMatch[];
   onSelectMatch?: (m: FotmobCalMatch) => void;
+  /** Clic sur un nom d'équipe → ouvre la fiche équipe. */
+  onTeamClick?: (team: FotmobCalTeam, venue: "home" | "away", leagueId?: string) => void;
   /** Tags Top stratégies par id match (E pill). */
   topTagsFor?: (id: string) => TopStratTag[];
   /** Clic pill Top (si absent : la pill ouvre le détail comme la ligne). */
@@ -391,6 +428,7 @@ export function FotmobCalendarTable({
             collapsed={collapsed.__top === true}
             onToggle={() => setCollapsed((p) => ({ ...p, __top: !(p.__top === true) }))}
             onSelectMatch={onSelectMatch}
+            onTeamClick={onTeamClick}
             topTagsFor={topTagsFor}
             onTopPillSelect={onTopPillSelect}
           />
@@ -404,6 +442,7 @@ export function FotmobCalendarTable({
             collapsed={collapsed.__suivis === true}
             onToggle={() => setCollapsed((p) => ({ ...p, __suivis: !(p.__suivis === true) }))}
             onSelectMatch={onSelectMatch}
+            onTeamClick={onTeamClick}
             topTagsFor={topTagsFor}
             onTopPillSelect={onTopPillSelect}
           />
@@ -417,6 +456,7 @@ export function FotmobCalendarTable({
             collapsed={collapsed[g.name] === true}
             onToggle={() => setCollapsed((p) => ({ ...p, [g.name]: !(p[g.name] === true) }))}
             onSelectMatch={onSelectMatch}
+            onTeamClick={onTeamClick}
             topTagsFor={topTagsFor}
             onTopPillSelect={onTopPillSelect}
           />
