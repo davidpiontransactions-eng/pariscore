@@ -175,15 +175,42 @@ export async function GET(req: NextRequest) {
   clearAllMemos();
   const gh = gameHandicap(holdA, holdB, pWinSetA, bestOf === 3);
   addMarket("game-handicap-2.5", "Handicap jeux -2.5", "game-handicap", gh < -2.5 ? 0.6 : 0.4, gh < -2.5 ? 0.4 : 0.6);
+  addMarket("game-handicap+2.5", "Handicap jeux +2.5", "game-handicap", gh > 2.5 ? 0.6 : 0.4, gh > 2.5 ? 0.4 : 0.6);
+  addMarket("game-handicap-4.5", "Handicap jeux -4.5", "game-handicap", gh < -4.5 ? 0.6 : 0.4, gh < -4.5 ? 0.4 : 0.6);
+  addMarket("game-handicap+4.5", "Handicap jeux +4.5", "game-handicap", gh > 4.5 ? 0.6 : 0.4, gh > 4.5 ? 0.4 : 0.6);
 
   // --- Total Games ---
   clearAllMemos();
   const lambda = 9.5 * (bestOf === 3 ? 2.1 : 4.0);
-  for (const threshold of [18.5, 19.5, 20.5, 21.5, 22.5]) {
+  for (const threshold of [18.5, 19.5, 20.5, 21.5, 22.5, 23.5]) {
     const overProb = probOver(threshold, lambda);
     addMarket(`total-over-${threshold}`, `Total Over ${threshold}`, "total-games", overProb, 1 - overProb);
     addMarket(`total-under-${threshold}`, `Total Under ${threshold}`, "total-games", 1 - overProb, overProb);
   }
+
+  // --- Player Total Games ---
+  clearAllMemos();
+  const ptg = playerTotalGames(holdA, holdB, pWinSetA, bestOf);
+  addMarket("player-a-over-12.5", "A Over 12.5 jeux", "total-games", ptg.gamesA > 12.5 ? 0.6 : 0.4, ptg.gamesA > 12.5 ? 0.4 : 0.6);
+  addMarket("player-b-over-12.5", "B Over 12.5 jeux", "total-games", ptg.gamesB > 12.5 ? 0.4 : 0.6, ptg.gamesB > 12.5 ? 0.6 : 0.4);
+
+  // --- Total Sets ---
+  clearAllMemos();
+  const ts = totalSets(pWinSetA, bestOf);
+  addMarket("total-sets-2", "Total sets = 2", "total-games", ts < 2.5 ? 0.65 : 0.35, ts < 2.5 ? 0.35 : 0.65);
+  addMarket("total-sets-3", "Total sets = 3", "total-games", ts > 2.5 ? 0.60 : 0.40, ts > 2.5 ? 0.40 : 0.60);
+
+  // --- Straight Sets ---
+  clearAllMemos();
+  const ss = straightSets(pWinSetA, bestOf);
+  addMarket("straight-sets-a", "A gagne en sets directs", "set-score", ss.aWins, 0);
+  addMarket("straight-sets-b", "B gagne en sets directs", "set-score", 0, ss.bWins);
+
+  // --- At Least One Set ---
+  clearAllMemos();
+  const als = atLeastOneSet(pWinSetA, bestOf);
+  addMarket("at-least-one-set-a", "A gagne ≥1 set", "set-score", als.aWinsAtLeast1, 1 - als.aWinsAtLeast1);
+  addMarket("at-least-one-set-b", "B gagne ≥1 set", "set-score", als.bWinsAtLeast1, 1 - als.bWinsAtLeast1);
 
   // --- Aces ---
   const lambdaA = 4.0; // défaut surface
@@ -208,11 +235,19 @@ export async function GET(req: NextRequest) {
   addMarket("first-set-winner-a", "1er set : A", "first-set", pFirstSet, 1 - pFirstSet);
   addMarket("first-set-winner-b", "1er set : B", "first-set", 1 - pFirstSet, pFirstSet);
 
+  // --- First Set Total Games ---
+  clearAllMemos();
+  const fst = firstSetTotal(holdA, holdB);
+  addMarket("first-set-over-9.5", "1er set Over 9.5", "first-set", fst > 9.5 ? 0.6 : 0.4, fst > 9.5 ? 0.4 : 0.6);
+  addMarket("first-set-under-9.5", "1er set Under 9.5", "first-set", fst < 9.5 ? 0.6 : 0.4, fst < 9.5 ? 0.4 : 0.6);
+
   // --- Double Result ---
   clearAllMemos();
   const dr = doubleResult(holdA, holdB, bestOf === 3);
   addMarket("double-a-a", "A gagne 1er set + match", "double-result", dr.aWins1stAndMatch, dr.bWins1stAndMatch);
   addMarket("double-b-b", "B gagne 1er set + match", "double-result", dr.bWins1stAndMatch, dr.aWins1stAndMatch);
+  addMarket("double-a-b", "A 1er set, B match", "double-result", dr.aWins1stLosesMatch, dr.bWins1stLosesMatch);
+  addMarket("double-b-a", "B 1er set, A match", "double-result", dr.bWins1stLosesMatch, dr.aWins1stLosesMatch);
 
   // --- Live blend si progression fournie ---
   if (params.liveProgress !== undefined && params.marketProbA !== undefined) {
