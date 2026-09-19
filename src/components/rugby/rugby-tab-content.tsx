@@ -15,19 +15,16 @@ import {
   useRugbyPredictions,
   useRugbyStandings,
 } from "@/lib/hooks/use-rugby";
-import type { Competition, PredictedMatch } from "@/lib/rugby/types";
+import type { Competition } from "@/lib/rugby/types";
 import { RugbyMarketsView } from "./RugbyMarketsView";
-import { RugbyMatchCard } from "./RugbyMatchCard";
 import { RugbyMatchDetailModal } from "./RugbyMatchDetailModal";
 import { RugbyMethodology } from "./RugbyMethodology";
 import { RugbyStandingsTable } from "./RugbyStandingsTable";
 import { RugbyCalendarTable, type RugbyCalMatch } from "./rugby-calendar-table";
 import { useRugbyCalendar } from "@/hooks/use-rugby-calendar";
-import { Card, SectionHeading, fmtDateLong } from "./rugby-ui";
-import { getFlashscorePayload } from "@/lib/rugby/provider";
+import { Card, SectionHeading } from "./rugby-ui";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
-import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { splitLivePrematch, filterByStartWindow, filterByToday, filterByWeekend, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { useRugbyHighlightStore } from "@/stores/use-rugby-highlight-store";
@@ -300,20 +297,6 @@ const effectiveMatches = flashscoreMatches.length > 0 ? flashscoreMatches : allM
     bestAttack: topBestAttack,
     bestDefense: topBestDefense,
   }), [topHomeWin, topAwayWin, topOver415, topUnder515, topHandicapHome, topHandicapAway, topBttsYes, topMarginBand, topBestAttack, topBestDefense]);
-
-  // Map matchId → nombre de stratégies Top10 (pour Match du Jour)
-  const top10MatchIds = useMemo(() => {
-    const allTop = [
-      ...topHomeWin, ...topAwayWin, ...topOver415, ...topUnder515,
-      ...topHandicapHome, ...topHandicapAway, ...topBttsYes, ...topMarginBand,
-      ...topBestAttack, ...topBestDefense,
-    ];
-    const counts = new Map<string, number>();
-    for (const m of allTop) {
-      counts.set(m.matchId, (counts.get(m.matchId) ?? 0) + 1);
-    }
-    return counts;
-  }, [topHomeWin, topAwayWin, topOver415, topUnder515, topHandicapHome, topHandicapAway, topBttsYes, topMarginBand, topBestAttack, topBestDefense]);
 
   const topTagsFor = useCallback(
     (id: string) => {

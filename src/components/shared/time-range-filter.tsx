@@ -35,7 +35,7 @@ export function TimeRangeFilter({ value, onChange, className, hourOptions, hideT
     })),
     { key: "today", label: t("timeToday") },
     ...(hideTomorrow ? [] : [{ key: "tomorrow" as TimeFilterKey, label: t("timeTomorrow") }]),
-    ...(showWeekend ? [{ key: "weekend" as TimeFilterKey, label: "Ce week-end" }] : []),
+    ...(showWeekend ? [{ key: "weekend" as TimeFilterKey, label: t("timeWeekend") }] : []),
   ];
 
   return (

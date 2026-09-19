@@ -225,7 +225,8 @@
     "timeAll": "All",
     "timeHour": "{hours}h",
     "timeToday": "Today",
-    "timeTomorrow": "Tomorrow"
+    "timeTomorrow": "Tomorrow",
+    "timeWeekend": "This weekend"
   },
   "sportsSidebar": {
     "title": "Sports filters",
@@ -240,6 +241,7 @@
     "timeHour": "{hours}h",
     "timeToday": "Today",
     "timeTomorrow": "Tomorrow",
+    "timeWeekend": "This weekend",
     "favorites": "Favorites & top leagues",
     "toggleFavorite": "Add or remove from favorites",
     "quickLinks": "Predictions",

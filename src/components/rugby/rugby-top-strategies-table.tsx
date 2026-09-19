@@ -82,28 +82,6 @@ function TrendIcon({ trend }: { trend?: "up" | "down" | "flat" }) {
   return <Minus className="h-3 w-3 text-[#717171]" />;
 }
 
-/* ------------------------------------------------------------------ */
-/* Format valeur par stratégie                                         */
-/* ------------------------------------------------------------------ */
-
-function formatValue(value: number, strategy: RugbyStrategyKey): string {
-  switch (strategy) {
-    case "homeWin":
-    case "awayWin":
-    case "over415":
-    case "under515":
-    case "handicapHome":
-    case "handicapAway":
-    case "bttsYes":
-    case "marginBand":
-      return `${value.toFixed(0)}%`;
-    case "bestAttack":
-      return `${value.toFixed(1)} pts`;
-    case "bestDefense":
-      return `${value.toFixed(1)} enc`;
-  }
-}
-
 /** Pill over/under — ligne optimale ~60% proba (value pick) */
 function OverUnderPill({ row, strategy }: { row: RugbyStrategyMatch; strategy: RugbyStrategyKey }) {
   if (strategy === "over415" && row.bestOverLine) {

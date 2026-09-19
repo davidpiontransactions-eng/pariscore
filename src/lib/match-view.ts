@@ -129,6 +129,7 @@ export function filterByTomorrow<T>(
 /**
  * Filtre les matchs du week-end (samedi + dimanche Europe/Paris).
  * Fenêtre principale du rugby : Top 14 samedi, Premiership samedi/dimanche.
+ * Retourne le prochain week-end (pas le passé).
  */
 export function filterByWeekend<T>(
   items: T[],
@@ -137,13 +138,29 @@ export function filterByWeekend<T>(
 ): T[] {
   const PARIS_TZ = "Europe/Paris";
   const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: PARIS_TZ, weekday: "short" }).format(now);
+  const weekdayFmt = new Intl.DateTimeFormat("en-US", { timeZone: PARIS_TZ, weekday: "short" });
 
-  // Calculer samedi et dimanche de la semaine en cours
+  // Trouver le jour de la semaine en Europe/Paris (pas en local)
+  const parisWeekday = weekdayFmt.format(now); // "Mon", "Tue", ..., "Sun"
+  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const currentDay = dayMap[parisWeekday] ?? 0;
+
+  // Calculer le prochain samedi (pas le passé)
   const nowDate = new Date(now);
-  const currentDay = nowDate.getDay(); // 0=dim, 6=sam
   const saturday = new Date(nowDate);
-  saturday.setDate(nowDate.getDate() - ((currentDay + 1) % 7)); // reculer au samedi
+
+  if (currentDay === 6) {
+    // Aujourd'hui = samedi → ce week-end = aujourd'hui + demain
+    saturday.setDate(nowDate.getDate());
+  } else if (currentDay === 0) {
+    // Aujourd'hui = dimanche → ce week-end = hier + aujourd'hui
+    saturday.setDate(nowDate.getDate() - 1);
+  } else {
+    // Lundi–Vendredi → prochain samedi
+    const daysUntilSaturday = (6 - currentDay + 7) % 7;
+    saturday.setDate(nowDate.getDate() + daysUntilSaturday);
+  }
+
   const sunday = new Date(saturday);
   sunday.setDate(saturday.getDate() + 1);
 
