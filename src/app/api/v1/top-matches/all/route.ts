@@ -10,6 +10,16 @@ import {
 import { STRATEGY_TOP5_KEYS, type StrategyTop5Key } from "@/lib/football-strategy-top5";
 import { football, type FootballEvent } from "@/lib/api/bzzoiro-client";
 
+// Lazy CJS require pour mmaService (module legacy)
+let _mmaSvc: any = null;
+function mmaSvc() {
+  if (!_mmaSvc) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _mmaSvc = require("../../../../../../services/mmaService");
+  }
+  return _mmaSvc;
+}
+
 /**
  * Clés de stratégies de cette route — pipeline indépendant du Top10
  * (conserve les stratégies edge historiques même si le moteur Top10 ne les sert plus).
@@ -403,14 +413,67 @@ export async function GET(request: Request) {
     // Construction de la réponse TopMatchResponse
     // Même si result est vide (aucune stratégie ne produit de picks après filtrage),
     // on renvoie toujours une structure valide pour éviter l'affichage "Aucun match top disponible"
+    const groups: TopLeague[] = result.map((entry) => ({
+      league: "",
+      leagueIcon: "",
+      leagueColor: "",
+      sport: entry.strategy,
+      matches: entry.picks,
+    }));
+
+    // ── MMA: injecter un groupe si sport=all ou sport=mma ──────────────────
+    if (sport === "all" || sport === "mma") {
+      try {
+        const mmaFights = await mmaSvc().getMMAFights(process.env.ODDS_API_KEY);
+        const now = Date.now();
+        const mmaMatches = [] as Array<{
+          id: string; home: { name: string; logo?: string }; away: { name: string; logo?: string };
+          kickoff: string; status: "scheduled"; odds?: { home?: string; away?: string };
+          badge?: { label: string; color: string }; probPct?: number; ev?: number;
+        }>;
+
+        for (const ev of mmaFights) {
+          for (const f of ev.fights ?? []) {
+            const ts = f.commence_time ? new Date(f.commence_time).getTime() : 0;
+            if (ts <= now) continue; // passés
+            const probA = f.prob_a != null ? Math.round(f.prob_a * 100) : null;
+            const evA = f.ev_a_pct ?? null;
+            const oddsA = f.best_odds_a ?? null;
+            const isTitle = f.is_title;
+            mmaMatches.push({
+              id: `mma:${f.fighter_a}:${f.fighter_b}:${f.commence_time}`,
+              home: { name: f.fighter_a, logo: f.photo_a ?? undefined },
+              away: { name: f.fighter_b, logo: f.photo_b ?? undefined },
+              kickoff: f.commence_time,
+              status: "scheduled",
+              odds: oddsA != null ? { home: oddsA.toFixed(2), away: f.best_odds_b?.toFixed(2) } : undefined,
+              badge: isTitle ? { label: "Title", color: "#EF4444" } : f.bet_a || f.bet_b ? { label: "Value", color: "#10B981" } : undefined,
+              probPct: probA ?? undefined,
+              ev: evA ?? undefined,
+            });
+          }
+        }
+
+        // Trier par heure, limiter à 10
+        mmaMatches.sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+        const topMma = mmaMatches.slice(0, 10);
+
+        if (topMma.length > 0) {
+          groups.push({
+            league: "UFC / MMA",
+            leagueIcon: "🥊",
+            leagueColor: "#EF4444",
+            sport: "mma",
+            matches: topMma,
+          });
+        }
+      } catch (err) {
+        console.error("[top-matches] MMA fetch error:", (err as Error).message);
+      }
+    }
+
     const response: TopMatchResponse = {
-      groups: result.map((entry) => ({
-        league: "",
-        leagueIcon: "",
-        leagueColor: "",
-        sport: entry.strategy,
-        matches: entry.picks,
-      })),
+      groups,
       generated_at: new Date().toISOString(),
     };
 
@@ -431,13 +494,14 @@ export async function GET(request: Request) {
 }
 
 // Type TopMatchResponse partagé
+type TopLeague = {
+  league: string;
+  leagueIcon: string;
+  leagueColor: string;
+  sport: string;
+  matches: unknown[];
+};
 type TopMatchResponse = {
-  groups: Array<{
-    league: string;
-    leagueIcon: string;
-    leagueColor: string;
-    sport: string;
-    matches: StrategyEntry["picks"];
-  }>;
+  groups: TopLeague[];
   generated_at: string;
 };
