@@ -27,11 +27,16 @@ import {
   TENNIS_TOURNAMENT_CATEGORIES,
   TENNIS_BET_TYPES,
   TENNIS_GAME_LINES,
+  TENNIS_MATCH_GAME_LINES_BO3,
+  TENNIS_MATCH_GAME_LINES_BO5,
   type TennisTimeWindow,
   type TennisSurface,
   type TennisTournamentCategory,
   type TennisBetType,
   type TennisGameLine,
+  type TennisMatchGameLineBo3,
+  type TennisMatchGameLineBo5,
+  type TennisMatchFormat,
 } from "@/lib/tennis-filters";
 import {
   TopStrategiesTable,
@@ -56,6 +61,9 @@ function toTableRows(
   overMap: Map<string, number>,
   betType: TennisBetType,
   gameLine: TennisGameLine,
+  matchGameLineBo3: TennisMatchGameLineBo3,
+  matchGameLineBo5: TennisMatchGameLineBo5,
+  matchFormat: TennisMatchFormat,
 ): StrategyTableRow[] {
   const def = TENNIS_STRATEGY_DEFS.find((d) => d.key === strat);
   return entries.map((e) => {
@@ -88,8 +96,9 @@ function toTableRows(
         display = pickName && prob != null ? `${pickName} ${prob} %` : def?.format(e.value) ?? `${e.value}`;
         break;
       case "over-games":
-        // Affiche "Over X.5 games / YY%".
-        display = prob != null ? `Over ${gameLine} games · ${prob} %` : `Over ${gameLine} games`;
+        // Affiche "Over X.5 games / YY%" avec la ligne selon le format (bo3/bo5).
+        const matchLine = matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5;
+        display = prob != null ? `Over ${matchLine} · ${prob} %` : `Over ${matchLine}`;
         break;
       case "most-aces":
         // Affiche le joueur avec le plus d'aces prédit.
@@ -205,6 +214,9 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const [mode, setMode] = useState<"prematch" | "live">(initial.mode);
   const [betType, setBetType] = useState<TennisBetType>(initial.betType);
   const [gameLine, setGameLine] = useState<TennisGameLine>(initial.gameLine);
+  const [matchGameLineBo3, setMatchGameLineBo3] = useState<TennisMatchGameLineBo3>("21.5");
+  const [matchGameLineBo5, setMatchGameLineBo5] = useState<TennisMatchGameLineBo5>("35.5");
+  const [matchFormat, setMatchFormat] = useState<TennisMatchFormat>("bo3");
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [overMap, setOverMap] = useState<Map<string, number>>(new Map());
@@ -296,7 +308,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   }, [data, strat, minEdge]);
 
   const rawRows = useMemo(() => {
-    return toTableRows(filteredEntries, strat, overMap, betType, gameLine);
+    return toTableRows(filteredEntries, strat, overMap, betType, gameLine, matchGameLineBo3, matchGameLineBo5, matchFormat);
   }, [filteredEntries, strat, overMap]);
 
   const rows = useMemo(() => {
@@ -357,6 +369,9 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   }, []);
   const handleBetTypeChange = useCallback((v: string) => setBetType(v as TennisBetType), []);
   const handleGameLineChange = useCallback((v: string) => setGameLine(v as TennisGameLine), []);
+  const handleMatchGameLineBo3Change = useCallback((v: string) => setMatchGameLineBo3(v as TennisMatchGameLineBo3), []);
+  const handleMatchGameLineBo5Change = useCallback((v: string) => setMatchGameLineBo5(v as TennisMatchGameLineBo5), []);
+  const handleMatchFormatChange = useCallback((f: TennisMatchFormat) => setMatchFormat(f), []);
 
   return (
     <section
@@ -414,22 +429,77 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             </SelectContent>
           </Select>
 
-          {/* Sélecteur de ligne Over (uniquement pour over-games et over-set) */}
-          {(betType === "over-games" || betType === "over-set") && (
+          {/* Sélecteur de ligne Over pour over-games (match total) */}
+          {betType === "over-games" && (
+            <>
+              {/* Toggle bo3 / bo5 */}
+              <div
+                className="flex overflow-hidden rounded"
+                style={{ border: `1px solid ${C.cardBorder}` }}
+                role="group"
+                aria-label="Format match"
+              >
+                {(["bo3", "bo5"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => handleMatchFormatChange(f)}
+                    aria-pressed={matchFormat === f}
+                    className={cn(
+                      "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
+                      matchFormat === f
+                        ? "bg-[#00985f]/10 text-[#00985f]"
+                        : "bg-transparent text-[#717171] hover:text-[#222]",
+                    )}
+                  >
+                    {f === "bo3" ? "BO3" : "BO5"}
+                  </button>
+                ))}
+              </div>
+              {/* Ligne Over selon format */}
+              <Select
+                value={matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5}
+                onValueChange={matchFormat === "bo3" ? handleMatchGameLineBo3Change : handleMatchGameLineBo5Change}
+              >
+                <SelectTrigger
+                  className="h-9 w-[120px] text-xs"
+                  aria-label="Ligne Over match"
+                >
+                  <SelectValue placeholder="Ligne" />
+                </SelectTrigger>
+                <SelectContent>
+                  {matchFormat === "bo3"
+                    ? TENNIS_MATCH_GAME_LINES_BO3.map((g) => (
+                        <SelectItem key={g.key} value={g.key} className="text-xs">
+                          {g.label}
+                        </SelectItem>
+                      ))
+                    : TENNIS_MATCH_GAME_LINES_BO5.map((g) => (
+                        <SelectItem key={g.key} value={g.key} className="text-xs">
+                          {g.label}
+                        </SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
+          {/* Sélecteur de ligne Over pour over-set (par set) */}
+          {betType === "over-set" && (
             <Select
               value={gameLine}
               onValueChange={handleGameLineChange}
             >
               <SelectTrigger
                 className="h-9 w-[120px] text-xs"
-                aria-label="Ligne Over"
+                aria-label="Ligne Over set"
               >
                 <SelectValue placeholder="Ligne" />
               </SelectTrigger>
               <SelectContent>
                 {TENNIS_GAME_LINES.map((g) => (
                   <SelectItem key={g.key} value={g.key} className="text-xs">
-                    {g.label} <span className="text-[#717171] ml-1">{g.overProb}</span>
+                    {g.label}
                   </SelectItem>
                 ))}
               </SelectContent>

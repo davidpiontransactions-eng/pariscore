@@ -44,6 +44,15 @@ export type TennisMarketCategory =
 /** Ligne de jeux Over/Under pour le marché total-games-per-set. */
 export type TennisGameLine = "6.5" | "7.5" | "8.5" | "9.5" | "10.5";
 
+/** Ligne de jeux Over/Under pour le marché total-games match (bo3). */
+export type TennisMatchGameLineBo3 = "18.5" | "19.5" | "20.5" | "21.5" | "22.5" | "23.5" | "24.5";
+
+/** Ligne de jeux Over/Under pour le marché total-games match (bo5 Grand Slam). */
+export type TennisMatchGameLineBo5 = "28.5" | "29.5" | "30.5" | "31.5" | "32.5" | "33.5" | "34.5" | "35.5" | "36.5" | "37.5" | "38.5" | "39.5" | "40.5";
+
+/** Format du match (best of 3 ou best of 5). */
+export type TennisMatchFormat = "bo3" | "bo5";
+
 /** Type de bet du joueur (prematch + live). */
 export type TennisBetType =
   | "winner"           // Match winner prematch
@@ -96,13 +105,49 @@ export const TENNIS_MARKET_CATEGORIES: readonly { key: TennisMarketCategory; lab
   { key: "live", label: "Live", emoji: "" },
 ] as const;
 
-/** Lignes de jeux Over/Under disponibles (1xBet per-set). */
+/** Lignes de jeux Over/Under par set (1xBet per-set). */
 export const TENNIS_GAME_LINES: readonly { key: TennisGameLine; label: string; overProb: string }[] = [
   { key: "6.5", label: "Over 6.5", overProb: "~95%" },
   { key: "7.5", label: "Over 7.5", overProb: "~77%" },
   { key: "8.5", label: "Over 8.5", overProb: "~49%" },
   { key: "9.5", label: "Over 9.5", overProb: "~24%" },
   { key: "10.5", label: "Over 10.5", overProb: "~10%" },
+] as const;
+
+/**
+ * Lignes de jeux Over/Under pour match total (best of 3 sets).
+ * Source : ATP/WTA stats — minimum 12 jeux (6-0,6-0), max ~39 jeux (7-6,6-7,7-6).
+ * Lignes standard bookmakers : 18.5 à 24.5.
+ */
+export const TENNIS_MATCH_GAME_LINES_BO3: readonly { key: TennisMatchGameLineBo3; label: string }[] = [
+  { key: "18.5", label: "Over 18.5" },
+  { key: "19.5", label: "Over 19.5" },
+  { key: "20.5", label: "Over 20.5" },
+  { key: "21.5", label: "Over 21.5" },
+  { key: "22.5", label: "Over 22.5" },
+  { key: "23.5", label: "Over 23.5" },
+  { key: "24.5", label: "Over 24.5" },
+] as const;
+
+/**
+ * Lignes de jeux Over/Under pour match total (best of 5 sets — Grand Slam hommes).
+ * Source : ATP stats — minimum 18 jeux (6-0,6-0,6-0), max ~65 jeux (7-6,6-7,7-6,6-7,7-6).
+ * Lignes standard bookmakers : 28.5 à 40.5.
+ */
+export const TENNIS_MATCH_GAME_LINES_BO5: readonly { key: TennisMatchGameLineBo5; label: string }[] = [
+  { key: "28.5", label: "Over 28.5" },
+  { key: "29.5", label: "Over 29.5" },
+  { key: "30.5", label: "Over 30.5" },
+  { key: "31.5", label: "Over 31.5" },
+  { key: "32.5", label: "Over 32.5" },
+  { key: "33.5", label: "Over 33.5" },
+  { key: "34.5", label: "Over 34.5" },
+  { key: "35.5", label: "Over 35.5" },
+  { key: "36.5", label: "Over 36.5" },
+  { key: "37.5", label: "Over 37.5" },
+  { key: "38.5", label: "Over 38.5" },
+  { key: "39.5", label: "Over 39.5" },
+  { key: "40.5", label: "Over 40.5" },
 ] as const;
 
 /** Types de bets du joueur. */
