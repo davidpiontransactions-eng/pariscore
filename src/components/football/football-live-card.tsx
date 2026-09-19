@@ -206,7 +206,7 @@ function StatRow({
 }) {
   const max = Math.max(home, away, 1);
   const homePct = pct ?? (home / max) * 70;
-  const awayPct = pct ?? (away / max) * 70;
+  const awayPct = pct != null ? 100 - pct : (away / max) * 70;
 
   return (
     <div className="flex items-center gap-2 text-sm">

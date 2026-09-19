@@ -21,11 +21,20 @@ import { prisma } from "@/lib/prisma";
  * best-effort : une panne ESPN retombe sur BSD seul, et vice-versa. 503 → indisponible total.
  */
 const CACHE_TTL = 60_000;
+const CACHE_MAX_AGE = 10 * 60_000; // 10 minutes max
 
 type CachedStats = { data: MatchTimelineData; at: number };
 const g = globalThis as unknown as { __footballStatsCacheV2?: Map<string, CachedStats> };
 const cache: Map<string, CachedStats> = g.__footballStatsCacheV2 ?? new Map();
 if (!g.__footballStatsCacheV2) g.__footballStatsCacheV2 = cache;
+
+// Nettoyage périodique : supprime les entrées >10 min
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now - entry.at > CACHE_MAX_AGE) cache.delete(key);
+  }
+}, 5 * 60_000);
 
 /** Fusionne le xG/minute BSD dans les buckets (par plage de 5'). Construit les buckets si absents. */
 function mergeXgBuckets(buckets: PressureBucketInput[], xgPerMinute: { minute: number; home: number; away: number }[]): PressureBucketInput[] {

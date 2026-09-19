@@ -18,19 +18,7 @@ import {
 } from "@/components/layout/sports-sidebar";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import type { SportTabId } from "@/types/sports-sidebar";
-import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { motion, useReducedMotion } from "framer-motion";
-import { FootballTabContent } from "@/components/football/football-tab-content";
-import { Cs2TabContent } from "@/components/cs2/cs2-tab-content";
-import { MmaTabContent } from "@/components/mma/mma-tab-content";
-import { BasketballTabContent } from "@/components/basketball/basketball-tab-content";
-import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
-import { F1TabContent } from "@/components/f1/f1-tab-content";
-import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
-import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
-import { SnookerTabContent } from "@/components/snooker/snooker-tab-content";
-import { HockeyTabContent } from "@/components/hockey/hockey-tab-content";
-import { HandballTabContent } from "@/components/handball/handball-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { FootballHeroHeader } from "@/components/football/football-hero-header";
@@ -56,6 +44,20 @@ import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
 import type { BasketballMatch } from "@/lib/basketball-data";
+
+// Lazy loading des onglets sport — réduit le bundle initial de ~200-400KB
+const TennisTabContent = lazy(() => import("@/components/football/tennis-tab-content").then((m) => ({ default: m.TennisTabContent })));
+const FootballTabContent = lazy(() => import("@/components/football/football-tab-content").then((m) => ({ default: m.FootballTabContent })));
+const Cs2TabContent = lazy(() => import("@/components/cs2/cs2-tab-content").then((m) => ({ default: m.Cs2TabContent })));
+const MmaTabContent = lazy(() => import("@/components/mma/mma-tab-content").then((m) => ({ default: m.MmaTabContent })));
+const BasketballTabContent = lazy(() => import("@/components/basketball/basketball-tab-content").then((m) => ({ default: m.BasketballTabContent })));
+const CyclingTabContent = lazy(() => import("@/components/cycling/cycling-tab-content").then((m) => ({ default: m.CyclingTabContent })));
+const F1TabContent = lazy(() => import("@/components/f1/f1-tab-content").then((m) => ({ default: m.F1TabContent })));
+const BaseballTabContent = lazy(() => import("@/components/baseball/baseball-tab-content").then((m) => ({ default: m.BaseballTabContent })));
+const RugbyTabContent = lazy(() => import("@/components/rugby/rugby-tab-content").then((m) => ({ default: m.RugbyTabContent })));
+const SnookerTabContent = lazy(() => import("@/components/snooker/snooker-tab-content").then((m) => ({ default: m.SnookerTabContent })));
+const HockeyTabContent = lazy(() => import("@/components/hockey/hockey-tab-content").then((m) => ({ default: m.HockeyTabContent })));
+const HandballTabContent = lazy(() => import("@/components/handball/handball-tab-content").then((m) => ({ default: m.HandballTabContent })));
 
 // Dialogs de détail globaux — lazy : ne chargent le code que si un match est
 // réellement ouvert via le tableau "10 prochains matchs" (event open-match-detail).
@@ -362,18 +364,20 @@ function HomeInner() {
           <FavorisNavView onOpenDrawer={() => useSportsSidebarStore.getState().setDrawerOpen(true)} />
         )}
         {activeTab === "profil" && <ProfilNavView />}
-        {activeTab === "tennis" && <TennisTabContent />}
-        {activeTab === "football" && <FootballTabContent />}
-        {activeTab === "cs2" && <Cs2TabContent />}
-        {activeTab === "mma" && <MmaTabContent />}
-        {activeTab === "basketball" && <BasketballTabContent />}
-        {activeTab === "cycling" && <CyclingTabContent />}
-        {activeTab === "f1" && <F1TabContent />}
-        {activeTab === "baseball" && <BaseballTabContent />}
-        {activeTab === "rugby" && <RugbyTabContent />}
-        {activeTab === "snooker" && <SnookerTabContent />}
-        {activeTab === "hockey" && <HockeyTabContent />}
-        {activeTab === "handball" && <HandballTabContent />}
+        <Suspense fallback={<div className="flex items-center justify-center py-20 text-slate-400">Chargement...</div>}>
+          {activeTab === "tennis" && <TennisTabContent />}
+          {activeTab === "football" && <FootballTabContent />}
+          {activeTab === "cs2" && <Cs2TabContent />}
+          {activeTab === "mma" && <MmaTabContent />}
+          {activeTab === "basketball" && <BasketballTabContent />}
+          {activeTab === "cycling" && <CyclingTabContent />}
+          {activeTab === "f1" && <F1TabContent />}
+          {activeTab === "baseball" && <BaseballTabContent />}
+          {activeTab === "rugby" && <RugbyTabContent />}
+          {activeTab === "snooker" && <SnookerTabContent />}
+          {activeTab === "hockey" && <HockeyTabContent />}
+          {activeTab === "handball" && <HandballTabContent />}
+        </Suspense>
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}
