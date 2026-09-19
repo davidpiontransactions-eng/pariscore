@@ -1003,10 +1003,10 @@ function getOdds1xBet() {
     // Staleness check: if file is older than 48h, log warning and return null
     const stat = FS_1XBET.statSync(PATH_1XBET);
     const fileAgeMs = now - stat.mtimeMs;
-    const MAX_AGE_MS = 48 * 3600 * 1000; // 48 heures
+    const MAX_AGE_MS = 7 * 24 * 3600 * 1000; // 7 jours (scraper n'est pas quotidien)
     if (fileAgeMs > MAX_AGE_MS) {
       const ageHours = Math.round(fileAgeMs / 3600000);
-      console.warn(`[MMA] 1xBet file stale: ${ageHours}h old (max 48h). Skipping fallback.`);
+      console.warn(`[MMA] 1xBet file stale: ${ageHours}h old (max 168h). Skipping fallback.`);
       return null;
     }
     const raw = FS_1XBET.readFileSync(PATH_1XBET, 'utf-8');
