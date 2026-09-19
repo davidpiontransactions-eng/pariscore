@@ -149,17 +149,19 @@ function toTableRows(
       }
       case "over-games": {
         // Calcule P(Over X.5) via Barnett-Clarke (2005) + Poisson.
-        const holdAVal = e.serveA ?? 0;
-        const holdBVal = e.serveB ?? 0;
-        const retAVal = e.retA ?? 0;
-        const retBVal = e.retB ?? 0;
+        // IMPORTANT : servePtProbA/B = probabilité de point sur service (0-1)
+        // PAS hold% (qui est gameWinProb(servePtProb)).
+        const servePtA = e.servePtProbA ?? null;
+        const servePtB = e.servePtProbB ?? null;
+        const retAVal = e.retA ?? null;
+        const retBVal = e.retB ?? null;
         const playerAServe: ServeStats = {
-          servePtsWonPct: holdAVal > 0 ? holdAVal / 100 : null,
-          returnPtsWonPct: retAVal > 0 ? retAVal / 100 : null,
+          servePtsWonPct: servePtA,
+          returnPtsWonPct: retAVal,
         };
         const playerBServe: ServeStats = {
-          servePtsWonPct: holdBVal > 0 ? holdBVal / 100 : null,
-          returnPtsWonPct: retBVal > 0 ? retBVal / 100 : null,
+          servePtsWonPct: servePtB,
+          returnPtsWonPct: retBVal,
         };
         const surface = (e.surface || "Hard") as PredictionSurface;
         const bestOf = matchFormat === "bo5" ? 5 : 3;
@@ -171,19 +173,29 @@ function toTableRows(
           e.playerA.value,
           e.playerB.value,
         );
-        // Récupère la proba pour le seuil sélectionné.
-        const threshold = matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5;
-        const thresholdKey = `over${threshold.replace(".", "_")}` as keyof typeof pred;
-        const prob = pred[thresholdKey] as number | undefined;
-        const probPct = prob != null ? Math.round(prob) : null;
-        // Affiche le meilleur Over ≥ 60%.
-        if (probPct != null && probPct >= 60) {
-          display = `Over ${threshold} · ${probPct}%`;
-        } else if (probPct != null) {
-          display = `Over ${threshold} · ${probPct}%`;
-        } else {
-          display = `Over ${threshold}`;
+        // Cascade : descend les seuils jusqu'à trouver P > 58%.
+        const lines = matchFormat === "bo5"
+          ? ["40.5", "39.5", "38.5", "37.5", "36.5", "35.5", "34.5", "33.5", "32.5", "31.5", "30.5", "29.5", "28.5"]
+          : ["24.5", "23.5", "22.5", "21.5", "20.5", "19.5", "18.5"];
+        const startIdx = lines.indexOf(matchFormat === "bo3" ? matchGameLineBo3 : matchGameLineBo5);
+        const searchLines = startIdx >= 0 ? lines.slice(startIdx) : lines;
+        let bestLine = searchLines[0];
+        let bestProb = 0;
+        for (const line of searchLines) {
+          const key = `over${line.replace(".", "_")}` as keyof typeof pred;
+          const p = pred[key] as number | undefined;
+          if (p != null && p > bestProb) {
+            bestProb = p;
+            bestLine = line;
+          }
+          if (p != null && p > 58) {
+            bestLine = line;
+            bestProb = p;
+            break;
+          }
         }
+        const probPct = bestProb > 0 ? Math.round(bestProb) : null;
+        display = probPct != null ? `Over ${bestLine} · ${probPct}%` : `Over ${bestLine}`;
         break;
       }
       case "most-aces":

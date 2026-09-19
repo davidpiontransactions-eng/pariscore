@@ -74,6 +74,9 @@ export interface TennisStrategyEntry {
   /** % points de retour gagnés A/B (null si absent). */
   retA?: number | null;
   retB?: number | null;
+  /** Probabilité de point sur service brute (0-1, pour Barnett-Clarke). */
+  servePtProbA?: number | null;
+  servePtProbB?: number | null;
   /** Cotes décimales bookmaker (null si absentes). */
   oddsA?: number | null;
   oddsB?: number | null;
@@ -520,6 +523,8 @@ export function buildTennisStrategyTop10(
         serveB: ctx.serveB != null ? gameWinProb(ctx.serveB) * 100 : null,
         retA: ctx.lbA?.returnPointsWonPct ?? null,
         retB: ctx.lbB?.returnPointsWonPct ?? null,
+        servePtProbA: ctx.serveA ?? null,
+        servePtProbB: ctx.serveB ?? null,
         oddsA: m.odds?.decimalA ?? null,
         oddsB: m.odds?.decimalB ?? null,
         bookmaker: m.odds?.bookmaker ?? null,
