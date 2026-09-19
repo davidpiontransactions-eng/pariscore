@@ -11,7 +11,7 @@ import { gameWinProb, setWinProb, setScoreExact, setHandicap, doubleResult, firs
 import { probOver } from "@/lib/prediction/total-games";
 import { totalAcesO_U } from "@/lib/prediction/most-aces";
 import { tiebreakSet } from "@/lib/prediction/tiebreak";
-import { bayesianBlend, deVig, oddToProb } from "@/lib/prediction/live-blend";
+import { bayesianBlend, deVig, oddToProb, computeEdge, kellyFraction } from "@/lib/prediction/live-blend";
 
 type MarketResult = {
   id: string;
@@ -20,6 +20,7 @@ type MarketResult = {
   probA: number;
   probB: number;
   edge?: number;
+  kelly?: number;
   recommended: boolean;
 };
 
@@ -76,16 +77,32 @@ function computeMarketsFromLive(
 
   const markets: MarketResult[] = [];
 
+  // Cotes live (si disponibles)
+  const oddsA = state.oddsA;
+  const oddsB = state.oddsB;
+
   // Helper
   function addMarket(id: string, label: string, category: string, probA: number, probB: number) {
     const maxProb = Math.max(probA, probB);
     const recommended = Math.abs(maxProb * 100 - 60) < 10;
+
+    // Edge vs marché (si cotes disponibles)
+    let edge: number | undefined;
+    let kelly: number | undefined;
+    if (oddsA && oddsB) {
+      const [marketProbA] = deVig([oddToProb(oddsA), oddToProb(oddsB)]);
+      edge = computeEdge(probA, marketProbA);
+      kelly = kellyFraction(probA, oddsA);
+    }
+
     markets.push({
       id,
       label,
       category,
       probA: Math.round(probA * 10000) / 100,
       probB: Math.round(probB * 10000) / 100,
+      edge: edge !== undefined ? Math.round(edge * 100) / 100 : undefined,
+      kelly: kelly !== undefined ? Math.round(kelly * 10000) / 100 : undefined,
       recommended,
     });
   }
