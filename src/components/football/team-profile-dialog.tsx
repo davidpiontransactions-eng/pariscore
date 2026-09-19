@@ -10,175 +10,202 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProbabilityRing } from "@/components/tennis/probability-ring";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import type { TeamProfile } from "@/lib/team-profile";
 
 type Props = {
   leagueId: string | null;
   team: string | null;
   venue: "home" | "away";
-  /** Probas fair modèle 0-100 (ex. prediction) — null = pas de value. */
   fair?: { home: number; draw: number; away: number } | null;
-  /** Cotes décimales marché — null = pas de value. */
   odds?: { home: number; draw: number; away: number } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-/** Header verdict 3 secondes : anneaux A/D + rang contexte + phrase auto. Sticky. */
-function VerdictHeader({ profile, venueLabel }: { profile: TeamProfile; venueLabel: string }) {
-  const phrase = profile.strengths[0] ?? profile.weaknesses[0] ?? "Profil équilibré";
-  return (
-    <section
-      aria-label={`Verdict ${profile.team}`}
-      className="sticky top-0 z-10 -mx-1 flex items-center gap-3 rounded-xl border border-border/40 bg-[#fafafa]/95 px-3 py-2 backdrop-blur"
-    >
-      <ProbabilityRing value={profile.attack.score} size={52} stroke={5} color="#10b981" animate={false}>
-        <span className="text-sm font-black tabular-nums text-foreground">{profile.attack.score}</span>
-      </ProbabilityRing>
-      <ProbabilityRing value={profile.defense.score} size={52} stroke={5} color="#0ea5e9" animate={false}>
-        <span className="text-sm font-black tabular-nums text-foreground">{profile.defense.score}</span>
-      </ProbabilityRing>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-black tabular-nums text-foreground">
-          #{profile.standing.rank}
-          <span className="font-normal text-muted-foreground">/{profile.standing.rankTotal} {venueLabel}</span>
-        </p>
-        <p className="truncate text-[11px] text-muted-foreground" title={phrase}>
-          {phrase}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-/** Heatmap des rangs intra-ligue : vert = top 3, rouge = bottom 3, texte redondant. */
-function RankHeatmap({ profile }: { profile: TeamProfile }) {
-  const cells = [
-    {
-      label: `PPG ${profile.venue === "home" ? "dom." : profile.venue === "away" ? "ext." : "gén."}`,
-      rank: profile.standing.rank,
-      total: profile.standing.rankTotal,
-    },
-    ...[...profile.attack.metrics, ...profile.defense.metrics].map((m) => ({
-      label: m.label.replace(" (FBref)", "*"),
-      rank: m.rank,
-      total: profile.attack.rankTotal,
-    })),
-  ];
-  return (
-    <section aria-label="Rangs dans le championnat" className="rounded-xl border border-border/40 p-3">
-      <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Rangs championnat
-      </h3>
-      <div className="grid grid-cols-2 gap-1.5">
-        {cells.map((c) => {
-          const tone =
-            c.rank == null
-              ? "bg-muted/40 text-muted-foreground"
-              : c.rank <= 3
-                ? "bg-emerald-500/10 text-emerald-700"
-                : c.rank >= c.total - 2
-                  ? "bg-rose-500/10 text-rose-700"
-                  : "bg-muted/40 text-foreground";
-          return (
-            <div key={c.label} className={`flex items-center justify-between gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold ${tone}`}>
-              <span className="truncate">{c.label}</span>
-              <span className="shrink-0 tabular-nums">{c.rank != null ? `#${c.rank}/${c.total}` : "—"}</span>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-type MarketParams = {
-  fair: { home: number; draw: number; away: number };
-  odds: { home: number; draw: number; away: number };
+/* ─── Couleurs sémantiques ─── */
+const COLORS = {
+  attack: { bg: "bg-emerald-500/10", text: "text-emerald-600", border: "border-emerald-500/20", ring: "#10b981" },
+  defense: { bg: "bg-sky-500/10", text: "text-sky-600", border: "border-sky-500/20", ring: "#0ea5e9" },
+  rank: { top: "bg-emerald-500/15 text-emerald-700", mid: "bg-muted text-muted-foreground", bottom: "bg-rose-500/15 text-rose-700" },
+  value: "bg-emerald-500/10 border-emerald-500/30 text-emerald-700",
+  alert: "bg-violet-500/10 border-violet-500/30 text-violet-700",
+  warning: "bg-amber-500/10 border-amber-500/30 text-amber-700",
 };
 
-/** Ligne metric : label + valeur brute + rang ligue. */
-function MetricRow({
-  label,
-  display,
-  rank,
-  rankTotal,
-}: {
-  label: string;
-  display: string;
-  rank: number | null;
-  rankTotal: number;
-}) {
+/* ─── Composant : Anneau de score ─── */
+function ScoreRing({ value, color, size = 56 }: { value: number; color: string; size?: number }) {
+  const radius = (size - 6) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (value / 100) * circumference;
+
   return (
-    <div className="flex items-center justify-between gap-2 py-1 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="flex items-center gap-1.5 font-semibold tabular-nums text-foreground">
-        {display}
-        {rank != null && (
-          <span className="rounded bg-muted px-1 py-px text-[10px] tabular-nums text-muted-foreground">
-            #{rank}/{rankTotal}
-          </span>
-        )}
-      </span>
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={5} className="text-muted/50" />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke={color} strokeWidth={5} strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-all duration-700 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-lg font-black tabular-nums">{value}</span>
+      </div>
     </div>
   );
 }
 
-/** Bloc PowerScore (titre + score + rang + metrics). */
-function PowerBlock({
-  title,
-  score,
-  rank,
-  rankTotal,
-  metrics,
-}: {
-  title: string;
-  score: number;
-  rank: number;
-  rankTotal: number;
-  metrics: TeamProfile["attack"]["metrics"];
-}) {
+/* ─── Composant : Barre de progression ─── */
+function ProgressBar({ value, color, className }: { value: number; color: string; className?: string }) {
   return (
-    <section className="rounded-xl border border-border/40 p-3">
-      <div className="mb-1 flex items-center justify-between">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </h3>
-        <span className="flex items-center gap-1.5 text-sm font-black tabular-nums text-foreground">
-          {score}
-          <span className="rounded bg-emerald-500/15 px-1 py-px text-[10px] font-bold text-emerald-600">
-            #{rank}/{rankTotal}
-          </span>
-        </span>
+    <div className={cn("h-2 w-full overflow-hidden rounded-full bg-muted/50", className)}>
+      <div
+        className="h-full rounded-full transition-all duration-500 ease-out"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%`, backgroundColor: color }}
+      />
+    </div>
+  );
+}
+
+/* ─── Composant : Badge de rang ─── */
+function RankBadge({ rank, total }: { rank: number | null; total: number }) {
+  if (rank == null) return <span className="text-[10px] text-muted-foreground">—</span>;
+  const tone = rank <= 3 ? COLORS.rank.top : rank >= total - 2 ? COLORS.rank.bottom : COLORS.rank.mid;
+  return (
+    <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums", tone)}>
+      #{rank}/{total}
+    </span>
+  );
+}
+
+/* ─── Composant : Ligne de statistique ─── */
+function StatLine({ label, value, rank, total }: { label: string; value: string; rank?: number | null; total?: number }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold tabular-nums">{value}</span>
+        {rank != null && total != null && <RankBadge rank={rank} total={total} />}
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${score}%` }} />
-      </div>
-      <div className="mt-1 divide-y divide-border/20">
-        {metrics.map((m) => (
-          <MetricRow
-            key={m.key}
-            label={m.label}
-            display={m.display}
-            rank={m.rank}
-            rankTotal={rankTotal}
-          />
-        ))}
-      </div>
+    </div>
+  );
+}
+
+/* ─── Composant : Carte de section ─── */
+function SectionCard({ title, icon, children, className }: { title: string; icon?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={cn("rounded-xl border border-border/50 bg-card/50 p-4", className)}>
+      <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        {icon && <span className="text-sm">{icon}</span>}
+        {title}
+      </h3>
+      {children}
     </section>
   );
 }
 
+/* ─── Composant : Verdict Header (sticky) ─── */
+function VerdictHeader({ profile, venueLabel }: { profile: TeamProfile; venueLabel: string }) {
+  const phrase = profile.strengths[0] ?? profile.weaknesses[0] ?? "Profil équilibré";
+  return (
+    <div className="sticky top-0 z-10 -mx-1 rounded-xl border border-border/50 bg-background/95 px-4 py-3 backdrop-blur-sm">
+      <div className="flex items-center gap-4">
+        <ScoreRing value={profile.attack.score} color={COLORS.attack.ring} />
+        <ScoreRing value={profile.defense.score} color={COLORS.defense.ring} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black tabular-nums">#{profile.standing.rank}</span>
+            <span className="text-sm text-muted-foreground">/{profile.standing.rankTotal} {venueLabel}</span>
+          </div>
+          <p className="mt-1 truncate text-xs text-muted-foreground" title={phrase}>
+            {phrase}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Composant : Bilan V/N/D ─── */
+function RecordDisplay({ wins, draws, losses }: { wins: number; draws: number; losses: number }) {
+  const total = wins + draws + losses;
+  if (total === 0) return null;
+  const wPct = (wins / total) * 100;
+  const dPct = (draws / total) * 100;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold text-emerald-600">{wins}V</span>
+        <span className="font-semibold text-muted-foreground">{draws}N</span>
+        <span className="font-semibold text-rose-600">{losses}D</span>
+      </div>
+      <div className="flex h-2 overflow-hidden rounded-full">
+        <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${wPct}%` }} />
+        <div className="bg-muted-foreground/30 transition-all duration-500" style={{ width: `${dPct}%` }} />
+        <div className="bg-rose-500 transition-all duration-500" style={{ width: `${100 - wPct - dPct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Composant : Forme récente ─── */
+function FormDisplay({ form }: { form?: ("W" | "D" | "L")[] }) {
+  if (!form || form.length === 0) return null;
+  return (
+    <div className="flex items-center gap-1.5">
+      {form.map((result, i) => (
+        <div
+          key={i}
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold",
+            result === "W" ? "bg-emerald-500/20 text-emerald-700" :
+            result === "D" ? "bg-muted text-muted-foreground" :
+            "bg-rose-500/20 text-rose-700"
+          )}
+        >
+          {result}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Composant : PowerBlock ─── */
+function PowerBlock({ title, score, rank, rankTotal, metrics, color }: {
+  title: string; score: number; rank: number; rankTotal: number;
+  metrics: TeamProfile["attack"]["metrics"]; color: typeof COLORS.attack;
+}) {
+  return (
+    <SectionCard title={title}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ScoreRing value={score} color={color.ring} size={48} />
+          <div>
+            <div className="text-2xl font-black tabular-nums">{score}</div>
+            <RankBadge rank={rank} total={rankTotal} />
+          </div>
+        </div>
+      </div>
+      <ProgressBar value={score} color={color.ring} className="mb-3" />
+      <div className="divide-y divide-border/30">
+        {metrics.map((m) => (
+          <StatLine key={m.key} label={m.label} value={m.display} rank={m.rank} total={rankTotal} />
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+/* ─── Composant principal ─── */
 export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onOpenChange }: Props) {
   const [profile, setProfile] = useState<TeamProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Contexte d'affichage : initialisé sur le rôle dans le match cliqué.
-  // Remonté à zéro via `key={team}` côté parent (pas de setState en effect).
   const [scope, setScope] = useState<"home" | "away" | "overall">(venue);
   const loading = open && team !== null && profile === null && error === null;
-  // Clé marché stable (objets parent recréés à chaque render → pas en deps bruts).
   const marketKey = fair && odds ? JSON.stringify({ fair, odds }) : "";
 
   useEffect(() => {
@@ -187,12 +214,11 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
     setProfile(null);
     setError(null);
 
-    // Essayer d'abord l'endpoint FD, puis fallback BSD
     const fetchProfile = async () => {
       const baseParams = `league=${encodeURIComponent(leagueId)}&team=${encodeURIComponent(team)}&venue=${scope}`;
       let url = `/api/football/teams/profile?${baseParams}`;
       if (marketKey) {
-        const m = JSON.parse(marketKey) as MarketParams;
+        const m = JSON.parse(marketKey) as { fair: { home: number; draw: number; away: number }; odds: { home: number; draw: number; away: number } };
         url += `&fairH=${m.fair.home}&fairD=${m.fair.draw}&fairA=${m.fair.away}&oddsH=${m.odds.home}&oddsD=${m.odds.draw}&oddsA=${m.odds.away}`;
       }
 
@@ -203,7 +229,6 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
           if (!cancelled) setProfile(data.profile);
           return;
         }
-        // Si 404, essayer l'endpoint BSD
         if (res.status === 404) {
           const bsdUrl = `/api/football/teams/bsd-profile?${baseParams}`;
           const bsdRes = await fetch(bsdUrl, { signal: AbortSignal.timeout(10000) });
@@ -237,190 +262,211 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-[#f0f0f0] bg-[#fafafa] text-[#222222]">
-        <DialogHeader>
-          <DialogTitle className="text-sm font-bold">
-            {team ?? "Équipe"} <span className="font-normal text-muted-foreground">· {venueLabel}</span>
+      <DialogContent className="max-w-md border-border/50 bg-background p-0">
+        <DialogHeader className="border-b border-border/50 px-6 py-4">
+          <DialogTitle className="flex items-center gap-3 text-lg font-bold">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <span className="text-lg">⚽</span>
+            </div>
+            <div>
+              <div className="font-black">{team ?? "Équipe"}</div>
+              <div className="text-xs font-normal text-muted-foreground">{venueLabel}</div>
+            </div>
           </DialogTitle>
           <DialogDescription className="sr-only">
             Fiche saison {team} : classement, PowerScores, Elo, infirmerie
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[calc(80vh-80px)] max-h-[calc(80dvh-80px)]">
-          <div className="space-y-3 px-1 py-2">
+
+        <ScrollArea className="max-h-[calc(80vh-120px)]">
+          <div className="space-y-4 px-6 py-4">
+            {/* Scope toggle */}
+            <ToggleGroup
+              type="single"
+              value={scope}
+              onValueChange={switchScope}
+              aria-label="Contexte du classement"
+              className="w-full rounded-lg border border-border/50 p-1"
+            >
+              <ToggleGroupItem value="home" className="flex-1 rounded-md text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Domicile
+              </ToggleGroupItem>
+              <ToggleGroupItem value="away" className="flex-1 rounded-md text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Extérieur
+              </ToggleGroupItem>
+              <ToggleGroupItem value="overall" className="flex-1 rounded-md text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Général
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            {/* Loading state */}
             {loading && (
-              <>
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-              </>
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-40 w-full rounded-xl" />
+                <Skeleton className="h-40 w-full rounded-xl" />
+              </div>
             )}
-            {error && <p className="text-xs text-rose-500">Données indisponibles ({error})</p>}
+
+            {/* Error state */}
+            {error && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center">
+                <p className="text-sm font-semibold text-rose-600">Données indisponibles</p>
+                <p className="mt-1 text-xs text-rose-500">{error}</p>
+              </div>
+            )}
+
+            {/* Profile content */}
             {profile && (
-              <>
-                <ToggleGroup
-                  type="single"
-                  value={scope}
-                  onValueChange={switchScope}
-                  aria-label="Contexte du classement"
-                  className="w-full justify-start gap-1"
-                >
-                  <ToggleGroupItem value="home" aria-label="Domicile" className="flex-1 text-xs">
-                    Domicile
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="away" aria-label="Extérieur" className="flex-1 text-xs">
-                    Extérieur
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="overall" aria-label="Général" className="flex-1 text-xs">
-                    Général
-                  </ToggleGroupItem>
-                </ToggleGroup>
+              <div className="space-y-4">
+                {/* Verdict Header */}
                 <VerdictHeader profile={profile} venueLabel={venueLabel} />
+
+                {/* Alerts */}
                 {profile.alerts.map((a) => (
-                  <p
-                    key={a}
-                    className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-[11px] font-bold text-violet-700"
-                  >
+                  <div key={a} className={cn("rounded-xl border p-3 text-xs font-semibold", COLORS.alert)}>
                     ⚡ {a}
-                  </p>
+                  </div>
                 ))}
+
+                {/* Value */}
                 {profile.value && profile.value.edgePct > 5 && (
-                  <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-bold text-emerald-700">
+                  <div className={cn("rounded-xl border p-3 text-xs font-semibold", COLORS.value)}>
                     VALUE {profile.value.side === "home" ? "Domicile" : profile.value.side === "draw" ? "Nul" : "Extérieur"} +
                     {profile.value.edgePct.toFixed(1).replace(".", ",")} % vs marché
-                  </p>
+                  </div>
                 )}
-                {/* Classement contexte + général */}
-                <section className="rounded-xl border border-border/40 p-3">
-                  <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Classement {profile.season} · {venueLabel}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-center">
-                    <div className="rounded-lg bg-muted/40 p-2">
-                      <div className="text-xl font-black tabular-nums">
-                        {profile.standing.rank}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          /{profile.standing.rankTotal}
-                        </span>
+
+                {/* Classement */}
+                <SectionCard title="Classement" icon="📊">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Contexte */}
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <div className="text-3xl font-black tabular-nums">{profile.standing.rank}</div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          {venueLabel} · {profile.standing.points} pts
+                        </div>
                       </div>
-                      <div className="text-[10px] uppercase text-muted-foreground">
-                        {venueLabel} · {profile.standing.points} pts ({profile.standing.gp} m)
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        {profile.standing.wins}V {profile.standing.draws}N {profile.standing.losses}D ·{" "}
-                        {profile.standing.gf}-{profile.standing.ga}
+                      <RecordDisplay
+                        wins={profile.standing.wins}
+                        draws={profile.standing.draws}
+                        losses={profile.standing.losses}
+                      />
+                      <div className="text-center text-xs text-muted-foreground">
+                        {profile.standing.gf}-{profile.standing.ga} (GD {profile.standing.gd > 0 ? "+" : ""}{profile.standing.gd})
                       </div>
                     </div>
-                    <div className="rounded-lg bg-muted/40 p-2">
-                      <div className="text-xl font-black tabular-nums">
-                        {profile.overall.rank}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          /{profile.overall.rankTotal}
-                        </span>
+
+                    {/* Général */}
+                    <div className="space-y-3">
+                      <div className="text-center">
+                        <div className="text-3xl font-black tabular-nums">{profile.overall.rank}</div>
+                        <div className="text-[10px] uppercase text-muted-foreground">
+                          Général · PPG {profile.overall.ppg.toFixed(2).replace(".", ",")}
+                        </div>
                       </div>
-                      <div className="text-[10px] uppercase text-muted-foreground">
-                        Général · PPG {profile.overall.ppg.toFixed(2).replace(".", ",")}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        Elo {profile.elo ? `${profile.elo.elo} (#${profile.elo.rank})` : "—"}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        SOS {profile.sos ?? "—"} · PPG ajusté{" "}
-                        {profile.ppmAjuste != null ? profile.ppmAjuste.toFixed(2).replace(".", ",") : "—"}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        Discipline ({profile.discipline ? `${profile.discipline.sample} derniers` : "—"}) :{" "}
-                        {profile.discipline ? `${profile.discipline.yellows} J, ${profile.discipline.reds} R` : "—"}
-                        {profile.discipline?.redLastMatch && (
-                          <span className="ml-1 font-bold text-rose-600">· rouge au dernier match</span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        Repos : {profile.congestion.restDays ?? "—"} j · {profile.congestion.next14d} match(s)/14 j
-                        {profile.congestion.congested && (
-                          <span className="ml-1 font-bold text-amber-600">· calendrier chargé</span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        Steam marché :{" "}
-                        {profile.clv
-                          ? `${profile.clv.avgMovePct > 0 ? "+" : ""}${profile.clv.avgMovePct.toFixed(1).replace(".", ",")} % (${profile.clv.samples})`
-                          : "—"}
-                      </div>
-                      <div className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                        Arbitre fréquent :{" "}
-                        {profile.referee
-                          ? `${profile.referee.name} (${profile.referee.avgCards.toFixed(1).replace(".", ",")} cartons/m, bilan ${profile.referee.teamW}V ${profile.referee.teamD}N ${profile.referee.teamL}D)`
-                          : "—"}
+                      <RecordDisplay
+                        wins={profile.overall.wins}
+                        draws={profile.overall.draws}
+                        losses={profile.overall.losses}
+                      />
+                      <div className="text-center text-xs text-muted-foreground">
+                        {profile.overall.gf}-{profile.overall.ga} (GD {profile.overall.gd > 0 ? "+" : ""}{profile.overall.gd})
                       </div>
                     </div>
                   </div>
-                </section>
+                </SectionCard>
 
+                {/* PowerScore Attaque */}
                 <PowerBlock
                   title="PowerScore Attaque"
                   score={profile.attack.score}
                   rank={profile.attack.rank}
                   rankTotal={profile.attack.rankTotal}
                   metrics={profile.attack.metrics}
+                  color={COLORS.attack}
                 />
+
+                {/* Réversion xG */}
                 {profile.reversion && profile.xgDiff != null && (
-                  <p
-                    className={`rounded-xl border px-3 py-2 text-[11px] font-semibold ${
-                      profile.reversion === "chaud"
-                        ? "border-amber-500/30 bg-amber-500/10 text-amber-700"
-                        : "border-sky-500/30 bg-sky-500/10 text-sky-700"
-                    }`}
-                  >
+                  <div className={cn(
+                    "rounded-xl border p-3 text-xs font-semibold",
+                    profile.reversion === "chaud" ? COLORS.warning : COLORS.value
+                  )}>
                     Finisher {profile.reversion} ({profile.xgDiff > 0 ? "+" : ""}
                     {profile.xgDiff.toFixed(2).replace(".", ",")} vs xG) — réversion probable
-                  </p>
+                  </div>
                 )}
+
+                {/* PowerScore Défense */}
                 <PowerBlock
                   title="PowerScore Défense"
                   score={profile.defense.score}
                   rank={profile.defense.rank}
                   rankTotal={profile.defense.rankTotal}
                   metrics={profile.defense.metrics}
+                  color={COLORS.defense}
                 />
 
-                {/* Heatmap rangs (remplace Forces/Faiblesses texte) */}
-                <RankHeatmap profile={profile} />
+                {/* Méta-données */}
+                <SectionCard title="Contexte" icon="ℹ️">
+                  <div className="divide-y divide-border/30">
+                    <StatLine label="Elo" value={profile.elo ? `${profile.elo.elo}` : "—"} rank={profile.elo?.rank} total={profile.elo?.rankTotal} />
+                    <StatLine label="SOS" value={profile.sos?.toString() ?? "—"} />
+                    <StatLine label="PPG ajusté" value={profile.ppmAjuste != null ? profile.ppmAjuste.toFixed(2).replace(".", ",") : "—"} />
+                    {profile.discipline && (
+                      <StatLine label="Discipline" value={`${profile.discipline.yellows}J ${profile.discipline.reds}R`} />
+                    )}
+                    <StatLine label="Repos" value={profile.congestion.restDays != null ? `${profile.congestion.restDays}j` : "—"} />
+                  </div>
+                </SectionCard>
+
+                {/* Forces & faiblesses */}
+                {(profile.strengths.length > 0 || profile.weaknesses.length > 0) && (
+                  <SectionCard title="Forces & faiblesses" icon="💪">
+                    <div className="space-y-2">
+                      {profile.strengths.map((s) => (
+                        <div key={s} className="flex items-start gap-2 text-xs">
+                          <span className="mt-0.5 text-emerald-500">✓</span>
+                          <span>{s}</span>
+                        </div>
+                      ))}
+                      {profile.weaknesses.map((w) => (
+                        <div key={w} className="flex items-start gap-2 text-xs">
+                          <span className="mt-0.5 text-rose-500">✗</span>
+                          <span>{w}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </SectionCard>
+                )}
 
                 {/* Infirmerie */}
-                <section className="rounded-xl border border-border/40 p-3">
-                  <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Absents
-                  </h3>
-                  {!profile.injuriesCovered && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Infirmerie non couverte pour ce championnat (5 grands championnats uniquement).
+                {profile.injuries && profile.injuries.list.length > 0 && (
+                  <SectionCard title="Infirmerie" icon="🏥">
+                    <div className="space-y-2">
+                      {profile.injuries.list.map((inj) => (
+                        <div key={inj.player} className="flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-semibold">{inj.player}</span>
+                            <span className="ml-2 text-muted-foreground">{inj.position}</span>
+                          </div>
+                          <span className={cn(
+                            "rounded-md px-2 py-0.5 text-[10px] font-bold",
+                            inj.status === "OUT" ? "bg-rose-500/20 text-rose-700" : "bg-amber-500/20 text-amber-700"
+                          )}>
+                            {inj.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[10px] text-muted-foreground">
+                      Mis à jour : {new Date(profile.injuries.updatedAt).toLocaleDateString("fr-FR")}
                     </p>
-                  )}
-                  {profile.injuriesCovered && profile.injuries!.list.length === 0 && (
-                    <p className="text-[11px] text-emerald-600">Aucun absent signalé ✓</p>
-                  )}
-                  {profile.injuriesCovered &&
-                    profile.injuries!.list.map((inj) => (
-                      <div key={inj.player} className="flex items-center justify-between gap-2 py-1 text-xs">
-                        <span className="font-semibold">{inj.player}</span>
-                        <span className="text-right text-muted-foreground">
-                          {[inj.position, inj.injury, inj.status].filter(Boolean).join(" · ")}
-                          {inj.returnDate && (
-                            <span className="block text-[10px] text-emerald-600">
-                              retour ~{inj.returnDate.split("-").reverse().join("/")}
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  {profile.injuriesCovered && (
-                    <p className="mt-1 text-[10px] text-muted-foreground/70">
-                      Sources RotoWire + Transfermarkt · retour inconnu = non communiqué
-                    </p>
-                  )}
-                </section>
-              </>
+                  </SectionCard>
+                )}
+              </div>
             )}
           </div>
         </ScrollArea>
