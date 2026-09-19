@@ -151,6 +151,33 @@ const TEAM_ALIASES: Record<string, string> = {
   realsociedad: "sociedad",
   rayovallecano: "vallecano",
   eintrachtfrankfurt: "einfrankfurt",
+  // Portugal
+  sportingcp: "splisbon",
+  sportinglisbon: "splisbon",
+  sporting: "splisbon",
+  slbenfica: "benfica",
+  fcporto: "porto",
+  scbraga: "spbraga",
+  sportingbraga: "spbraga",
+  vitoriaguimaraes: "guimaraes",
+  // Belgique
+  clubbruggekv: "clubbrugge",
+  clubbrugge: "clubbrugge",
+  rscanderlecht: "anderlecht",
+  anderlecht: "anderlecht",
+  standarddeliege: "standard",
+  standardliege: "standard",
+  krcgenk: "genk",
+  kaaent: "gent",
+  unionstgilloise: "stgilloise",
+  // Pays-Bas
+  ajaxamsterdam: "ajax",
+  psvindhoven: "psv",
+  azalkmaar: "az",
+  feyenoordrotterdam: "feyenoord",
+  // Écosse
+  celticfc: "celtic",
+  rangersfc: "rangers",
 };
 
 /** Clé canonique : normalisation + alias noms longs/shorts (entrée ET référentiels). */
@@ -216,7 +243,10 @@ export function buildTeamProfile(
   if (!fdName) return null;
   const fdKey = normTeam(fdName);
 
-  const standing = withRank(scopeRows, fdKey);
+  // Si l'équipe n'est pas dans scopeRows (gp=0 à domicile/extérieur), utiliser overallRows
+  const hasInScope = scopeRows?.some((r) => normTeam(r.team) === fdKey) ?? false;
+  const standingRows = hasInScope ? scopeRows : overallRows;
+  const standing = withRank(standingRows, fdKey);
   const overall = withRank(overallRows, fdKey);
   if (!standing || !overall) return null;
   const stats = fdTeamStats(leagueId, season, fdName);
