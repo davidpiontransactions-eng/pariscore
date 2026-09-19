@@ -655,6 +655,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
                   const rawId = leagueId?.replace("bsd-", "") ?? "";
                   const numId = Number(rawId);
                   const slug = numId > 0 ? (BSD_ID_TO_SLUG[numId] ?? rawId) : (leagueId ?? undefined);
+                  console.log("[DEBUG-team-click]", { team: team.name, venue, leagueId, rawId, numId, slug });
                   setTeamProfile({ name: team.name, logo: team.logo, venue, leagueId: slug });
                 }}
                 topTagsFor={topTagsFor}
