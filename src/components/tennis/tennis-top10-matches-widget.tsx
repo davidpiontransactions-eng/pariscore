@@ -332,7 +332,9 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     const ac = new AbortController();
     setIsLoading(true);
     setError(null);
-    const qs = new URLSearchParams({ strat, win });
+    // Pour over-games, on fetch "all" pour avoir tous les matchs (pas filtrés par stratégie).
+    const fetchStrat = betType === "over-games" ? "all" : strat;
+    const qs = new URLSearchParams({ strat: fetchStrat, win });
     const qsOver = new URLSearchParams({ strat: "over215", win });
     Promise.all([
       fetch(`/api/tennis/strategy-top10?${qs.toString()}`, { signal: ac.signal }).then((r) => {
@@ -361,7 +363,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
       })
       .finally(() => setIsLoading(false));
     return () => ac.abort();
-  }, [strat, win, onEntries]);
+  }, [strat, win, onEntries, betType]);
 
   // Deep-link : reflète tous les filtres dans l'URL (partageable).
   useEffect(() => {
@@ -396,10 +398,25 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   // Pour over-games, on ne filtre PAS par minEdge (le calcul Barnett-Clarke est indépendant).
   const filteredEntries = useMemo(() => {
     if (!data?.strategies) return [];
+    // Pour over-games, on prend toutes les stratégies fusionnées (dédup par matchId).
+    if (betType === "over-games") {
+      const seen = new Set<string>();
+      const all: TennisStrategyEntry[] = [];
+      for (const entries of Object.values(data.strategies)) {
+        if (!entries) continue;
+        for (const e of entries) {
+          if (!seen.has(e.matchId)) {
+            seen.add(e.matchId);
+            all.push(e);
+          }
+        }
+      }
+      return all;
+    }
     let entries = data.strategies[strat] ?? [];
 
     // Filtrer par edge minimum UNIQUEMENT pour les stratégies (pas pour over-games).
-    if (minEdge > 0 && betType !== "over-games") {
+    if (minEdge > 0) {
       entries = entries.filter((e) => (e.probPick ?? 0) >= minEdge * 100);
     }
 
