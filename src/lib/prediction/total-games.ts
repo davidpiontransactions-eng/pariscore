@@ -59,8 +59,16 @@ export type TotalGamesPrediction = {
   over18_5: number;
   /** P(Over 19.5) [0..100]. */
   over19_5: number;
+  /** P(Over 20.5) [0..100]. */
+  over20_5: number;
   /** P(Over 21.5) [0..100]. */
   over21_5: number;
+  /** P(Over 22.5) [0..100]. */
+  over22_5: number;
+  /** P(Over 23.5) [0..100]. */
+  over23_5: number;
+  /** P(Over 24.5) [0..100]. */
+  over24_5: number;
   /** P(Over 7.5 jeux set courant) [0..100] — live seulement. */
   setOver75: number;
   /** P(Under 12.5 jeux set courant) [0..100] — live seulement. */
@@ -68,7 +76,7 @@ export type TotalGamesPrediction = {
   /** Seuil recommandé = celui dont la proba Over est la plus proche de 60%
    *  (le plus "value", ni trop évident ni trop risqué). */
   recommendedBet: {
-    threshold: 18.5 | 19.5 | 21.5;
+    threshold: 18.5 | 19.5 | 20.5 | 21.5 | 22.5 | 23.5 | 24.5;
     direction: "over" | "under";
     prob: number;
   };
@@ -311,13 +319,21 @@ export function predictTotalGames(
   //    Si le seuil est déjà dépassé par les games jouées → P(Over) = 100%.
   const over18_5 = gamesAlreadyPlayed > 18 ? 100 : Math.round(probOver(18.5, lambda) * 100);
   const over19_5 = gamesAlreadyPlayed > 19 ? 100 : Math.round(probOver(19.5, lambda) * 100);
+  const over20_5 = gamesAlreadyPlayed > 20 ? 100 : Math.round(probOver(20.5, lambda) * 100);
   const over21_5 = gamesAlreadyPlayed > 21 ? 100 : Math.round(probOver(21.5, lambda) * 100);
+  const over22_5 = gamesAlreadyPlayed > 22 ? 100 : Math.round(probOver(22.5, lambda) * 100);
+  const over23_5 = gamesAlreadyPlayed > 23 ? 100 : Math.round(probOver(23.5, lambda) * 100);
+  const over24_5 = gamesAlreadyPlayed > 24 ? 100 : Math.round(probOver(24.5, lambda) * 100);
 
   // Reco : seuil dont P(Over) est le plus proche de 60% (value sweet spot).
-  const candidates: Array<{ threshold: 18.5 | 19.5 | 21.5; prob: number }> = [
+  const candidates: Array<{ threshold: 18.5 | 19.5 | 20.5 | 21.5 | 22.5 | 23.5 | 24.5; prob: number }> = [
     { threshold: 18.5, prob: over18_5 },
     { threshold: 19.5, prob: over19_5 },
+    { threshold: 20.5, prob: over20_5 },
     { threshold: 21.5, prob: over21_5 },
+    { threshold: 22.5, prob: over22_5 },
+    { threshold: 23.5, prob: over23_5 },
+    { threshold: 24.5, prob: over24_5 },
   ];
   const best = candidates.reduce((best, c) =>
     Math.abs(c.prob - 60) < Math.abs(best.prob - 60) ? c : best,
@@ -337,7 +353,11 @@ export function predictTotalGames(
     lambda: Math.round(lambda * 10) / 10,
     over18_5,
     over19_5,
+    over20_5,
     over21_5,
+    over22_5,
+    over23_5,
+    over24_5,
     setOver75,
     setUnder125,
     recommendedBet,

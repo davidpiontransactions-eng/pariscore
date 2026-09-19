@@ -66,7 +66,7 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
   };
 }
 
-type Threshold = 18.5 | 19.5 | 21.5;
+type Threshold = 18.5 | 19.5 | 20.5 | 21.5 | 22.5 | 23.5 | 24.5;
 
 type Prediction = {
   over18_5: number;

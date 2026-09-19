@@ -112,7 +112,7 @@ export type TennisMatch = {
     over21_5: number; // P(Over 21.5) [0..100]
     lambda: number; // E[total games] attendu (debug)
     recommendedBet: {
-      threshold: 18.5 | 19.5 | 21.5;
+      threshold: 18.5 | 19.5 | 20.5 | 21.5 | 22.5 | 23.5 | 24.5;
       direction: "over" | "under";
       prob: number;
     };
