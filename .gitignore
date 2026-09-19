@@ -273,3 +273,6 @@ public/cache/cs2-teams/
 # Artefacts de deploy/transfert locaux (jamais committes — cf. AUDIT-VPS-2026-09-11)
 *.tar
 *.exe
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/

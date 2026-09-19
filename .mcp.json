@@ -252,6 +252,13 @@
         "PHOENIX_API_KEY": "${PHOENIX_API_KEY}"
       }
     },
+    "inspo": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "inspo-mcp"
+      ]
+    },
     "notebooklm": {
       "command": "npx",
       "args": [
@@ -264,6 +271,14 @@
       "headers": {
         "Authorization": "Bearer ${MEM0_API_KEY}"
       }
+    },
+    "graft": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@nanonets/graft",
+        "mcp"
+      ]
     },
     "snowflake": {
       "command": "uvx",

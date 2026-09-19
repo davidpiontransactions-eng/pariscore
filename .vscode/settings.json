@@ -1,4 +1,14 @@
 {
+  "cline.mcpServers": {
+    "inspo": {
+      "command": "npx",
+      "args": ["-y", "inspo-mcp"]
+    },
+    "graft": {
+      "command": "npx",
+      "args": ["-y", "@nanonets/graft", "mcp"]
+    }
+  },
   "terminal.integrated.profiles.windows": {
     "Git Bash (D:)": {
       "path": "D:\\Program Files\\Git\\bin\\bash.exe",
