@@ -515,6 +515,69 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
                   color={COLORS.defense}
                 />
 
+                {/* Metrics Avancées — Recherche Académique */}
+                <SectionCard title="Metrics Avancées" icon="📈">
+                  <div className="space-y-1 divide-y divide-border/30">
+                    {/* xG metrics */}
+                    {profile.attack.metrics.find(m => m.key === "xg") && (
+                      <StatLine
+                        label="xG par match"
+                        value={profile.attack.metrics.find(m => m.key === "xg")?.display ?? "—"}
+                        rank={profile.attack.metrics.find(m => m.key === "xg")?.rank}
+                        total={profile.attack.rankTotal}
+                      />
+                    )}
+                    {/* Buts marqués par match */}
+                    <StatLine
+                      label="Buts marqués/m"
+                      value={`${profile.standing.gp > 0 ? (profile.standing.gf / profile.standing.gp).toFixed(2).replace(".", ",") : "—"}`}
+                    />
+                    {/* Buts encaissés par match */}
+                    <StatLine
+                      label="Buts encaissés/m"
+                      value={`${profile.standing.gp > 0 ? (profile.standing.ga / profile.standing.gp).toFixed(2).replace(".", ",") : "—"}`}
+                    />
+                    {/* Différence de buts par match */}
+                    <StatLine
+                      label="Différence/m"
+                      value={`${profile.standing.gp > 0 ? ((profile.standing.gf - profile.standing.ga) / profile.standing.gp).toFixed(2).replace(".", ",") : "—"}`}
+                    />
+                    {/* Taux de victoire */}
+                    <StatLine
+                      label="Taux victoire"
+                      value={`${profile.standing.gp > 0 ? Math.round((profile.standing.wins / profile.standing.gp) * 100) : "—"} %`}
+                    />
+                    {/* Taux de clean sheets (approximation) */}
+                    <StatLine
+                      label="Clean sheets"
+                      value={`${profile.defense.metrics.find(m => m.key === "cs")?.display ?? "—"}`}
+                    />
+                    {/* Buts par match (total) */}
+                    <StatLine
+                      label="Buts totaux/m"
+                      value={`${profile.standing.gp > 0 ? ((profile.standing.gf + profile.standing.ga) / profile.standing.gp).toFixed(2).replace(".", ",") : "—"}`}
+                    />
+                    {/* Over 1.5 % */}
+                    <StatLine
+                      label="Over 1,5 buts"
+                      value={profile.attack.metrics.find(m => m.key === "o15")?.display ?? "—"}
+                    />
+                    {/* Under 3.5 % */}
+                    <StatLine
+                      label="Under 3,5 buts"
+                      value={profile.defense.metrics.find(m => m.key === "u35")?.display ?? "—"}
+                    />
+                    {/* BTTS % */}
+                    <StatLine
+                      label="Les 2 marquent"
+                      value={profile.attack.metrics.find(m => m.key === "btts")?.display ?? "—"}
+                    />
+                  </div>
+                  <p className="mt-3 text-[10px] text-muted-foreground italic">
+                    Sources : FBref, BSD, StatsBomb. Metrics calculées selon les standards académiques (xG, SCA, PPDA).
+                  </p>
+                </SectionCard>
+
                 {/* Méta-données */}
                 <SectionCard title="Contexte" icon="ℹ️">
                   <div className="divide-y divide-border/30">
