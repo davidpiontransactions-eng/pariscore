@@ -170,6 +170,13 @@ async function syncCompetition(slug: string): Promise<void> {
   if (!def) return;
   const cs = getCompState(slug);
 
+  // Garde-fou : sans mapping ESPN (ex. Pro D2 : espnSport/espnLeagueId vides),
+  // aucun appel — sinon URL `sports///scoreboard` → 500 en boucle à chaque sync.
+  if (!def.espnSport || !def.espnLeagueId) {
+    cs.degraded = true;
+    return;
+  }
+
   const futureDays = def.lookaheadDays ?? FUTURE_DAYS;
   const windows = buildWindows(HISTORY_MONTHS, futureDays);
   const collected: RugbyMatch[] = [];
