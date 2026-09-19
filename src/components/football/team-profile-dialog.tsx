@@ -200,6 +200,112 @@ function PowerBlock({ title, score, rank, rankTotal, metrics, color }: {
   );
 }
 
+/* ─── Composant : Header stade avec silhouettes ─── */
+function StadiumHeader({ team, venueLabel }: { team: string; venueLabel: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-t-xl">
+      {/* Fond stade SVG */}
+      <div className="absolute inset-0">
+        <svg viewBox="0 0 800 200" className="h-full w-full" preserveAspectRatio="xMidYMid slice">
+          {/* Gradient ciel */}
+          <defs>
+            <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#0c4a6e" stopOpacity="0.9" />
+              <stop offset="50%" stopColor="#164e63" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0.95" />
+            </linearGradient>
+            <linearGradient id="field" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#15803d" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#166534" stopOpacity="0.9" />
+            </linearGradient>
+            {/* Flou lumineux projecteurs */}
+            <filter id="blur">
+              <feGaussianBlur stdDeviation="20" />
+            </filter>
+          </defs>
+
+          {/* Ciel nocturne */}
+          <rect width="800" height="200" fill="url(#sky)" />
+
+          {/* Projecteurs (lumières) */}
+          <circle cx="200" cy="30" r="60" fill="#fef08a" opacity="0.15" filter="url(#blur)" />
+          <circle cx="600" cy="30" r="60" fill="#fef08a" opacity="0.15" filter="url(#blur)" />
+          <circle cx="400" cy="20" r="80" fill="#fef08a" opacity="0.1" filter="url(#blur)" />
+
+          {/* Terrain */}
+          <rect x="50" y="120" width="700" height="80" rx="4" fill="url(#field)" />
+
+          {/* Lignes du terrain */}
+          <rect x="50" y="120" width="700" height="80" rx="4" fill="none" stroke="#fff" strokeWidth="1.5" opacity="0.4" />
+          <line x1="400" y1="120" x2="400" y2="200" stroke="#fff" strokeWidth="1" opacity="0.3" />
+          <circle cx="400" cy="160" r="25" fill="none" stroke="#fff" strokeWidth="1" opacity="0.3" />
+
+          {/* Surface de réparation */}
+          <rect x="50" y="140" width="80" height="60" fill="none" stroke="#fff" strokeWidth="1" opacity="0.25" />
+          <rect x="670" y="140" width="80" height="60" fill="none" stroke="#fff" strokeWidth="1" opacity="0.25" />
+
+          {/* Silhouettes joueurs */}
+          {/* Joueur 1 — attaquant */}
+          <g transform="translate(320, 135)" opacity="0.5">
+            <circle cx="0" cy="0" r="5" fill="#fef9c3" />
+            <line x1="0" y1="5" x2="0" y2="20" stroke="#fef9c3" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="-8" y2="18" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="8" y2="18" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="-6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+          </g>
+
+          {/* Joueur 2 — défenseur */}
+          <g transform="translate(480, 140)" opacity="0.4">
+            <circle cx="0" cy="0" r="5" fill="#fef9c3" />
+            <line x1="0" y1="5" x2="0" y2="20" stroke="#fef9c3" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="-8" y2="18" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="8" y2="18" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="-6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+          </g>
+
+          {/* Joueur 3 — gardien */}
+          <g transform="translate(100, 150)" opacity="0.35">
+            <circle cx="0" cy="0" r="5" fill="#fef9c3" />
+            <line x1="0" y1="5" x2="0" y2="20" stroke="#fef9c3" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="-10" y2="14" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="10" x2="10" y2="14" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="-6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="20" x2="6" y2="30" stroke="#fef9c3" strokeWidth="2" strokeLinecap="round" />
+          </g>
+
+          {/* Ballon */}
+          <circle cx="350" cy="155" r="4" fill="#fff" opacity="0.6" />
+
+          {/* Tribunes (silhouettes spectateurs) */}
+          <g opacity="0.15">
+            {[...Array(20)].map((_, i) => (
+              <circle key={i} cx={60 + i * 35} cy={100 + Math.sin(i * 0.8) * 8} r="3" fill="#fef9c3" />
+            ))}
+          </g>
+        </svg>
+      </div>
+
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+
+      {/* Contenu */}
+      <div className="relative z-10 px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 text-primary shadow-lg">
+            <span className="text-xl">⚽</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-white drop-shadow-lg">{team}</h2>
+            <p className="text-xs font-medium text-white/80 drop-shadow">{venueLabel}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Composant principal ─── */
 export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onOpenChange }: Props) {
   const [profile, setProfile] = useState<TeamProfile | null>(null);
@@ -262,12 +368,12 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border/50 bg-background p-0">
+      <DialogContent className="max-w-md border-border/50 bg-background p-0 overflow-hidden">
+        {/* Header stade avec silhouettes */}
+        <StadiumHeader team={team ?? "Équipe"} venueLabel={venueLabel} />
+
         <DialogHeader className="border-b border-border/50 px-6 py-4">
           <DialogTitle className="flex items-center gap-3 text-lg font-bold">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <span className="text-lg">⚽</span>
-            </div>
             <div>
               <div className="font-black">{team ?? "Équipe"}</div>
               <div className="text-xs font-normal text-muted-foreground">{venueLabel}</div>
