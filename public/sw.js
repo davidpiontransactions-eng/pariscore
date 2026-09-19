@@ -19,7 +19,7 @@
 // stale qui référencent mode-toggle.tsx (supprimé). Le cache-first SW
 // servait encore l'ancien bundle → erreur "module factory not available".
 
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 const STATIC_CACHE = `setpoint-static-${CACHE_VERSION}`;
 const API_CACHE = `setpoint-api-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
