@@ -111,15 +111,15 @@ const pct1 = (v: number) => `${v.toFixed(1).replace(".", ",")} %`;
 const int0 = (v: number) => Math.round(v).toLocaleString("fr-FR");
 
 export const TENNIS_STRATEGY_DEFS: readonly TennisStrategyDef[] = [
-  { key: "surfaceEloGap", label: "Écart Élo surface (≥ 100)", emoji: "◆", threshold: 100, format: int0 },
-  { key: "momentum", label: "Momentum (≥ 4 victoires / 5)", emoji: "▲", threshold: 4, format: (v) => `${Math.round(v)}/5` },
-  { key: "serveHold", label: "Force service (hold ≥ 80 %)", emoji: "●", threshold: 80, format: pct1 },
-  { key: "returnEfficacy", label: "Efficacité retour", emoji: "◀", threshold: 0, format: pct1 },
-  { key: "fatigue", label: "Adversaire en fatigue (7 j)", emoji: "▽", threshold: 0, format: (v) => `${Math.round(v)} match(s) chargé(s)` },
-  { key: "underdogValue", label: "Value outsider (≥ 15 pts)", emoji: "◇", threshold: 15, format: (v) => `+${v.toFixed(1).replace(".", ",")} pts` },
-  { key: "over215", label: "Over 21,5 jeux (≥ 60 %)", emoji: "■", threshold: 60, format: pct1 },
-  { key: "under215", label: "Under 21,5 jeux", emoji: "□", threshold: 0, format: pct1 },
-  { key: "favorite20", label: "Favori 2-0 (≥ 70 %)", emoji: "★", threshold: 70, format: pct1 },
+  { key: "surfaceEloGap", label: "Écart Élo surface (≥ 100)", emoji: "", threshold: 100, format: int0 },
+  { key: "momentum", label: "Momentum (≥ 4 victoires / 5)", emoji: "", threshold: 4, format: (v) => `${Math.round(v)}/5` },
+  { key: "serveHold", label: "Force service (hold ≥ 80 %)", emoji: "", threshold: 80, format: pct1 },
+  { key: "returnEfficacy", label: "Efficacité retour", emoji: "", threshold: 0, format: pct1 },
+  { key: "fatigue", label: "Adversaire en fatigue (7 j)", emoji: "", threshold: 0, format: (v) => `${Math.round(v)} match(s) chargé(s)` },
+  { key: "underdogValue", label: "Value outsider (≥ 15 pts)", emoji: "", threshold: 15, format: (v) => `+${v.toFixed(1).replace(".", ",")} pts` },
+  { key: "over215", label: "Over 21,5 jeux (≥ 60 %)", emoji: "", threshold: 60, format: pct1 },
+  { key: "under215", label: "Under 21,5 jeux", emoji: "", threshold: 0, format: pct1 },
+  { key: "favorite20", label: "Favori 2-0 (≥ 70 %)", emoji: "", threshold: 70, format: pct1 },
 ] as const;
 
 

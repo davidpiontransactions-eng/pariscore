@@ -371,7 +371,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             <SelectContent>
               {TENNIS_BET_TYPES.filter((b) => b.mode === mode).map((b) => (
                 <SelectItem key={b.key} value={b.key} className="text-xs">
-                  <span aria-hidden>{b.emoji}</span> {b.label}
+                  {b.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -436,7 +436,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             <SelectContent>
               {TENNIS_SURFACES.map((s) => (
                 <SelectItem key={s.key} value={s.key} className="text-xs">
-                  <span aria-hidden>{s.emoji}</span> {s.label}
+                  {s.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -456,7 +456,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             <SelectContent>
               {TENNIS_TOURNAMENT_CATEGORIES.map((c) => (
                 <SelectItem key={c.key} value={c.key} className="text-xs">
-                  <span aria-hidden>{c.emoji}</span> {c.label}
+                  {c.label}
                 </SelectItem>
               ))}
             </SelectContent>
