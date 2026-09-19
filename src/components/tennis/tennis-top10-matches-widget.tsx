@@ -20,8 +20,14 @@ import {
   extractTournaments,
   filterByTournament,
   filterByTimeWindow,
+  filterBySurface,
+  filterByTournamentCategory,
   TENNIS_TIME_WINDOWS,
+  TENNIS_SURFACES,
+  TENNIS_TOURNAMENT_CATEGORIES,
   type TennisTimeWindow,
+  type TennisSurface,
+  type TennisTournamentCategory,
 } from "@/lib/tennis-filters";
 import {
   TopStrategiesTable,
@@ -86,18 +92,24 @@ function toTableRows(
 }
 
 
-/** Lit strat/win/tournament depuis l'URL pour le deep-link partageable. */
+/** Lit strat/win/tournament/surface/tourCat depuis l'URL pour le deep-link. */
 function readInitialParams(): {
   strat: TennisStrategyKey;
   win: WinKey;
   tournament: string | null;
   timeWin: TennisTimeWindow;
+  surface: TennisSurface;
+  tourCat: TennisTournamentCategory;
+  minEdge: number;
 } {
   const fallback = {
     strat: "surfaceEloGap" as TennisStrategyKey,
     win: "all" as WinKey,
     tournament: null as string | null,
     timeWin: "all" as TennisTimeWindow,
+    surface: "all" as TennisSurface,
+    tourCat: "all" as TennisTournamentCategory,
+    minEdge: 0,
   };
   if (typeof window === "undefined") return fallback;
   const sp = new URLSearchParams(window.location.search);
@@ -105,11 +117,17 @@ function readInitialParams(): {
   const w = sp.get("win");
   const t = sp.get("tournament");
   const tw = sp.get("timeWin");
+  const sf = sp.get("surface");
+  const tc = sp.get("tourCat");
+  const me = sp.get("minEdge");
   return {
     strat: TENNIS_STRATEGY_DEFS.some((d) => d.key === s) ? (s as TennisStrategyKey) : fallback.strat,
     win: w === "today" || w === "tomorrow" ? w : "all",
     tournament: t || null,
     timeWin: (["all", "jour", "48h", "semaine"] as string[]).includes(tw ?? "") ? (tw as TennisTimeWindow) : fallback.timeWin,
+    surface: (["all", "hard", "clay", "grass", "indoor"] as string[]).includes(sf ?? "") ? (sf as TennisSurface) : fallback.surface,
+    tourCat: (["all", "grand-slam", "atp-1000", "atp-500", "atp-250", "wta", "challenger", "itf"] as string[]).includes(tc ?? "") ? (tc as TennisTournamentCategory) : fallback.tourCat,
+    minEdge: me != null && !isNaN(Number(me)) ? Number(me) : fallback.minEdge,
   };
 }
 
@@ -128,6 +146,9 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const [win, setWin] = useState<WinKey>(initial.win);
   const [tournament, setTournament] = useState<string | null>(initial.tournament);
   const [timeWin, setTimeWin] = useState<TennisTimeWindow>(initial.timeWin);
+  const [surface, setSurface] = useState<TennisSurface>(initial.surface);
+  const [tourCat, setTourCat] = useState<TennisTournamentCategory>(initial.tourCat);
+  const [minEdge, setMinEdge] = useState<number>(initial.minEdge);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [overMap, setOverMap] = useState<Map<string, number>>(new Map());
@@ -176,16 +197,19 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     return () => ac.abort();
   }, [strat, win, onEntries]);
 
-  // Deep-link : reflète strat/win/tournament/timeWin dans l'URL (partageable).
+  // Deep-link : reflète tous les filtres dans l'URL (partageable).
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     sp.set("strat", strat);
     sp.set("win", win);
     if (tournament) sp.set("tournament", tournament); else sp.delete("tournament");
     if (timeWin !== "all") sp.set("timeWin", timeWin); else sp.delete("timeWin");
+    if (surface !== "all") sp.set("surface", surface); else sp.delete("surface");
+    if (tourCat !== "all") sp.set("tourCat", tourCat); else sp.delete("tourCat");
+    if (minEdge > 0) sp.set("minEdge", String(minEdge)); else sp.delete("minEdge");
     const qs = sp.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [strat, win, tournament, timeWin]);
+  }, [strat, win, tournament, timeWin, surface, tourCat, minEdge]);
 
   const activeDef = useMemo(
     () => TENNIS_STRATEGY_DEFS.find((d) => d.key === strat)!,
@@ -198,46 +222,71 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     return extractTournaments(data.matches);
   }, [data]);
 
-  // Rows bruts depuis l'API (tous les matchs qualifiés pour la stratégie).
-  const rawRows = useMemo(() => {
+  // Filtres appliqués côté client : tournoi + fenêtre temporelle + surface + catégorie.
+  // Edge filter est appliqué sur les entries brutes AVANT toTableRows.
+  const filteredEntries = useMemo(() => {
     if (!data?.strategies) return [];
-    const entries = data.strategies[strat] ?? [];
-    return toTableRows(entries, strat, overMap);
-  }, [data, strat, overMap]);
+    let entries = data.strategies[strat] ?? [];
 
-  // Filtres appliqués côté client : tournoi + fenêtre temporelle.
+    // Filtrer par edge minimum (Hubáček 2020 : decorrelation from market).
+    if (minEdge > 0) {
+      entries = entries.filter((e) => (e.probPick ?? 0) >= minEdge * 100);
+    }
+
+    return entries;
+  }, [data, strat, minEdge]);
+
+  const rawRows = useMemo(() => {
+    return toTableRows(filteredEntries, strat, overMap);
+  }, [filteredEntries, strat, overMap]);
+
   const rows = useMemo(() => {
-    // D'abord filtrer par tournoi (sur les matchs API pour extraire les scheduledAt).
     let filtered = rawRows;
+
+    // 1. Filtrer par tournoi.
     if (tournament && data?.matches) {
-      const matchScheduled = new Map<string, string>();
-      for (const m of data.matches) {
-        matchScheduled.set(m.matchId, m.scheduledAt);
-      }
       const matchTournament = new Map<string, string>();
-      for (const m of data.matches) {
-        matchTournament.set(m.matchId, m.tournament);
-      }
-      filtered = rawRows.filter((r) => {
+      for (const m of data.matches) matchTournament.set(m.matchId, m.tournament);
+      filtered = filtered.filter((r) => {
         const t = matchTournament.get(r.matchId);
         return !t || t === tournament;
       });
     }
-    // Ensuite filtrer par fenêtre temporelle.
+
+    // 2. Filtrer par fenêtre temporelle.
     if (timeWin !== "all") {
       const matchScheduled = new Map<string, string>();
       if (data?.matches) {
-        for (const m of data.matches) {
-          matchScheduled.set(m.matchId, m.scheduledAt);
-        }
+        for (const m of data.matches) matchScheduled.set(m.matchId, m.scheduledAt);
       }
       filtered = filterByTimeWindow(
         filtered.map((r) => ({ ...r, scheduledAt: matchScheduled.get(r.matchId) ?? r.kickoff })),
         timeWin,
       );
     }
+
+    // 3. Filtrer par surface (Gao 2019 : serve strength by surface).
+    if (surface !== "all" && data?.matches) {
+      const matchSurface = new Map<string, string>();
+      for (const m of data.matches) matchSurface.set(m.matchId, m.surface ?? "");
+      filtered = filterBySurface(
+        filtered.map((r) => ({ ...r, surface: matchSurface.get(r.matchId) ?? "" })),
+        surface,
+      );
+    }
+
+    // 4. Filtrer par catégorie de tournoi (Clegg 2023 : competitive matches).
+    if (tourCat !== "all" && data?.matches) {
+      const matchTournament = new Map<string, string>();
+      for (const m of data.matches) matchTournament.set(m.matchId, m.tournament);
+      filtered = filterByTournamentCategory(
+        filtered.map((r) => ({ ...r, tournament: matchTournament.get(r.matchId) ?? "" })),
+        tourCat,
+      );
+    }
+
     return filtered;
-  }, [rawRows, tournament, timeWin, data]);
+  }, [rawRows, tournament, timeWin, surface, tourCat, data]);
 
   const handleTournamentChange = useCallback((v: string) => setTournament(v === "__all__" ? null : v), []);
   const handleStratChange = useCallback((v: string) => {
@@ -245,6 +294,8 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     setHighlightId(null);
   }, []);
   const handleTimeWinChange = useCallback((w: TennisTimeWindow) => () => setTimeWin(w), []);
+  const handleSurfaceChange = useCallback((v: string) => setSurface(v as TennisSurface), []);
+  const handleTourCatChange = useCallback((v: string) => setTourCat(v as TennisTournamentCategory), []);
 
   return (
     <section
@@ -292,6 +343,46 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
               {TENNIS_STRATEGY_DEFS.map((d) => (
                 <SelectItem key={d.key} value={d.key} className="text-xs">
                   <span aria-hidden>{d.emoji}</span> {d.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Sélecteur de surface (Gao 2019) */}
+          <Select
+            value={surface}
+            onValueChange={handleSurfaceChange}
+          >
+            <SelectTrigger
+              className="h-9 w-[120px] text-xs"
+              aria-label="Surface"
+            >
+              <SelectValue placeholder="Surface" />
+            </SelectTrigger>
+            <SelectContent>
+              {TENNIS_SURFACES.map((s) => (
+                <SelectItem key={s.key} value={s.key} className="text-xs">
+                  <span aria-hidden>{s.emoji}</span> {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Sélecteur catégorie tournoi (Clegg 2023) */}
+          <Select
+            value={tourCat}
+            onValueChange={handleTourCatChange}
+          >
+            <SelectTrigger
+              className="h-9 w-[130px] text-xs"
+              aria-label="Catégorie tournoi"
+            >
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              {TENNIS_TOURNAMENT_CATEGORIES.map((c) => (
+                <SelectItem key={c.key} value={c.key} className="text-xs">
+                  <span aria-hidden>{c.emoji}</span> {c.label}
                 </SelectItem>
               ))}
             </SelectContent>

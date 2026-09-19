@@ -16,6 +16,7 @@ export type MarketCategory =
   | "set-handicap"
   | "game-handicap"
   | "total-games"
+  | "total-games-per-set"
   | "aces"
   | "tiebreak"
   | "first-set"
@@ -82,6 +83,20 @@ export const TENNIS_MARKETS: TennisMarket[] = [
   // --- Player Total Games ---
   { id: "player-a-over-12.5", label: "A Over 12.5 jeux", category: "total-games", compute: "poisson", params: { player: "A", threshold: 12.5 } },
   { id: "player-b-over-12.5", label: "B Over 12.5 jeux", category: "total-games", compute: "poisson", params: { player: "B", threshold: 12.5 } },
+
+  // --- Total Games Per Set (1xBet) ---
+  // Probabilité que le set N ait ≥ threshold jeux. Modèle Markov conditionnel :
+  // P(set_jeux ≥ k) = Σ_{i+j=k} P(set score i-j) pour tous les scores atteignables.
+  { id: "set-over-6.5", label: "Set Over 6.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 6.5 } },
+  { id: "set-over-7.5", label: "Set Over 7.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 7.5 } },
+  { id: "set-over-8.5", label: "Set Over 8.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 8.5 } },
+  { id: "set-over-9.5", label: "Set Over 9.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 9.5 } },
+  { id: "set-over-10.5", label: "Set Over 10.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 10.5 } },
+  { id: "set-under-6.5", label: "Set Under 6.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 6.5 } },
+  { id: "set-under-7.5", label: "Set Under 7.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 7.5 } },
+  { id: "set-under-8.5", label: "Set Under 8.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 8.5 } },
+  { id: "set-under-9.5", label: "Set Under 9.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 9.5 } },
+  { id: "set-under-10.5", label: "Set Under 10.5 jeux", category: "total-games-per-set", compute: "markov", params: { threshold: 10.5 } },
 
   // --- Aces ---
   { id: "aces-over-9.5", label: "Total aces Over 9.5", category: "aces", compute: "skellam", params: { threshold: 9.5 } },
