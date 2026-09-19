@@ -218,14 +218,35 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
       acceptedPairs.push([nameTokens(a), nameTokens(b)]);
     };
     const cutoff = Date.now() - 30 * 60_000;
-    const extra = oddsMatches.filter((m: TennisMatch) => {
-      if (!m?.playerA?.name || !m?.playerB?.name) return false;
-      if (isDoubles(m.playerA.name, m.playerB.name)) return false;
-      if (Number.isFinite(Date.parse(m.scheduledAt)) && Date.parse(m.scheduledAt) < cutoff) return false;
-      if (isDupPair(m.playerA.name, m.playerB.name)) return false;
+    const extra: TennisMatch[] = [];
+    // Index Odds API par paire de tokens pour merger les cotes dans BSD.
+    const oddsByPair = new Map<string, TennisMatch>();
+    for (const m of oddsMatches) {
+      if (!m?.playerA?.name || !m?.playerB?.name) continue;
+      if (isDoubles(m.playerA.name, m.playerB.name)) continue;
+      if (Number.isFinite(Date.parse(m.scheduledAt)) && Date.parse(m.scheduledAt) < cutoff) continue;
+      const key = [...nameTokens(m.playerA.name)].sort().join(",") + "|" + [...nameTokens(m.playerB.name)].sort().join(",");
+      oddsByPair.set(key, m);
+    }
+    // Merger les cotes Odds API dans les matchs BSD existants.
+    for (const m of bsdMatches) {
+      if (!m?.playerA?.name || !m?.playerB?.name) continue;
+      const key = [...nameTokens(m.playerA.name)].sort().join(",") + "|" + [...nameTokens(m.playerB.name)].sort().join(",");
+      const oddsMatch = oddsByPair.get(key);
+      if (oddsMatch?.odds && !m.odds) {
+        m.odds = oddsMatch.odds;
+        m.allOdds = oddsMatch.allOdds;
+      }
+    }
+    // Ajouter les matchs Odds API qui n'existent PAS dans BSD.
+    for (const m of oddsMatches) {
+      if (!m?.playerA?.name || !m?.playerB?.name) continue;
+      if (isDoubles(m.playerA.name, m.playerB.name)) continue;
+      if (Number.isFinite(Date.parse(m.scheduledAt)) && Date.parse(m.scheduledAt) < cutoff) continue;
+      if (isDupPair(m.playerA.name, m.playerB.name)) continue;
       acceptPair(m.playerA.name, m.playerB.name);
-      return true;
-    });
+      extra.push(m);
+    }
     const matches = [...bsdMatches, ...extra];
     // Routine matinale Flashscore (fichier JSON) — normalisée puis
     // dédupliquée par chevauchement de tokens (noms courts "Tiafoe F.").
