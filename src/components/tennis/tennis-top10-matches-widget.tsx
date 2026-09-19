@@ -381,21 +381,22 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
 
   // Filtres appliqués côté client : tournoi + fenêtre temporelle + surface + catégorie.
   // Edge filter est appliqué sur les entries brutes AVANT toTableRows.
+  // Pour over-games, on ne filtre PAS par minEdge (le calcul Barnett-Clarke est indépendant).
   const filteredEntries = useMemo(() => {
     if (!data?.strategies) return [];
     let entries = data.strategies[strat] ?? [];
 
-    // Filtrer par edge minimum (Hubáček 2020 : decorrelation from market).
-    if (minEdge > 0) {
+    // Filtrer par edge minimum UNIQUEMENT pour les stratégies (pas pour over-games).
+    if (minEdge > 0 && betType !== "over-games") {
       entries = entries.filter((e) => (e.probPick ?? 0) >= minEdge * 100);
     }
 
     return entries;
-  }, [data, strat, minEdge]);
+  }, [data, strat, minEdge, betType]);
 
   const rawRows = useMemo(() => {
     return toTableRows(filteredEntries, strat, overMap, betType, gameLine, matchGameLineBo3, matchGameLineBo5, matchFormat);
-  }, [filteredEntries, strat, overMap]);
+  }, [filteredEntries, strat, overMap, betType, gameLine, matchGameLineBo3, matchGameLineBo5, matchFormat]);
 
   const rows = useMemo(() => {
     let filtered = rawRows;
