@@ -107,7 +107,7 @@ function toTableRows(
           eloSurface: e.playerA.value,
           holdPct: holdAVal / 100,
           breakPct: retAVal / 100,
-          formL5: 0, // pas disponible dans l'entrée
+          formL5: 0,
           h2hWins: 0,
           h2hTotal: 0,
           matchesLast7d: 0,
@@ -125,14 +125,21 @@ function toTableRows(
           acesPerMatch: 0,
         };
         const ctx: MatchContext = {
-          surface: "hard", // TODO: récupérer la surface du match
+          surface: "hard",
           tournamentCategory: e.tournament,
           round: e.round ?? "",
           isBo5: false,
         };
         const winProb = computeWinProbability(playerAStats, playerBStats, ctx);
         const winnerName = winProb.pick === "A" ? e.playerA.shortName : e.playerB.shortName;
-        display = `${winnerName} ${winProb.probA >= winProb.probB ? winProb.probA : winProb.probB} %`;
+        const probPct = winProb.probA >= winProb.probB ? winProb.probA : winProb.probB;
+        // Affiche cotes si disponibles, sinon proba modèle.
+        if (e.oddsA != null && e.oddsB != null) {
+          const coteWinner = winProb.pick === "A" ? e.oddsA : e.oddsB;
+          display = `${winnerName} ${probPct}% · cote ${coteWinner.toFixed(2)}`;
+        } else {
+          display = `${winnerName} ${probPct}%`;
+        }
         break;
       }
       case "over-games":
