@@ -311,10 +311,6 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   }, [rawRows, tournament, timeWin, surface, tourCat, data]);
 
   const handleTournamentChange = useCallback((v: string) => setTournament(v === "__all__" ? null : v), []);
-  const handleStratChange = useCallback((v: string) => {
-    setStrat(v as TennisStrategyKey);
-    setHighlightId(null);
-  }, []);
   const handleTimeWinChange = useCallback((w: TennisTimeWindow) => () => setTimeWin(w), []);
   const handleSurfaceChange = useCallback((v: string) => setSurface(v as TennisSurface), []);
   const handleTourCatChange = useCallback((v: string) => setTourCat(v as TennisTournamentCategory), []);
@@ -333,7 +329,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     >
       <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <h2 className="text-[15px] font-semibold" style={{ color: C.headerText }}>
-          Top 10 matchs par stratégie
+          Top 10 matchs
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {/* Toggle Prematch / Live */}
@@ -421,23 +417,6 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
               {tournaments.map((t) => (
                 <SelectItem key={t} value={t} className="text-xs">
                   {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Sélecteur de stratégie */}
-          <Select
-            value={strat}
-            onValueChange={handleStratChange}
-          >
-            <SelectTrigger className="h-9 w-[200px] text-xs">
-              <SelectValue placeholder="Stratégie" />
-            </SelectTrigger>
-            <SelectContent>
-              {TENNIS_STRATEGY_DEFS.map((d) => (
-                <SelectItem key={d.key} value={d.key} className="text-xs">
-                  <span aria-hidden>{d.emoji}</span> {d.label}
                 </SelectItem>
               ))}
             </SelectContent>
