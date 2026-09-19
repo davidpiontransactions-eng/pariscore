@@ -104,6 +104,43 @@ function formatValue(value: number, strategy: RugbyStrategyKey): string {
   }
 }
 
+/** Pill over/under — ligne optimale ~60% proba */
+function OverUnderPill({ row, strategy }: { row: RugbyStrategyMatch; strategy: RugbyStrategyKey }) {
+  if (strategy === "over415" && row.bestOverLine) {
+    const { line, prob } = row.bestOverLine;
+    return (
+      <span
+        className="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
+        style={{
+          background: "rgba(255, 109, 0, 0.08)",
+          color: "#FF6D00",
+          borderColor: "rgba(255, 109, 0, 0.20)",
+        }}
+      >
+        🔥 Over {line.toFixed(1)}
+        <span className="font-medium opacity-75">→ {(prob * 100).toFixed(0)}%</span>
+      </span>
+    );
+  }
+  if (strategy === "under515" && row.bestUnderLine) {
+    const { line, prob } = row.bestUnderLine;
+    return (
+      <span
+        className="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold whitespace-nowrap"
+        style={{
+          background: "rgba(96, 165, 250, 0.08)",
+          color: "#3B82F6",
+          borderColor: "rgba(96, 165, 250, 0.20)",
+        }}
+      >
+        ❄️ Under {line.toFixed(1)}
+        <span className="font-medium opacity-75">→ {(prob * 100).toFixed(0)}%</span>
+      </span>
+    );
+  }
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
 /* ------------------------------------------------------------------ */
@@ -216,14 +253,15 @@ export function RugbyTopStrategiesTable({ rows, strategy, format, highlightId }:
                 </div>
               </div>
 
-              {/* Col 2 : Valeur */}
-              <div className="flex items-center justify-end px-3 md:justify-center">
+              {/* Col 2 : Valeur + pill over/under */}
+              <div className="flex items-center justify-end gap-1.5 px-3 md:justify-center">
                 <span
                   className="text-[14px] font-bold tabular-nums"
                   style={{ color: C.score }}
                 >
                   {format(row.value)}
                 </span>
+                <OverUnderPill row={row} strategy={strategy} />
               </div>
 
               {/* Col 3 : Confiance badge */}

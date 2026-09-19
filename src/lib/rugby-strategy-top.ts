@@ -47,6 +47,10 @@ export type RugbyStrategyMatch = {
   pick: string;
   /** Données de prédiction brutes. */
   prediction: RugbyPrediction;
+  /** Ligne over optimale (proba la plus proche de 60%). */
+  bestOverLine: { line: number; prob: number } | null;
+  /** Ligne under optimale (proba la plus proche de 60%). */
+  bestUnderLine: { line: number; prob: number } | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -89,6 +93,51 @@ function findOverUnderLine(lines: OverUnderLine[], target: number): OverUnderLin
     }
   }
   return best;
+}
+
+/**
+ * Trouve la ligne over/under dont la probabilité est la plus proche de 60%.
+ * Objectif : afficher un pari "value" — proba ~60% = cote implicite ~1.67,
+ * seuil classique de value betting (ni trop sûr ni trop risqué).
+ *
+ * Cherche parmi toutes les lignes disponibles (dynamiques + classiques).
+ * Priorité : proba >= 55% ET <= 68% (fenêtre de value), sinon la plus proche de 60%.
+ */
+function findBestLineNear60(
+  lines: OverUnderLine[],
+  side: "over" | "under",
+): { line: number; prob: number } | null {
+  if (!lines.length) return null;
+
+  const TARGET = 0.60;
+  const MIN_OK = 0.55;
+  const MAX_OK = 0.68;
+
+  // Chercher dans la fenêtre "value" d'abord
+  let bestInWindow: { line: number; prob: number } | null = null;
+  let bestDiffInWindow = Infinity;
+
+  // Sinon, chercher le plus proche de 60%
+  let bestOverall: { line: number; prob: number } | null = null;
+  let bestDiffOverall = Infinity;
+
+  for (const l of lines) {
+    const prob = side === "over" ? l.over : l.under;
+    const diff = Math.abs(prob - TARGET);
+
+    if (prob >= MIN_OK && prob <= MAX_OK) {
+      if (diff < bestDiffInWindow) {
+        bestDiffInWindow = diff;
+        bestInWindow = { line: l.line, prob };
+      }
+    }
+    if (diff < bestDiffOverall) {
+      bestDiffOverall = diff;
+      bestOverall = { line: l.line, prob };
+    }
+  }
+
+  return bestInWindow ?? bestOverall;
 }
 
 function scoreRugbyMatch(
@@ -168,6 +217,12 @@ export function computeRugbyTopStrategies(
   for (const pm of matches) {
     const result = scoreRugbyMatch(pm, strategy);
     if (!result) continue;
+
+    // Calculer les lignes over/under optimales (~60% proba) pour CE match
+    const ouLines = pm.prediction?.overUnderLines ?? [];
+    const bestOverLine = findBestLineNear60(ouLines, "over");
+    const bestUnderLine = findBestLineNear60(ouLines, "under");
+
     scored.push({
       matchId: pm.match.id,
       competition: pm.match.competitionSlug,
@@ -187,6 +242,8 @@ export function computeRugbyTopStrategies(
       probPct: result.probPct,
       pick: result.pick,
       prediction: pm.prediction!,
+      bestOverLine,
+      bestUnderLine,
     });
   }
 
