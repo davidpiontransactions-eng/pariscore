@@ -163,8 +163,10 @@ export function computeFactors(
     const defence = avg > 0 ? row.pa / row.w / avg : 1;
     out.set(teamId, {
       teamId,
-      attack: clamp(attack, 0.25, 2.5),
-      defence: clamp(defence, 0.25, 2.5),
+      // Clamp plus serré pour éviter les lambdas extrêmes (Dixon-Coles calibration)
+      // 0.25→2.5 donnait λ=65 sur les gros écarts → probabilités 100%
+      attack: clamp(attack, 0.45, 1.9),
+      defence: clamp(defence, 0.45, 1.9),
       elo,
     });
   }
@@ -404,12 +406,58 @@ export function modelMatch(input: MatchModelInput): MatchModelResult {
     return { label: b.label, homeProb, awayProb };
   });
 
+  // --- Calibration Dixon-Coles : borner les probabilités extrêmes ---
+  // Quand les lambdas divergent (gros écarts de niveau), le Poisson donne
+  // des probabilités ~100% irréalistes. On applique un shrinkage vers 50%
+  // inspiré de la correction rho de Dixon-Coles (1997).
+  // Plafond : 93% (au-delà, la valeur betting est nulle de toute façon).
+  const MAX_PROB = 0.93;
+  const MIN_PROB = 0.03;
+  let calHome = win;
+  let calAway = loss;
+  let calDraw = draw;
+  if (calHome > MAX_PROB) {
+    const excess = calHome - MAX_PROB;
+    calHome = MAX_PROB;
+    // Redistribuer l'excès sur draw et away proportionnellement
+    const totalOther = calDraw + calAway;
+    if (totalOther > 0) {
+      calDraw += excess * (calDraw / totalOther);
+      calAway += excess * (calAway / totalOther);
+    } else {
+      calDraw += excess * 0.3;
+      calAway += excess * 0.7;
+    }
+  }
+  if (calAway > MAX_PROB) {
+    const excess = calAway - MAX_PROB;
+    calAway = MAX_PROB;
+    const totalOther = calDraw + calHome;
+    if (totalOther > 0) {
+      calDraw += excess * (calDraw / totalOther);
+      calHome += excess * (calHome / totalOther);
+    } else {
+      calDraw += excess * 0.3;
+      calHome += excess * 0.7;
+    }
+  }
+  // Plancher pour éviter les 0% absolus
+  if (calHome < MIN_PROB) calHome = MIN_PROB;
+  if (calAway < MIN_PROB) calAway = MIN_PROB;
+  // Re-normaliser pour que la somme = 1
+  const totalProb = calHome + calDraw + calAway;
+  if (totalProb > 0) {
+    calHome /= totalProb;
+    calDraw /= totalProb;
+    calAway /= totalProb;
+  }
+
   return {
     lambdaHome: lh,
     lambdaAway: la,
-    homeWinProb: win,
-    drawProb: draw,
-    awayWinProb: loss,
+    homeWinProb: calHome,
+    drawProb: calDraw,
+    awayWinProb: calAway,
     expectedHomeScore: expHome,
     expectedAwayScore: expAway,
     expectedMargin,
