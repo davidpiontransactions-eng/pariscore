@@ -209,6 +209,21 @@ export const RUGBY_COMPETITIONS: CompetitionDef[] = [
     featured: false,
     sortOrder: 14,
   },
+  {
+    id: "pro-d2",
+    slug: "pro-d2",
+    espnSport: "",
+    espnLeagueId: "",
+    name: "Pro D2",
+    code: "UNION",
+    country: "France",
+    description:
+      "La seconde division du rugby professionnel français — 16 clubs en lutte pour la montée en Top 14.",
+    format:
+      "16 clubs en double round-robin (30 journées) ; le premier est champion, les 2e-5e jouent les barrages de promotion.",
+    featured: true,
+    sortOrder: 15,
+  },
 ];
 
 /** Index par slug pour accès O(1). */

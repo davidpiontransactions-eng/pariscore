@@ -41,7 +41,7 @@ const COMP_COLORS: Record<string, { color: string; icon: string; country: string
   "currie-cup": { color: "#FFD700", icon: "🏉", country: "Afrique du Sud" },
   "npc": { color: "#000000", icon: "🏉", country: "Nouvelle-Zélande" },
   "major-league-rugby": { color: "#1E3A5F", icon: "🏉", country: "USA" },
-  "test-match": { color: "#8B0000", icon: "🌍", country: "International" },
+  "international-tests": { color: "#8B0000", icon: "🌍", country: "International" },
 };
 
 /* ─── Helpers ─── */

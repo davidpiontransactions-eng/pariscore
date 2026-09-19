@@ -6,6 +6,7 @@ import { isLiveStatus, isImminent } from './types';
 const FEATURED_SLUGS = [
   'six-nations',
   'top-14',
+  'pro-d2',
   'premiership',
   'super-rugby-pacific',
   'united-rugby-championship',
@@ -15,6 +16,7 @@ const FEATURED_SLUGS = [
 const COMP_META: Record<string, { icon: string; color: string; country: string }> = {
   'six-nations':            { icon: '🏉', color: '#006B3F', country: 'Europe' },
   'top-14':                 { icon: '🏉', color: '#003DA5', country: 'France' },
+  'pro-d2':                 { icon: '🏉', color: '#E63946', country: 'France' },
   'premiership':            { icon: '🏉', color: '#C8102E', country: 'England' },
   'super-rugby-pacific':    { icon: '🏉', color: '#1C1C1C', country: 'Oceania' },
   'united-rugby-championship': { icon: '🏉', color: '#003DA5', country: 'Europe & SA' },
@@ -32,6 +34,16 @@ export const rugbyAdapter: SportAdapter = {
     // Fetch en parallèle les compétitions featured
     const results = await Promise.allSettled(
       FEATURED_SLUGS.map(async (slug) => {
+        // Pro D2 : source Idalgo (widget Rugbyrama) + moteur Poisson
+        if (slug === 'pro-d2') {
+          const res = await fetch(`${base}/api/rugby/prod2/predictions`, {
+            next: { revalidate: 60 },
+          });
+          if (!res.ok) return null;
+          const data: any = await res.json();
+          return { slug, matches: data.matches || [] };
+        }
+        // Autres compétitions : ESPN via predictions API
         const res = await fetch(`${base}/api/rugby/predictions?slug=${slug}`, {
           next: { revalidate: 60 },
         });
@@ -45,36 +57,60 @@ export const rugbyAdapter: SportAdapter = {
       if (r.status !== 'fulfilled' || !r.value) continue;
       const { slug, matches: rawMatches } = r.value;
 
-      // Filtrer : scheduled ou live, pas finished, kickoff pas trop ancien
+      // Filtrer : scheduled, live, ou finished récents (score visible)
       const filtered = rawMatches.filter((m: any) => {
         if (!m || !m.match) return false;
         const match = m.match;
-        if (match.status === 'finished') return false;
         const ko = new Date(match.date || 0).getTime();
+        // Matchs terminés : garder ceux des dernières 24h pour afficher le score
+        if (match.status === 'finished') return ko >= nowMs - 24 * 60 * 60_000;
         return match.status === 'scheduled' || match.status === 'inprogress' || isLiveStatus(match.status, 'rugby') || ko >= nowMs - 30 * 60_000;
       });
 
       const meta = COMP_META[slug] || { icon: '🏉', color: '#333', country: '' };
       const mapped = filtered.slice(0, limit).map((m: any) => {
         const match = m.match;
+        const pred = m.prediction;
         const isLive = match.status === 'inprogress' || isLiveStatus(match.status, 'rugby');
-        const imminent = !isLive && isImminent(match.date, match.status);
+        const isFinished = match.status === 'finished';
+        const imminent = !isLive && !isFinished && isImminent(match.date, match.status);
         const score = (match.homeScore != null && match.awayScore != null)
           ? `${match.homeScore} - ${match.awayScore}`
           : undefined;
+
+        // Win probability depuis le moteur Poisson (0-100)
+        const probPct = pred ? Math.round(pred.homeWinProb * 100) : undefined;
+        // Label de confiance basé sur le verdict
+        const confLabel = pred?.verdict === 'backing-home' || pred?.verdict === 'backing-away'
+          ? 'Très Forte'
+          : pred?.verdict?.startsWith('leaning')
+          ? 'Élevée'
+          : pred?.verdict === 'toss-up'
+          ? 'Moyenne'
+          : undefined;
+        const confLevel = pred?.verdict === 'backing-home' || pred?.verdict === 'backing-away'
+          ? 1 as const
+          : pred?.verdict?.startsWith('leaning')
+          ? 2 as const
+          : 3 as const;
 
         return {
           id: `rugby-${match.id}`,
           home: { name: match.home?.name || 'TBD', logo: match.home?.logo || undefined },
           away: { name: match.away?.name || 'TBD', logo: match.away?.logo || undefined },
           kickoff: match.date || '',
-          status: (isLive ? 'live' : 'scheduled') as 'live' | 'scheduled',
+          status: (isLive ? 'live' : isFinished ? 'finished' : 'scheduled') as 'live' | 'scheduled' | 'finished',
           score,
           liveScore: isLive ? { current: score } : undefined,
+          probPct,
+          confLabel,
+          confLevel,
           badge: imminent
             ? { label: 'Imminent', color: '#FF9800' }
             : isLive
             ? { label: 'LIVE', color: '#f44336' }
+            : isFinished
+            ? { label: 'Terminé', color: '#6b7280' }
             : undefined,
         };
       });

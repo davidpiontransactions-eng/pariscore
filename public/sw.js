@@ -14,8 +14,12 @@
 // (Win Predictor) dans la zone live analytique hors Collapsible. Sans ce
 // bump, certains navigateurs servent encore l'ancien bundle (barre cachée
 // dans le Collapsible fermé → invisibilité du Win Predictor prematch/live).
+//
+// HOTFIX 2026-09-17: bump v6 → v7 — force l'invalidation des chunks JS
+// stale qui référencent mode-toggle.tsx (supprimé). Le cache-first SW
+// servait encore l'ancien bundle → erreur "module factory not available".
 
-const CACHE_VERSION = "v6";
+const CACHE_VERSION = "v7";
 const STATIC_CACHE = `setpoint-static-${CACHE_VERSION}`;
 const API_CACHE = `setpoint-api-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";

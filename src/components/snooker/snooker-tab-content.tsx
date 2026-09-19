@@ -90,6 +90,66 @@ const TUTORIALS: Record<MarketKey, { title: string; lines: string[] }> = {
   },
 };
 
+// Explications des metrics joueur (PS / E / W%)
+const METRICS_INFO = {
+  title: "Metrics joueur — PS · E · W%",
+  lines: [
+    "PS — PowerScore (0-100) : force globale. Elo 30 %, Win% 25 %, century rate 20 %, deciders 15 %, break moyen 10 %.",
+    "Couleurs : ≥ 75 excellent, ≥ 60 bon, ≥ 45 moyen, en dessous faible. L'étoile ★ = meilleur PowerScore du match.",
+    "E — rating Elo (base 1500). W% — matchs gagnés en %.",
+  ],
+};
+
+/** Coquille partagée des popups d'explication (tutoriels + metrics). */
+function ExplainPopup({
+  title,
+  lines,
+  label,
+  onClose,
+}: {
+  title: string;
+  lines: string[];
+  label: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+    >
+      <div
+        className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl p-5 sm:mx-4 sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-[14px] font-bold" style={{ color: "#00985f" }}>
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
+          >
+            ✕
+          </button>
+        </div>
+        <ul className="flex flex-col gap-2">
+          {lines.map((line) => (
+            <li key={line.slice(0, 24)} className="text-[12px] leading-relaxed" style={{ color: "#444" }}>
+              {line}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 // Scoring helpers — basé sur les données DB (Elo, WinPct, CenturyRate, DeciderWinPct, AvgBreak)
 function normalize(val: number, min: number, max: number): number {
   if (max === min) return 50;
@@ -313,13 +373,27 @@ function powerScoreColor(score: number): string {
 }
 
 /** Affiche le PowerScore + Elo + Win% sous le nom du joueur. */
-function PowerScoreTag({ player }: { player: ApiPlayer }) {
+function PowerScoreTag({ player, onInfo }: { player: ApiPlayer; onInfo?: () => void }) {
   const score = Math.round(playerScore(player));
   const elo = player.eloRating;
   const winPct = player.winPct != null ? player.winPct.toFixed(1) : "—";
   return (
     <span className={`text-[9px] tabular-nums leading-none ${powerScoreColor(score)}`}>
       PS {score} · E {elo} · W% {winPct}%
+      {onInfo && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            onInfo();
+          }}
+          aria-label="Explications des metrics PS, E, W%"
+          title="Explications des metrics"
+          className="ml-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full border border-current align-middle text-[8px] font-bold opacity-60 hover:opacity-100"
+        >
+          i
+        </button>
+      )}
     </span>
   );
 }
@@ -521,6 +595,8 @@ export function SnookerTabContent() {
   const [videoQuery, setVideoQuery] = useState<string | null>(null);
   // Marché affiché dans le popup tutoriel (null = fermé)
   const [tutorialMarket, setTutorialMarket] = useState<MarketKey | null>(null);
+  // Popup d'explication des metrics joueur (false = fermé)
+  const [showMetricsInfo, setShowMetricsInfo] = useState(false);
   // Match live ouvert dans le popup live (id — les données suivent le refresh SWR)
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
 
@@ -751,15 +827,39 @@ export function SnookerTabContent() {
     return list;
   }, [sorted, calFilter, calDate]);
 
-  /** Groupement par tournoi */
+  /** Groupement par tournoi, trié : live d'abord, puis tranches horaires, meilleurs PS en tête */
   const calGroups = useMemo(() => {
+    const meta = new Map<string, { rank: number; time: number; ps: number }>();
+    for (const m of calFiltered) {
+      const [pa, pb] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
+      meta.set(m.id, {
+        rank: m.status === "live" ? 0 : m.status === "scheduled" ? 1 : 2,
+        time: m.scheduled_at ? new Date(m.scheduled_at).getTime() : 0,
+        ps: Math.max(playerScore(pa), playerScore(pb)),
+      });
+    }
     const groups: Record<string, ApiMatch[]> = {};
     for (const m of calFiltered) {
       const key = m.tournament || "Snooker";
       (groups[key] ??= []).push(m);
     }
+    for (const k of Object.keys(groups)) {
+      groups[k].sort((a, b) => {
+        const ma = meta.get(a.id)!;
+        const mb = meta.get(b.id)!;
+        if (ma.rank !== mb.rank) return ma.rank - mb.rank;
+        if (ma.rank === 2) {
+          // Terminés : récents d'abord, puis PS
+          if (mb.time !== ma.time) return mb.time - ma.time;
+        } else if (ma.time !== mb.time) {
+          // Tranches horaires croissantes
+          return ma.time - mb.time;
+        }
+        return mb.ps - ma.ps;
+      });
+    }
     return groups;
-  }, [calFiltered]);
+  }, [calFiltered, players, playerIndex, allPlayerLikes]);
 
   /** Navigation date — jours dispo */
   const calDateObj = useMemo(() => new Date(calDate + "T12:00:00"), [calDate]);
@@ -975,7 +1075,7 @@ export function SnookerTabContent() {
                               </svg>
                             )}
                           </div>
-                          <PowerScoreTag player={pa} />
+                          <PowerScoreTag player={pa} onInfo={() => setShowMetricsInfo(true)} />
                         </div>
                         {m.player1PhotoUrl ? (
                           <img src={m.player1PhotoUrl} alt="" className="h-3.5 w-3.5 shrink-0 rounded-sm object-cover" />
@@ -1032,7 +1132,7 @@ export function SnookerTabContent() {
                               </svg>
                             )}
                           </div>
-                          <PowerScoreTag player={pb} />
+                          <PowerScoreTag player={pb} onInfo={() => setShowMetricsInfo(true)} />
                         </div>
                       </div>
 
@@ -1643,40 +1743,22 @@ export function SnookerTabContent() {
 
       {/* ======== POPUP TUTORIEL STRATÉGIE ======== */}
       {tutorialMarket && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center"
-          onClick={() => setTutorialMarket(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Tutoriel stratégie"
-        >
-          <div
-            className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl p-5 sm:mx-4 sm:rounded-3xl"
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
-          >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 className="text-[14px] font-bold" style={{ color: "#00985f" }}>
-                {TUTORIALS[tutorialMarket].title}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setTutorialMarket(null)}
-                aria-label="Fermer le tutoriel"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
-              >
-                ✕
-              </button>
-            </div>
-            <ul className="flex flex-col gap-2">
-              {TUTORIALS[tutorialMarket].lines.map((line) => (
-                <li key={line.slice(0, 24)} className="text-[12px] leading-relaxed" style={{ color: "#444" }}>
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <ExplainPopup
+          title={TUTORIALS[tutorialMarket].title}
+          lines={TUTORIALS[tutorialMarket].lines}
+          label="Tutoriel stratégie"
+          onClose={() => setTutorialMarket(null)}
+        />
+      )}
+
+      {/* ======== POPUP METRICS JOUEUR ======== */}
+      {showMetricsInfo && (
+        <ExplainPopup
+          title={METRICS_INFO.title}
+          lines={METRICS_INFO.lines}
+          label="Metrics joueur"
+          onClose={() => setShowMetricsInfo(false)}
+        />
       )}
 
       {/* ======== POPUP LIVE ======== */}

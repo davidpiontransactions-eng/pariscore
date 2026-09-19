@@ -33,6 +33,8 @@ import { BesoccerEloPanel } from "@/components/football/besoccer-elo-panel";
 import { BesoccerTablePanel } from "@/components/football/besoccer-table-panel";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { PowerScoreBar } from "@/components/shared/power-score-bar";
+import { TeamProfileDialog } from "@/components/football/team-profile-dialog";
+import { BSD_LEAGUE_IDS } from "@/lib/league-mapping";
 import { footballPowerScore } from "@/lib/power-score";
 import { FootballRadarChart } from "@/components/football/football-radar-chart";
 import { OddsHistoryChart } from "@/components/football/odds-history-chart";
@@ -136,6 +138,8 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [prematch, setPrematch] = useState<FootballMatch | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Fiche équipe : { nom BSD, venue } — null = dialogue fermé.
+  const [teamProfile, setTeamProfile] = useState<{ name: string; venue: "home" | "away" } | null>(null);
   // "loading" est dérivé : true tant qu'on attend la première réponse pour le
   // match courant. Évite les setState synchrones en tête d'effect (règle
   // react-hooks/set-state-in-effect).
@@ -143,6 +147,17 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
   // Vue enrichie : le match prématch BSD (plus riche) si dispo, sinon le fallback.
   const view = prematch ?? match;
+
+  // Slug interne (epl…) depuis l'id BSD numérique — alimente la fiche équipe.
+  const profileLeagueSlug = (() => {
+    const id = view?.league?.id;
+    if (id == null) return null;
+    if (typeof id === "string") return id;
+    for (const [slug, bsdId] of Object.entries(BSD_LEAGUE_IDS)) {
+      if (bsdId === id) return slug;
+    }
+    return null;
+  })();
 
   // PowerScore 0-100 par équipe (moteur partagé) — affiché sous les noms.
   // Forme (PPG L5) 30 % · Dom./Ext. 20 % · Attaque 20 % · Défense 15 % · H2H absent.
@@ -280,6 +295,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   }, [open, match]);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222]">
         <DialogHeader>
@@ -346,7 +362,14 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName ?? view.home.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTeamProfile({ name: view.home.name, venue: "home" })}
+                    title="Voir la fiche équipe"
+                    className="cursor-pointer text-center text-xs font-semibold leading-tight underline-offset-2 hover:underline"
+                  >
+                    {view.home.shortName ?? view.home.name}
+                  </button>
                   {powerScores && <PowerScoreBar score={powerScores.home} />}
                 </div>
 
@@ -391,7 +414,14 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName ?? view.away.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTeamProfile({ name: view.away.name, venue: "away" })}
+                    title="Voir la fiche équipe"
+                    className="cursor-pointer text-center text-xs font-semibold leading-tight underline-offset-2 hover:underline"
+                  >
+                    {view.away.shortName ?? view.away.name}
+                  </button>
                   {powerScores && <PowerScoreBar score={powerScores.away} />}
                 </div>
               </div>
@@ -729,6 +759,32 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         </ScrollArea>
       </DialogContent>
     </Dialog>
+    {/* Fiche équipe au clic sur un nom (dialogue sœur, pas imbriqué). */}
+    <TeamProfileDialog
+      key={teamProfile?.name ?? "none"}
+      leagueId={profileLeagueSlug}
+      team={teamProfile?.name ?? null}
+      venue={teamProfile?.venue ?? "home"}
+      fair={
+        view?.prediction
+          ? {
+              home: view.prediction.homeProb,
+              draw: view.prediction.drawProb,
+              away: view.prediction.awayProb,
+            }
+          : null
+      }
+      odds={
+        view?.odds?.home != null && view?.odds?.draw != null && view?.odds?.away != null
+          ? { home: view.odds.home, draw: view.odds.draw, away: view.odds.away }
+          : null
+      }
+      open={teamProfile !== null}
+      onOpenChange={(o) => {
+        if (!o) setTeamProfile(null);
+      }}
+    />
+    </>
   );
 }
 

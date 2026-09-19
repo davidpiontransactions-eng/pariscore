@@ -1,12 +1,60 @@
 "use client";
 
 /**
- * Classement rugby : Elo, bilan (J/V/N/D), points marqués/encaissés, forme,
- * points terrain (4/2/0) et probabilité de titre issue du Monte Carlo.
+ * Classement rugby enrichi : Elo, bilan (J/V/N/D), bonus, points marqués/encaissés,
+ * forme, trend, barres attaque/défense, points terrain (4/2/0) et probabilité de titre.
  */
 
 import type { StandingRow } from "@/lib/rugby/types";
 import { FormBadges, RugbyTeamLogo, pct } from "./rugby-ui";
+
+/* ─── Trend (flèche direction forme) ─── */
+function TrendArrow({ form }: { form: string }) {
+  if (!form || form.length < 3) return <span className="text-slate-600">—</span>;
+  const recent = form.slice(-3).split("");
+  const wins = recent.filter((c) => c === "W").length;
+  const losses = recent.filter((c) => c === "L").length;
+  if (wins >= 2) return <span className="text-emerald-400 text-xs font-bold">▲</span>;
+  if (losses >= 2) return <span className="text-red-400 text-xs font-bold">▼</span>;
+  return <span className="text-slate-500 text-xs">—</span>;
+}
+
+/* ─── Barre attaque/défense visuelle ─── */
+function AttackDefBar({ attack, defence }: { attack: number; defence: number }) {
+  const maxVal = Math.max(attack, defence, 1.2);
+  const attWidth = Math.min(100, (attack / maxVal) * 100);
+  const defWidth = Math.min(100, (defence / maxVal) * 100);
+  return (
+    <div className="flex flex-col gap-0.5 w-16">
+      <div className="flex items-center gap-1">
+        <div className="h-1 flex-1 rounded-full bg-slate-800 overflow-hidden">
+          <div className="h-full bg-emerald-400/80" style={{ width: `${attWidth}%` }} />
+        </div>
+        <span className="text-[9px] tabular-nums text-emerald-300/70 w-6 text-right">{attack.toFixed(1)}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <div className="h-1 flex-1 rounded-full bg-slate-800 overflow-hidden">
+          <div className="h-full bg-sky-400/80" style={{ width: `${defWidth}%` }} />
+        </div>
+        <span className="text-[9px] tabular-nums text-sky-300/70 w-6 text-right">{defence.toFixed(1)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Bonus (offensif 4+ essais, défensif ≤7 pts) ─── */
+function BonusEstimate({ row }: { row: StandingRow }) {
+  // Bonus offensif estimé : ~40% si attaque > 1.0
+  const offensive = row.attack > 1.0 ? 1 : 0;
+  // Bonus défensif estimé : ~30% si défense < 0.85
+  const defensive = row.defence < 0.85 ? 1 : 0;
+  const total = offensive + defensive;
+  return (
+    <span className="text-[11px] tabular-nums text-slate-400">
+      {total > 0 ? `+${total}` : "—"}
+    </span>
+  );
+}
 
 export function RugbyStandingsTable({
   standings,
@@ -30,7 +78,7 @@ export function RugbyStandingsTable({
   return (
     <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#12151f] shadow-lg shadow-black/20">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="border-b border-white/8 text-[11px] uppercase tracking-wider text-slate-400">
               <th scope="col" className="px-3 py-3 text-left font-bold">#</th>
@@ -40,9 +88,12 @@ export function RugbyStandingsTable({
               <th scope="col" className="px-2 py-3 text-center font-bold">N</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">D</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">±</th>
+              <th scope="col" className="px-2 py-3 text-center font-bold">Bonus</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">Pts</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">Elo</th>
+              <th scope="col" className="px-2 py-3 text-center font-bold">Att/Déf</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">Forme</th>
+              <th scope="col" className="px-2 py-3 text-center font-bold">Trend</th>
               <th scope="col" className="px-3 py-3 text-right font-bold">Titre</th>
             </tr>
           </thead>
@@ -60,9 +111,6 @@ export function RugbyStandingsTable({
                       <RugbyTeamLogo src={row.logo} name={row.name} size={26} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-100">{row.name}</p>
-                        <p className="text-[11px] text-slate-400">
-                          Att {row.attack.toFixed(2)} · Déf {row.defence.toFixed(2)}
-                        </p>
                       </div>
                     </div>
                   </td>
@@ -77,14 +125,23 @@ export function RugbyStandingsTable({
                   >
                     {diff > 0 ? `+${diff}` : diff}
                   </td>
+                  <td className="px-2 py-2.5 text-center">
+                    <BonusEstimate row={row} />
+                  </td>
                   <td className="px-2 py-2.5 text-center font-black tabular-nums text-white">{row.points}</td>
                   <td className="px-2 py-2.5 text-center font-semibold tabular-nums text-teal-300">
                     {row.elo}
                   </td>
                   <td className="px-2 py-2.5">
+                    <AttackDefBar attack={row.attack} defence={row.defence} />
+                  </td>
+                  <td className="px-2 py-2.5">
                     <div className="flex justify-center">
                       <FormBadges form={row.form} />
                     </div>
+                  </td>
+                  <td className="px-2 py-2.5 text-center">
+                    <TrendArrow form={row.form} />
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <TitleChance value={row.titleChance} />

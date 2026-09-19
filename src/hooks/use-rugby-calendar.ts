@@ -21,7 +21,7 @@ const FEATURED_SLUGS = [
   "currie-cup",
   "npc",
   "major-league-rugby",
-  "test-match",
+  "international-tests",
 ];
 
 const COMP_NAMES: Record<string, string> = {
@@ -36,7 +36,7 @@ const COMP_NAMES: Record<string, string> = {
   "currie-cup": "Currie Cup",
   "npc": "NPC (Nouvelle-Zélande)",
   "major-league-rugby": "Major League Rugby",
-  "test-match": "Test-matchs internationaux",
+  "international-tests": "Test-matchs internationaux",
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => (r.ok ? r.json() : null));

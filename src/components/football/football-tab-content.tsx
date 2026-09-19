@@ -26,7 +26,7 @@ import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top
 import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
 import { useTeamAttackDefenseStats } from "@/hooks/use-team-attack-defense-stats";
 import { MatchCardSkeleton } from "@/components/mobile/match-card-skeleton";
-import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
+import { FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
 import { FootballBankerWidget } from "./football-banker";
 import { FootballTop10Widget } from "./football-top10-widget";
@@ -395,11 +395,17 @@ export function FootballTabContent() {
                       EN DIRECT ({liveMatches.length})
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-                    {liveMatches.map((m) => (
-                      <FootballLiveCard key={m.id} match={m} onOpenDetail={openDetail} />
-                    ))}
-                  </div>
+                  {/* Tableau Live (style Flashscore, groupé par ligue) — remplace
+                      les cartes : minute, score, cotes 1X2, favoris, détail. */}
+                  <FlashscoreFootballList
+                    matches={liveMatches}
+                    favoriteIds={favorites}
+                    onToggleFavorite={toggleFavorite}
+                    onOpenDetail={openDetail}
+                    isLoading={false}
+                    error={error?.message ?? null}
+                    onRetry={() => mutate()}
+                  />
                 </>
               ) : (
                 <MatchEmptyState

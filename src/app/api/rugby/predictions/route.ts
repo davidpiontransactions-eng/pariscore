@@ -9,9 +9,17 @@ export const revalidate = 0;
  * GET /api/rugby/predictions?slug=six-nations
  * Prédictions (1X2, score attendu, over/under, handicap, marge) d'une compétition.
  */
+
+/** Aliases historiques → slugs canoniques (évite les 400 sur les anciens liens). */
+const SLUG_ALIASES: Record<string, string> = {
+  "test-match": "international-tests",
+  "test-matches": "international-tests",
+};
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const slug = (searchParams.get("slug") ?? "").toLowerCase();
+  const raw = (searchParams.get("slug") ?? "").toLowerCase();
+  const slug = SLUG_ALIASES[raw] ?? raw;
 
   if (!slug || !COMPETITION_BY_SLUG.has(slug)) {
     return NextResponse.json(

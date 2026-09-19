@@ -1,6 +1,7 @@
 /**
  * Client ESPN "hidden API" — gratuit, sans clé.
- * Docs: https://site.api.espn.com/apis/site/v2/sports/{sport}/{leagueId}/scoreboard
+ * Docs: https://site.web.api.espn.com/apis/site/v2/sports/{sport}/{leagueId}/scoreboard
+ * Note: site.api.espn.com retourne 403 (Akamai CDN) — utiliser site.web.api.espn.com.
  *
  * Renvoie des matchs normalisés (scoreboard) pour une fenêtre de dates donnée.
  * Aucune donnée inventée : si un champ manque, il est null/vide.
@@ -38,13 +39,6 @@ async function fetchJson(url: string, retries = 3): Promise<any> {
   }
 }
 
-function fmt(d: Date): string {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}${m}${day}`;
-}
-
 function parseTeam(raw: any): TeamRef {
   const team = raw?.team ?? {};
   return {
@@ -75,6 +69,39 @@ function isCancelledOrPostponed(comp: any): boolean {
   return detail.includes("cancelled") || detail.includes("postponed") || detail.includes("suspended");
 }
 
+/** Parse un event scoreboard ESPN → match normalisé (null = à écarter). */
+function parseEvent(ev: any, competitionSlug: string): RugbyMatch | null {
+  const comp = ev?.competitions?.[0];
+  if (!comp) return null;
+  // Annulés / reportés : on ne les comptabilise ni comme passés ni comme à venir.
+  if (isCancelledOrPostponed(comp)) return null;
+  const competitors = comp.competitors ?? [];
+  const homeRaw = competitors.find((c: any) => c.homeAway === "home");
+  const awayRaw = competitors.find((c: any) => c.homeAway === "away");
+  if (!homeRaw || !awayRaw) return null;
+
+  const state = comp.status?.type?.state ?? "pre";
+  const status: MatchStatus =
+    state === "post" ? "finished" : state === "in" ? "inprogress" : "scheduled";
+
+  return {
+    id: String(ev.id),
+    competitionSlug,
+    date: ev.date ?? comp.date ?? "",
+    status,
+    home: parseTeam(homeRaw),
+    away: parseTeam(awayRaw),
+    homeScore: parseScore(homeRaw.score),
+    awayScore: parseScore(awayRaw.score),
+    venue: comp.venue?.fullName ?? "",
+    neutral: !!comp.neutralSite,
+    form: {
+      home: cleanForm(homeRaw.form ?? homeRaw.records?.[0]?.summary),
+      away: cleanForm(awayRaw.form ?? awayRaw.records?.[0]?.summary),
+    },
+  };
+}
+
 /** Récupère le scoreboard d'une fenêtre (max ~6 mois fiable). */
 export async function fetchScoreboard(
   espnSport: string,
@@ -83,43 +110,26 @@ export async function fetchScoreboard(
   end: Date,
   competitionSlug: string
 ): Promise<RugbyMatch[]> {
-  const url = `https://site.api.espn.com/apis/site/v2/sports/${espnSport}/${leagueId}/scoreboard?dates=${fmt(
-    start
-  )}-${fmt(end)}&limit=500`;
-  const data = await fetchJson(url);
-  const events: any[] = data?.events ?? [];
+  // ESPN rejette les plages `dates=A-B` (400) mais accepte `dates=AAAA`
+  // (année civile entière, ~200 events). On boucle sur les années couvertes
+  // puis on filtre sur la fenêtre demandée — même signature, moteur inchangé.
+  const years: number[] = [];
+  for (let y = start.getUTCFullYear(); y <= end.getUTCFullYear(); y++) years.push(y);
+  const t0 = start.getTime();
+  const t1 = end.getTime();
   const out: RugbyMatch[] = [];
 
-  for (const ev of events) {
-    const comp = ev?.competitions?.[0];
-    if (!comp) continue;
-    // Annulés / reportés : on ne les comptabilise ni comme passés ni comme à venir.
-    if (isCancelledOrPostponed(comp)) continue;
-    const competitors = comp.competitors ?? [];
-    const homeRaw = competitors.find((c: any) => c.homeAway === "home");
-    const awayRaw = competitors.find((c: any) => c.homeAway === "away");
-    if (!homeRaw || !awayRaw) continue;
-
-    const state = comp.status?.type?.state ?? "pre";
-    const status: MatchStatus =
-      state === "post" ? "finished" : state === "in" ? "inprogress" : "scheduled";
-
-    out.push({
-      id: String(ev.id),
-      competitionSlug,
-      date: ev.date ?? comp.date ?? "",
-      status,
-      home: parseTeam(homeRaw),
-      away: parseTeam(awayRaw),
-      homeScore: parseScore(homeRaw.score),
-      awayScore: parseScore(awayRaw.score),
-      venue: comp.venue?.fullName ?? "",
-      neutral: !!comp.neutralSite,
-      form: {
-        home: cleanForm(homeRaw.form ?? homeRaw.records?.[0]?.summary),
-        away: cleanForm(awayRaw.form ?? awayRaw.records?.[0]?.summary),
-      },
-    });
+  for (const y of years) {
+    const url = `https://site.web.api.espn.com/apis/site/v2/sports/${espnSport}/${leagueId}/scoreboard?dates=${y}&limit=500`;
+    const data = await fetchJson(url);
+    const events: any[] = data?.events ?? [];
+    for (const ev of events) {
+      const m = parseEvent(ev, competitionSlug);
+      if (!m || !m.date) continue;
+      const t = new Date(m.date).getTime();
+      if (!Number.isFinite(t) || t < t0 || t > t1) continue;
+      out.push(m);
+    }
   }
   return out;
 }

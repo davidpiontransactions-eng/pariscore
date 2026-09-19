@@ -190,8 +190,12 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){var r=0;window.addEventListener("error",function(e){
-              if((e.message&&(e.message.indexOf("ChunkLoadError")>-1||e.message.indexOf("Loading chunk")>-1))&&r<1)
-              {r=1;window.location.reload()}})})()`,
+              if(e.message&&(
+                e.message.indexOf("ChunkLoadError")>-1||
+                e.message.indexOf("Loading chunk")>-1||
+                e.message.indexOf("module factory")>-1||
+                e.message.indexOf("was instantiated")>-1
+              )&&r<1){r=1;window.location.reload()}})})()`,
           }}
         />
       </head>
