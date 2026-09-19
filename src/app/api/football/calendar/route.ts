@@ -49,8 +49,21 @@ export async function GET(request: Request) {
     let matches = dedupeFootballMatches([...live, ...prematch, ...olb]);
     const bsdOk = live.length > 0 || prematch.length > 0;
     const degraded = !bsdOk;
-    const source = bsdOk ? "bsd+openligadb" : "openligadb";
-    if (!degraded) cache.set({ matches, degraded, source });
+    let source = bsdOk ? "bsd+openligadb" : "openligadb";
+
+    // Toujours remplir le cache, même en mode degraded.
+    // Si degraded ET cache existant non-degraded → fallback sur l'ancien cache.
+    if (degraded) {
+      const stale = cache.getEntry();
+      if (stale && !stale.data.degraded) {
+        matches = stale.data.matches as any[];
+        source = stale.data.source;
+      } else {
+        cache.set({ matches, degraded, source });
+      }
+    } else {
+      cache.set({ matches, degraded, source });
+    }
 
     if (dateParam) matches = matches.filter((m: any) => toParisDateKey(m.scheduledAt) === dateParam);
     if (liveOnly) matches = matches.filter((m: any) => m.live?.status === "LIVE" || m.live?.status === "HT");

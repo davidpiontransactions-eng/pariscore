@@ -463,21 +463,35 @@ async function bsdFetch<T>(endpoint: string): Promise<T> {
   const key = process.env.BSD_API_KEY;
   if (!key) throw new Error("BSD_API_KEY not configured");
 
-  const url = `${BSD_BASE}${endpoint}`;
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Token ${key}`,
-      Accept: "application/json",
-    },
-    signal: AbortSignal.timeout(15000),
-  });
+  const allResults: BSDFootballMatch[] = [];
+  let url: string | null = `${BSD_BASE}${endpoint}`;
 
-  if (res.status === 402) throw new Error("BSD Sports Addon required (402)");
-  if (res.status === 429) throw new Error("BSD rate limited (429)");
-  if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
+  while (url) {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Token ${key}`,
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(15000),
+    });
 
-  const data: BSDPaginatedResponse | BSDFootballMatch[] = await res.json();
-  return (Array.isArray(data) ? data : data.results) as T;
+    if (res.status === 402) throw new Error("BSD Sports Addon required (402)");
+    if (res.status === 429) throw new Error("BSD rate limited (429)");
+    if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
+
+    const data: BSDPaginatedResponse | BSDFootballMatch[] = await res.json();
+
+    if (Array.isArray(data)) {
+      // Endpoint non-paginé : retour direct
+      return data as T;
+    }
+
+    // Endpoint paginé : accumuler les résultats et suivre le lien next
+    allResults.push(...data.results);
+    url = data.next;
+  }
+
+  return allResults as unknown as T;
 }
 
 /**
@@ -550,7 +564,7 @@ export async function fetchBSDMatchStats(matchId: string): Promise<FootballMatch
 }
 
 export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
-  const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=500");
+  const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=1000");
   const result = matches.map(buildMatch);
   console.log(`[bsd-foot] Fetched ${result.length} prematch matches`);
 
@@ -1056,7 +1070,7 @@ export async function fetchBSDFootballMatchMeta(matchId: string): Promise<BSDFoo
 
 export async function fetchBSDFootballLive(): Promise<FootballMatch[]> {
 
-  const matches = await bsdFetch<BSDFootballMatch[]>("/live/?limit=50");
+  const matches = await bsdFetch<BSDFootballMatch[]>("/live/?limit=200");
   const result = matches.map(buildMatch);
   console.log(`[bsd-foot] Fetched ${result.length} live matches`);
   return result;
