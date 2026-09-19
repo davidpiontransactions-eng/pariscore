@@ -63,37 +63,37 @@ export const TENNIS_TIME_WINDOWS: readonly { key: TennisTimeWindow; label: strin
 ] as const;
 
 export const TENNIS_SURFACES: readonly { key: TennisSurface; label: string; emoji: string }[] = [
-  { key: "all", label: "Toutes", emoji: "🏟️" },
-  { key: "hard", label: "Dur", emoji: "🔵" },
-  { key: "clay", label: "Terre", emoji: "🟤" },
-  { key: "grass", label: "Herbe", emoji: "🟢" },
-  { key: "indoor", label: "Indoor", emoji: "🏠" },
+  { key: "all", label: "Toutes", emoji: "⬜" },
+  { key: "hard", label: "Dur", emoji: "🔷" },
+  { key: "clay", label: "Terre", emoji: "🔶" },
+  { key: "grass", label: "Herbe", emoji: "🟩" },
+  { key: "indoor", label: "Indoor", emoji: "◾" },
 ] as const;
 
 export const TENNIS_TOURNAMENT_CATEGORIES: readonly { key: TennisTournamentCategory; label: string; emoji: string }[] = [
-  { key: "all", label: "Tous", emoji: "🎾" },
+  { key: "all", label: "Tous", emoji: "◻️" },
   { key: "grand-slam", label: "Grand Slam", emoji: "🏆" },
-  { key: "atp-1000", label: "ATP 1000", emoji: "💎" },
-  { key: "atp-500", label: "ATP 500", emoji: "🥇" },
-  { key: "atp-250", label: "ATP 250", emoji: "🥈" },
-  { key: "wta", label: "WTA", emoji: "👩" },
-  { key: "challenger", label: "Challenger", emoji: "📈" },
-  { key: "itf", label: "ITF", emoji: "🌱" },
+  { key: "atp-1000", label: "ATP 1000", emoji: "🔷" },
+  { key: "atp-500", label: "ATP 500", emoji: "🔹" },
+  { key: "atp-250", label: "ATP 250", emoji: "▫️" },
+  { key: "wta", label: "WTA", emoji: "🔸" },
+  { key: "challenger", label: "Challenger", emoji: "▪️" },
+  { key: "itf", label: "ITF", emoji: "◽" },
 ] as const;
 
 export const TENNIS_MARKET_CATEGORIES: readonly { key: TennisMarketCategory; label: string; emoji: string }[] = [
-  { key: "all", label: "Tous marchés", emoji: "🎯" },
+  { key: "all", label: "Tous marchés", emoji: "◻️" },
   { key: "match-winner", label: "Vainqueur", emoji: "🏆" },
   { key: "set-score", label: "Score exact", emoji: "🎯" },
   { key: "set-handicap", label: "Hdp sets", emoji: "➕" },
   { key: "game-handicap", label: "Hdp jeux", emoji: "➖" },
   { key: "total-games", label: "Total jeux", emoji: "📊" },
   { key: "total-games-per-set", label: "Total/set", emoji: "📈" },
-  { key: "aces", label: "Aces", emoji: "🎾" },
-  { key: "tiebreak", label: "Tiebreak", emoji: "⚡" },
+  { key: "aces", label: "Aces", emoji: "⚡" },
+  { key: "tiebreak", label: "Tiebreak", emoji: "⏱️" },
   { key: "first-set", label: "1er set", emoji: "1️⃣" },
-  { key: "double-result", label: "Double", emoji: "🔀" },
-  { key: "live", label: "Live", emoji: "🔴" },
+  { key: "double-result", label: "Double", emoji: "✖️" },
+  { key: "live", label: "Live", emoji: "⏺️" },
 ] as const;
 
 /** Lignes de jeux Over/Under disponibles (1xBet per-set). */
@@ -109,10 +109,10 @@ export const TENNIS_GAME_LINES: readonly { key: TennisGameLine; label: string; o
 export const TENNIS_BET_TYPES: readonly { key: TennisBetType; label: string; emoji: string; mode: "prematch" | "live" }[] = [
   { key: "winner", label: "Vainqueur", emoji: "🏆", mode: "prematch" },
   { key: "over-games", label: "Over Games", emoji: "📊", mode: "prematch" },
-  { key: "most-aces", label: "Most Aces", emoji: "🎾", mode: "prematch" },
+  { key: "most-aces", label: "Most Aces", emoji: "⚡", mode: "prematch" },
   { key: "over-set", label: "Over/Set", emoji: "📈", mode: "live" },
   { key: "set-winner", label: "Set Winner", emoji: "🎯", mode: "live" },
-  { key: "winner-live", label: "Winner Live", emoji: "🔴", mode: "live" },
+  { key: "winner-live", label: "Winner Live", emoji: "⏺️", mode: "live" },
 ] as const;
 
 // ─── Extract tournaments ───────────────────────────────────────────────────
