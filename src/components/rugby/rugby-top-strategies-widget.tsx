@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRugbyTopStrategies } from "@/hooks/use-rugby-top-strategies";
 import { RUGBY_STRATEGIES, type RugbyStrategyKey } from "@/lib/rugby-strategy-top";
 import { RugbyTopStrategiesTable } from "./rugby-top-strategies-table";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import {
+  filterByStartWindow,
+  filterByToday,
+  filterByTomorrow,
+  parseTimeFilter,
+  type TimeFilterKey,
+} from "@/lib/match-view";
 
 /* Teintes FotMob clair */
 const C = {
@@ -18,8 +26,22 @@ const C = {
 
 export function RugbyTopStrategiesWidget() {
   const [active, setActive] = useState<RugbyStrategyKey>("homeWin");
+  const [timeKey, setTimeKey] = useState<TimeFilterKey>("all");
   const def = RUGBY_STRATEGIES.find((s) => s.key === active) ?? RUGBY_STRATEGIES[0];
-  const { matches, loading } = useRugbyTopStrategies(active, 10);
+  const { matches: rawMatches, loading } = useRugbyTopStrategies(active, 10);
+
+  // Filtre horaire & date (côté client, sur le kickoff)
+  const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
+  const matches = useMemo(() => {
+    let filtered = rawMatches;
+    if (timeToday) {
+      filtered = filterByToday(filtered, (m) => m.kickoff);
+    } else if (timeTomorrow) {
+      filtered = filterByTomorrow(filtered, (m) => m.kickoff);
+    }
+    filtered = filterByStartWindow(filtered, timeRange, (m) => m.kickoff);
+    return filtered;
+  }, [rawMatches, timeRange, timeToday, timeTomorrow]);
 
   return (
     <div
@@ -57,6 +79,11 @@ export function RugbyTopStrategiesWidget() {
         </div>
       </div>
 
+      {/* Filtre horaire & date */}
+      <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.cardBorder}` }}>
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} />
+      </div>
+
       {/* Description stratégie */}
       <div className="px-4 py-2 text-[12px]" style={{ color: C.time, borderBottom: `1px solid ${C.cardBorder}` }}>
         {def.emoji} {def.label} — {def.isProb
@@ -77,6 +104,11 @@ export function RugbyTopStrategiesWidget() {
                 style={{ height: 56, backgroundColor: "#f5f5f5" }}
               />
             ))}
+          </div>
+        ) : matches.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-[13px]" style={{ color: C.time }}>
+            <span className="text-2xl mb-2">🏉</span>
+            Aucun match dans ce créneau.
           </div>
         ) : (
           <RugbyTopStrategiesTable
