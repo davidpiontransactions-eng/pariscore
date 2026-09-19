@@ -186,29 +186,44 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
     let cancelled = false;
     setProfile(null);
     setError(null);
-    let url =
-      `/api/football/teams/profile?league=${encodeURIComponent(leagueId)}` +
-      `&team=${encodeURIComponent(team)}&venue=${scope}`;
-    if (marketKey) {
-      const m = JSON.parse(marketKey) as MarketParams;
-      url +=
-        `&fairH=${m.fair.home}&fairD=${m.fair.draw}&fairA=${m.fair.away}` +
-        `&oddsH=${m.odds.home}&oddsD=${m.odds.draw}&oddsA=${m.odds.away}`;
-    }
-    fetch(url, { signal: AbortSignal.timeout(15000) })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as { profile: TeamProfile };
-      })
-      .then((data) => {
-        if (!cancelled) setProfile(data.profile);
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setError(err?.name === "TimeoutError" ? "délai dépassé" : err.message);
-      });
-    return () => {
-      cancelled = true;
+
+    // Essayer d'abord l'endpoint FD, puis fallback BSD
+    const fetchProfile = async () => {
+      const baseParams = `league=${encodeURIComponent(leagueId)}&team=${encodeURIComponent(team)}&venue=${scope}`;
+      let url = `/api/football/teams/profile?${baseParams}`;
+      if (marketKey) {
+        const m = JSON.parse(marketKey) as MarketParams;
+        url += `&fairH=${m.fair.home}&fairD=${m.fair.draw}&fairA=${m.fair.away}&oddsH=${m.odds.home}&oddsD=${m.odds.draw}&oddsA=${m.odds.away}`;
+      }
+
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setProfile(data.profile);
+          return;
+        }
+        // Si 404, essayer l'endpoint BSD
+        if (res.status === 404) {
+          const bsdUrl = `/api/football/teams/bsd-profile?${baseParams}`;
+          const bsdRes = await fetch(bsdUrl, { signal: AbortSignal.timeout(10000) });
+          if (bsdRes.ok) {
+            const bsdData = await bsdRes.json();
+            if (!cancelled) setProfile(bsdData.profile);
+            return;
+          }
+        }
+        throw new Error(`HTTP ${res.status}`);
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const msg = err instanceof Error ? err.message : String(err);
+          setError(msg === "TimeoutError" ? "délai dépassé" : msg);
+        }
+      }
     };
+
+    fetchProfile();
+    return () => { cancelled = true; };
   }, [open, leagueId, team, scope, marketKey]);
 
   const venueLabel = scope === "home" ? "à domicile" : scope === "away" ? "à l'extérieur" : "général";

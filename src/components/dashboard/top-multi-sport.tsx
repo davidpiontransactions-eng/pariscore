@@ -9,13 +9,6 @@ import { FootballMatchDetailDialog } from "@/components/football/football-match-
 import { TeamProfileDialog } from "@/components/football/team-profile-dialog";
 import type { FootballMatch } from "@/lib/football-data";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
-
-// Ligues avec données FD disponibles (team-profile)
-const FD_LEAGUES = new Set([
-  "bundesliga", "bundesliga2", "championship", "epl", "eredivisie", "jupiler",
-  "laliga", "laliga2", "ligue1", "ligue2", "primeira_liga", "scot_prem",
-  "seriea", "serieb", "superleague_greece", "super_lig",
-]);
 import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
 import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
 import { buildTopTags, topTagsForMatch } from "@/lib/top10-calendar-link";
@@ -662,8 +655,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
                   const rawId = leagueId?.replace("bsd-", "") ?? "";
                   const numId = Number(rawId);
                   const slug = numId > 0 ? (BSD_ID_TO_SLUG[numId] ?? rawId) : (leagueId ?? undefined);
-                  // Vérifier si la ligue a des données FD disponibles
-                  if (!slug || !FD_LEAGUES.has(slug)) return;
+                  if (!slug) return;
                   setTeamProfile({ name: team.name, logo: team.logo, venue, leagueId: slug });
                 }}
                 topTagsFor={topTagsFor}
