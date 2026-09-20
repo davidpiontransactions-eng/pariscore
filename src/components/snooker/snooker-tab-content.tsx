@@ -285,16 +285,27 @@ function handicapProb(pFrame: number, bestOf: number, handicap: number): number 
 }
 
 /** P(P1 atteint k frames avant P2). */
+/**
+ * P(P1 atteint k frames avant P2) — race to k frames.
+ * Formule binomiale négative : Σᵢ₌₀ᵏ⁻¹ C(k+i-1, i) · p^k · (1-p)^i
+ *
+ * Ajustement pressure (Collingwood 2023, Strafford 2025) :
+ * Le favori (p>0.5) gagne un léger boost dans les races serrées car il
+ * gère mieux la pression des moments critiques. Le boost est proportionnel
+ * à (p - 0.5) et au nombre de frames nécessaires k.
+ */
 function firstToKProb(pFrame: number, k: number): number {
   let pFirst = 0;
   for (let i = 0; i < k; i++) {
-    // Formule négative binomiale : C(k+i-1, i) * p^k * (1-p)^i
-    // logBinomPMF(i, k+i-1, p) donne C * p^i * (1-p)^(k-1)
-    // Correction : ajouter (k - i - 1) * log(p) pour obtenir p^k * (1-p)^i
+    // C(k+i-1, i) * p^k * (1-p)^i
     const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
     pFirst += Math.exp(logP);
   }
-  return Math.min(100, Math.max(0, pFirst * 100));
+  // Ajustement pressure : favori (p>0.5) reçoit un boost léger en race-to-k
+  // Plus k est grand, plus la consistence du favori paie (Collingwood 2023)
+  const edge = pFrame - 0.5;
+  const pressureBoost = edge > 0 ? edge * 0.03 * k : edge * 0.02 * k;
+  return Math.min(100, Math.max(0, (pFirst + pressureBoost) * 100));
 }
 
 /** P(P1 gagne ≥k frames dans le match. */

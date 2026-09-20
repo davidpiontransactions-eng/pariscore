@@ -79,14 +79,19 @@ function overTotalProb(pFrame: number, bestOf: number, threshold: number): numbe
   return Math.min(100, Math.max(0, pOver * 100));
 }
 
+/**
+ * P(P1 atteint k frames avant P2) — race to k frames.
+ * Ajustement pressure : favori gère mieux la pression (Collingwood 2023).
+ */
 function firstToK(pFrame: number, k: number): number {
   let p = 0;
   for (let i = 0; i < k; i++) {
-    // Formule négative binomiale : C(k+i-1, i) * p^k * (1-p)^i
     const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
     p += Math.exp(logP);
   }
-  return Math.min(100, Math.max(0, p * 100));
+  const edge = pFrame - 0.5;
+  const pressureBoost = edge > 0 ? edge * 0.03 * k : edge * 0.02 * k;
+  return Math.min(100, Math.max(0, (p + pressureBoost) * 100));
 }
 
 function StatBar({ label, val1, val2, higher }: { label: string; val1: number; val2: number; higher?: boolean }) {

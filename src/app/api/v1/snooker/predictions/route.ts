@@ -99,32 +99,66 @@ type TopPick = {
 // Constantes & helpers
 // ---------------------------------------------------------------------------
 // ─── Génération de 3 paris pré-match ───────────────────────────────────────
+/**
+ * Log-binomiale PMF : log(P(X=k)) pour X ~ Binomial(n, p).
+ * Utilisée pour la binomiale négative (race to k frames).
+ */
+function logBinomPMF(k: number, n: number, p: number): number {
+  if (p <= 0) return k === 0 ? 0 : -Infinity;
+  if (p >= 1) return k === n ? 0 : -Infinity;
+  let logC = 0;
+  for (let i = 0; i < k; i++) {
+    logC += Math.log(n - i) - Math.log(i + 1);
+  }
+  return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
+}
+
+/**
+ * P(P1 atteint k frames avant P2) — race to k frames.
+ * Formule binomiale négative avec ajustement pressure (Collingwood 2023).
+ */
+function firstToKProb(pFrame: number, k: number): number {
+  let pFirst = 0;
+  for (let i = 0; i < k; i++) {
+    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
+    pFirst += Math.exp(logP);
+  }
+  const edge = pFrame - 0.5;
+  const pressureBoost = edge > 0 ? edge * 0.03 * k : edge * 0.02 * k;
+  return Math.min(0.95, Math.max(0.5, pFirst + pressureBoost));
+}
+
 function buildPickBets(probA: number, probB: number, eloA: number, eloB: number): Array<{ type: string; label: string; prob: number }> {
   const favProb = Math.max(probA, probB);
-  const underdogProb = Math.min(probA, probB);
+  const favIsA = probA >= probB;
+  const pFrame = favIsA ? favProb : 1 - favProb;
   const eloDiff = Math.abs(eloA - eloB);
   const bets: Array<{ type: string; label: string; prob: number }> = [];
 
   // 1. Handicap frames (si favori large)
   if (favProb >= 0.75) {
-    const pHandicap = 0.4 + (favProb - 0.5) * 0.5; // 0.40→0.65 selon prob
+    const pHandicap = 0.4 + (favProb - 0.5) * 0.5;
     bets.push({ type: "handicap", label: "Handicap -2.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
   } else if (favProb >= 0.65) {
     const pHandicap = 0.35 + (favProb - 0.5) * 0.4;
     bets.push({ type: "handicap", label: "Handicap -1.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
   }
 
-  // 2. Total frames over/under
+  // 2. 1er à 2 frames (race to 2 — binomiale négative, ajusté pressure)
+  const pFirst2 = firstToKProb(pFrame, 2);
+  bets.push({ type: "first_to_2", label: "1er à 2 frames", prob: Math.min(0.95, Math.max(0.5, pFirst2)) });
+
+  // 3. Total frames over/under
   const isClose = favProb < 0.70;
   if (isClose) {
-    const pOver = 0.45 + (0.70 - favProb) * 0.3; // ~0.45→0.51
+    const pOver = 0.45 + (0.70 - favProb) * 0.3;
     bets.push({ type: "total_frames", label: "Over 8.5 frames", prob: Math.min(0.95, Math.max(0.5, pOver)) });
   } else {
-    const pUnder = 0.35 + favProb * 0.25; // ~0.50→0.58
+    const pUnder = 0.35 + favProb * 0.25;
     bets.push({ type: "total_frames", label: "Under 7.5 frames", prob: Math.min(0.95, Math.max(0.5, pUnder)) });
   }
 
-  // 3. Century in match (si joueurs actifs + gros breakeurs)
+  // 4. Century in match (si joueurs actifs + gros breakeurs)
   const centuryProb = 0.25 + (eloDiff > 300 ? 0.15 : 0) + (favProb > 0.7 ? 0.10 : 0);
   bets.push({ type: "century", label: "Century in match — Oui", prob: Math.min(0.95, Math.max(0.5, centuryProb)) });
 
