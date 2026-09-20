@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import type { ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
@@ -76,11 +77,13 @@ export function SportTabs({
   className,
 }: SportTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const moreBtnRef = useRef<HTMLButtonElement>(null);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(max-width: 768px)").matches;
   });
   const [showMore, setShowMore] = useState(false);
+  const [moreBtnRect, setMoreBtnRect] = useState<DOMRect | null>(null);
 
   // Sports favoris (localStorage, max 5)
   const allSportIds = useMemo(() => SPORT_TABS.map((t) => t.id), []);
@@ -222,11 +225,17 @@ export function SportTabs({
             );
           })}
 
-          {/* Bouton "Plus" — dropdown sports secondaires */}
+          {/* Bouton "Plus" — dropdown sports secondaires (portal pour éviter overflow clip) */}
           {moreTabs.length > 0 && (
             <div className="relative flex h-full items-center">
               <button
-                onClick={() => setShowMore((v) => !v)}
+                ref={moreBtnRef}
+                onClick={() => {
+                  if (!showMore && moreBtnRef.current) {
+                    setMoreBtnRect(moreBtnRef.current.getBoundingClientRect());
+                  }
+                  setShowMore((v) => !v);
+                }}
                 className={cn(
                   "flex h-full items-center gap-1 px-2.5 text-xs font-medium",
                   "text-muted-foreground hover:text-foreground transition-colors",
@@ -239,15 +248,29 @@ export function SportTabs({
                 <span>Plus</span>
                 <ChevronDown className={cn("h-3 w-3 transition-transform", showMore && "rotate-180")} />
               </button>
+            </div>
+          )}
 
-              <AnimatePresence>
-                {showMore && (
+          {/* Dropdown portal — rendu en dehors du conteneur overflow */}
+          {typeof document !== "undefined" && moreBtnRect && createPortal(
+            <AnimatePresence>
+              {showMore && (
+                <>
+                  {/* Overlay invisible pour fermer au clic extérieur */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowMore(false)}
+                  />
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 z-50 mt-1 min-w-[140px] rounded-lg border border-border bg-popover p-1 shadow-lg"
+                    className="fixed z-50 min-w-[140px] rounded-lg border border-border bg-popover p-1 shadow-lg"
+                    style={{
+                      top: moreBtnRect.bottom + 4,
+                      left: moreBtnRect.left,
+                    }}
                   >
                     {moreTabs.map((tab) => {
                       const liveCount = liveCounts[tab.id] ?? 0;
@@ -272,9 +295,10 @@ export function SportTabs({
                       );
                     })}
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                </>
+              )}
+            </AnimatePresence>,
+            document.body
           )}
         </div>
 
