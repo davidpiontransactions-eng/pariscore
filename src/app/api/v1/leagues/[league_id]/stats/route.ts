@@ -16,17 +16,8 @@ function cacheSet<T>(key: string, data: T) {
   (globalThis as any)[key] = { data, at: Date.now() };
 }
 
-// Import sélectif — bsdFetchRaw n'est pas exporté, on refait le fetch direct
-async function fetchBSDRaw<T>(endpoint: string): Promise<T> {
-  const key = process.env.BSD_API_KEY;
-  if (!key) throw new Error("BSD_API_KEY not configured");
-  const res = await fetch(`https://sports.bzzoiro.com/api${endpoint}`, {
-    headers: { Authorization: `Token ${key}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
-  return (await res.json()) as T;
-}
+// Import du client BSD partagé (pagination automatique)
+import { bsdFetch } from "@/lib/bsd-football-fetcher";
 
 
 export async function GET(
@@ -129,8 +120,7 @@ export async function GET(
     } else {
       // BSD — fetch finished matches, filter by real BSD league id
       try {
-        const raw = await fetchBSDRaw<any>(`/matches/?status=finished&limit=200`);
-        const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
+        const allMatches = await bsdFetch<any[]>(`/matches/?status=finished&limit=200`);
         const leagueMatches = allMatches.filter((m: any) => m?.league?.id === bsdId);
 
         if (leagueMatches.length >= 5) {

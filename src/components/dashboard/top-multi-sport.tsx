@@ -324,6 +324,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   // l'onglet actif est football — remplace les top-picks (vides hors edges).
   const [calMatches, setCalMatches] = useState<FotmobCalMatch[]>([]);
   const [calLoading, setCalLoading] = useState(false);
+  const [calDegraded, setCalDegraded] = useState(false);
   // Calendrier rugby : même style FotMob, données /api/rugby/*/predictions
   const { matches: rugbyCalMatches, loading: rugbyCalLoading } = useRugbyCalendar();
   // Filtres barre FotMob (remplacent pills masquées en mode foot).
@@ -369,8 +370,10 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       const res = await fetch(`/api/football/calendar?date=${key ?? parisTodayKey()}`);
       const data = await res.json();
       setCalMatches(Array.isArray(data.matches) ? data.matches : []);
+      setCalDegraded(data.degraded === true);
     } catch {
       setCalMatches([]);
+      setCalDegraded(false);
     }
     setCalLoading(false);
   }, []);
@@ -452,6 +455,18 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [fetchData, fetchCal, timeFilter, activeSport, mode, calDate]);
+
+  // Re-fetch immédiat au retour sur l'onglet (visibility change)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        fetchData(true);
+        if (activeSport === "football") fetchCal(calDate);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [fetchData, fetchCal, activeSport, calDate]);
 
   const handleRefresh = () => {
     setSpinning(true);
@@ -623,6 +638,12 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
           <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
         ) : (
           <>
+            {calDegraded && (
+              <div className="mb-2 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
+                <span className="mt-0.5 shrink-0">⚠</span>
+                <p>Source principale indisponible — données partielles affichées. Récupération automatique en cours.</p>
+              </div>
+            )}
             <FotmobFilterBar
               dateKey={calDate}
               todayKey={parisTodayKey()}

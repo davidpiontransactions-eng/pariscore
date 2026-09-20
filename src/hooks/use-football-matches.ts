@@ -25,9 +25,9 @@ export function useFootballMatches() {
     "/api/football/matches",
     fetcher,
     {
-      refreshInterval: 60_000,
-      revalidateOnFocus: false,
-      dedupingInterval: 30_000,
+      refreshInterval: 30_000,
+      revalidateOnFocus: true,
+      dedupingInterval: 15_000,
       errorRetryCount: 2,
     }
   );

@@ -439,27 +439,38 @@ function buildMatch(m: BSDFootballMatch): FootballMatch {
 /**
  * Déduplique les matchs fusionnés live + prematch : un même fixture présent
  * dans les deux flux BSD (ids différents) ne doit apparaître qu'une fois.
- * Conserve la PREMIÈRE occurrence (les appelants étalent le live en premier).
- * Clé = noms d'équipes normalisés ( convention `normalizeTeamName` ).
+ * Si un match est présent en live ET en prematch, la version LIVE est conservée
+ * (elle contient les scores/minutes à jour). Clé = noms d'équipes normalisés.
  */
 export function dedupeFootballMatches<
-  T extends { id: string; home: { name: string }; away: { name: string } },
+  T extends { id: string; home: { name: string }; away: { name: string }; live?: unknown },
 >(matches: T[]): T[] {
-  const seen = new Set<string>();
+  const indexByKey = new Map<string, number>();
   const out: T[] = [];
   for (const m of matches) {
     const h = normalizeTeamName(m.home?.name ?? "");
     const a = normalizeTeamName(m.away?.name ?? "");
     if (!h || !a) { out.push(m); continue; } // noms vides : on ne déduplique pas
     const key = h + "|" + a;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const existing = indexByKey.get(key);
+    if (existing !== undefined) {
+      // Remplacer par la version live si l'existante est prematch
+      if (m.live && !out[existing].live) {
+        out[existing] = m;
+      }
+      continue;
+    }
+    indexByKey.set(key, out.length);
     out.push(m);
   }
   return out;
 }
 
-async function bsdFetch<T>(endpoint: string): Promise<T> {
+/**
+ * Fetch BSD avec pagination automatique. Exporté pour les routes API qui
+ * ont besoin d'appeler BSD directement (top5, leagues/stats, etc.).
+ */
+export async function bsdFetch<T>(endpoint: string): Promise<T> {
   const key = process.env.BSD_API_KEY;
   if (!key) throw new Error("BSD_API_KEY not configured");
 

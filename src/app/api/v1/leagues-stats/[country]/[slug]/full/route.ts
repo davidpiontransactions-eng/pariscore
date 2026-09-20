@@ -56,17 +56,8 @@ function lruSet(key: string, data: unknown): void {
   cache.set(key, { at: Date.now(), data });
 }
 
-// ── BSD fetch inline ──
-async function fetchBSDRaw<T>(endpoint: string): Promise<T> {
-  const key = process.env.BSD_API_KEY;
-  if (!key) throw new Error("BSD_API_KEY not configured");
-  const res = await fetch(`https://sports.bzzoiro.com/api${endpoint}`, {
-    headers: { Authorization: `Token ${key}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
-  return (await res.json()) as T;
-}
+// ── BSD fetch via module partagé ──
+import { bsdFetch } from "@/lib/bsd-football-fetcher";
 
 type FullLeagueResponse = {
   league: {
@@ -120,10 +111,9 @@ export async function GET(
   let standings: unknown[] = [];
   if (ids.hasBsd) {
     try {
-      const raw = await fetchBSDRaw<{ results?: BSDFootballMatch[] }>(
+      const allMatches = await bsdFetch<BSDFootballMatch[]>(
         `/matches/?status=finished&limit=200`,
       );
-      const allMatches = Array.isArray(raw) ? raw : raw?.results ?? [];
       const leagueMatches = allMatches.filter(
         (m: any) => m?.league?.id === ids.bsdId,
       );

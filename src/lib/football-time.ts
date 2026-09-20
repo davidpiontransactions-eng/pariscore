@@ -80,12 +80,12 @@ export type KickoffWindow = "jour" | "48h" | "semaine" | "1h" | "2h" | "4h" | "8
 const WINDOW_HOURS: Record<string, number> = { "1h": 1, "2h": 2, "4h": 4, "8h": 8, "48h": 48, "semaine": 24 * 7 };
 
 /** Match à venir dans la fenêtre choisie ? Borne basse = maintenant. */
-export function isInKickoffWindow(iso: string, win: KickoffWindow): boolean {
+export function isInKickoffWindow(iso: string, win: KickoffWindow, now: Date = new Date()): boolean {
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return false;
-  const now = Date.now();
-  if (t < now) return false;
-  if (win === "jour") return parisDayKey(new Date(t)) === parisDayKey(new Date());
+  const nowMs = now.getTime();
+  if (t < nowMs) return false;
+  if (win === "jour") return parisDayKey(new Date(t)) === parisDayKey(now);
   const hours = WINDOW_HOURS[win];
-  return hours != null && t <= now + hours * 3_600_000;
+  return hours != null && t <= nowMs + hours * 3_600_000;
 }

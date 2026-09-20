@@ -11,12 +11,12 @@ const fetcher = async (url: string) => {
   return r.json() as Promise<Top5Response>;
 };
 
-/** Top 5 matchs à venir par stratégie — forme L5 Domicile/Extérieur (cache 30 min). */
+/** Top 5 matchs à venir par stratégie — forme L5 Domicile/Extérieur (cache 10 min). */
 export function useFootballTop5() {
   const { data, error, isLoading } = useSWR<Top5Response>(
     "/api/football/top5",
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 20 * 60_000 },
+    { revalidateOnFocus: true, dedupingInterval: 5 * 60_000 },
   );
 
   return {
@@ -39,8 +39,8 @@ export function useFootballTopN(limit: number, league: string | null) {
   const url = `/api/football/top5?${params.toString()}`;
 
   const { data, error, isLoading } = useSWR<Top5Response>(url, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 20 * 60_000,
+    revalidateOnFocus: true,
+    dedupingInterval: 5 * 60_000,
   });
 
   return {

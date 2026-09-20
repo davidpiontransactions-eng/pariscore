@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeStrategyTop5Matches, type StrategyTop5 } from "@/lib/football-strategy-top5";
 import { emptyStrategyTop5, readFixturesCache, writeFixturesCache } from "@/lib/football-top5-cache";
+import { bsdFetch } from "@/lib/bsd-football-fetcher";
 import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
 
-const CACHE_TTL = 30 * 60_000;
+const CACHE_TTL = 10 * 60_000;
 
 type CachePayload = StrategyTop5;
 
@@ -12,32 +13,9 @@ const cacheByKey = new Map<string, { at: number; data: CachePayload }>();
 /**
  * GET /api/football/top5
  *
- * Top 5 MATCHS à venir par stratégie de pari (Meilleure équipe, double chance,
- * Over 1.5 / Under 3.5 buts, BTTS yes, attaque, défense, Over 6.5 corners) —
- * agrégé sur toutes les ligues BSD. Un match est scoré en croisant la forme
- * récente (5 derniers matchs terminés) de l'équipe à Domicile avec celle de
- * l'équipe à Extérieur. Cotes non requises.
- * Cache serveur 30 min (les données de forme changent lentement en journée).
+ * Top 5 MATCHS à venir par stratégie de pari — agrégé sur toutes les ligues BSD.
+ * Cache serveur 10 min.
  */
-async function fetchBSDRaw<T>(endpoint: string): Promise<T> {
-  const key = process.env.BSD_API_KEY;
-  if (!key) throw new Error("BSD_API_KEY not configured");
-  const res = await fetch(`https://sports.bzzoiro.com/api${endpoint}`, {
-    headers: { Authorization: `Token ${key}`, Accept: "application/json" },
-    signal: AbortSignal.timeout(20000),
-  });
-  if (res.status === 402) throw new Error("BSD Sports Addon required (402)");
-  if (res.status === 429) throw new Error("BSD rate limited (429)");
-  if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
-  return (await res.json()) as T;
-}
-
-function unpackList<T>(raw: T[] | { results?: T[] } | { count?: number; results?: T[] } | null | undefined): T[] {
-  if (Array.isArray(raw)) return raw as T[];
-  const r = raw as { results?: T[] } | null | undefined;
-  return r?.results ?? [];
-}
-
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 5, 1), 20);
@@ -53,20 +31,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [finishedRaw, fixturesRaw] = await Promise.all([
-      fetchBSDRaw<{ results?: BSDFootballMatch[] } | BSDFootballMatch[]>(
+    const [finished, fixtures] = await Promise.all([
+      bsdFetch<BSDFootballMatch[]>(
         "/matches/?status=finished&limit=200&offset=0",
       ),
-      fetchBSDRaw<{ results?: BSDFootballMatch[] } | BSDFootballMatch[]>(
+      bsdFetch<BSDFootballMatch[]>(
         "/matches/?status=notstarted&limit=100",
       ),
     ]);
-    const finished = unpackList<BSDFootballMatch>(finishedRaw);
-    const fixtures = unpackList<BSDFootballMatch>(fixturesRaw);
 
     const data: StrategyTop5 = computeStrategyTop5Matches(finished, fixtures, { limit, league });
     cacheByKey.set(cacheKey, { at: Date.now(), data });
-    // Snapshot disque pour le fallback hors-ligne (best-effort).
     writeFixturesCache(finished, fixtures);
 
     return NextResponse.json({
@@ -85,7 +60,6 @@ export async function GET(request: NextRequest) {
       });
     }
     // Fallback 2 : shape vide COMPLÈTE (toutes les stratégies à []).
-    // Le hook client lit data.strategies[key] — une shape partielle = tableau vide silencieux.
     return NextResponse.json({
       ...emptyStrategyTop5(),
       matches: [],

@@ -196,7 +196,7 @@ function HomeInner() {
   const prematchMatches = useMemo(() => {
     if (!footballMatches?.matches) return [];
     return footballMatches.matches.filter(
-      (m: any) => !m.live,
+      (m: any) => !m.live || m.live.status === "FT" || m.live.status === "PEN",
     );
   }, [footballMatches]);
 
