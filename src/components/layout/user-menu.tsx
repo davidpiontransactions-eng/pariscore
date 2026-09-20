@@ -56,7 +56,7 @@ export function UserMenu() {
           variant="ghost"
           size="icon"
           aria-label={t("openMenu")}
-          className="relative h-8 w-8 rounded-full bg-muted p-0"
+          className="relative h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-muted p-0"
         >
           {/* Avatar circulaire — icône User par défaut, ou initiales */}
           <span className="flex h-full w-full items-center justify-center rounded-full text-xs font-medium">

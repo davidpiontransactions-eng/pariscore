@@ -316,7 +316,7 @@ export function FootballStrategyTop5Widget() {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 5 matchs"
-            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-emerald-500"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-base sm:text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-emerald-500"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useId, useCallback, useEffect, useRef, lazy, Suspense } from "react";
+import { mutate as swrMutate } from "swr";
 import { useTranslations } from "next-intl";
 import {
   Trophy,
@@ -146,6 +147,22 @@ export function FootballTabContent() {
     clearMatchSelection();
   }, [setSelectedLeague, clearCountry, setTimeKey, clearMatchSelection]);
 
+  // Auto-refresh classements quand un match se termine (FT).
+  // Détecte l'augmentation du nombre de matchs FT → revalide toutes les
+  // clés SWR rankings (préfixe /api/football/rankings).
+  const prevFtCountRef = useRef(0);
+  useEffect(() => {
+    const ftCount = matches.filter((m) => m.live?.status === "FT").length;
+    if (ftCount > prevFtCountRef.current) {
+      swrMutate(
+        (key: string) => typeof key === "string" && key.startsWith("/api/football/rankings"),
+        undefined,
+        { revalidate: true },
+      );
+    }
+    prevFtCountRef.current = ftCount;
+  }, [matches]);
+
   const liveMatches = useMemo(() => {
     let list = matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT"));
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
@@ -278,7 +295,7 @@ export function FootballTabContent() {
                 clearCountry(null);
               }
             }}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 min-h-[40px] text-emerald-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
           >
             ← Retour
           </button>

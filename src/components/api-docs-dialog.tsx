@@ -187,7 +187,8 @@ export function ApiDocsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl overflow-hidden p-0">
+      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-3xl overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader className="border-b border-border/60 px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Code className="h-4 w-4 text-emerald-600" />
@@ -429,7 +430,7 @@ function CopyButton({
     <Button
       variant="ghost"
       size="sm"
-      className="h-6 gap-1 text-[11px]"
+      className="h-8 gap-1 text-[11px] sm:h-6"
       onClick={handle}
       type="button"
     >

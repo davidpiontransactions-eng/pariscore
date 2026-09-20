@@ -366,7 +366,7 @@ export function FootballLeagueRankingsWidget() {
           <SelectTrigger
             size="sm"
             aria-label="Championnat"
-            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-base sm:text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Choisir un championnat…" />
           </SelectTrigger>
@@ -479,7 +479,7 @@ export function FootballLeagueRankingsWidget() {
           <SelectTrigger
             size="sm"
             aria-label="Marché statistique"
-            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-base sm:text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Choisir un marché…" />
           </SelectTrigger>
@@ -516,15 +516,15 @@ export function FootballLeagueRankingsWidget() {
             </p>
           ) : (
             <div
-              className="max-h-72 overflow-y-auto pr-0.5 scrollbar-thin"
+              className="max-h-72 overflow-x-auto overflow-y-auto pr-0.5 scrollbar-thin"
               role="region"
               aria-label={`Classement complet ${def.title}`}
             >
-              <table className="border-collapse text-[9px]">
+              <table className="border-collapse text-[10px] sm:text-[9px]">
                 <thead>
                   <tr className="text-[#6B5B8D]">
                     <th scope="col" className="w-4 py-0.5 pr-1 text-right font-medium">#</th>
-                    <th scope="col" className="w-[104px] py-0.5 text-left font-medium">Équipe</th>
+                    <th scope="col" className="w-[80px] sm:w-[104px] py-0.5 text-left font-medium">Équipe</th>
                     <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Matchs joués">J</th>
                     {isXgRows(rawRows) ? (
                       <>
@@ -552,7 +552,7 @@ export function FootballLeagueRankingsWidget() {
                         <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-[#6B5B8D]">
                           {i + 1}
                         </td>
-                        <td className="w-[104px] truncate py-0.5 text-[10px] text-[#7B3FA0]">
+                        <td className="w-[80px] sm:w-[104px] truncate py-0.5 text-[10px] text-[#7B3FA0]">
                           {teamName}
                         </td>
                         <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-[#6B5B8D]">

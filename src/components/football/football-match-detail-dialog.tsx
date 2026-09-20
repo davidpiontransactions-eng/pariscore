@@ -297,7 +297,9 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222]">
+      <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222] max-h-[90vh] sm:max-h-[90dvh] overflow-hidden flex flex-col max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        {/* Drag handle mobile (BottomSheet affordance) */}
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">

@@ -266,7 +266,7 @@ function SearchBar() {
         placeholder={t("searchPlaceholder")}
         aria-label={t("searchPlaceholder")}
         className={cn(
-          "h-8 w-full rounded-md border border-[#E0D8F0]/60 bg-white pl-8 pr-7 text-xs text-[#1A1145]",
+          "h-8 w-full rounded-md border border-[#E0D8F0]/60 bg-white pl-8 pr-7 text-base sm:text-xs text-[#1A1145]",
           "placeholder:text-[#6B5B8D] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       />
@@ -275,7 +275,7 @@ function SearchBar() {
           type="button"
           onClick={() => setSearchQuery("")}
           aria-label={t("searchClear")}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#6B5B8D] hover:text-[#1A1145]"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded text-[#6B5B8D] hover:text-[#1A1145]"
         >
           <X aria-hidden className="h-3.5 w-3.5" />
         </button>
@@ -307,7 +307,7 @@ function TimePills() {
     <div
       role="group"
       aria-label={t("timeAria")}
-      className="flex items-center gap-1 overflow-x-auto scrollbar-none"
+      className="flex items-center gap-1 overflow-x-auto snap-x snap-mandatory scrollbar-none"
     >
       {options.map((opt) => {
         const active = selected === opt.key;
@@ -318,7 +318,7 @@ function TimePills() {
             aria-pressed={active}
             onClick={() => setTimeFilter(opt.key)}
             className={cn(
-              "shrink-0 rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+              "shrink-0 snap-start rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active
                 ? "bg-[#7B3FA0] text-[#1A1145]"
@@ -482,7 +482,7 @@ function MatchRow({
   return (
     <div
       className={cn(
-        "flex w-full items-center gap-1.5 rounded px-1 py-1 pl-0 text-[11px]",
+        "flex w-full items-center gap-1.5 rounded px-1.5 py-1.5 pl-0 text-[11px]",
         isSelected
           ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/40"
           : "text-[#6B5B8D] hover:bg-[#EDE8F5]/80",
@@ -984,13 +984,13 @@ function MyTeamsBlock({
         {followedTeamIds.map((teamId) => {
           const name = teamNames.get(teamId) ?? teamId.split(":").pop() ?? teamId;
           return (
-            <li key={teamId} className="flex items-center gap-1.5 rounded-md px-2.5 py-1 hover:bg-[#EDE8F5]/80">
+            <li key={teamId} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 hover:bg-[#EDE8F5]/80">
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#1A1145]">{name}</span>
               <button
                 type="button"
                 onClick={() => onToggleFollow(teamId)}
                 aria-label="Unfollow team"
-                className="p-0.5 text-[#6B5B8D] hover:text-red-400"
+                className="flex h-9 w-9 sm:h-7 sm:w-7 items-center justify-center rounded text-[#6B5B8D] hover:text-red-400"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -1073,7 +1073,7 @@ function FavoritesBlock({
         {favorites.map((league) => (
           <li
             key={league.id}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1 hover:bg-[#EDE8F5]/80"
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 hover:bg-[#EDE8F5]/80"
           >
             <button
               type="button"
@@ -1339,7 +1339,7 @@ export function SportsSidebarContent({
                 onClick={() => setSortMode(sortMode === "default" ? "chrono" : "default")}
                 aria-label={sortMode === "chrono" ? "Sort by A-Z" : "Sort by kickoff time"}
                 className={cn(
-                  "shrink-0 rounded-md px-2 py-1 text-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "shrink-0 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   sortMode === "chrono"
                     ? "bg-[#7B3FA0]/20 text-[#7B3FA0]"
                 : "bg-[#EDE8F5]/80 text-[#6B5B8D] hover:bg-[#EDE8F5]/80 hover:text-[#1A1145]",

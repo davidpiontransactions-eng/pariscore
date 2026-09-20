@@ -52,7 +52,7 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
   }, []);
 
   return (
-    <div className={cn("flex items-center gap-1 overflow-x-auto pb-2 scrollbar-none", className)}>
+    <div className={cn("flex items-center gap-1 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-none", className)}>
       {/* Prev day button */}
       <button
         type="button"
@@ -61,7 +61,7 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
           prev.setDate(prev.getDate() - 1);
           onSelect(prev);
         }}
-        className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+        className="shrink-0 snap-start rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
         aria-label="Jour précédent"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -78,7 +78,7 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
             type="button"
             onClick={() => onSelect(d)}
             className={cn(
-              "shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 min-w-[52px] transition-all",
+              "shrink-0 snap-start flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 min-w-[52px] transition-all",
               isSelected
                 ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-500/10"
                 : "bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800/50",
@@ -103,7 +103,7 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
           next.setDate(next.getDate() + 1);
           onSelect(next);
         }}
-        className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+        className="shrink-0 snap-start rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
         aria-label="Jour suivant"
       >
         <ChevronRight className="h-4 w-4" />

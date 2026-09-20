@@ -158,7 +158,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
                 key={tab.id}
                 onClick={() => setPageView(tab.id)}
                 className={cn(
-                  "rounded-md px-3 py-1 text-xs font-medium transition-all duration-150",
+                  "rounded-md px-3 py-1 min-h-[36px] text-xs font-medium transition-all duration-150",
                   pageView === tab.id
                     ? "bg-primary/20 text-primary shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",

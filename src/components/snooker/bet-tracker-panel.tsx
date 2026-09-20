@@ -46,7 +46,7 @@ export function BetTrackerPanel() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center" onClick={() => setIsOpen(false)}>
           <div
-            className="mx-0 max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white sm:mx-4 sm:rounded-3xl"
+            className="mx-0 max-h-[80vh] sm:max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white sm:mx-4 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

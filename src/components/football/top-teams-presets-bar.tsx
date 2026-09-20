@@ -222,11 +222,11 @@ export function TopTeamsPresetsBar({
   return (
     <div className="space-y-2">
       {/* Pills horizontales scrollables */}
-      <div className="flex flex-nowrap gap-1.5 overflow-x-auto scrollbar-none pb-1">
+      <div className="flex flex-nowrap gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-1">
         <button
           onClick={() => onPresetChange(null)}
           className={cn(
-            "inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "inline-flex shrink-0 snap-start items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             activePreset === null
               ? "border-foreground bg-foreground text-background"
               : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/40",
@@ -241,7 +241,7 @@ export function TopTeamsPresetsBar({
             disabled={p.unavailable}
             title={p.unavailable ? "Données bientôt disponibles" : p.tooltip}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "inline-flex shrink-0 snap-start items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               p.unavailable && "cursor-not-allowed opacity-40",
               activePreset === p.key
                 ? "border-foreground bg-foreground text-background"

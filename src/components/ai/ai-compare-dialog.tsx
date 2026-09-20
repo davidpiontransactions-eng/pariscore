@@ -229,7 +229,7 @@ export function AICompareDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[85vh] overflow-y-auto border-purple-500/20 bg-card sm:max-w-2xl">
+      <DialogContent className="max-h-[85vh] sm:max-h-[85dvh] overflow-y-auto border-purple-500/20 bg-card sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-purple-400" />

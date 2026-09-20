@@ -161,7 +161,7 @@ export function SportTabs({
           ref={scrollRef}
           className={cn(
             "flex h-full items-center gap-1 px-3",
-            "overflow-x-auto scrollbar-none",
+            "overflow-x-auto snap-x snap-mandatory scrollbar-none",
             "md:mx-auto md:justify-center md:overflow-visible"
           )}
         >
@@ -179,7 +179,7 @@ export function SportTabs({
                 aria-label={tab.label}
                 onClick={() => onSportChange(tab.id)}
                 className={cn(
-                  "relative flex h-full shrink-0 items-center gap-1.5 px-3",
+                  "relative flex h-full shrink-0 snap-start items-center gap-1.5 px-3",
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",

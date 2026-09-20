@@ -61,8 +61,8 @@ export function HandballRankings({
         <table className="w-full text-xs">
           <thead>
             <tr className="text-muted-foreground border-b">
-              <th className="text-left py-1 px-1">#</th>
-              <th className="text-left py-1 px-1">Équipe</th>
+              <th className="text-left py-1 px-1 sticky left-0 z-20 bg-background">#</th>
+              <th className="text-left py-1 px-1 sticky left-8 z-20 bg-background">Équipe</th>
               <th className="text-center py-1 px-1">MJ</th>
               <th className="text-center py-1 px-1">V</th>
               <th className="text-center py-1 px-1">N</th>
@@ -79,8 +79,8 @@ export function HandballRankings({
               const diff = row.goalsFor - row.goalsAgainst;
               return (
                 <tr key={row.rank} className="border-b hover:bg-muted/50">
-                  <td className="py-1 px-1 font-medium">{row.rank}</td>
-                  <td className="py-1 px-1 font-medium">{row.team}</td>
+                  <td className="py-1 px-1 font-medium sticky left-0 z-10 bg-background">{row.rank}</td>
+                  <td className="py-1 px-1 font-medium sticky left-8 z-10 bg-background min-w-[100px]">{row.team}</td>
                   <td className="py-1 px-1 text-center">{row.played}</td>
                   <td className="py-1 px-1 text-center">{row.wins}</td>
                   <td className="py-1 px-1 text-center">{row.draws}</td>

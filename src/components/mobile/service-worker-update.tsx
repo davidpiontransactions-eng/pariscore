@@ -98,7 +98,7 @@ export function ServiceWorkerUpdate({ className }: Props) {
       <div className="flex items-center gap-2">
         <button
           onClick={handleUpdate}
-          className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium hover:bg-white/30 transition-colors"
+          className="rounded-md bg-white/20 px-3 py-1.5 text-xs font-medium hover:bg-white/30 transition-colors"
         >
           Mettre à jour
         </button>

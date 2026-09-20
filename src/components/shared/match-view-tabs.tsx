@@ -128,7 +128,7 @@ export function MatchViewTabs({
             tabIndex={isActive ? 0 : -1}
             onClick={() => activate(tab.id)}
             className={cn(
-              "relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
+              "relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2.5 text-xs font-semibold transition-colors sm:py-2 sm:text-sm",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
             )}
             style={{

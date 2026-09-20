@@ -159,7 +159,7 @@ export function LiveDecisionsDrawer(props: Props) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
-        <DrawerContent className="max-h-[80vh]">
+        <DrawerContent className="max-h-[80vh] sm:max-h-[80dvh]">
           <DrawerHeader className="text-left">
             <DrawerTitle className="flex items-center gap-2 text-sm"><Brain className="h-4 w-4 text-violet-400" />Décisions Live · {rest.playerAName} vs {rest.playerBName}</DrawerTitle>
           </DrawerHeader>

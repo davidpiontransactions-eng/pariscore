@@ -946,7 +946,7 @@ export function FootballMatchCard({
           <div className="flex items-center gap-1">
             <button
               onClick={() => onOpenDetail?.(match)}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex min-h-10 sm:min-h-9 items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Voir l'analyse détaillée"
             >
               <BarChart3 className="h-3 w-3" />

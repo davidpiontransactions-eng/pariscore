@@ -20,7 +20,7 @@ export function HandballStrategyBar({ active, onChange }: { active: HandballStra
         <button
           key={s.key}
           onClick={() => onChange(s.key)}
-          className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs border transition-colors ${active === s.key ? "bg-foreground text-background" : "hover:bg-muted"}`}
+          className={`whitespace-nowrap px-2.5 py-1.5 rounded-full text-xs border transition-colors ${active === s.key ? "bg-foreground text-background" : "hover:bg-muted"}`}
         >
           {s.emoji} {s.label}
         </button>

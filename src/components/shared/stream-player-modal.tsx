@@ -122,7 +122,8 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-4xl">
+      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-4xl max-h-[90vh] sm:max-h-[90dvh] overflow-y-auto max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader className="border-b border-border/40 px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex items-center gap-2 text-sm font-semibold">

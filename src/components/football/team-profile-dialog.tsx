@@ -387,7 +387,8 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border/50 bg-background p-0 overflow-hidden">
+      <DialogContent className="max-w-md border-border/50 bg-background p-0 overflow-hidden max-h-[90vh] sm:max-h-[90dvh] flex flex-col max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         {/* Header stade avec silhouettes */}
         <StadiumHeader team={team ?? "Équipe"} venueLabel={venueLabel} />
 
@@ -403,7 +404,7 @@ export function TeamProfileDialog({ leagueId, team, venue, fair, odds, open, onO
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(80vh-120px)]">
+        <ScrollArea className="max-h-[calc(80vh-120px)] sm:max-h-[calc(80dvh-120px)]">
           <div className="space-y-4 px-6 py-4">
             {/* Scope toggle */}
             <ToggleGroup

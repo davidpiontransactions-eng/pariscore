@@ -152,7 +152,7 @@ export function BetSlip() {
       role="region"
       aria-label={t("title")}
       className={cn(
-        "fixed bottom-20 right-4 z-40 flex max-h-[calc(100vh-6rem)] w-[calc(100vw-2rem)] max-w-sm flex-col",
+        "fixed bottom-20 right-4 z-40 flex max-h-[calc(100vh-6rem)] sm:max-h-[calc(100dvh-6rem)] w-[calc(100vw-2rem)] max-w-sm flex-col",
         "rounded-xl border border-border/70 bg-card shadow-2xl",
       )}
     >
@@ -177,7 +177,7 @@ export function BetSlip() {
             disabled={count === 0 || placing}
             aria-label={t("clear")}
             title={t("clear")}
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400"
+            className="h-9 px-2 text-xs text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 sm:h-7"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -188,7 +188,7 @@ export function BetSlip() {
             onClick={() => setExpanded(false)}
             aria-label={t("collapse")}
             title={t("collapse")}
-            className="h-7 px-2 text-muted-foreground"
+            className="h-9 px-2 text-muted-foreground sm:h-7"
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -366,7 +366,7 @@ function SlipRow({
             setStakeText(e.target.value);
             onStakeChange(parseFloat(e.target.value) || 0);
           }}
-          className="h-7 flex-1 px-2 py-1 text-xs tabular-nums"
+          className="h-9 flex-1 px-2 py-1 text-base tabular-nums sm:h-7 sm:text-xs"
         />
         <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
           →{" "}

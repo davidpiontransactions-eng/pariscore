@@ -214,7 +214,7 @@ export function OddsCarousel({
             onClick={() => scrollRef.current?.scrollBy({ left: -120, behavior: "smooth" })}
             disabled={!canScrollLeft}
             className={cn(
-              "h-6 w-6 rounded-full border border-white/10 flex items-center justify-center text-xs",
+              "h-9 w-9 sm:h-6 sm:w-6 rounded-full border border-white/10 flex items-center justify-center text-xs",
               canScrollLeft ? "text-zinc-400 hover:bg-white/10" : "text-zinc-700"
             )}
           >
@@ -225,7 +225,7 @@ export function OddsCarousel({
             onClick={() => scrollRef.current?.scrollBy({ left: 120, behavior: "smooth" })}
             disabled={!canScrollRight}
             className={cn(
-              "h-6 w-6 rounded-full border border-white/10 flex items-center justify-center text-xs",
+              "h-9 w-9 sm:h-6 sm:w-6 rounded-full border border-white/10 flex items-center justify-center text-xs",
               canScrollRight ? "text-zinc-400 hover:bg-white/10" : "text-zinc-700"
             )}
           >

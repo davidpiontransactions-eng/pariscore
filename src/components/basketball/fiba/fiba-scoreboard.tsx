@@ -119,7 +119,7 @@ export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps)
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150",
+                "flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
                 activeTab === tab.id
                   ? "bg-primary/20 text-primary shadow-sm"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",

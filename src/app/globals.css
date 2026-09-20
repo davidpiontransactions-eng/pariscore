@@ -315,6 +315,26 @@
   [data-radix-sheet-content] {
     overscroll-behavior: contain;
   }
+  /* Bottom-sheet mobile : dialog qui slide en bas sur petits écrans */
+  @media (max-width: 639px) {
+    [data-radix-dialog-content].max-sm\:bottom-0 {
+      max-height: 90dvh !important;
+      max-height: 90vh;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      animation: slide-up 0.2s ease-out;
+    }
+    @keyframes slide-up {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    /* Body scroll lock quand un dialog est ouvert sur mobile */
+    body:has([data-state="open"][data-radix-dialog-content]) {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+    }
+  }
   /* Listes scrollables : pas de scroll chaining vers le body */
   .scrollable-list {
     overscroll-behavior-y: contain;
@@ -341,6 +361,30 @@
     background: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
     border: 2px solid transparent;
     background-clip: content-box;
+  }
+  /* ── Mobile scrollbar — plus fin, semi-transparent ──────────────────── */
+  @media (max-width: 639px) {
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: color-mix(in oklch, var(--muted-foreground) 20%, transparent);
+    }
+    /* Masquer scrollbar horizontale sur les filter bars */
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+  /* ── iOS safe areas — PWA Capacitor ─────────────────────────────────── */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    .mobile-safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
   }
 }
 

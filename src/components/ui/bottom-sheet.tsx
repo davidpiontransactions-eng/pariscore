@@ -32,7 +32,7 @@ function BottomSheet({
           <DrawerPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <DrawerPrimitive.Content
             className={cn(
-              "fixed inset-x-0 bottom-0 z-50 mt-24 flex flex-col rounded-t-2xl border border-border/60 bg-card max-h-[85vh] overflow-y-auto",
+              "fixed inset-x-0 bottom-0 z-50 mt-24 flex flex-col rounded-t-2xl border border-border/60 bg-card max-h-[85vh] sm:max-h-[85dvh] overflow-y-auto",
               className
             )}
           >
@@ -47,7 +47,7 @@ function BottomSheet({
                   Sheet
                 </DrawerPrimitive.Title>
               )}
-              <DrawerPrimitive.Close className="ml-auto rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden">
+              <DrawerPrimitive.Close className="ml-auto flex h-10 w-10 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden">
                 <XIcon className="size-4" />
                 <span className="sr-only">Close</span>
               </DrawerPrimitive.Close>
@@ -65,7 +65,7 @@ function BottomSheet({
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/60 bg-card max-w-md w-full mx-auto",
+            "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/60 bg-card max-w-md w-full mx-auto max-h-[90vh] sm:max-h-[90dvh] overflow-y-auto",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
             className
           )}
@@ -80,7 +80,7 @@ function BottomSheet({
                 Sheet
               </DialogPrimitive.Title>
             )}
-            <DialogPrimitive.Close className="ml-auto rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden">
+            <DialogPrimitive.Close className="ml-auto flex h-10 w-10 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden">
               <XIcon className="size-4" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>

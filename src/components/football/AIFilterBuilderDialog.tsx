@@ -88,7 +88,8 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-emerald-400" aria-hidden />
@@ -159,7 +160,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                 <input
                   value={draft.label}
                   onChange={(e) => setDraft({ ...draft, label: e.target.value.slice(0, 30) })}
-                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-base sm:text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Nom du filtre"
                 />
                 <span className="shrink-0 text-[11px] text-muted-foreground">
@@ -182,7 +183,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                     <select
                       value={rule.operator}
                       onChange={(e) => updateRule(idx, { operator: e.target.value as FilterOperator })}
-                      className="rounded border border-border bg-background px-1 py-0.5 text-[11px]"
+                      className="rounded border border-border bg-background px-1 py-0.5 text-base sm:text-[11px]"
                       aria-label="Opérateur"
                     >
                       {OPERATORS.map((op) => (

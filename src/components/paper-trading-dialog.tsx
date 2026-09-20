@@ -55,7 +55,8 @@ export function PaperTradingDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-2xl overflow-hidden p-0">
+      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-2xl overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader className="border-b border-border/60 px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <FlaskConical className="h-4 w-4 text-purple-600" />
@@ -182,7 +183,7 @@ export function PaperTradingDialog() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-500/10"
+                            className="h-9 w-9 sm:h-7 sm:w-7 p-0 text-emerald-600 hover:bg-emerald-500/10"
                             onClick={() => settleBet(bet.id, "won")}
                             title={t("actions.markWon")}
                           >
@@ -191,7 +192,7 @@ export function PaperTradingDialog() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-rose-600 hover:bg-rose-500/10"
+                            className="h-9 w-9 sm:h-7 sm:w-7 p-0 text-rose-600 hover:bg-rose-500/10"
                             onClick={() => settleBet(bet.id, "lost")}
                             title={t("actions.markLost")}
                           >
@@ -200,7 +201,7 @@ export function PaperTradingDialog() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-amber-600 hover:bg-amber-500/10"
+                            className="h-9 w-9 sm:h-7 sm:w-7 p-0 text-amber-600 hover:bg-amber-500/10"
                             onClick={() => settleBet(bet.id, "void")}
                             title={t("actions.markVoid")}
                           >
@@ -211,7 +212,7 @@ export function PaperTradingDialog() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+                        className="h-9 w-9 sm:h-7 sm:w-7 shrink-0 p-0 text-muted-foreground hover:text-foreground"
                         onClick={() => deleteBet(bet.id)}
                         title={t("actions.delete")}
                       >

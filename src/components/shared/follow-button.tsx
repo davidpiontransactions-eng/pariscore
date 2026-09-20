@@ -40,13 +40,13 @@ type Props = {
 };
 
 const SIZE_CLASSES = {
-  sm: "h-6 w-6",
-  md: "h-8 w-8",
+  sm: "h-8 w-8 sm:h-6 sm:w-6",
+  md: "h-9 w-9 sm:h-8 sm:w-8",
   lg: "h-10 w-10",
 } as const;
 
 const ICON_SIZES = {
-  sm: "h-3 w-3",
+  sm: "h-3.5 w-3.5 sm:h-3 sm:w-3",
   md: "h-4 w-4",
   lg: "h-5 w-5",
 } as const;

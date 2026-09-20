@@ -63,7 +63,7 @@ export function FibaLeaderboard({ onPlayerClick, className }: FibaLeaderboardPro
               key={opt.key}
               onClick={() => setStat(opt.key)}
               className={cn(
-                "px-2.5 py-1 text-[10px] font-bold rounded-md transition-all",
+                "px-2.5 py-1.5 text-[10px] font-bold rounded-md transition-all",
                 stat === opt.key
                   ? "bg-primary/20 text-primary"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",
@@ -81,7 +81,7 @@ export function FibaLeaderboard({ onPlayerClick, className }: FibaLeaderboardPro
               key={opt.key}
               onClick={() => setPosition(opt.key)}
               className={cn(
-                "px-2 py-1 text-[10px] font-bold rounded-md transition-all",
+                "px-2 py-1.5 text-[10px] font-bold rounded-md transition-all",
                 position === opt.key
                   ? "bg-primary/20 text-primary"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",
@@ -95,7 +95,7 @@ export function FibaLeaderboard({ onPlayerClick, className }: FibaLeaderboardPro
         {/* Sort direction */}
         <button
           onClick={() => setSortAsc(!sortAsc)}
-          className="px-2 py-1 text-[10px] text-slate-400 hover:text-slate-200 bg-white/[0.06] rounded-lg"
+          className="px-2 py-1.5 text-[10px] text-slate-400 hover:text-slate-200 bg-white/[0.06] rounded-lg"
         >
           {sortAsc ? "↑ Croissant" : "↓ Décroissant"}
         </button>

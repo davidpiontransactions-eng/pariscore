@@ -35,7 +35,7 @@ function LeagueTab({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-[9px]">
+      <table className="w-full text-[10px] sm:text-[9px]">
         <thead>
           <tr className="border-b border-slate-800 text-left text-slate-400">
             <th className="px-1 py-0.5 font-medium">Ligue</th>
@@ -134,7 +134,7 @@ export function Top5BacktestStrip({
       {open && (
         <Tabs defaultValue="recents" className="mt-1">
           <div className="rounded border border-slate-800 bg-slate-950/80 p-1">
-            <TabsList className="mb-1 h-6 w-full">
+            <TabsList className="mb-1 h-8 w-full sm:h-6">
               <TabsTrigger value="recents" className="h-5 px-2 text-[9px]">
                 Récents
               </TabsTrigger>

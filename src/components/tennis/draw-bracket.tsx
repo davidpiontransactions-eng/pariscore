@@ -37,7 +37,7 @@ export function DrawBracket({
 
   return (
     <div className={cn("overflow-x-auto pb-2", className)}>
-      <div className="flex min-w-[700px] gap-0">
+      <div className="flex min-w-[500px] sm:min-w-[700px] gap-0">
         {rounds.map((round, colIdx) => {
           const roundMatches = grouped.get(round) ?? [];
           const isLast = colIdx === rounds.length - 1;

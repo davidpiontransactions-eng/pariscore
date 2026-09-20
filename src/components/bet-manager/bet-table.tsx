@@ -46,7 +46,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
-      <table className="w-full min-w-[760px] text-left text-xs">
+      <table className="w-full min-w-[600px] text-left text-xs sm:min-w-[760px]">
         <thead>
           <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-[#6B5B8D]">
             <th className="px-3 py-2.5 font-semibold">Date</th>
@@ -113,13 +113,13 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                     <StatusBadge status={b.status} />
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                       {b.status === "pending" ? (
                         <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-emerald-400 hover:bg-emerald-500/10"
+                            className="h-9 w-9 text-emerald-400 hover:bg-emerald-500/10 sm:h-6 sm:w-6"
                             title="Gagné"
                             aria-label="Marquer gagné"
                             onClick={() => onSettle(b.id, "won")}
@@ -129,7 +129,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-red-400 hover:bg-red-500/10"
+                            className="h-9 w-9 text-red-400 hover:bg-red-500/10 sm:h-6 sm:w-6"
                             title="Perdu"
                             aria-label="Marquer perdu"
                             onClick={() => onSettle(b.id, "lost")}
@@ -139,7 +139,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
+                            className="h-9 w-9 text-[#6B5B8D] hover:bg-white/10 sm:h-6 sm:w-6"
                             title="Cashout"
                             aria-label="Cashout"
                             onClick={() => onSettle(b.id, "cashout")}
@@ -149,7 +149,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
+                            className="h-9 w-9 text-[#6B5B8D] hover:bg-white/10 sm:h-6 sm:w-6"
                             title="Remboursé (void)"
                             aria-label="Rembourser"
                             onClick={() => onSettle(b.id, "void")}
@@ -163,7 +163,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
+                            className="h-9 w-9 text-[#6B5B8D] hover:bg-white/10 sm:h-6 sm:w-6"
                             aria-label="Actions"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />

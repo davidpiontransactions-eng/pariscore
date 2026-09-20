@@ -270,7 +270,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Championnat du Top 10"
-            className="h-9 w-full rounded-lg text-xs font-medium sm:h-7 sm:w-52 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
+            className="h-9 w-full rounded-lg text-base sm:text-xs font-medium sm:h-7 sm:w-52 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Toutes les ligues" />
           </SelectTrigger>
@@ -291,7 +291,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
-            className="h-9 w-full rounded-lg text-xs font-medium sm:h-7 sm:w-56 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
+            className="h-9 w-full rounded-lg text-base sm:text-xs font-medium sm:h-7 sm:w-56 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>

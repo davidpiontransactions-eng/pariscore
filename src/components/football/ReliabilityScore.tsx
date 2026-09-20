@@ -47,7 +47,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as StakingMethod)}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+              className="rounded-md border border-border bg-background px-2 py-1 text-base sm:text-xs"
               aria-label="Méthode de staking"
             >
               {(Object.keys(STAKING_LABELS) as StakingMethod[]).map((m) => (

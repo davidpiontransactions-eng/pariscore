@@ -76,7 +76,7 @@ function Pagination({
         type="button"
         onClick={() => onChange(Math.max(1, page - 1))}
         disabled={page <= 1}
-        className="rounded px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30"
+        className="rounded px-2 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30"
       >
         &laquo;
       </button>
@@ -91,7 +91,7 @@ function Pagination({
             type="button"
             onClick={() => onChange(p)}
             className={cn(
-              "min-w-[28px] rounded px-2 py-1 text-xs tabular-nums transition-colors",
+              "min-w-[28px] rounded px-2 py-1.5 text-xs tabular-nums transition-colors",
               p === page
                 ? "bg-[#00985f] text-white"
                 : "text-zinc-400 hover:bg-zinc-800 hover:text-white",
@@ -105,7 +105,7 @@ function Pagination({
         type="button"
         onClick={() => onChange(Math.min(totalPages, page + 1))}
         disabled={page >= totalPages}
-        className="rounded px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30"
+        className="rounded px-2 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-30"
       >
         &raquo;
       </button>
@@ -145,7 +145,7 @@ export function PlayerStatsTable({
 
   return (
     <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[500px] text-sm">
         <thead>
           <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400">
             {columns.map((col) => (
@@ -153,8 +153,8 @@ export function PlayerStatsTable({
                 key={col.key}
                 className={cn(
                   "px-2 py-2",
-                  col.key === "#" && "w-8 text-center",
-                  (col.key === "Player" || col.key === "Team") && "text-left",
+                  col.key === "#" && "w-8 text-center sticky left-0 z-20 bg-zinc-950/95 backdrop-blur-sm",
+                  (col.key === "Player" || col.key === "Team") && "text-left sticky left-8 z-20 bg-zinc-950/95 backdrop-blur-sm",
                   col.key !== "#" && col.key !== "Player" && col.key !== "Team" && "text-center",
                 )}
               >
@@ -179,8 +179,8 @@ export function PlayerStatsTable({
                     key={col.key}
                     className={cn(
                       "px-2 py-1.5 text-xs tabular-nums",
-                      col.key === "#" && "text-center text-zinc-400",
-                      col.key === "Player" && "text-left font-medium text-white",
+                      col.key === "#" && "text-center text-zinc-400 sticky left-0 z-10 bg-zinc-950",
+                      col.key === "Player" && "text-left font-medium text-white sticky left-8 z-10 bg-zinc-950 min-w-[120px] sm:min-w-0",
                       col.key === "Team" && "text-left text-zinc-400",
                       col.key !== "#" && col.key !== "Player" && col.key !== "Team" && "text-center text-zinc-300",
                     )}

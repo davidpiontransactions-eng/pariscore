@@ -122,10 +122,11 @@ export function SnookerLivePopup({ data, onClose, onRefresh }: Props) {
       aria-label={`Live : ${data.player1} contre ${data.player2}`}
     >
       <div
-        className="relative mx-0 max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl p-4 sm:mx-4 sm:rounded-3xl"
+        className="relative mx-0 max-h-[88vh] sm:max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl p-4 sm:mx-4 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
         style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
       >
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         {/* Header */}
         <div className="mb-2 flex items-center gap-1.5">
           <span className="relative flex h-2 w-2">
@@ -140,7 +141,7 @@ export function SnookerLivePopup({ data, onClose, onRefresh }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Fermer le live"
-            className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
+            className="ml-auto flex h-9 w-9 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
           >
             ✕
           </button>

@@ -41,7 +41,11 @@ export function useFootballLeagueRankings(
   const { data, error, isLoading } = useSWR<RankingsResponse>(
     league ? `/api/football/rankings?${qs.toString()}` : null,
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 60 * 60_000 },
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 5 * 60_000, // 5 min (était 1h — données trop périmées)
+      refreshInterval: 5 * 60_000, // polling toutes les 5 min
+    },
   );
 
   return {

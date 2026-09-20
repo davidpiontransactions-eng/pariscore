@@ -47,7 +47,8 @@ export function RugbyMatchDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-white/10 bg-[#0d1017] text-slate-100">
+      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] max-w-2xl overflow-y-auto border-white/10 bg-[#0d1017] text-slate-100 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="sr-only">Détail du match rugby</DialogTitle>
         </DialogHeader>

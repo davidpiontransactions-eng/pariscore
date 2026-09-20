@@ -508,7 +508,7 @@ export function FootballRankingsEnhanced() {
           )}
         </div>
         <Select value={selectedLeague} onValueChange={setSelectedLeague}>
-          <SelectTrigger className="w-40 h-8 text-xs">
+          <SelectTrigger className="w-40 h-8 text-base sm:text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

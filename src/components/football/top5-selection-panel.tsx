@@ -100,7 +100,7 @@ export function Top5SelectionPanel({
                 type="button"
                 onClick={() => remove(matchId)}
                 aria-label={`Retirer ${entry.home.shortName} contre ${entry.away.shortName} de la sélection`}
-                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-6 sm:w-6"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
               </button>

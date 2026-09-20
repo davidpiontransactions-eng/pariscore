@@ -27,7 +27,7 @@ const HOUR_SEGS: { label: string; hours: number }[] = [
 function HourSegments({ hours, onHours, count }: { hours: number | null; onHours: (h: number | null) => void; count?: number }) {
   return (
     <div
-      className="flex shrink-0 items-center gap-1 overflow-x-auto"
+      className="flex shrink-0 items-center gap-1 overflow-x-auto snap-x snap-mandatory"
       role="group"
       aria-label="Fenêtre horaire"
     >
@@ -41,7 +41,7 @@ function HourSegments({ hours, onHours, count }: { hours: number | null; onHours
             aria-pressed={on}
             aria-label={on ? `Filtre ${o.label} actif, désactiver` : `Matchs dans les ${o.hours} prochaines heures`}
             title={on ? "Désactiver le filtre horaire" : `Coup d'envoi dans les ${o.hours}h`}
-            className="shrink-0 rounded-full border px-2.5 py-1.5 text-xs font-bold tabular-nums transition-colors active:scale-95"
+            className="shrink-0 snap-start rounded-full border px-2.5 py-1.5 text-xs font-bold tabular-nums transition-colors active:scale-95"
             style={{
               backgroundColor: on ? C.live : C.pillBg,
               borderColor: on ? C.live : C.pillBorder,
@@ -95,7 +95,7 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
         <input
           type="date" value={p.dateKey} aria-label="Choisir la date"
           onChange={(e) => e.target.value && p.onPickDate(e.target.value)}
-          className="h-8 rounded-full border px-2 text-xs"
+          className="h-8 rounded-full border px-2 text-base sm:text-xs"
           style={{ backgroundColor: C.pillBg, borderColor: C.pillBorder, color: C.text, colorScheme: "light" }}
         />
         <button
@@ -168,7 +168,7 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
             onChange={(e) => p.onQuery(e.target.value)}
             placeholder="Filtrer par équipe…"
             aria-label="Filtrer par équipe"
-            className="w-full bg-transparent text-xs outline-none placeholder:text-[#9e9e9e]"
+            className="w-full bg-transparent text-base sm:text-xs outline-none placeholder:text-[#9e9e9e]"
             style={{ color: C.text }}
           />
         </div>

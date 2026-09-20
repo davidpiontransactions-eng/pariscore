@@ -237,7 +237,7 @@ export function FootballCalendar() {
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-slate-500" />
           <input value={query} onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher une équipe…" aria-label="Filtrer matchs"
-            className="pl-8 pr-3 py-1 text-xs rounded-full bg-slate-900/60 border border-slate-700/40 text-slate-300 placeholder:text-slate-600 w-48" />
+            className="pl-8 pr-3 py-1 text-base sm:text-xs rounded-full bg-slate-900/60 border border-slate-700/40 text-slate-300 placeholder:text-slate-600 w-48" />
         </div>
       </div>
 

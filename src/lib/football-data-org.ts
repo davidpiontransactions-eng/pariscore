@@ -120,7 +120,7 @@ const LEAGUE_CODE_MAP: Record<string, string> = {
 // ── Cache ──────────────────────────────────────────────────────────────────
 
 const standingsCache = new Map<string, { data: FbOrgStanding[]; ts: number }>();
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1h (était 6h — données trop périmées pour les classements live)
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -161,7 +161,7 @@ async function fetchStandings(
     const res = await fetch(url.toString(), {
       headers: { "X-Auth-Token": apiKey },
       // Next.js cache
-      next: { revalidate: 21600 }, // 6h
+      next: { revalidate: 3600 }, // 1h
     });
 
     if (!res.ok) {

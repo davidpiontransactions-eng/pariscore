@@ -121,10 +121,11 @@ function ExplainPopup({
       aria-label={label}
     >
       <div
-        className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl p-5 sm:mx-4 sm:rounded-3xl"
+        className="relative mx-0 max-h-[85vh] sm:max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-t-3xl p-5 sm:mx-4 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
         style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
       >
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-[14px] font-bold" style={{ color: "#00985f" }}>
             {title}
@@ -133,7 +134,7 @@ function ExplainPopup({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
+            className="flex h-9 w-9 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[14px] font-bold text-gray-500 hover:text-[#222]"
           >
             ✕
           </button>
@@ -930,7 +931,7 @@ export function SnookerTabContent() {
               <button
                 type="button"
                 onClick={() => shiftDate(-1)}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+                className="flex h-9 w-9 sm:h-7 sm:w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
                 aria-label="Jour précédent"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -943,7 +944,7 @@ export function SnookerTabContent() {
               <button
                 type="button"
                 onClick={() => shiftDate(1)}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+                className="flex h-9 w-9 sm:h-7 sm:w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
                 aria-label="Jour suivant"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1378,7 +1379,7 @@ export function SnookerTabContent() {
               onClick={() => setTutorialMarket(activeMarket)}
               aria-label="Tutoriel de la stratégie"
               title="Tutoriel de la stratégie"
-              className="ml-auto flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#00985f] hover:text-[#00985f]"
+              className="ml-auto flex h-9 w-9 sm:h-6 sm:w-6 items-center justify-center rounded-full border border-gray-200 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#00985f] hover:text-[#00985f]"
             >
               i
             </button>

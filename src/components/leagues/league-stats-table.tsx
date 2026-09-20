@@ -111,9 +111,9 @@ export function StandingsTable({ rows, className }: Props) {
     <div className={cn("relative overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent", className)}>
       {/* Gradient fade droite mobile */}
       <div className="pointer-events-none absolute right-0 top-0 z-20 h-full w-6 bg-gradient-to-l from-zinc-950 to-transparent sm:hidden" />
-      <table className="w-full text-sm min-w-[800px]">
+      <table className="w-full text-sm min-w-[600px] sm:min-w-[800px]">
         <thead className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-sm">
-          <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400">
+          <tr className="border-b border-zinc-800 text-[10px] sm:text-[11px] uppercase tracking-wider text-zinc-400">
             {[
               { key: "#", label: "#", w: "w-8" },
               { key: "team", label: "Team", w: "" },
@@ -134,6 +134,8 @@ export function StandingsTable({ rows, className }: Props) {
                   "px-2 py-2 text-center cursor-pointer select-none hover:text-white transition-colors",
                   col.w,
                   sortCol === col.key && "text-[#00985f]",
+                  col.key === "#" && "sticky left-0 z-20 bg-zinc-950/95 backdrop-blur-sm",
+                  col.key === "team" && "sticky left-8 z-20 bg-zinc-950/95 backdrop-blur-sm text-left",
                 )}
                 onClick={() => handleSort(col.key)}
               >
@@ -157,8 +159,8 @@ export function StandingsTable({ rows, className }: Props) {
                 i % 2 === 0 ? "bg-transparent" : "bg-white/[0.01]",
               )}
             >
-              <td className="px-2 py-2 text-center text-zinc-400">{row.rank}</td>
-              <td className="px-2 py-2 text-left font-medium text-white">
+              <td className="px-2 py-2 text-center text-zinc-400 sticky left-0 z-10 bg-zinc-950">{row.rank}</td>
+              <td className="px-2 py-2 text-left font-medium text-white sticky left-8 z-10 bg-zinc-950 min-w-[120px] sm:min-w-0">
                 <div className="flex items-center gap-2">
                   {row.logo && (
                     <img src={row.logo} alt="" className="h-4 w-4 rounded-full" loading="lazy" />
@@ -166,26 +168,26 @@ export function StandingsTable({ rows, className }: Props) {
                   <span className="truncate">{row.shortName ?? row.team}</span>
                 </div>
               </td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.played}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.wins}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.draws}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.losses}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.goalsFor}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">{row.goalsAgainst}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.played}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.wins}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.draws}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.losses}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.goalsFor}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">{row.goalsAgainst}</td>
               <td className={cn(
-                "px-2 py-2 text-center tabular-nums font-medium",
+                "px-1.5 py-1.5 text-center tabular-nums font-medium sm:px-2 sm:py-2",
                 row.goalDiff > 0 ? "text-[#00985f]" : row.goalDiff < 0 ? "text-[#DD3636]" : "text-zinc-300",
               )}>
                 {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
               </td>
-              <td className="px-2 py-2 text-center tabular-nums font-bold text-white">{row.points}</td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">
+              <td className="px-1.5 py-1.5 text-center tabular-nums font-bold text-white sm:px-2 sm:py-2">{row.points}</td>
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">
                 {row.xG != null ? row.xG.toFixed(2) : "-"}
               </td>
-              <td className="px-2 py-2 text-center tabular-nums text-zinc-300">
+              <td className="px-1.5 py-1.5 text-center tabular-nums text-zinc-300 sm:px-2 sm:py-2">
                 {row.xGA != null ? row.xGA.toFixed(2) : "-"}
               </td>
-              <td className="px-2 py-2 text-center">
+              <td className="px-1.5 py-1.5 text-center sm:px-2 sm:py-2">
                 <div className="flex items-center justify-center gap-0.5">
                   {row.form?.slice(-5).map((f, fi) => (
                     <FormBadge key={fi} result={f} />

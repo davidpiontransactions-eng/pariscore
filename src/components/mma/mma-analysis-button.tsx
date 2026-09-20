@@ -72,7 +72,7 @@ export function MmaAnalysisButton({ fight }: Props) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-background p-6 shadow-xl"
+            className="relative max-h-[80vh] sm:max-h-[80dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-background p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button

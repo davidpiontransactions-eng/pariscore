@@ -337,7 +337,7 @@ export function HorizontalScroll({
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
                 className={cn(
-                  "h-7 w-7 rounded-full border border-white/10 flex items-center justify-center transition-colors",
+                  "h-9 w-9 sm:h-7 sm:w-7 rounded-full border border-white/10 flex items-center justify-center transition-colors",
                   canScrollLeft
                     ? "hover:bg-white/10 text-zinc-400"
                     : "opacity-30 cursor-not-allowed text-zinc-600"
@@ -351,7 +351,7 @@ export function HorizontalScroll({
                 onClick={() => scroll("right")}
                 disabled={!canScrollRight}
                 className={cn(
-                  "h-7 w-7 rounded-full border border-white/10 flex items-center justify-center transition-colors",
+                  "h-9 w-9 sm:h-7 sm:w-7 rounded-full border border-white/10 flex items-center justify-center transition-colors",
                   canScrollRight
                     ? "hover:bg-white/10 text-zinc-400"
                     : "opacity-30 cursor-not-allowed text-zinc-600"

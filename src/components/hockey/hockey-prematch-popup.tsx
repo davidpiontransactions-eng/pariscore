@@ -381,7 +381,7 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#0a1628] border border-white/10 rounded-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+      <div className="bg-[#0a1628] border border-white/10 rounded-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[85dvh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">

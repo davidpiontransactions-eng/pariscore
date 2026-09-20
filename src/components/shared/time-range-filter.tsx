@@ -42,9 +42,9 @@ export function TimeRangeFilter({ value, onChange, className, hourOptions, hideT
     <div
       role="group"
       aria-label={t("timeFilterLabel")}
-      className={cn("flex flex-wrap items-center gap-2", className)}
+      className={cn("flex flex-nowrap items-center gap-2 overflow-x-auto scrollbar-none", className)}
     >
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
         <Clock className="h-3.5 w-3.5" aria-hidden />
         {t("timeFilterLabel")} :
       </span>
@@ -57,7 +57,7 @@ export function TimeRangeFilter({ value, onChange, className, hourOptions, hideT
             aria-pressed={isActive}
             onClick={() => onChange(opt.key)}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isActive
                 ? "border-foreground bg-foreground text-background"

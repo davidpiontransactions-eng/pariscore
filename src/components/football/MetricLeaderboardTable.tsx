@@ -36,7 +36,7 @@ export function MetricLeaderboardTable({ rankings, homeTeamName, awayTeamName }:
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="flex-1 bg-transparent text-[11px] font-medium text-foreground outline-none"
+          className="flex-1 bg-transparent text-base sm:text-[11px] font-medium text-foreground outline-none"
         >
           {METRIC_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>

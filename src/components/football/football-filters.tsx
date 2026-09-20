@@ -30,10 +30,10 @@ export function FootballLeagueBar({
   if (leagues.length === 0) return null;
 
   return (
-    <div className="flex flex-nowrap gap-1.5 overflow-x-auto scrollbar-none pb-1">
+    <div className="flex flex-nowrap gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-1">
       <button
         onClick={() => onSelectLeague(null)}
-        className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+        className={`inline-flex shrink-0 snap-start items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
           selectedLeague === null
             ? "border-foreground bg-foreground text-background"
             : "border-border bg-background text-muted-foreground hover:text-foreground"
@@ -46,7 +46,7 @@ export function FootballLeagueBar({
         <span key={l.id} className="inline-flex shrink-0 items-center gap-0.5">
           <button
             onClick={() => onSelectLeague(l.id)}
-            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center gap-1 snap-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
               selectedLeague === l.id
                 ? "border-foreground bg-foreground text-background"
                 : "border-border bg-background text-muted-foreground hover:text-foreground"
@@ -75,7 +75,7 @@ export function FootballLeagueBar({
           </button>
           <Link
             href={`/league/${l.id}/stats`}
-            className="rounded-full border border-border bg-background px-1.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+            className="rounded-full border border-border bg-background px-2 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
             title="Statistiques du championnat"
           >
             📊

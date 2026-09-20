@@ -471,7 +471,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           <div className="mt-2">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/30"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1 min-h-[40px] text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/30"
             >
               <span>📐 Détail xG</span>
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -572,7 +572,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         {onOpenDetail && (
           <button
             onClick={() => onOpenDetail(match)}
-            className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="mt-3 inline-flex min-h-10 sm:min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Voir le momentum du match"
           >
             <Activity className="h-3 w-3" />

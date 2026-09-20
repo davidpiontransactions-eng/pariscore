@@ -243,7 +243,7 @@ function PlayerSelect({
       <select
         value={selected}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-2 py-1.5 text-[11px] text-foreground appearance-none cursor-pointer"
+        className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-2 py-1.5 text-base sm:text-[11px] text-foreground appearance-none cursor-pointer"
         style={{ colorScheme: "dark" }}
       >
         <option value="">Choisir...</option>

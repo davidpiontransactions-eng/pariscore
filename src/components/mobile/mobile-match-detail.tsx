@@ -58,7 +58,7 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
 
   return (
     <DrawerDetail open={open} onOpenChange={onOpenChange}>
-      <div className="flex flex-col max-h-[80vh]">
+      <div className="flex flex-col max-h-[80vh] sm:max-h-[80dvh]">
         {/* Header — Score + Actions */}
         <div className="sticky top-0 z-10 bg-card border-b border-border/30">
           <div className="flex items-center justify-between px-4 py-3">
@@ -67,7 +67,7 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
                 <button
                   onClick={() => onOpenChange(false)}
                   aria-label="Retour"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground"
+                  className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
@@ -87,7 +87,7 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
                 size="sm"
               />
               <button
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground"
+                className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground"
                 aria-label="Partager"
               >
                 <Share2 className="h-3.5 w-3.5" />

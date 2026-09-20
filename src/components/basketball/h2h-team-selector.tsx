@@ -46,7 +46,7 @@ export function H2HTeamSelector({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary"
+        className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 text-muted-foreground hover:text-primary"
         onClick={onSwap}
         aria-label="Inverser les équipes"
       >

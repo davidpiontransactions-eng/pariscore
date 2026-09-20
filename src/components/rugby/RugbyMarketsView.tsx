@@ -58,7 +58,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
         </div>
         {rows.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-xs">
+            <table className="w-full min-w-[500px] sm:min-w-[720px] text-left text-xs">
               <thead>
                 <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-400">
                   <th className="px-4 py-2.5">Date</th>

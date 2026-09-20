@@ -120,7 +120,7 @@ function StatsContent({
   const currentStats: TennisLiveStats | TennisSetStats | null = activeSet === 0 ? stats : (sets[activeSet - 1] ?? null);
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh] overflow-y-auto">
+    <div className="flex flex-col h-full max-h-[85vh] sm:max-h-[85dvh] overflow-y-auto">
       {/* Header: players + score */}
       <div className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -222,7 +222,7 @@ export function LiveTennisStatsDrawer(props: Props) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85vh] sm:max-h-[85dvh]">
           <DrawerHeader className="text-left">
             <DrawerTitle className="flex items-center gap-2 text-sm"><BarChart3 className="h-4 w-4 text-emerald-400" />Statistiques live</DrawerTitle>
           </DrawerHeader>

@@ -92,8 +92,9 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-[min(90vw,42rem)] overflow-hidden p-0">
-        <ScrollArea className="max-h-[90vh]">
+      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-[min(90vw,42rem)] overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
+        <ScrollArea className="max-h-[90vh] sm:max-h-[90dvh]">
           <div className="space-y-5 p-5">
             <DialogHeader>
               <DialogTitle className="sr-only">

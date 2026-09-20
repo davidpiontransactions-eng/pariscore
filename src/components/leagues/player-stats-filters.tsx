@@ -64,7 +64,7 @@ export function PlayerStatsFilters({
           placeholder="Search player..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-8 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-8 pr-3 text-xs text-white placeholder:text-zinc-500 focus:border-[#00985f] focus:outline-none focus:ring-1 focus:ring-[#00985f]/50"
+          className="h-8 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-8 pr-3 text-base sm:text-xs text-white placeholder:text-zinc-500 focus:border-[#00985f] focus:outline-none focus:ring-1 focus:ring-[#00985f]/50"
         />
       </div>
 

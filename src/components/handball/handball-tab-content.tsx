@@ -46,8 +46,8 @@ export function HandballTabContent() {
           onClick={() => setMode("live")}
           className={
             mode === "live"
-              ? "bg-red-500 text-white px-3 py-1 rounded"
-              : "px-3 py-1 rounded border"
+              ? "bg-red-500 text-white px-3 py-1.5 rounded"
+              : "px-3 py-1.5 rounded border"
           }
         >
           🔴 Live ({live.length})
@@ -56,8 +56,8 @@ export function HandballTabContent() {
           onClick={() => setMode("prematch")}
           className={
             mode === "prematch"
-              ? "bg-foreground text-background px-3 py-1 rounded"
-              : "px-3 py-1 rounded border"
+              ? "bg-foreground text-background px-3 py-1.5 rounded"
+              : "px-3 py-1.5 rounded border"
           }
         >
           📅 À venir

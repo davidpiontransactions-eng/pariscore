@@ -250,7 +250,7 @@ export function Cs2HltvStatsPanel() {
             type="button"
             onClick={() => setView("teams")}
             className={cn(
-              "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+              "rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors",
               view === "teams"
                 ? "bg-orange-500/20 text-orange-400"
                 : "text-zinc-400 hover:text-white"
@@ -262,7 +262,7 @@ export function Cs2HltvStatsPanel() {
             type="button"
             onClick={() => setView("maps")}
             className={cn(
-              "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+              "rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors",
               view === "maps"
                 ? "bg-orange-500/20 text-orange-400"
                 : "text-zinc-400 hover:text-white"
@@ -283,7 +283,7 @@ export function Cs2HltvStatsPanel() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Filtrer équipe..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pl-8 pr-3 text-xs text-white placeholder-zinc-500 outline-none focus:border-orange-500/40"
+              className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pl-8 pr-3 text-base sm:text-xs text-white placeholder-zinc-500 outline-none focus:border-orange-500/40"
             />
           </div>
 

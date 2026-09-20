@@ -296,13 +296,14 @@ export function SnookerPlayerPopup({
       onClick={onClose}
     >
       <div
-        className="relative mx-0 max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-3xl sm:mx-4 sm:max-h-[72vh] sm:rounded-3xl sm:max-w-md"
+        className="relative mx-0 max-h-[85vh] sm:max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-t-3xl sm:mx-4 sm:max-h-[72vh] sm:rounded-3xl sm:max-w-md"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%)",
           boxShadow: "0 25px 60px rgba(0,0,0,.25), 0 8px 20px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.9)",
         }}
       >
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         {/* ─── Header ──────────────────────────────────────────────── */}
         <div
           className="relative px-5 pt-5 pb-4"
@@ -365,7 +366,7 @@ export function SnookerPlayerPopup({
           {/* Close */}
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
+            className="absolute right-3 top-3 flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
             aria-label="Fermer"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

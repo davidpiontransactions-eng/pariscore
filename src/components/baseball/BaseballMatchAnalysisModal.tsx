@@ -296,7 +296,7 @@ function ContextSection({
           Attaque & Platoon Splits (OPS vs main de lancer)
         </h4>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-left text-xs">
+          <table className="w-full min-w-[320px] text-left text-xs sm:min-w-[480px]">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-slate-400">
                 <th className="pb-2 font-bold">Équipe</th>
@@ -509,7 +509,7 @@ export function BaseballMatchAnalysisModal({
       aria-label="Analyse de match baseball"
     >
       <div
-        className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-slate-700 bg-[#0d1119] shadow-2xl sm:rounded-2xl"
+        className="flex max-h-[94vh] sm:max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-slate-700 bg-[#0d1119] shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* En-tête */}

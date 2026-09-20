@@ -117,7 +117,7 @@ function OddsPill({
       <span
         className={cn(
           "inline-flex items-center justify-center rounded-md border border-border/30 bg-zinc-800/50 text-zinc-600 tabular-nums",
-          compact ? "h-6 min-w-[48px] px-1.5 text-[10px]" : "h-7 min-w-[56px] px-2 text-[11px]",
+          compact ? "h-8 min-w-[48px] px-1.5 text-[10px] sm:h-6" : "h-8 min-w-[56px] px-2 text-[11px] sm:h-7",
         )}
       >
         —
@@ -140,7 +140,7 @@ function OddsPill({
       transition={{ duration: 0.25, ease: "easeOut" }}
       className={cn(
         "inline-flex items-center justify-center rounded-md border border-border/30 tabular-nums font-semibold transition-colors",
-        compact ? "h-6 min-w-[48px] px-1.5 text-[10px]" : "h-7 min-w-[56px] px-2 text-[11px]",
+        compact ? "h-8 min-w-[48px] px-1.5 text-[10px] sm:h-6" : "h-8 min-w-[56px] px-2 text-[11px] sm:h-7",
         flash === "up" && "text-emerald-300",
         flash === "down" && "text-red-300",
         !flash && "text-zinc-200",

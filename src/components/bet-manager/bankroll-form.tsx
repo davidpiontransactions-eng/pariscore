@@ -53,7 +53,8 @@ export function BankrollForm({ open, onOpenChange, onCreate }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/10 bg-white text-[#1A1145] sm:max-w-sm">
+      <DialogContent className="border-white/10 bg-white text-[#1A1145] sm:max-w-sm max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <PiggyBank className="h-4 w-4 text-emerald-400" /> Nouvelle bankroll

@@ -91,7 +91,7 @@ export function BankrollSimulator() {
             type="number"
             value={bankroll}
             onChange={(e) => setBankroll(Number(e.target.value) || 100)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-sm tabular-nums focus:border-[#00985f] focus:outline-none"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-base sm:text-sm tabular-nums focus:border-[#00985f] focus:outline-none"
             min={10}
             max={10000}
           />

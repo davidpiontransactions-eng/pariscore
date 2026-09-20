@@ -90,7 +90,7 @@ function MatchSelect({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          "w-full appearance-none rounded-lg border border-border/60 bg-muted/40 px-3 py-2 pr-8 text-xs text-foreground",
+          "w-full appearance-none rounded-lg border border-border/60 bg-muted/40 px-3 py-2 pr-8 text-base sm:text-xs text-foreground",
           "focus:outline-none focus:ring-1 focus:ring-purple-500/50",
           "disabled:opacity-50",
           !value && "text-muted-foreground",

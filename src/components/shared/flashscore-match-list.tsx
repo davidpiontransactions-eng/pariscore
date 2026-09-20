@@ -142,7 +142,7 @@ function FilterBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Rechercher…"
-          className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:w-48"
+          className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-base sm:h-8 sm:text-xs placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:w-48"
           aria-label="Rechercher un joueur ou un club"
         />
       </div>
@@ -189,7 +189,7 @@ function MatchRow({
   onToggleFavorite?: (id: string) => void; onOpenDetail?: (id: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2 text-xs transition-colors hover:bg-muted/30 last:border-b-0">
+    <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2.5 text-xs transition-colors hover:bg-muted/30 last:border-b-0 sm:py-2">
       <div className="flex w-14 shrink-0 flex-col items-start gap-0.5">
         {match.isLive ? (
           <span className="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-xs font-bold text-rose-600 dark:text-rose-400">
@@ -467,7 +467,7 @@ export function FlashscoreMatchList({
               )}
               <div
                 ref={scrollRef}
-                className="max-h-[calc(100vh-280px)] overflow-y-auto scrollable-list"
+                className="max-h-[calc(100vh-280px)] sm:max-h-[calc(100dvh-280px)] overflow-y-auto scrollable-list"
                 onTouchStart={onRefresh ? handleTouchStart : undefined}
                 onTouchMove={onRefresh ? handleTouchMove : undefined}
                 onTouchEnd={onRefresh ? handleTouchEnd : undefined}

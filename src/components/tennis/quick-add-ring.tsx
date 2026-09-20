@@ -61,7 +61,7 @@ export function QuickAddRing({
           aria-label={quickAddLabel}
           title={quickAddLabel}
           className={cn(
-            "absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full",
+            "absolute -bottom-1 -right-1 z-10 flex h-10 w-10 sm:h-7 sm:w-7 items-center justify-center rounded-full",
             "border-2 border-background bg-emerald-600 text-white shadow-md",
             "transition-all hover:scale-110 hover:bg-emerald-700",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

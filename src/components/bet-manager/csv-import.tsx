@@ -60,7 +60,8 @@ export function CsvImport({ onImport }: Props) {
           <FileUp className="h-3.5 w-3.5 text-sky-400" /> Import CSV
         </Button>
       </DialogTrigger>
-      <DialogContent className="border-white/10 bg-white text-[#1A1145] sm:max-w-lg">
+      <DialogContent className="border-white/10 bg-white text-[#1A1145] sm:max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="text-base">Import CSV de paris</DialogTitle>
         </DialogHeader>

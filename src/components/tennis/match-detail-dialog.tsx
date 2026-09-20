@@ -304,7 +304,8 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-[min(90vw,56rem)] overflow-hidden p-0">
+      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-[min(90vw,56rem)] overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader className="border-b border-border/60 px-5 py-4">
           <div className="flex items-center gap-2">
             <TournamentBadge category={match.tournamentCategory} />

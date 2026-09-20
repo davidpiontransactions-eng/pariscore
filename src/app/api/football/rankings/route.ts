@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { statSync, existsSync } from "fs";
+import { join } from "path";
 import {
   fdRanking,
   fdStandings,
@@ -9,6 +11,21 @@ import {
 } from "@/lib/football-fd";
 import { leagueXgRanking } from "@/lib/football-xg";
 
+/** Âge max (ms) des fichiers statiques avant marquage stale. */
+const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2h
+
+/** Retourne l'âge (ms) du fichier JSON de la ligue, ou null si introuvable. */
+function fdFileAge(league: string): number | null {
+  const file = join(process.cwd(), "public", "data", "fd", `${league}.json`);
+  if (!existsSync(file)) return null;
+  try {
+    const { mtimeMs } = statSync(file);
+    return Date.now() - mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * GET /api/football/rankings?league=ligue1&season=2025/26&scope=overall
  *
@@ -16,6 +33,9 @@ import { leagueXgRanking } from "@/lib/football-xg";
  * buts moyens, Over 1.5 / Under 3.5, BTTS, corners O6.5/O7.5/match, PPM
  * (source football-data.co.uk) + xG moyen et xG défensif moyen (Understat,
  * si la ligue est couverte).
+ *
+ * Headers Cache-Control : max-age=300 (5 min), stale-while-revalidate=600.
+ * Le champ `stale` indique si les données source ont plus de 2h.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -55,13 +75,28 @@ export async function GET(request: Request) {
   const standings = fdStandings(league, season, scope);
   if (standings) markets.standings = standings;
 
-  return NextResponse.json({
+  // Fraîcheur des données source (fichier statique CI).
+  const ageMs = fdFileAge(league);
+  const stale = ageMs !== null && ageMs > STALE_THRESHOLD_MS;
+
+  const body = {
     league,
     season,
     scope,
     availableSeasons: seasons.length ? seasons : xgRows ? [season] : [],
     higherBetter,
     markets,
-    meta: { computedAt: new Date().toISOString() },
+    stale,
+    meta: {
+      computedAt: new Date().toISOString(),
+      sourceAgeMs: ageMs,
+    },
+  };
+
+  return NextResponse.json(body, {
+    headers: {
+      // Le client peut utiliser `stale` pour afficher un badge "données anciennes".
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+    },
   });
 }

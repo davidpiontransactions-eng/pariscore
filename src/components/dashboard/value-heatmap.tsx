@@ -137,7 +137,7 @@ export function ValueHeatmap({ data, className }: ValueHeatmapProps) {
       >
         {/* Header row — tournament column labels */}
         <div
-          className="flex items-center justify-center bg-card px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="flex items-center justify-center bg-card px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sticky left-0 z-20"
           role="columnheader"
         >
           Sport
@@ -159,7 +159,7 @@ export function ValueHeatmap({ data, className }: ValueHeatmapProps) {
             {/* Sport row label */}
             <div
               key={`label-${sport}`}
-              className="flex items-center gap-1.5 bg-card px-2 text-xs font-medium text-foreground"
+              className="flex items-center gap-1.5 bg-card px-2 text-xs font-medium text-foreground sticky left-0 z-10"
               role="rowheader"
             >
               <span aria-hidden="true">{SPORT_EMOJI[sport] ?? "📌"}</span>
