@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 
 // ─── Cache avec stale-while-revalidate ───────────────────────────────────────
 const CACHE_TTL = 5 * 60_000;       // 5 min fresh
@@ -11,7 +10,8 @@ let cache: CacheEntry | null = null;
 let _svc: any = null;
 function svc() {
   if (!_svc) {
-    _svc = require(path.join(process.cwd(), "services", "mmaService"));
+    // Chemin absolu via Node — résout correctement dans standalone build
+    _svc = require(require("path").join(process.cwd(), "services", "mmaService"));
   }
   return _svc;
 }
