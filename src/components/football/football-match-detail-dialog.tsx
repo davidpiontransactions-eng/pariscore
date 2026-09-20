@@ -323,7 +323,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         </DialogHeader>
 
         {/* L2+L3 — contenu scrollable avec analyse, presse, score, live */}
-        <ScrollArea className="min-h-0 flex-1 max-h-[calc(90vh-80px)] max-h-[calc(90dvh-80px)]">
+        <ScrollArea className="min-h-0 flex-1 overflow-hidden">
           <div className="px-6 py-4 space-y-4">
             {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
             {view && (
