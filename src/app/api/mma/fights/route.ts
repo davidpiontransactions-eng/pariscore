@@ -10,8 +10,7 @@ let cache: CacheEntry | null = null;
 let _svc: any = null;
 function svc() {
   if (!_svc) {
-    // Chemin absolu via Node — résout correctement dans standalone build
-    _svc = require(require("path").join(process.cwd(), "services", "mmaService"));
+    _svc = require("../../../../../services/mmaService");
   }
   return _svc;
 }

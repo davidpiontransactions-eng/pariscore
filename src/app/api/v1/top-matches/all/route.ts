@@ -15,7 +15,7 @@ let _mmaSvc: any = null;
 function mmaSvc() {
   if (!_mmaSvc) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _mmaSvc = require(require("path").join(process.cwd(), "services", "mmaService"));
+    _mmaSvc = require("../../../../../../services/mmaService");
   }
   return _mmaSvc;
 }
