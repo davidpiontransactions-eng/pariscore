@@ -4,7 +4,7 @@
     "leagueId": "championship",
     "leagueName": "England2",
     "season": "2026-27",
-    "lastUpdated": "2026-09-19T08:43:20.266016Z",
+    "lastUpdated": "2026-09-20T07:41:08.228744Z",
     "source": "soccerstats.com",
     "teamCount": 24,
     "partial": false
@@ -33,59 +33,66 @@
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Stoke",
+        "value": 2.25,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Swansea",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Charlton",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Millwall",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Norwich",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Wolves",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 11,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Millwall",
+        "value": 1.75,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Watford",
         "value": 1.75,
+        "played": 4
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 1.5,
         "played": 4
       },
       {
@@ -110,67 +117,60 @@
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 1.33,
-        "played": 3
+        "teamName": "Wrexham",
+        "value": 1.25,
+        "played": 4
       },
       {
         "rank": 16,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 1.25,
+        "played": 4
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Birmingham City",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Portsmouth",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 18,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 21,
         "teamId": "",
-        "teamName": "Birmingham City",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Preston",
+        "teamName": "Burnley",
         "value": 0.75,
         "played": 4
       },
       {
         "rank": 21,
         "teamId": "",
-        "teamName": "Burnley",
-        "value": 0.67,
-        "played": 3
+        "teamName": "Preston",
+        "value": 0.75,
+        "played": 4
       },
       {
-        "rank": 21,
-        "teamId": "",
-        "teamName": "Wrexham",
-        "value": 0.67,
-        "played": 3
-      },
-      {
-        "rank": 21,
+        "rank": 23,
         "teamId": "",
         "teamName": "Lincoln City",
-        "value": 0.67,
-        "played": 3
+        "value": 0.5,
+        "played": 4
       },
       {
         "rank": 24,
@@ -203,144 +203,144 @@
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Stoke",
+        "value": 9.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Swansea",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Charlton",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Watford",
+        "teamName": "Millwall",
         "value": 7.0,
         "played": 4
       },
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Millwall",
-        "value": 6.0,
-        "played": 3
+        "teamName": "Watford",
+        "value": 7.0,
+        "played": 4
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 6.0,
-        "played": 3
-      },
-      {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Norwich",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Bolton",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 15,
+        "teamId": "",
+        "teamName": "Wrexham",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 15,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
         "teamId": "",
         "teamName": "Wolves",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 17,
         "teamId": "",
-        "teamName": "Qp Rangers",
+        "teamName": "Birmingham City",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 14,
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Portsmouth",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 21,
         "teamId": "",
-        "teamName": "Birmingham City",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Preston",
+        "teamName": "Burnley",
         "value": 3.0,
         "played": 4
       },
       {
         "rank": 21,
         "teamId": "",
-        "teamName": "Burnley",
-        "value": 2.0,
-        "played": 3
+        "teamName": "Preston",
+        "value": 3.0,
+        "played": 4
       },
       {
-        "rank": 21,
-        "teamId": "",
-        "teamName": "Wrexham",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 21,
+        "rank": 23,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 24,
@@ -376,148 +376,148 @@
         "rank": 4,
         "teamId": "",
         "teamName": "Millwall",
-        "value": 7.0,
-        "played": 3
+        "value": 9.0,
+        "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Stoke",
+        "value": 8.0,
+        "played": 4
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Norwich",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Birmingham City",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 10,
         "teamId": "",
         "teamName": "Watford",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 6.0,
-        "played": 3
-      },
-      {
-        "rank": 7,
+        "rank": 10,
         "teamId": "",
         "teamName": "Wolves",
         "value": 6.0,
         "played": 2
       },
       {
-        "rank": 11,
+        "rank": 13,
         "teamId": "",
         "teamName": "Swansea",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 13,
         "teamId": "",
         "teamName": "Bolton",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 13,
         "teamId": "",
-        "teamName": "Birmingham City",
+        "teamName": "Wrexham",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Portsmouth",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Burnley",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 18,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 14,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 14,
+        "rank": 18,
         "teamId": "",
         "teamName": "Preston",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 14,
-        "teamId": "",
-        "teamName": "Burnley",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 18,
+        "rank": 21,
         "teamId": "",
         "teamName": "Charlton",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 21,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 21,
         "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Wrexham",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Derby County",
+        "teamName": "Lincoln City",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 23,
+        "rank": 21,
         "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 23,
-        "teamId": "",
-        "teamName": "Lincoln City",
-        "value": 2.0,
-        "played": 3
+        "teamName": "Derby County",
+        "value": 3.0,
+        "played": 4
       }
     ],
     "ga": [
@@ -539,139 +539,139 @@
         "rank": 3,
         "teamId": "",
         "teamName": "Stoke",
-        "value": 2.0,
-        "played": 3
+        "value": 3.0,
+        "played": 4
       },
       {
         "rank": 3,
-        "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 5,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Millwall",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 5,
+        "rank": 3,
         "teamId": "",
         "teamName": "Wolves",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
         "teamName": "Southampton",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
         "teamName": "Norwich",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
-        "teamName": "Cardiff",
+        "teamName": "Qp Rangers",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
-        "teamName": "Wrexham",
-        "value": 4.0,
-        "played": 3
+        "teamName": "Millwall",
+        "value": 5.0,
+        "played": 4
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Lincoln City",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
+        "rank": 11,
         "teamId": "",
         "teamName": "Watford",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Bolton",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 11,
         "teamId": "",
-        "teamName": "Birmingham City",
+        "teamName": "Wrexham",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Burnley",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 20,
+        "rank": 16,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 20,
+        "rank": 16,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 22,
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Burnley",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Lincoln City",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
         "teamId": "",
         "teamName": "Middlesbrough",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Birmingham City",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Portsmouth",
         "value": 7.0,
         "played": 4
       },
@@ -708,30 +708,30 @@
       {
         "rank": 3,
         "teamId": "",
+        "teamName": "Stoke",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 4,
+        "teamId": "",
         "teamName": "Middlesbrough",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Swansea",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Millwall",
         "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 7,
@@ -762,67 +762,74 @@
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Watford",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Bolton",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Wrexham",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Bristol City",
         "value": -1.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Burnley",
         "value": -1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 17,
+        "rank": 20,
         "teamId": "",
-        "teamName": "Wrexham",
-        "value": -1.0,
-        "played": 3
+        "teamName": "Portsmouth",
+        "value": -2.0,
+        "played": 4
       },
       {
         "rank": 20,
@@ -832,18 +839,11 @@
         "played": 4
       },
       {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Portsmouth",
-        "value": -2.0,
-        "played": 3
-      },
-      {
-        "rank": 20,
+        "rank": 22,
         "teamId": "",
         "teamName": "Lincoln City",
-        "value": -2.0,
-        "played": 3
+        "value": -3.0,
+        "played": 4
       },
       {
         "rank": 23,
@@ -883,73 +883,94 @@
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Stoke",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Swansea",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Charlton",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Millwall",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Watford",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Millwall",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Norwich",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Bolton",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Cardiff",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Wrexham",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 1.0,
         "played": 4
       },
       {
@@ -962,9 +983,9 @@
       {
         "rank": 14,
         "teamId": "",
-        "teamName": "Qp Rangers",
+        "teamName": "Portsmouth",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 14,
@@ -976,54 +997,33 @@
       {
         "rank": 14,
         "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 14,
-        "teamId": "",
         "teamName": "Preston",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 19,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "Burnley",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 19,
-        "teamId": "",
-        "teamName": "Wrexham",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "Derby County",
         "value": 0.0,
@@ -1035,165 +1035,165 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Birmingham City",
-        "value": 3.0,
-        "played": 3
+        "value": 4.0,
+        "played": 4
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Cardiff",
         "value": 3.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 3,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Burnley",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Swansea",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Charlton",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Burnley",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Middlesbrough",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Millwall",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Watford",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Wolves",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
-        "teamName": "Qp Rangers",
+        "teamName": "Portsmouth",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Derby County",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Southampton",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Millwall",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Stoke",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Norwich",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bolton",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Portsmouth",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
+        "rank": 17,
         "teamId": "",
         "teamName": "Preston",
         "value": 0.0,
@@ -1239,6 +1239,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Cardiff",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Wolves",
         "value": 0.0,
         "played": 2
@@ -1248,19 +1255,26 @@
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Cardiff",
-        "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 9,
         "teamId": "",
         "teamName": "West Ham Utd",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Stoke",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Millwall",
         "value": 1.0,
         "played": 4
       },
@@ -1274,35 +1288,7 @@
       {
         "rank": 9,
         "teamId": "",
-        "teamName": "Millwall",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Stoke",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
         "teamName": "Norwich",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Burnley",
         "value": 1.0,
         "played": 3
       },
@@ -1311,49 +1297,63 @@
         "teamId": "",
         "teamName": "Wrexham",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 9,
         "teamId": "",
-        "teamName": "Lincoln City",
+        "teamName": "Qp Rangers",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 18,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Burnley",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bolton",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Portsmouth",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 17,
         "teamId": "",
-        "teamName": "Portsmouth",
+        "teamName": "Lincoln City",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 23,
@@ -1376,26 +1376,26 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Swansea",
+        "value": 2.25,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lincoln City",
         "value": 2.25,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
@@ -1426,18 +1426,11 @@
         "rank": 8,
         "teamId": "",
         "teamName": "West Ham Utd",
-        "value": 1.67,
-        "played": 3
+        "value": 1.5,
+        "played": 4
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 1.67,
-        "played": 3
-      },
-      {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Portsmouth",
         "value": 1.33,
@@ -1447,43 +1440,57 @@
         "rank": 10,
         "teamId": "",
         "teamName": "Middlesbrough",
-        "value": 1.33,
-        "played": 3
+        "value": 1.25,
+        "played": 4
       },
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Charlton",
-        "value": 1.33,
-        "played": 3
+        "teamName": "Sheffield United",
+        "value": 1.25,
+        "played": 4
       },
       {
-        "rank": 13,
+        "rank": 10,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 1.25,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Derby County",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Millwall",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Stoke",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
-        "teamName": "Derby County",
+        "teamName": "Charlton",
         "value": 1.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Blackburn",
+        "value": 0.75,
+        "played": 4
       },
       {
         "rank": 17,
@@ -1493,18 +1500,11 @@
         "played": 4
       },
       {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Blackburn",
-        "value": 0.67,
-        "played": 3
-      },
-      {
-        "rank": 18,
+        "rank": 19,
         "teamId": "",
         "teamName": "Southampton",
-        "value": 0.67,
-        "played": 3
+        "value": 0.5,
+        "played": 4
       },
       {
         "rank": 20,
@@ -1516,6 +1516,13 @@
       {
         "rank": 21,
         "teamId": "",
+        "teamName": "Preston",
+        "value": 0.25,
+        "played": 4
+      },
+      {
+        "rank": 21,
+        "teamId": "",
         "teamName": "Cardiff",
         "value": 0.25,
         "played": 4
@@ -1533,16 +1540,16 @@
         "teamName": "Burnley",
         "value": 0.25,
         "played": 4
-      },
-      {
-        "rank": 24,
-        "teamId": "",
-        "teamName": "Preston",
-        "value": 0.0,
-        "played": 3
       }
     ],
     "pts": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Swansea",
+        "value": 9.0,
+        "played": 4
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1551,130 +1558,130 @@
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Wolves",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
-        "teamName": "Swansea",
+        "teamName": "West Ham Utd",
         "value": 6.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
-        "teamName": "West Ham Utd",
+        "teamName": "Middlesbrough",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
         "teamName": "Portsmouth",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Middlesbrough",
+        "teamName": "Derby County",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 11,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
         "teamName": "Millwall",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
         "teamName": "Stoke",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Derby County",
-        "value": 3.0,
-        "played": 3
+        "teamName": "Charlton",
+        "value": 4.0,
+        "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Blackburn",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
         "teamId": "",
         "teamName": "Norwich",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Blackburn",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 18,
+        "rank": 19,
         "teamId": "",
         "teamName": "Southampton",
         "value": 2.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Preston",
+        "value": 1.0,
+        "played": 4
       },
       {
         "rank": 20,
@@ -1703,16 +1710,16 @@
         "teamName": "Burnley",
         "value": 1.0,
         "played": 4
-      },
-      {
-        "rank": 24,
-        "teamId": "",
-        "teamName": "Preston",
-        "value": 0.0,
-        "played": 3
       }
     ],
     "gf": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Swansea",
+        "value": 8.0,
+        "played": 4
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1728,35 +1735,28 @@
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 8.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 6.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "West Ham Utd",
-        "value": 6.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 5,
         "teamId": "",
         "teamName": "Millwall",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 5,
         "teamId": "",
         "teamName": "Norwich",
         "value": 6.0,
@@ -1772,105 +1772,105 @@
       {
         "rank": 8,
         "teamId": "",
+        "teamName": "Middlesbrough",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Sheffield United",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 8,
+        "teamId": "",
         "teamName": "Stoke",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Blackburn",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 13,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 10,
+        "rank": 13,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 13,
         "teamId": "",
         "teamName": "Portsmouth",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 10,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Derby County",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Charlton",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Southampton",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Preston",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Burnley",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Middlesbrough",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Derby County",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Blackburn",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Southampton",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
+        "rank": 22,
         "teamId": "",
         "teamName": "Cardiff",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 22,
+        "rank": 23,
         "teamId": "",
         "teamName": "Bolton",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 22,
-        "teamId": "",
-        "teamName": "Preston",
         "value": 2.0,
         "played": 3
       },
@@ -1900,40 +1900,19 @@
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
-        "teamId": "",
         "teamName": "Portsmouth",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Middlesbrough",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 6,
+        "rank": 4,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 6,
+        "rank": 4,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 4.0,
@@ -1942,96 +1921,117 @@
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Blackburn",
-        "value": 4.0,
-        "played": 3
+        "teamName": "Swansea",
+        "value": 5.0,
+        "played": 4
       },
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Southampton",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 11,
-        "teamId": "",
-        "teamName": "West Ham Utd",
+        "teamName": "Middlesbrough",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 11,
+        "rank": 6,
         "teamId": "",
-        "teamName": "Derby County",
+        "teamName": "Sheffield United",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 11,
+        "rank": 6,
         "teamId": "",
         "teamName": "Watford",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 10,
         "teamId": "",
-        "teamName": "Preston",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Charlton",
+        "teamName": "Derby County",
         "value": 6.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 16,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Blackburn",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Southampton",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Wolves",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Preston",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Cardiff",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 13,
         "teamId": "",
         "teamName": "Bolton",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 20,
+        "rank": 19,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 21,
+        "rank": 20,
         "teamId": "",
         "teamName": "Stoke",
         "value": 9.0,
         "played": 4
       },
       {
-        "rank": 21,
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Charlton",
+        "value": 9.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
         "teamId": "",
         "teamName": "Norwich",
         "value": 9.0,
@@ -2056,23 +2056,23 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Swansea",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Qp Rangers",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 2.0,
         "played": 4
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 2.0,
-        "played": 3
       },
       {
         "rank": 4,
@@ -2093,14 +2093,7 @@
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 4,
@@ -2110,46 +2103,53 @@
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Middlesbrough",
         "value": 0.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Sheffield United",
+        "value": 0.0,
+        "played": 4
       },
       {
         "rank": 12,
         "teamId": "",
         "teamName": "Blackburn",
         "value": -1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Southampton",
-        "value": -1.0,
-        "played": 3
-      },
-      {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Derby County",
         "value": -2.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Southampton",
+        "value": -2.0,
+        "played": 4
       },
       {
         "rank": 15,
@@ -2157,13 +2157,6 @@
         "teamName": "Wrexham",
         "value": -3.0,
         "played": 4
-      },
-      {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": -3.0,
-        "played": 3
       },
       {
         "rank": 15,
@@ -2177,38 +2170,45 @@
         "teamId": "",
         "teamName": "Preston",
         "value": -3.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Millwall",
         "value": -4.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Stoke",
         "value": -4.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Cardiff",
         "value": -4.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Watford",
         "value": -4.0,
         "played": 4
       },
       {
-        "rank": 23,
+        "rank": 22,
+        "teamId": "",
+        "teamName": "Charlton",
+        "value": -5.0,
+        "played": 4
+      },
+      {
+        "rank": 22,
         "teamId": "",
         "teamName": "Bolton",
         "value": -5.0,
@@ -2226,47 +2226,47 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Swansea",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lincoln City",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Wolves",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
@@ -2277,14 +2277,21 @@
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 1.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Middlesbrough",
+        "value": 1.0,
+        "played": 4
       },
       {
         "rank": 8,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 8,
@@ -2303,16 +2310,9 @@
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Middlesbrough",
+        "teamName": "Derby County",
         "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 8,
@@ -2331,9 +2331,9 @@
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Derby County",
+        "teamName": "Charlton",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 8,
@@ -2347,14 +2347,21 @@
         "teamId": "",
         "teamName": "Blackburn",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 18,
         "teamId": "",
         "teamName": "Southampton",
         "value": 0.0,
-        "played": 3
+        "played": 4
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Preston",
+        "value": 0.0,
+        "played": 4
       },
       {
         "rank": 18,
@@ -2383,183 +2390,176 @@
         "teamName": "Burnley",
         "value": 0.0,
         "played": 4
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Preston",
-        "value": 0.0,
-        "played": 3
       }
     ],
     "d": [
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 2.0,
-        "played": 4
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "West Ham Utd",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Wrexham",
-        "value": 2.0,
+        "value": 3.0,
         "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
         "teamName": "Blackburn",
-        "value": 2.0,
-        "played": 3
+        "value": 3.0,
+        "played": 4
       },
       {
-        "rank": 1,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Middlesbrough",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Sheffield United",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Wrexham",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Southampton",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Wolves",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Portsmouth",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Middlesbrough",
+        "teamName": "Derby County",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Millwall",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Stoke",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Charlton",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Preston",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Cardiff",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Watford",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Bolton",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Burnley",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 21,
+        "teamId": "",
+        "teamName": "Swansea",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 21,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 19,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 19,
-        "teamId": "",
-        "teamName": "Derby County",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 19,
+        "rank": 21,
         "teamId": "",
         "teamName": "Norwich",
         "value": 0.0,
         "played": 4
-      },
-      {
-        "rank": 19,
-        "teamId": "",
-        "teamName": "Preston",
-        "value": 0.0,
-        "played": 3
       }
     ],
     "l": [
@@ -2575,122 +2575,122 @@
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
-        "teamName": "Sheffield United",
-        "value": 0.0,
-        "played": 3
+        "teamName": "Swansea",
+        "value": 1.0,
+        "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Lincoln City",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Wolves",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Swansea",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Middlesbrough",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Sheffield United",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Portsmouth",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Middlesbrough",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Charlton",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 4,
+        "rank": 14,
         "teamId": "",
-        "teamName": "Southampton",
-        "value": 1.0,
-        "played": 3
+        "teamName": "Derby County",
+        "value": 2.0,
+        "played": 4
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
         "teamName": "Millwall",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
         "teamName": "Stoke",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
-        "teamName": "Derby County",
+        "teamName": "Charlton",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 16,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Southampton",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Bolton",
         "value": 2.0,
@@ -2700,6 +2700,13 @@
         "rank": 20,
         "teamId": "",
         "teamName": "Norwich",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Preston",
         "value": 3.0,
         "played": 4
       },
@@ -2723,13 +2730,6 @@
         "teamName": "Burnley",
         "value": 3.0,
         "played": 4
-      },
-      {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Preston",
-        "value": 3.0,
-        "played": 3
       }
     ]
   },
