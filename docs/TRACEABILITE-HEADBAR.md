@@ -132,6 +132,9 @@
 | `tsc --noEmit` | ✅ 0 erreurs |
 | Sparkline duplication | ✅ Supprimé `ui/sparkline.tsx`, import corrigé vers `tennis/sparkline.tsx` |
 | JSX fragment error | ✅ Corrigé `notifications-dropdown.tsx` |
+| Git commit | ✅ `903e3036` — `feat(headbar): complete redesign` (24 files, +3410/-224) |
+| Git push | ✅ origin/main |
+| VPS deploy | ✅ `DEPLOY-OK` — health check OK, build ran, discord notification envoyée |
 
 ---
 
