@@ -129,13 +129,15 @@ async function fetchAndEnrich(now: number): Promise<CacheEntry> {
   let getPhoto: ((name: string) => Promise<string | null>) | null = null;
   try {
     const s = svc();
-    fights = await s.getMMAFights(process.env.ODDS_API_KEY);
-    getPhoto = (name: string) => s.getFighterPhoto(name);
-  } catch (svcErr) {
-    console.error("[mma-fights] svc error, trying direct 1xBet read:", (svcErr as Error).message);
-    fights = read1xBetDirect(now);
-  }
-  if (!fights || fights.length === 0) {
+    const result = await s.getMMAFights(process.env.ODDS_API_KEY);
+    if (result && result.length > 0) {
+      fights = result;
+      getPhoto = (name: string) => s.getFighterPhoto(name);
+    } else {
+      // Service returned empty → fallback direct 1xBet
+      fights = read1xBetDirect(now);
+    }
+  } catch {
     fights = read1xBetDirect(now);
   }
 
