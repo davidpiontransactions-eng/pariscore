@@ -10,7 +10,9 @@ let cache: CacheEntry | null = null;
 let _svc: any = null;
 function svc() {
   if (!_svc) {
-    _svc = require("../../../../../services/mmaService");
+    // Chemin absolu requis : le require relatif se résout mal dans standalone build
+    const path = require("path");
+    _svc = require(path.join(process.cwd(), "services", "mmaService"));
   }
   return _svc;
 }
