@@ -172,8 +172,9 @@ export function matchForm(
  * λCorners = BASE + buts × K, avec BASE≈7.5 et K≈1.2 (corners additionnels
  * générés par un jeu ouvert / déficit).
  */
-const CORNERS_BASE = 7.5;
-const CORNERS_PER_GOAL = 1.2;
+// Calibré EPL 2023-24 : ~10.2 corners/match, ~2.6 xG total → base 4.5, gradient 2.2
+const CORNERS_BASE = 4.5;
+const CORNERS_PER_GOAL = 2.2;
 
 /** Expected total corners du match (home + away), dérivés des buts attendus. */
 export function expectedMatchCorners(m: { home: FormAgg; away: FormAgg }): number {

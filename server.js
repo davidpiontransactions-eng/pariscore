@@ -10835,8 +10835,8 @@ function buildMatchRecord(raw) {
     away: Math.min(awayInjCount * 5, 30),
   };
 
-  // Corners Poisson — total attendu = (xG Dom + xG Ext) * ratio corners/buts (~3.0)
-  const cornerTotal = Math.max(1.0, (expHome + expAway) * 3.0);
+  // Corners Poisson — total attendu = (xG Dom + xG Ext) * ratio corners/buts (~4.2, EPL avg ~10.2 corners / ~2.6 xG)
+  const cornerTotal = Math.max(1.0, (expHome + expAway) * 4.2);
   let crCum = 0;
   for (let k = 0; k <= 6; k++) {
     let logP = -cornerTotal + k * Math.log(Math.max(cornerTotal, 0.001));
@@ -17453,8 +17453,10 @@ function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5
   // Expected total corners = average of both teams' averages
   const expectedTotal = (homeAvg + awayAvg) / 2;
 
-  // Poisson-like distribution for corners (discrete, 0-20 range)
+  // Negative Binomial : gère l'overdispersion des corners (clusters, batches)
+  // r = paramètre de dispersion (calibré EPL ~10, Var = λ + λ²/r)
   const lambda = expectedTotal;
+  const r = 10;
   const probs = {};
 
   for (const threshold of thresholds) {
@@ -17462,9 +17464,10 @@ function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5
     let cumulative = 0;
     const maxX = Math.floor(threshold);
     for (let k = 0; k <= maxX; k++) {
-      // Poisson PMF approximation for corners
-      let logP = -lambda + k * Math.log(Math.max(lambda, 0.001));
-      for (let i = 1; i <= k; i++) logP -= Math.log(i);
+      // Negative Binomial PMF : P(X=k) = C(k+r-1, k) * (r/(r+λ))^r * (λ/(r+λ))^k
+      let logP = 0;
+      for (let i = 0; i < k; i++) logP += Math.log(r + i) - Math.log(i + 1);
+      logP += r * Math.log(r / (r + lambda)) + k * Math.log(lambda / (r + lambda));
       cumulative += Math.exp(logP);
     }
     probs[`over_${String(threshold).replace('.', '_')}`] = Math.round((1 - cumulative) * 100);

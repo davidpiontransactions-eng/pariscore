@@ -125,9 +125,9 @@ function filterForStrategy(
 
     case "over15":
     case "over65Corners":
-      // Marchés de total : tri par EV décroissant
+      // Marchés de total : tri par EV décroissant, edge > 2% requis
       return picks
-        .filter((p) => p.winProbability >= 0.60)
+        .filter((p) => p.winProbability >= 0.55 && p.edge > 0.02)
         .sort((a, b) => b.expectedValue - a.expectedValue)
         .slice(0, 10);
 

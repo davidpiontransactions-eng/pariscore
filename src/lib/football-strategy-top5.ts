@@ -432,6 +432,8 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
   const lambdaAway = (a.gf / nA + h.ga / nH) / 2;
   const lambdaTotal = lambdaHome + lambdaAway;
   const lambdaCorners = (h.corners / nH + a.corners / nA) / 2;
+  // Bonus domicile : +0.5 corners en moyenne (EPL 2023-24 : 5.3 home vs 4.9 away)
+  const HOME_CORNER_BONUS = 0.5;
 
   switch (key) {
     case "bestTeam":
@@ -486,7 +488,7 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
       return { value: prob, pick: mk.homeWin >= mk.awayWin ? "home" : "away" };
     }
     case "over65Corners":
-      return { value: poissonTailAt(lambdaCorners, 7) * 100, pick: null };
+      return { value: poissonTailAt(lambdaCorners + HOME_CORNER_BONUS, 7) * 100, pick: null };
   }
 }
 

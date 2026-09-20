@@ -13471,11 +13471,15 @@ function calcStatsFlash(m, hs, as, p) {
 }
 
 function cornerProbFromXG(homeXG, awayXG) {
-  const lambda = Math.max(1.0, (homeXG + awayXG) * 3.0);
+  // ratio corners/xG ~4.2 (EPL avg ~10.2 corners / ~2.6 xG total)
+  const lambda = Math.max(1.0, (homeXG + awayXG) * 4.2);
+  // Negative Binomial : gère l'overdispersion des corners (r=10, calibré EPL)
+  const r = 10;
   let cumulative = 0;
   for (let k = 0; k <= 6; k++) {
-    let logP = -lambda + k * Math.log(Math.max(lambda, 0.001));
-    for (let i = 1; i <= k; i++) logP -= Math.log(i);
+    let logP = 0;
+    for (let i = 0; i < k; i++) logP += Math.log(r + i) - Math.log(i + 1);
+    logP += r * Math.log(r / (r + lambda)) + k * Math.log(lambda / (r + lambda));
     cumulative += Math.exp(logP);
   }
   return Math.round(Math.max(0, Math.min(99, (1 - cumulative) * 100)));
