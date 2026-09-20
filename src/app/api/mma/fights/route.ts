@@ -15,6 +15,43 @@ function svc() {
   return _svc;
 }
 
+// ─── Fallback: lecture directe du fichier 1xBet (bypass service) ─────────────
+// Résout le problème de require() dans standalone build où le service bundled
+// ne trouve pas le fichier de données.
+function read1xBetDirect(now: number): MmaEventRaw[] {
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const jsonPath = path.join(process.cwd(), "data", "odds_1xbet_mma.json");
+    if (!fs.existsSync(jsonPath)) return [];
+    const raw = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+    if (!raw?.fights?.length) return [];
+
+    const events = new Map<string, MmaEventRaw>();
+    for (const f of raw.fights) {
+      if (!f.start_time || f.start_time * 1000 <= now) continue;
+      const iso = new Date(f.start_time * 1000).toISOString();
+      const dateKey = iso.slice(0, 10);
+      const evName = f.event_name || `UFC Event — ${dateKey}`;
+      if (!events.has(evName)) {
+        events.set(evName, { event_date: dateKey, event_name: evName, fights: [] });
+      }
+      events.get(evName)!.fights.push({
+        fighter_a: f.fighter1 || "",
+        fighter_b: f.fighter2 || "",
+        commence_time: iso,
+        weight_class: f.category || "",
+        event_name: evName,
+        best_odds_a: f.odds_f1 ?? undefined,
+        best_odds_b: f.odds_f2 ?? undefined,
+      });
+    }
+    return [...events.values()];
+  } catch {
+    return [];
+  }
+}
+
 type MmaFightRaw = {
   fighter_a: string;
   fighter_b: string;
@@ -88,17 +125,30 @@ export async function GET(req: NextRequest) {
 
 // ─── Fetch + enrich fighters (photos) ───────────────────────────────────────
 async function fetchAndEnrich(now: number): Promise<CacheEntry> {
-  const s = svc();
-  const fights: MmaEventRaw[] = await s.getMMAFights(process.env.ODDS_API_KEY);
+  let fights: MmaEventRaw[];
+  let getPhoto: ((name: string) => Promise<string | null>) | null = null;
+  try {
+    const s = svc();
+    fights = await s.getMMAFights(process.env.ODDS_API_KEY);
+    getPhoto = (name: string) => s.getFighterPhoto(name);
+  } catch (svcErr) {
+    console.error("[mma-fights] svc error, trying direct 1xBet read:", (svcErr as Error).message);
+    fights = read1xBetDirect(now);
+  }
+  if (!fights || fights.length === 0) {
+    fights = read1xBetDirect(now);
+  }
 
   const enriched = await Promise.all(
     fights.map(async (ev) => {
       const enrichedFights = await Promise.all(
         ev.fights.map(async (f: MmaFightRaw) => {
-          const [photoA, photoB] = await Promise.all([
-            s.getFighterPhoto(f.fighter_a).catch(() => null),
-            s.getFighterPhoto(f.fighter_b).catch(() => null),
-          ]);
+          const [photoA, photoB] = getPhoto
+            ? await Promise.all([
+                getPhoto(f.fighter_a).catch(() => null),
+                getPhoto(f.fighter_b).catch(() => null),
+              ])
+            : [null, null];
           return { ...f, photo_a: photoA, photo_b: photoB };
         }),
       );
