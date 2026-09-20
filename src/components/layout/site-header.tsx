@@ -51,21 +51,15 @@ export function SiteHeader() {
           }}
         />
 
-        {/* Sports athlete image — dynamique selon sport actif */}
+        {/* Sports athlete image — fallback SVG unique (pas de SVGs par sport) */}
         <div className="absolute right-0 top-0 h-full w-[400px] pointer-events-none">
           <Image
-            src={`/athletes/${activeSport ?? "football"}-header.svg`}
+            src="/sports-athlete-header.svg"
             alt=""
             width={400}
             height={60}
             style={{ maxWidth: '400px', maxHeight: '60px' }}
             className="object-cover object-right opacity-80 transition-opacity duration-300"
-            onError={(e) => {
-              const img = e.currentTarget as HTMLImageElement;
-              if (!img.src.endsWith("sports-athlete-header.svg")) {
-                img.src = "/sports-athlete-header.svg";
-              }
-            }}
           />
           {/* Fade gradient to blend with header */}
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />

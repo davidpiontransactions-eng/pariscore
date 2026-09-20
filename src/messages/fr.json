@@ -933,11 +933,15 @@
     "openMenu": "Ouvrir le menu utilisateur",
     "defaultName": "Utilisateur",
     "defaultEmail": "invité",
+    "guest": "Invité",
+    "notConnected": "Non connecté",
+    "login": "Se connecter",
     "profile": "Mon profil",
     "settings": "Réglages",
     "language": "Langue",
     "lightMode": "Mode clair",
     "darkMode": "Mode sombre",
+    "autoMode": "Auto",
     "logout": "Déconnexion"
   }
 }

@@ -297,7 +297,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222] max-h-[90vh] sm:max-h-[90dvh] overflow-hidden flex flex-col max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+      <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222] max-h-[90vh] sm:max-h-[90dvh] !overflow-hidden flex flex-col max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
         {/* Drag handle mobile (BottomSheet affordance) */}
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
@@ -323,7 +323,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         </DialogHeader>
 
         {/* L2+L3 — contenu scrollable avec analyse, presse, score, live */}
-        <ScrollArea className="max-h-[calc(90vh-80px)] max-h-[calc(90dvh-80px)]">
+        <ScrollArea className="min-h-0 flex-1 max-h-[calc(90vh-80px)] max-h-[calc(90dvh-80px)]">
           <div className="px-6 py-4 space-y-4">
             {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
             {view && (
