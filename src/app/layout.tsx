@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { PHProvider } from "@/components/analytics-provider";
 import { ConsentProvider } from "@/components/consent-provider";
+import { Providers } from "@/components/providers";
 
 import { PrivacyDialog } from "@/components/privacy-dialog";
 import { BankrollDialog } from "@/components/bankroll-dialog";
@@ -213,9 +214,10 @@ export default async function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem={false}
+          enableSystem
           disableTransitionOnChange
         >
+          <Providers>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ConsentProvider>
               <PHProvider>
@@ -246,6 +248,7 @@ export default async function RootLayout({
               </PHProvider>
             </ConsentProvider>
           </NextIntlClientProvider>
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

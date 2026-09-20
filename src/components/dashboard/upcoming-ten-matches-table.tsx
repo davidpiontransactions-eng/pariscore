@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkline } from "@/components/ui/sparkline";
+import { Sparkline } from "@/components/tennis/sparkline";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
 import { computePredictiveBets } from "@/lib/prediction/predictive-bets-engine";
 import { useEditorialSummary } from "@/hooks/use-editorial-summaries";

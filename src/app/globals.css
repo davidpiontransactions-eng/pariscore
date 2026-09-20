@@ -821,7 +821,8 @@
   100% { background-position: 200% 0; }
 }
 
-.liquid-glass--animated::after {
+/* Double class selector pour override .glass-liquid-elevated::after sans !important */
+.liquid-glass--animated.liquid-glass--animated::after {
   background: linear-gradient(
     110deg,
     transparent 20%,
@@ -829,8 +830,8 @@
     rgba(255, 255, 255, 0.25) 50%,
     rgba(255, 255, 255, 0.12) 60%,
     transparent 80%
-  ) !important;
-  background-size: 200% 100% !important;
+  );
+  background-size: 200% 100%;
   animation: lg-sheen-drift 8s ease-in-out infinite;
 }
 

@@ -10,6 +10,7 @@ import { SportTabs } from "@/components/layout/sport-tabs";
 import SearchModal, { useSearchModal } from "@/components/layout/search-modal";
 import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
 import { UserMenu } from "@/components/layout/user-menu";
+import { LiveTicker } from "@/components/layout/live-ticker";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
 
@@ -38,31 +39,36 @@ export function SiteHeader() {
     <>
       <AutoHideHeader className="relative overflow-hidden">
         {/* Liquid Glass background — tier2 elevated pour la navbar */}
-        <LiquidGlass tier="tier2" elevated className="absolute inset-0 bg-white liquid-glass--animated"><></></LiquidGlass>
+        <LiquidGlass tier="tier2" elevated className="absolute inset-0 bg-background liquid-glass--animated"><></></LiquidGlass>
 
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.015]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(123,63,160,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(123,63,160,0.1) 1px, transparent 1px)",
+              "linear-gradient(rgba(var(--primary-rgb,123,63,160),0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--primary-rgb,123,63,160),0.1) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
 
-        {/* Sports athlete image — right side with splash effect */}
+        {/* Sports athlete image — dynamique selon sport actif */}
         <div className="absolute right-0 top-0 h-full w-[400px] pointer-events-none">
           <Image
-            src="/sports-athlete-header.svg"
+            src={`/athletes/${activeSport ?? "football"}-header.svg`}
             alt=""
             width={400}
             height={60}
             style={{ maxWidth: '400px', maxHeight: '60px' }}
-            className="object-cover object-right opacity-80"
-            priority
+            className="object-cover object-right opacity-80 transition-opacity duration-300"
+            onError={(e) => {
+              const img = e.currentTarget as HTMLImageElement;
+              if (!img.src.endsWith("sports-athlete-header.svg")) {
+                img.src = "/sports-athlete-header.svg";
+              }
+            }}
           />
           {/* Fade gradient to blend with header */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
         </div>
 
         {/* Bottom glow line */}
@@ -73,7 +79,7 @@ export function SiteHeader() {
           {/* Gauche : Logo Shield */}
           <Link
             href="/"
-            className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition-all hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50"
+            className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition-all hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="PariScore — Accueil"
           >
             {/* Shield logo SVG */}
@@ -88,15 +94,15 @@ export function SiteHeader() {
                 priority
               />
               {/* Glow effect on hover */}
-              <div className="absolute inset-0 rounded-full bg-purple-500/0 transition-all group-hover:bg-purple-500/10" />
+              <div className="absolute inset-0 rounded-full bg-primary/0 transition-all group-hover:bg-primary/10" />
             </div>
             
             {/* Texte logo */}
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-[#1A1145] leading-none">
-                PARI<span className="text-[#7B3FA0]">SCORE</span>
+              <span className="text-xl font-black tracking-tight text-foreground leading-none">
+                PARI<span className="text-primary">SCORE</span>
               </span>
-              <span className="text-[10px] font-medium tracking-[0.25em] text-[#6B5B8D] leading-none mt-1">
+              <span className="text-[10px] font-medium tracking-[0.25em] text-muted-foreground leading-none mt-1">
                 MULTISPORT DATA & PRÉDICTIONS
               </span>
             </div>
@@ -108,19 +114,22 @@ export function SiteHeader() {
               type="button"
               onClick={() => onOpenChange(true)}
               className={cn(
-                "group hidden items-center gap-2.5 rounded-xl border border-[#E0D8F0] bg-white px-4 py-2.5 text-xs text-[#6B5B8D] transition-all w-full",
-                "hover:border-[#7B3FA0]/30 hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5",
+                "group hidden items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs text-muted-foreground transition-all w-full",
+                "hover:border-primary/30 hover:bg-secondary hover:text-foreground hover:shadow-lg hover:shadow-primary/5",
                 "sm:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
               aria-label="Rechercher (Ctrl+K)"
             >
-              <Search className="h-4 w-4 shrink-0 text-[#6B5B8D] transition-colors group-hover:text-[#7B3FA0]" />
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
               <span className="flex-1 text-left">Rechercher un match, équipe, ligue...</span>
-              <kbd className="ml-auto rounded-md border border-[#E0D8F0] bg-[#F8F5FC] px-2 py-1 text-[10px] font-medium text-[#6B5B8D] transition-colors group-hover:border-[#7B3FA0]/30 group-hover:text-[#1A1145]">
+              <kbd className="ml-auto rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-foreground">
                 ⌘K
               </kbd>
             </button>
           </div>
+
+          {/* Live Ticker — scores temps réel */}
+          <LiveTicker />
 
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
@@ -133,7 +142,7 @@ export function SiteHeader() {
             {/* Réglages */}
             <Link
               href="/settings"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-[#6B5B8D] transition-all hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-secondary hover:text-foreground hover:shadow-lg hover:shadow-primary/5"
               aria-label="Paramètres"
               title="Paramètres"
             >

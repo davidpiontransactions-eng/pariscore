@@ -4,22 +4,21 @@ import { motion } from "framer-motion";
 import { Home, Radio, Gem, Star, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLiveMatches } from "@/hooks/use-live-matches";
+import { useSportLiveCounts } from "@/hooks/use-sport-live-counts";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 type TabDef = {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  accent: string;
 };
 
 const TABS: TabDef[] = [
-  { id: "home", label: "Accueil", icon: Home, accent: "bg-[#7B3FA0]" },
-  { id: "live", label: "Live", icon: Radio, accent: "bg-[#4CAF50]" },
-  { id: "value", label: "Value", icon: Gem, accent: "bg-[#FF6D00]" },
-  { id: "favoris", label: "Favoris", icon: Star, accent: "bg-[#FF6D00]" },
-  { id: "profil", label: "Profil", icon: User, accent: "bg-[#7B3FA0]" },
+  { id: "home", label: "Accueil", icon: Home },
+  { id: "live", label: "Live", icon: Radio },
+  { id: "value", label: "Value", icon: Gem },
+  { id: "favoris", label: "Favoris", icon: Star },
+  { id: "profil", label: "Profil", icon: User },
 ] as const;
 
 type MobileBottomNavProps = {
@@ -29,15 +28,20 @@ type MobileBottomNavProps = {
 
 export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
   const isMobile = useIsMobile();
-  const { liveMatchList } = useLiveMatches();
-  const liveCount = liveMatchList.filter((m) => m.isLive).length;
 
   if (!isMobile) return null;
+
+  return <MobileBottomNavInner activeTab={activeTab} onTabChange={onTabChange} />;
+}
+
+/** Inner component — monté seulement sur mobile pour éviter le polling sur desktop */
+function MobileBottomNavInner({ activeTab, onTabChange }: MobileBottomNavProps) {
+  const { total: liveTotal } = useSportLiveCounts();
 
   return (
     <LiquidGlass
       tier="regular"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E0D8F0] pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
       role="navigation"
       aria-label="Navigation principale"
     >
@@ -55,18 +59,15 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
               className={cn(
                 "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isActive
-                  ? "text-[#1A1145]"
-                  : "text-[#6B5B8D] hover:text-[#1A1145]"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {/* Accent bar at top of tab */}
               {isActive && (
                 <motion.div
                   layoutId="bottom-nav-indicator"
-                  className={cn(
-                    "absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full",
-                    tab.accent
-                  )}
+                  className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary"
                   transition={{
                     type: "spring",
                     stiffness: 500,
@@ -78,9 +79,9 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
               {/* Icon with optional live count badge */}
               <span className="relative inline-flex">
                 <Icon className="h-5 w-5" />
-                {isLive && liveCount > 0 && (
+                {isLive && liveTotal > 0 && (
                   <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold text-white shadow-sm shadow-red-500/30">
-                    {liveCount}
+                    {liveTotal}
                   </span>
                 )}
               </span>

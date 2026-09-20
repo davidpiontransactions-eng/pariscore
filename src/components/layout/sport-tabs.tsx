@@ -2,10 +2,11 @@
 
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import type { ComponentType } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useLiveMatches } from "@/hooks/use-live-matches";
-import { useFootballMatches } from "@/hooks/use-football-matches";
+import { ChevronDown } from "lucide-react";
+import { useSportLiveCounts } from "@/hooks/use-sport-live-counts";
+import { useSportPreferences } from "@/hooks/use-sport-preferences";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
 import {
   FootballPicto,
@@ -79,6 +80,21 @@ export function SportTabs({
     if (typeof window === "undefined") return false;
     return window.matchMedia("(max-width: 768px)").matches;
   });
+  const [showMore, setShowMore] = useState(false);
+
+  // Sports favoris (localStorage, max 5)
+  const allSportIds = useMemo(() => SPORT_TABS.map((t) => t.id), []);
+  const { favorites, secondary, addFavorite } = useSportPreferences(allSportIds);
+
+  // Tabs à afficher : favoris en premier
+  const visibleTabs = useMemo(
+    () => SPORT_TABS.filter((t) => favorites.includes(t.id)),
+    [favorites]
+  );
+  const moreTabs = useMemo(
+    () => SPORT_TABS.filter((t) => secondary.includes(t.id)),
+    [secondary]
+  );
 
   // Détection responsive
   useEffect(() => {
@@ -90,39 +106,8 @@ export function SportTabs({
   }, []);
 
   // ─── Compteur de matchs live par sport ────────────────────────────────────
-  // useLiveMatches fournit les matchs tennis live.
-  // useFootballMatches fournit les matchs football (certains live).
-  const { liveMatchList: tennisLive } = useLiveMatches();
-  const { data: footballData } = useFootballMatches();
-
-  const liveCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      football: 0,
-      tennis: 0,
-      basketball: 0,
-      hockey: 0,
-      rugby: 0,
-      mma: 0,
-      cycling: 0,
-      f1: 0,
-      baseball: 0,
-      cs2: 0,
-      snooker: 0,
-      handball: 0,
-    };
-
-    // Tennis live — le hook expose directement les matchs en cours
-    counts.tennis = tennisLive.filter((m) => m.isLive).length;
-
-    // Football live — les matchs marqués live dans la réponse API
-    if (footballData?.matches) {
-      counts.football = footballData.matches.filter(
-        (m) => m.live && m.live.status !== "FT"
-      ).length;
-    }
-
-    return counts;
-  }, [tennisLive, footballData]);
+  // Source unique : multisport-calendar (tous sports, polling 30s)
+  const { counts: liveCounts } = useSportLiveCounts();
 
   // ─── Scroll vers l'onglet actif (mobile) ─────────────────────────────────
   const scrollToTab = useCallback(
@@ -141,6 +126,37 @@ export function SportTabs({
     if (isMobile) scrollToTab(activeSport);
   }, [activeSport, isMobile, scrollToTab]);
 
+  // ─── Navigation clavier (roving tabindex) ────────────────────────────────
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const allTabs = [...visibleTabs, ...moreTabs];
+      const currentIdx = allTabs.findIndex((t) => t.id === activeSport);
+      if (currentIdx < 0) return;
+
+      let nextIdx = currentIdx;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nextIdx = (currentIdx + 1) % allTabs.length;
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        nextIdx = (currentIdx - 1 + allTabs.length) % allTabs.length;
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        nextIdx = 0;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        nextIdx = allTabs.length - 1;
+      } else {
+        return;
+      }
+
+      const nextSport = allTabs[nextIdx].id;
+      onSportChange(nextSport);
+      scrollToTab(nextSport);
+    },
+    [activeSport, visibleTabs, moreTabs, onSportChange, scrollToTab]
+  );
+
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
     <LiquidGlass
@@ -154,6 +170,7 @@ export function SportTabs({
       )}
       role="tablist"
       aria-label="Navigation par sport"
+      onKeyDown={handleKeyDown}
     >
       <div className="relative mx-auto flex h-full max-w-7xl items-center">
         {/* Conteneur scrollable sur mobile, centré sur desktop */}
@@ -165,7 +182,7 @@ export function SportTabs({
             "md:mx-auto md:justify-center md:overflow-visible"
           )}
         >
-          {SPORT_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = activeSport === tab.id;
             const liveCount = liveCounts[tab.id] ?? 0;
             const Icon = tab.icon;
@@ -175,6 +192,7 @@ export function SportTabs({
                 key={tab.id}
                 data-sport={tab.id}
                 role="tab"
+                tabIndex={isActive ? 0 : -1}
                 aria-selected={isActive}
                 aria-label={tab.label}
                 onClick={() => onSportChange(tab.id)}
@@ -182,10 +200,10 @@ export function SportTabs({
                   "relative flex h-full shrink-0 snap-start items-center gap-1.5 px-3",
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/50",
                   isActive
-                    ? "text-[#7B3FA0]"
-                    : "text-[#6B5B8D] hover:text-[#1A1145]"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -196,13 +214,68 @@ export function SportTabs({
                 {isActive && (
                   <motion.div
                     layoutId="sport-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#7B3FA0]"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
               </button>
             );
           })}
+
+          {/* Bouton "Plus" — dropdown sports secondaires */}
+          {moreTabs.length > 0 && (
+            <div className="relative flex h-full items-center">
+              <button
+                onClick={() => setShowMore((v) => !v)}
+                className={cn(
+                  "flex h-full items-center gap-1 px-2.5 text-xs font-medium",
+                  "text-muted-foreground hover:text-foreground transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/50",
+                  showMore && "text-foreground"
+                )}
+                aria-expanded={showMore}
+                aria-haspopup="true"
+              >
+                <span>Plus</span>
+                <ChevronDown className={cn("h-3 w-3 transition-transform", showMore && "rotate-180")} />
+              </button>
+
+              <AnimatePresence>
+                {showMore && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 z-50 mt-1 min-w-[140px] rounded-lg border border-border bg-popover p-1 shadow-lg"
+                  >
+                    {moreTabs.map((tab) => {
+                      const liveCount = liveCounts[tab.id] ?? 0;
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            addFavorite(tab.id);
+                            onSportChange(tab.id);
+                            setShowMore(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs",
+                            "text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{tab.label}</span>
+                          <LiveBadge count={liveCount} />
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Fade gradient sur le bord droit (mobile uniquement) */}

@@ -10,6 +10,10 @@ import {
   Calendar,
   CalendarCheck,
   Loader2,
+  Zap,
+  TrendingUp,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -32,6 +36,11 @@ import {
   useDigestScheduler,
   setDigestEnabled,
 } from "@/hooks/use-digest-scheduler";
+import {
+  useNotifications,
+  type NotificationPriority,
+  type NotificationItem,
+} from "@/hooks/use-notifications";
 
 /**
  * Dropdown unifié de notifications regroupant Push, Email, Digest
@@ -40,22 +49,15 @@ import {
 export function NotificationsDropdown() {
   const t = useTranslations("Notifications");
 
-  // Hooks d'état
-  const push = usePushNotifications();
-  const email = useEmailAlerts();
-  const valueBet = useValueBetScanner();
-  const digest = useDigestScheduler();
-
   // Popover ouvert/fermé
   const [open, setOpen] = useState(false);
 
-  // Nombre total d'alertes value bet
-  const totalAlerts = valueBet.alertsSent;
+  // Hooks légers (montés en permanence pour le badge)
+  const valueBet = useValueBetScanner();
+  const notifs = useNotifications();
 
-  // État des canaux
-  const pushActive = push.subscribed;
-  const emailActive = email.subscribed;
-  const digestActive = digest.enabled;
+  // Nombre total d'alertes (value bets + notifications feed)
+  const totalAlerts = valueBet.alertsSent + notifs.unreadCount;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -80,15 +82,60 @@ export function NotificationsDropdown() {
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-80 p-0">
-        {/* En-tête */}
-        <div className="flex items-center gap-2 border-b px-4 py-3">
-          <BellRing className="h-4 w-4 text-emerald-400" />
-          <span className="text-sm font-semibold">{t("title")}</span>
-        </div>
+        {open && <NotificationsContent t={t} notifs={notifs} valueBet={valueBet} />}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
-        <div className="space-y-1 p-2">
-          {/* Section 1 — Value Bets */}
-          <CardSection
+/** Contenu du dropdown — monté seulement quand le popover est ouvert */
+function NotificationsContent({
+  t,
+  notifs,
+  valueBet,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  notifs: ReturnType<typeof useNotifications>;
+  valueBet: ReturnType<typeof useValueBetScanner>;
+}) {
+  // Hooks lourds montés seulement quand le dropdown est ouvert
+  const push = usePushNotifications();
+  const email = useEmailAlerts();
+  const digest = useDigestScheduler();
+
+  const pushActive = push.subscribed;
+  const emailActive = email.subscribed;
+  const digestActive = digest.enabled;
+  const totalAlerts = notifs.unreadCount;
+
+  return (
+    <>
+      {/* En-tête */}
+      <div className="flex items-center gap-2 border-b px-4 py-3">
+        <BellRing className="h-4 w-4 text-emerald-400" />
+        <span className="text-sm font-semibold">{t("title")}</span>
+      </div>
+
+      <div className="space-y-1 p-2">
+        {/* Section 0 — Notifications récentes */}
+        {notifs.items.length > 0 && (
+          <div className="mb-2 max-h-40 overflow-y-auto space-y-1">
+            {notifs.items.slice(0, 8).map((notif) => (
+              <NotificationFeedItem key={notif.id} item={notif} onRead={notifs.markRead} />
+            ))}
+            {notifs.unreadCount > 0 && (
+              <button
+                onClick={notifs.markAllRead}
+                className="w-full text-center text-[10px] text-muted-foreground hover:text-foreground transition-colors py-1"
+              >
+                Tout marquer lu
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Section 1 — Value Bets */}
+        <CardSection
             icon={<BellRing className="h-4 w-4" />}
             title={t("valueBets")}
             active={totalAlerts > 0}
@@ -237,8 +284,7 @@ export function NotificationsDropdown() {
             <a href="/settings">{t("fullSettings")}</a>
           </Button>
         </div>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }
 
@@ -317,4 +363,70 @@ function ToggleSwitch({
       </Tooltip>
     </TooltipProvider>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Notification feed item
+// ---------------------------------------------------------------------------
+
+const PRIORITY_ICONS: Record<NotificationPriority, React.ReactNode> = {
+  live: <Zap className="h-3 w-3" />,
+  value: <TrendingUp className="h-3 w-3" />,
+  alert: <AlertTriangle className="h-3 w-3" />,
+  info: <Info className="h-3 w-3" />,
+};
+
+const PRIORITY_COLORS: Record<NotificationPriority, string> = {
+  live: "text-red-400 bg-red-500/10",
+  value: "text-emerald-400 bg-emerald-500/10",
+  alert: "text-amber-400 bg-amber-500/10",
+  info: "text-muted-foreground bg-muted/50",
+};
+
+function NotificationFeedItem({
+  item,
+  onRead,
+}: {
+  item: NotificationItem;
+  onRead: (id: string) => void;
+}) {
+  const color = PRIORITY_COLORS[item.priority];
+  const icon = PRIORITY_ICONS[item.priority];
+
+  return (
+    <button
+      onClick={() => {
+        onRead(item.id);
+        if (item.href) window.location.href = item.href;
+      }}
+      className={cn(
+        "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
+        "hover:bg-muted/50",
+        !item.read && "bg-muted/20"
+      )}
+    >
+      <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded", color)}>
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={cn("truncate font-medium", !item.read && "text-foreground")}>
+          {item.title}
+        </p>
+        {item.body && (
+          <p className="truncate text-[10px] text-muted-foreground">{item.body}</p>
+        )}
+      </div>
+      <span className="shrink-0 text-[10px] text-muted-foreground">
+        {formatRelativeTime(item.timestamp)}
+      </span>
+    </button>
+  );
+}
+
+function formatRelativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return "now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`;
+  return `${Math.floor(diff / 86_400_000)}j`;
 }

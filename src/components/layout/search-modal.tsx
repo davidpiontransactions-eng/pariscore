@@ -2,39 +2,20 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Search, X, Trophy, Users, MapPin } from "lucide-react"
+import { Search, X, Trophy, Users, MapPin, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { AnimatePresence, motion } from "framer-motion"
+import { useSearchApi, type SearchResult } from "@/hooks/use-search-api"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
-interface SearchResult {
-  id: string
-  name: string
-  subtitle?: string
-  icon: "match" | "team" | "league"
-}
 
 interface SearchModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   trigger?: React.ReactNode
 }
-
-const DEMO_RESULTS: SearchResult[] = [
-  { id: "m1", name: "PSG vs Olympique Lyonnais", subtitle: "Ligue 1 — Aujourd'hui", icon: "match" },
-  { id: "m2", name: "Real Madrid vs FC Barcelone", subtitle: "La Liga — Demain", icon: "match" },
-  { id: "m3", name: "Manchester City vs Liverpool", subtitle: "Premier League — 14h00", icon: "match" },
-  { id: "t1", name: "Paris Saint-Germain", subtitle: "France", icon: "team" },
-  { id: "t2", name: "Manchester City", subtitle: "Angleterre", icon: "team" },
-  { id: "t3", name: "Real Madrid", subtitle: "Espagne", icon: "team" },
-  { id: "l1", name: "Ligue 1", subtitle: "France", icon: "league" },
-  { id: "l2", name: "Premier League", subtitle: "Angleterre", icon: "league" },
-  { id: "l3", name: "La Liga", subtitle: "Espagne", icon: "league" },
-  { id: "l4", name: "Serie A", subtitle: "Italie", icon: "league" },
-]
 
 /* ------------------------------------------------------------------ */
 /*  Icône par catégorie                                                */
@@ -106,23 +87,24 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
   const t = useTranslations()
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const [query, setQuery] = useState("")
   const [activeIdx, setActiveIdx] = useState(-1)
+  const { results, loading, query, setQuery } = useSearchApi(12)
 
-  /* Résultats filtrés */
-  const filtered = DEMO_RESULTS.filter((r) => {
-    if (!query.trim()) return true
-    const q = query.toLowerCase()
-    return (
-      r.name.toLowerCase().includes(q) ||
-      (r.subtitle && r.subtitle.toLowerCase().includes(q))
-    )
-  })
-
-  const grouped = groupResults(filtered)
+  const grouped = groupResults(results)
 
   /* Résultat plat pour la navigation clavier */
   const flatResults = CATEGORY_ORDER.flatMap((cat) => grouped[cat])
+
+  /* Navigation vers résultat sélectionné */
+  const navigateTo = useCallback(
+    (item: SearchResult) => {
+      onOpenChange(false)
+      if (item.href) {
+        window.location.href = item.href
+      }
+    },
+    [onOpenChange],
+  )
 
   /* Réinitialiser l'index actif à chaque changement de requête */
   useEffect(() => {
@@ -165,12 +147,11 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
       if (e.key === "Enter" && activeIdx >= 0) {
         const selected = flatResults[activeIdx]
         if (selected) {
-          // TODO: naviguer vers le détail du résultat
-          onOpenChange(false)
+          navigateTo(selected)
         }
       }
     },
-    [activeIdx, flatResults, onOpenChange],
+    [activeIdx, flatResults, navigateTo],
   )
 
   /* Index global pour la navigation clavier */
@@ -182,7 +163,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
       {trigger && (
         <button
           onClick={() => onOpenChange(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-[#1a1d2e] px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
         >
           {trigger}
         </button>
@@ -205,7 +186,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
             {/* Modale */}
             <motion.div
               className={cn(
-                "w-full max-w-lg overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12162a] via-[#161b2e] to-[#12162a] shadow-2xl shadow-black/40",
+                "w-full max-w-lg overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-card via-popover to-card shadow-2xl shadow-black/40",
               )}
               initial={{ opacity: 0, scale: 0.96, y: -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -246,9 +227,22 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
 
               {/* Résultats */}
               <div ref={listRef} className="max-h-80 overflow-y-auto p-2">
-                {flatResults.length === 0 && (
+                {loading && (
+                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("search.loading", { defaultValue: "Recherche…" })}
+                  </div>
+                )}
+
+                {!loading && flatResults.length === 0 && query.trim().length >= 2 && (
                   <p className="py-8 text-center text-sm text-muted-foreground">
                     {t("search.noResults", { defaultValue: "Aucun résultat trouvé." })}
+                  </p>
+                )}
+
+                {!loading && flatResults.length === 0 && query.trim().length < 2 && (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    {t("search.hint", { defaultValue: "Tapez au moins 2 caractères…" })}
                   </p>
                 )}
 
@@ -275,10 +269,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                                 : "text-foreground/80 hover:bg-white/[0.04]",
                             )}
                             onMouseEnter={() => setActiveIdx(idx)}
-                            onClick={() => {
-                              // TODO: naviguer vers le détail du résultat
-                              onOpenChange(false)
-                            }}
+                            onClick={() => navigateTo(item)}
                           >
                             <ResultIcon type={item.icon} />
                             <div className="min-w-0 flex-1">
@@ -300,7 +291,9 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
               {/* Barre de statut */}
               <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2 text-[11px] text-zinc-400">
                 <span>
-                  {flatResults.length} résultat{flatResults.length !== 1 ? "s" : ""}
+                  {loading
+                    ? t("search.loading", { defaultValue: "Recherche…" })
+                    : `${flatResults.length} résultat${flatResults.length !== 1 ? "s" : ""}`}
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">

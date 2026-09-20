@@ -263,13 +263,18 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | h2h-players-tab | h2h-players-tab.tsx | Tableau joueurs 2 équipes avec tri colonnes |
 | over-under-table | over-under-table.tsx | Tableau générique O/U : seuils + barres % + option 3 colonnes |
 
-## Layout (`src/components/layout/`) — 6 components
+## Layout (`src/components/layout/`) — 11 components
 
 | Component | File | Role |
 |-----------|------|------|
-| auto-hide-header | auto-hide-header.tsx | Header qui se masque au scroll descendant |
+| site-header | site-header.tsx | Orchestrateur principal headbar 2 niveaux (logo + search + actions + sport tabs) |
+| auto-hide-header | auto-hide-header.tsx | Header sticky + auto-hide au scroll descendant (framer-motion) |
+| sport-tabs | sport-tabs.tsx | Niveau 2 — 12 onglets sport + badges live temps réel |
+| search-modal | search-modal.tsx | Modale recherche Ctrl+K (API /api/v1/search, autocomplete, keyboard nav) |
+| notifications-dropdown | notifications-dropdown.tsx | Dropdown notifications (push, email, value bets, digest) |
+| user-menu | user-menu.tsx | Menu utilisateur popover (NextAuth session, thème, langue, login/logout) |
 | drawer-detail | drawer-detail.tsx | Drawer générique de détail |
-| mobile-bottom-nav | mobile-bottom-nav.tsx | Navigation basse mobile |
+| mobile-bottom-nav | mobile-bottom-nav.tsx | Navigation basse mobile (5 onglets + live count badge) |
 
 | sports-sidebar | sports-sidebar.tsx | Filtre latéral multi-sports (1xBet) : recherche, pills horaires, favoris, arborescence Sport→Pays→Ligue→Matchs, toggle Live/Line ; aside sticky desktop + Sheet drawer mobile + sync URL |
 

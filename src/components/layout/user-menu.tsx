@@ -6,13 +6,16 @@ import {
   User,
   Settings,
   LogOut,
+  LogIn,
   Moon,
   Sun,
+  Monitor,
   Languages,
   BarChart3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -26,6 +29,7 @@ import { useRouter } from "next/navigation";
 export function UserMenu() {
   const t = useTranslations("UserMenu");
   const { theme, setTheme } = useTheme();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [locale, setLocale] = useState<string>("fr");
@@ -44,10 +48,27 @@ export function UserMenu() {
     router.refresh();
   };
 
-  /** Basculer thème clair/sombre */
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+  /** Basculer thème : light → dark → system → light */
+  const cycleTheme = () => {
+    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+    setTheme(next);
   };
+
+  const themeIcon =
+    theme === "dark" ? <Moon className="h-4 w-4" /> :
+    theme === "system" ? <Monitor className="h-4 w-4" /> :
+    <Sun className="h-4 w-4" />;
+
+  const themeLabel =
+    theme === "dark" ? t("darkMode") :
+    theme === "system" ? t("autoMode", { defaultValue: "Auto" }) :
+    t("lightMode");
+
+  const isLoggedIn = status === "authenticated";
+  const userName = session?.user?.name ?? session?.user?.email?.split("@")[0] ?? null;
+  const userEmail = session?.user?.email ?? null;
+  const userRole = (session?.user as { role?: string })?.role ?? "freemium";
+  const userInitial = (userName ?? userEmail ?? "U").charAt(0).toUpperCase();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,25 +79,33 @@ export function UserMenu() {
           aria-label={t("openMenu")}
           className="relative h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-muted p-0"
         >
-          {/* Avatar circulaire — icône User par défaut, ou initiales */}
+          {/* Avatar circulaire — initiales si connecté, icône User sinon */}
           <span className="flex h-full w-full items-center justify-center rounded-full text-xs font-medium">
-            <User className="h-4 w-4" />
+            {isLoggedIn ? userInitial : <User className="h-4 w-4" />}
           </span>
+          {/* Badge vert si connecté */}
+          {isLoggedIn && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
+          )}
         </Button>
       </PopoverTrigger>
 
       <PopoverContent align="end" className="w-56 p-0">
         {/* En-tête : info utilisateur */}
         <div className="flex items-center gap-2 px-4 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-            <User className="h-4 w-4" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+            {isLoggedIn ? userInitial : <User className="h-4 w-4" />}
           </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-medium">
-              {t("defaultName", { defaultValue: "Utilisateur" })}
+              {isLoggedIn
+                ? (userName ?? "Utilisateur")
+                : t("guest", { defaultValue: "Invité" })}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t("defaultEmail", { defaultValue: "invité" })}
+              {isLoggedIn
+                ? (userEmail ?? userRole)
+                : t("notConnected", { defaultValue: "Non connecté" })}
             </span>
           </div>
         </div>
@@ -85,71 +114,100 @@ export function UserMenu() {
 
         {/* Navigation du menu */}
         <nav className="p-1">
-          {/* Dashboard */}
-          <MenuItem
-            icon={<BarChart3 className="h-4 w-4" />}
-            label="Dashboard"
-            onClick={() => {
-              router.push("/dashboard");
-              setOpen(false);
-            }}
-          />
+          {isLoggedIn ? (
+            <>
+              {/* Dashboard */}
+              <MenuItem
+                icon={<BarChart3 className="h-4 w-4" />}
+                label="Dashboard"
+                onClick={() => {
+                  router.push("/dashboard");
+                  setOpen(false);
+                }}
+              />
 
-          {/* Profil */}
-          <MenuItem
-            icon={<User className="h-4 w-4" />}
-            label={t("profile")}
-            onClick={() => {
-              router.push("/settings");
-              setOpen(false);
-            }}
-          />
+              {/* Profil */}
+              <MenuItem
+                icon={<User className="h-4 w-4" />}
+                label={t("profile")}
+                onClick={() => {
+                  router.push("/settings");
+                  setOpen(false);
+                }}
+              />
 
-          {/* Paramètres */}
-          <MenuItem
-            icon={<Settings className="h-4 w-4" />}
-            label={t("settings")}
-            onClick={() => {
-              router.push("/settings");
-              setOpen(false);
-            }}
-          />
+              {/* Paramètres */}
+              <MenuItem
+                icon={<Settings className="h-4 w-4" />}
+                label={t("settings")}
+                onClick={() => {
+                  router.push("/settings");
+                  setOpen(false);
+                }}
+              />
 
-          <Separator className="my-1" />
+              <Separator className="my-1" />
 
-          {/* Toggle langue */}
-          <MenuItem
-            icon={<Languages className="h-4 w-4" />}
-            label={`${t("language")} (${locale.toUpperCase()})`}
-            active
-            onClick={toggleLocale}
-          />
+              {/* Toggle langue */}
+              <MenuItem
+                icon={<Languages className="h-4 w-4" />}
+                label={`${t("language")} (${locale.toUpperCase()})`}
+                active
+                onClick={toggleLocale}
+              />
 
-          {/* Toggle thème */}
-          <MenuItem
-            icon={
-              theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )
-            }
-            label={
-              theme === "dark" ? t("lightMode") : t("darkMode")
-            }
-            active
-            onClick={toggleTheme}
-          />
+              {/* Toggle thème (3-mode : Light/Dark/Auto) */}
+              <MenuItem
+                icon={themeIcon}
+                label={themeLabel}
+                active
+                onClick={cycleTheme}
+              />
 
-          <Separator className="my-1" />
+              <Separator className="my-1" />
 
-          {/* Déconnexion */}
-          <MenuItem
-            icon={<LogOut className="h-4 w-4" />}
-            label={t("logout")}
-            variant="destructive"
-            onClick={() => setOpen(false)}
-          />
+              {/* Déconnexion */}
+              <MenuItem
+                icon={<LogOut className="h-4 w-4" />}
+                label={t("logout")}
+                variant="destructive"
+                onClick={() => {
+                  signOut({ callbackUrl: "/" });
+                  setOpen(false);
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Connexion */}
+              <MenuItem
+                icon={<LogIn className="h-4 w-4" />}
+                label={t("login", { defaultValue: "Se connecter" })}
+                onClick={() => {
+                  signIn();
+                  setOpen(false);
+                }}
+              />
+
+              <Separator className="my-1" />
+
+              {/* Toggle langue */}
+              <MenuItem
+                icon={<Languages className="h-4 w-4" />}
+                label={`${t("language")} (${locale.toUpperCase()})`}
+                active
+                onClick={toggleLocale}
+              />
+
+              {/* Toggle thème (3-mode : Light/Dark/Auto) */}
+              <MenuItem
+                icon={themeIcon}
+                label={themeLabel}
+                active
+                onClick={cycleTheme}
+              />
+            </>
+          )}
         </nav>
       </PopoverContent>
     </Popover>
