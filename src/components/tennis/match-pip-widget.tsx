@@ -97,14 +97,20 @@ export function MatchPipWidget() {
   // avec les matchs live. Pour chaque match live, on construit un TennisMatch synthétique.
   const liveFavoriteMatches = useMemo(() => {
     const selectedSet = new Set(selectedMatchIds);
+    // FIX prefix mismatch : sidebar="bsd-tn-XXX", live stream="bsd-XXX".
+    const normalizedSelected = new Set(
+      selectedMatchIds.map((id) =>
+        id.startsWith("bsd-tn-") ? `bsd-${id.slice(7)}` : id,
+      ),
+    );
     const result: Array<{
       match: TennisMatch;
       liveState: (typeof liveStates)[string];
     }> = [];
     for (const lm of liveMatchList) {
       if (!lm.isLive) continue;
-      // Match si favori ★ OU sélectionné dans la sidebar
-      if (!favorites.has(lm.id) && !selectedSet.has(lm.id)) continue;
+      // Match si favori ★ OU sélectionné dans la sidebar (direct + normalisé)
+      if (!favorites.has(lm.id) && !selectedSet.has(lm.id) && !normalizedSelected.has(lm.id)) continue;
       const liveState = liveStates[lm.id];
       if (!liveState) continue; // pas encore de state live détaillé
       result.push({
