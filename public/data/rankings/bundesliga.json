@@ -4,7 +4,7 @@
     "leagueId": "bundesliga",
     "leagueName": "Germany",
     "season": "2026-27",
-    "lastUpdated": "2026-09-20T09:12:42.004804Z",
+    "lastUpdated": "2026-09-21T09:49:37.233412Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -35,6 +35,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 3.0,
         "played": 2
@@ -45,13 +52,6 @@
         "teamName": "Werder Bremen",
         "value": 3.0,
         "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 3.0,
-        "played": 1
       },
       {
         "rank": 7,
@@ -77,6 +77,13 @@
       {
         "rank": 9,
         "teamId": "",
+        "teamName": "Paderborn",
+        "value": 1.5,
+        "played": 2
+      },
+      {
+        "rank": 9,
+        "teamId": "",
         "teamName": "Elversberg",
         "value": 1.5,
         "played": 2
@@ -96,42 +103,35 @@
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 1.0,
-        "played": 1
+        "played": 2
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Monchengladbach",
         "value": 0.0,
@@ -163,6 +163,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 6.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 6.0,
         "played": 2
@@ -175,91 +182,84 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Paderborn",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Elversberg",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Hamburger SV",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Schalke 04",
-        "value": 1.0,
-        "played": 1
+        "value": 2.0,
+        "played": 2
       },
       {
-        "rank": 13,
+        "rank": 15,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 15,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 15,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Monchengladbach",
         "value": 0.0,
@@ -291,6 +291,13 @@
       {
         "rank": 4,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 6.0,
+        "played": 2
+      },
+      {
+        "rank": 4,
+        "teamId": "",
         "teamName": "Werder Bremen",
         "value": 6.0,
         "played": 2
@@ -303,59 +310,59 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Dortmund",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 4.0,
-        "played": 1
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Elversberg",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 4.0,
+        "played": 2
+      },
+      {
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Paderborn",
+        "value": 3.0,
         "played": 2
       },
       {
@@ -366,32 +373,25 @@
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Hamburger SV",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "ga": [
@@ -405,6 +405,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 0.0,
         "played": 2
@@ -412,16 +419,9 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 5,
@@ -438,23 +438,23 @@
         "played": 2
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 1.0,
-        "played": 1
-      },
-      {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Stuttgart",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Paderborn",
         "value": 2.0,
         "played": 2
       },
@@ -547,16 +547,16 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Dortmund",
-        "value": 5.0,
+        "teamName": "Leverkusen",
+        "value": 6.0,
         "played": 2
       },
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 4.0,
-        "played": 1
+        "teamName": "Dortmund",
+        "value": 5.0,
+        "played": 2
       },
       {
         "rank": 6,
@@ -587,32 +587,32 @@
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Paderborn",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Elversberg",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": -1.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 14,
@@ -675,6 +675,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 2.0,
         "played": 2
@@ -687,91 +694,84 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 1.0,
-        "played": 1
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Paderborn",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Elversberg",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Hamburger SV",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Monchengladbach",
         "value": 0.0,
@@ -782,40 +782,40 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Schalke 04",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Augsburg",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Schalke 04",
-        "value": 1.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 1.0,
@@ -845,6 +845,13 @@
       {
         "rank": 7,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 7,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 0.0,
         "played": 2
@@ -859,14 +866,14 @@
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Leverkusen",
+        "teamName": "Stuttgart",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Stuttgart",
+        "teamName": "Paderborn",
         "value": 0.0,
         "played": 2
       },
@@ -890,13 +897,6 @@
         "teamName": "Hamburger SV",
         "value": 0.0,
         "played": 2
-      },
-      {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 0.0,
-        "played": 1
       },
       {
         "rank": 7,
@@ -931,6 +931,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leverkusen",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Dortmund",
         "value": 0.0,
         "played": 2
@@ -959,21 +966,21 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Leverkusen",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 10,
         "teamId": "",
         "teamName": "Stuttgart",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Paderborn",
         "value": 1.0,
         "played": 2
       },
@@ -1020,13 +1027,6 @@
         "played": 2
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Paderborn",
-        "value": 1.0,
-        "played": 1
-      },
-      {
         "rank": 18,
         "teamId": "",
         "teamName": "Monchengladbach",
@@ -1052,28 +1052,28 @@
         "played": 2
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Elversberg",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Freiburg",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
         "teamName": "Bayern Munich",
         "value": 2.0,
@@ -1119,19 +1119,19 @@
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 12,
         "teamId": "",
         "teamName": "FC Koln",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "RB Leipzig",
         "value": 0.0,
         "played": 2
       },
@@ -1189,6 +1189,13 @@
       {
         "rank": 3,
         "teamId": "",
+        "teamName": "Elversberg",
+        "value": 4.0,
+        "played": 2
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Freiburg",
         "value": 4.0,
         "played": 2
@@ -1201,21 +1208,14 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 3.0,
@@ -1247,19 +1247,19 @@
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 12,
         "teamId": "",
         "teamName": "FC Koln",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "RB Leipzig",
         "value": 0.0,
         "played": 2
       },
@@ -1326,7 +1326,7 @@
         "teamId": "",
         "teamName": "Elversberg",
         "value": 4.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 4,
@@ -1350,35 +1350,35 @@
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Hoffenheim",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Bayern Munich",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Werder Bremen",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Hoffenheim",
-        "value": 2.0,
-        "played": 1
-      },
-      {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 2.0,
@@ -1389,7 +1389,7 @@
         "teamId": "",
         "teamName": "RB Leipzig",
         "value": 1.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 15,
@@ -1454,7 +1454,7 @@
         "teamId": "",
         "teamName": "Elversberg",
         "value": 3.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 4,
@@ -1464,56 +1464,56 @@
         "played": 2
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Hoffenheim",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 9,
+        "rank": 7,
         "teamId": "",
         "teamName": "E. Frankfurt",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 7,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 7,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 10,
         "teamId": "",
         "teamName": "Leverkusen",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 10,
         "teamId": "",
         "teamName": "Werder Bremen",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "RB Leipzig",
+        "value": 5.0,
+        "played": 2
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Hoffenheim",
+        "value": 6.0,
+        "played": 2
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 6.0,
@@ -1580,6 +1580,13 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Elversberg",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 5,
+        "teamId": "",
         "teamName": "Freiburg",
         "value": 1.0,
         "played": 2
@@ -1590,13 +1597,6 @@
         "teamName": "Bayern Munich",
         "value": 1.0,
         "played": 2
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 1.0,
-        "played": 1
       },
       {
         "rank": 8,
@@ -1613,37 +1613,37 @@
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Hoffenheim",
-        "value": -1.0,
-        "played": 1
-      },
-      {
-        "rank": 11,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": -2.0,
-        "played": 1
-      },
-      {
-        "rank": 12,
+        "rank": 10,
         "teamId": "",
         "teamName": "Werder Bremen",
         "value": -3.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 10,
         "teamId": "",
         "teamName": "Paderborn",
         "value": -3.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Hoffenheim",
+        "value": -3.0,
+        "played": 2
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "FC Koln",
+        "value": -4.0,
+        "played": 2
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "RB Leipzig",
         "value": -4.0,
         "played": 2
       },
@@ -1701,6 +1701,13 @@
       {
         "rank": 3,
         "teamId": "",
+        "teamName": "Elversberg",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Freiburg",
         "value": 1.0,
         "played": 2
@@ -1718,13 +1725,6 @@
         "teamName": "Augsburg",
         "value": 1.0,
         "played": 2
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 1.0,
-        "played": 1
       },
       {
         "rank": 3,
@@ -1759,19 +1759,19 @@
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 9,
         "teamId": "",
         "teamName": "FC Koln",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "RB Leipzig",
         "value": 0.0,
         "played": 2
       },
@@ -1815,6 +1815,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Elversberg",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Freiburg",
         "value": 1.0,
         "played": 2
@@ -1848,84 +1855,77 @@
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Fsv Mainz",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Dortmund",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Augsburg",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Schalke 04",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Hoffenheim",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "RB Leipzig",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Hamburger SV",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Monchengladbach",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 0.0,
@@ -1957,6 +1957,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Elversberg",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Freiburg",
         "value": 0.0,
         "played": 2
@@ -1967,13 +1974,6 @@
         "teamName": "Bayern Munich",
         "value": 0.0,
         "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Elversberg",
-        "value": 0.0,
-        "played": 1
       },
       {
         "rank": 7,
@@ -2011,49 +2011,49 @@
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Hoffenheim",
-        "value": 1.0,
-        "played": 1
+        "value": 2.0,
+        "played": 2
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "RB Leipzig",
-        "value": 1.0,
-        "played": 1
-      },
-      {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "FC Koln",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "RB Leipzig",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Stuttgart",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "Hamburger SV",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "Monchengladbach",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "Union Berlin",
         "value": 2.0,

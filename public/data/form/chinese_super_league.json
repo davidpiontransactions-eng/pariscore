@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-09-20T09:24:49.076523Z",
+    "lastUpdated": "2026-09-21T10:09:00.810639Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,6 +13,15 @@
   },
   "home": [
     {
+      "teamName": "Qingdao West C.",
+      "gp": 8,
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 13,
+      "ga": 6
+    },
+    {
       "teamName": "Zhejiang",
       "gp": 8,
       "w": 5,
@@ -20,15 +29,6 @@
       "l": 2,
       "gf": 21,
       "ga": 15
-    },
-    {
-      "teamName": "Beijing Guoan",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 18,
-      "ga": 9
     },
     {
       "teamName": "Shandong T.",
@@ -40,6 +40,15 @@
       "ga": 13
     },
     {
+      "teamName": "Beijing Guoan",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 18,
+      "ga": 9
+    },
+    {
       "teamName": "Yunnan Yukun",
       "gp": 8,
       "w": 6,
@@ -47,27 +56,9 @@
       "l": 1,
       "gf": 20,
       "ga": 10
-    },
-    {
-      "teamName": "Qingdao West C.",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
     }
   ],
   "away": [
-    {
-      "teamName": "Shanghai Port",
-      "gp": 8,
-      "w": 5,
-      "d": 1,
-      "l": 2,
-      "gf": 15,
-      "ga": 12
-    },
     {
       "teamName": "Chengdu",
       "gp": 8,
@@ -78,13 +69,13 @@
       "ga": 10
     },
     {
-      "teamName": "Beijing Guoan",
+      "teamName": "S. Shenhua",
       "gp": 8,
-      "w": 3,
-      "d": 5,
-      "l": 0,
-      "gf": 17,
-      "ga": 11
+      "w": 4,
+      "d": 1,
+      "l": 3,
+      "gf": 16,
+      "ga": 14
     },
     {
       "teamName": "Qingdao West C.",
@@ -96,13 +87,22 @@
       "ga": 11
     },
     {
-      "teamName": "S. Shenhua",
+      "teamName": "Beijing Guoan",
       "gp": 8,
-      "w": 4,
+      "w": 3,
+      "d": 5,
+      "l": 0,
+      "gf": 17,
+      "ga": 11
+    },
+    {
+      "teamName": "Shanghai Port",
+      "gp": 8,
+      "w": 5,
       "d": 1,
-      "l": 3,
-      "gf": 16,
-      "ga": 14
+      "l": 2,
+      "gf": 15,
+      "ga": 12
     }
   ]
 }
