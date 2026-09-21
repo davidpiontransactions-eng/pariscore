@@ -777,6 +777,7 @@ let activeTopValue = 0;      // 1 = value bets only (edge ≥ 3%)
 let topRankMap = {};         // { matchId: rank } pour les badges de rang
 let activeEdge  = 0;       // filtre edge minimum (0 = tous)
 let matchesLoaded = false;
+let matchesLoadedAt = 0; // [FIX Bug4] timestamp du dernier loadMatches()
 let favoriteMatchIds = new Set(JSON.parse(localStorage.getItem('ps_fav') || '[]'));
 let activeFavFilter  = false;
 let activeSteamFilter = false;
@@ -932,7 +933,13 @@ function showPage(pageId, linkEl) {
   if (pageId === 'accueil') { initAccueilTopMatches(); loadHeroAccuracy(); loadPartnerBookmakers(); }
   if (pageId === 'hot-picks' && !hotPicksLoaded) { try { hotPicksLoaded = true; loadHotPicks(); } catch(e) { console.warn('hot-picks init:', e); } }
   if (pageId === 'sure-bets' && !sureBetsLoaded) { try { sureBetsLoaded = true; loadSureBets(); } catch(e) { console.warn('sure-bets init:', e); } }
-  if (pageId === 'matchs' && !matchesLoaded) { try { matchesLoaded = true; loadMatches(); } catch(e) { console.warn('matchs init:', e); } }
+  // [FIX Bug4] Re-fetch si données périmées (>10 min) même si déjà chargées
+  if (pageId === 'matchs') {
+    var _matchesStale = typeof matchesLoadedAt !== 'undefined' && matchesLoadedAt && (Date.now() - matchesLoadedAt > 10 * 60 * 1000);
+    if (!matchesLoaded || _matchesStale) {
+      try { matchesLoaded = true; matchesLoadedAt = Date.now(); loadMatches(); } catch(e) { console.warn('matchs init:', e); }
+    }
+  }
   if (pageId === 'matchs') try { initMatchdayBanner(); } catch(e) {}
   if (pageId === 'matchs') { try { if (window.HybridHero) HybridHero.init(); } catch(e) { console.warn('hybrid init:', e); } } else { try { if (window.HybridHero) HybridHero.destroy(); } catch(e) {} }
   if (pageId === 'predictions') { try { loadPredictions(); } catch(e){}; try { loadBetminesPicks(); } catch(e){} }
@@ -11962,6 +11969,7 @@ async function loadMatches() {
         matchesRetryTimer = null;
       }
       setLoading(false);
+      matchesLoadedAt = Date.now(); // [FIX Bug4] timestamp succès
       return; // succès
     } catch(e) {
       console.error('Erreur Fetch/Render:', e);
@@ -12016,12 +12024,15 @@ var _lastLiveSnapshot = null;
 var _prevLiveIds = []; // V73: track previous live IDs for cleanup
 
 function liveScoresChanged(matches) {
-  // [P0] Signature etendue : score + minute + statut
+  // [P0] Signature etendue : score + minute + statut + intensité + possession
+  // [FIX Bug2] Ajout intensity/possession pour détecter les changements de stats
+  // même quand le score est stable (ex: barres momentum, xG, possession).
   var liveMatches = matches.filter(function(m) { return isMatchInProgress(m); });
   var sig = '';
   for (var i = 0; i < liveMatches.length; i++) {
     var m = liveMatches[i];
-    sig += m.id + ':' + (m.live_score || '') + ':' + (m.live_minute || '') + ':' + (m.status || '') + '|';
+    sig += m.id + ':' + (m.live_score || '') + ':' + (m.live_minute || '') + ':' + (m.status || '')
+         + ':' + (m.live_intensity || '') + ':' + (m.live_possession || '') + '|';
   }
   if (sig === _lastLiveSnapshot) return false;
   _lastLiveSnapshot = sig;
@@ -12653,17 +12664,49 @@ function liveUpdateProtocol(newMatches, meta) {
 
 // Auto-refresh polling 5 minutes (fallback)
 let autoRefreshTimer = null;
+let _autoRefreshBackoff = 0; // backoff exponentiel si erreurs consécutives
+let _autoRefreshLastStart = 0; // [FIX Bug6] debounce anti-oscillation SSE
 function startAutoRefresh() {
-  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-  autoRefreshTimer = setInterval(async () => {
+  // [FIX Bug6] Debounce : ignorer les appels trop rapprochés (<10s) depuis SSE onerror
+  var now = Date.now();
+  if (now - _autoRefreshLastStart < 10000 && autoRefreshTimer) return;
+  _autoRefreshLastStart = now;
+  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+  _autoRefreshBackoff = 0;
+  var _poll = async function () {
     if (document.visibilityState !== 'visible') return;
     try {
-      const res = await apiFetch('/api/v1/matches');
-      if (!res.ok) return;
+      const res = await apiFetch('/api/v1/matches', { skipCache: true });
+      if (!res.ok) {
+        _autoRefreshBackoff = Math.min(_autoRefreshBackoff + 1, 4); // max 80min
+        return;
+      }
       const json = await res.json();
+      _autoRefreshBackoff = 0; // reset on success
       liveUpdateProtocol(json.matches || [], json.meta);
-    } catch(e) { /* silencieux */ }
-  }, 5 * 60 * 1000);
+    } catch(e) {
+      if (e && e.status === 401) {
+        // Auth expirée : tenter un refresh via cache stale dispo
+        try {
+          const stale = AppCache.get('/api/v1/matches');
+          if (stale && stale.data && stale.data.matches) {
+            liveUpdateProtocol(stale.data.matches, stale.data.meta);
+          }
+        } catch(_) {}
+      }
+      _autoRefreshBackoff = Math.min(_autoRefreshBackoff + 1, 4);
+    }
+  };
+  var _interval = function() { return Math.min(5 * 60 * 1000 * Math.pow(2, _autoRefreshBackoff), 80 * 60 * 1000); };
+  autoRefreshTimer = setInterval(_poll, 5 * 60 * 1000);
+  // Ajuster l'intervalle dynamiquement après le premier tick si backoff
+  var _adaptivePoll = function() {
+    if (!autoRefreshTimer) return;
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(function() { _poll(); _adaptivePoll(); }, _interval());
+  };
+  // Premier tick immédiat pour vérifier la connectivité
+  _poll();
 }
 
 // v11.0 — Badge néon WebSocket BSD : helper + fetch initial
@@ -12791,6 +12834,10 @@ function initSSE() {
       });
       if (_needRerender && typeof renderMatches === 'function') {
         renderMatches(allMatches);
+      } else if (activeMatchTab !== 'live' && typeof renderMatchesDebounced === 'function') {
+        // [FIX Bug1] Forcer le re-render sur onglets All/Prematch quand les données
+        // live changent (score, minute, intensité). Debounce pour éviter le spam DOM.
+        renderMatchesDebounced(allMatches, 'live-patch');
       }
       if (activeMatchTab === 'live') {
         updateLiveDashboard(allMatches);
