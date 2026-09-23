@@ -28,6 +28,22 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
+## Hockey (`src/components/hockey/`) — 8 components
+
+| Component | File | Role |
+|-----------|------|------|
+| hockey-hero-header | hockey-hero-header.tsx | Hero onglet Hockey — illustration patinoire SVG, logos ligues, ROI par stratégie |
+| hockey-league-mark | hockey-team-logo.tsx | Logo/photo ligue (NHL/KHL/Magnus) + fallback disque teinté |
+| hockey-prematch-popup | hockey-prematch-popup.tsx | Popup détail match (h2h, standings, odds) |
+| hockey-projection-graph | hockey-projection-graph.tsx | Graphe projections par ligue |
+| hockey-spider-match | hockey-spider-match.tsx | Radar comparatif du match |
+| hockey-strategies | hockey-strategies.tsx | Top 10 matchs par stratégie |
+| hockey-tab-content | hockey-tab-content.tsx | Conteneur onglet (selector ligues, standings, matchs, vues) |
+| hockey-team-logo | hockey-team-logo.tsx | Photo/logo équipe (CDN oddspedia Magnus + frozenpool NHL) + fallback PuckMark SVG |
+| hockey-top-players | hockey-top-players.tsx | Top 10 joueurs avec photoUrl |
+
+---
+
 ## Tennis (`src/components/tennis/`) — 60 components
 
 | Component | File | Role |

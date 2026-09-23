@@ -20,6 +20,7 @@ import { useHockeyMatches, type HockeyMatch } from "@/hooks/use-hockey-matches";
 import { FOT } from "@/components/football/fotmob-theme";
 import { parisDayLabel, parisKickoff } from "@/lib/football-time";
 import { normalizeHockeyLeagueId } from "@/lib/top-matches/hockey";
+import { HockeyTeamLogo, HockeyLeagueMark } from "./hockey-team-logo";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -112,10 +113,10 @@ type PlayerStatsPayload = {
 
 type LeagueId = "nhl" | "khl" | "magnus";
 
-const LEAGUES: { id: LeagueId; label: string; flag: string }[] = [
-  { id: "nhl", label: "NHL", flag: "🇺🇸" },
-  { id: "khl", label: "KHL", flag: "🇷🇺" },
-  { id: "magnus", label: "Magnus", flag: "🇫🇷" },
+const LEAGUES: { id: LeagueId; label: string }[] = [
+  { id: "nhl", label: "NHL" },
+  { id: "khl", label: "KHL" },
+  { id: "magnus", label: "Magnus" },
 ];
 
 type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier" | "strategies";
@@ -376,8 +377,10 @@ function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyM
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs uppercase w-10 font-medium" style={{ color: FOT.muted }}>{normalizeHockeyLeagueId(m.leagueId)}</span>
+                  <HockeyTeamLogo name={m.homeName} size={22} />
                   <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.homeName}</span>
                   <span className="text-xs" style={{ color: FOT.muted }}>vs</span>
+                  <HockeyTeamLogo name={m.awayName} size={22} />
                   <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.awayName}</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -472,7 +475,7 @@ export function HockeyTabContent() {
                 className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                   activeLeague === l.id ? "bg-[#00e676] text-[#0a1628]" : "text-white/60 hover:text-white hover:bg-white/10"
                 )}>
-                <span className="mr-1">{l.flag}</span>{l.label}
+                <span className="mr-1 inline-flex align-middle"><HockeyLeagueMark league={l.id} size={16} /></span>{l.label}
               </button>
             ))}
           </div>
