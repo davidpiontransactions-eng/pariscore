@@ -115,6 +115,8 @@ const nextConfig: NextConfig = {
       // de upload.wikimedia.org → runtime error next-image si absent)
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "thumb.wikimedia.org" },
+      // Photos joueurs snooker locales (data/snooker-player-photos.json)
+      { protocol: "https", hostname: "images.gc.wstservices.co.uk" },
       // Placeholder local (fallback ultime)
       { protocol: "https", hostname: "placehold.co" },
       // DiceBear — avatars initiales (fallback photos joueurs tennis)

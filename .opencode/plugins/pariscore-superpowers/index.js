@@ -114,6 +114,16 @@ When skills request actions, substitute OpenCode equivalents:
     _bootstrapCache = `<EXTREMELY_IMPORTANT>
 You have PariScore Superpowers — a structured development methodology.
 
+**SUPERPOWERS = SYSTÉMATIQUES (injecté au démarrage de CHAQUE session).**
+Applique using-superpowers à CHAQUE tâche, même si l'utilisateur ne l'invoque pas :
+- tâche créative (feature/composant) → brainstorming d'abord
+- bug/regression → systematic-debugging / diagnosing-bugs avant fix
+- édition de code → research (Grep/Glob/Read) avant d'écrire
+- avant de dire "fait" → verification-before-completion (gates exécutés, output lu)
+- ≥2 tâches indépendantes → dispatching-parallel-agents (task tool)
+- gros plan → writing-plans puis executing-plans
+Les skills vivent dans le skill tool + .agents/tools-active/ ; charge-les via \`skill\` quand la tâche matche leur description.
+
 **IMPORTANT: The using-superpowers skill content is included below. It is ALREADY LOADED — you are currently following it. Do NOT use the skill tool to load "using-superpowers" again — that would be redundant.**
 
 ${content}
@@ -158,3 +168,6 @@ ${toolMapping}${cavemanBlock}
     },
   };
 };
+
+// Export nommé + default : sûr quel que soit le mode de résolution du loader plugin
+export default PariScoreSuperpowersPlugin;
