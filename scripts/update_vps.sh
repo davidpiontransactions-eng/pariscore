@@ -203,6 +203,16 @@ else
   echo "  cron daily-tables déjà présent"
 fi
 
+# Revue de presse académique bimestrielle (tous les14 jours, garde dans le script).
+# Sortie : docs/press-review/YYYY-MM-DD.md (modèles prédictifs, LLM OSS, paris sportifs).
+CRON_PRESS="0 6 * * * cd $OPT_DIR && python3 scripts/press-review.py >> logs/press-review.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q "press-review.py"; then
+  (crontab -l 2>/dev/null; echo "$CRON_PRESS") | crontab -
+  echo "  ✅ cron press-review ajouté (06:00, garde14j)"
+else
+  echo "  cron press-review déjà présent"
+fi
+
 echo "[6/6] Health check..."
 HEALTH_OK=0
 # Legacy-only = 4 checks (fast restart), Full build = 8 checks (slower boot)
