@@ -1,0 +1,94 @@
+name: Refresh Hockey Prematch
+
+# Scrapers hockey (BetExplorer + Annabet + EliteProspects) -> data/*.json
+# et commit des resultats back sur main (pattern: refresh-rankings.yml).
+#
+# Triggers:
+#   - push (paths scrapers/workflow) : premier run immediat a l'ajout du workflow
+#   - schedule: 05:00 UTC daily
+#   - workflow_dispatch: trigger manuel (filtre ligue optionnel)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/refresh-hockey-prematch.yml"
+      - "scripts/scrape-betexplorer-hockey.mjs"
+      - "scripts/scrape-annabet-hockey-prematch.mjs"
+      - "scripts/scrape-eliteprospects-hockey.mjs"
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "League id: nhl|khl|magnus (blank = all)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: refresh-hockey-prematch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Scrape hockey prematch (BetExplorer + Annabet + EliteProspects)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright (BetExplorer age gate + DOM)
+        run: |
+          npm i playwright@1.61.1 --no-save
+          npx playwright install chromium --with-deps
+
+      - name: Scrape BetExplorer (1X2 odds)
+        run: |
+          LEAGUE_ARG=""
+          if [ -n "${{ inputs.league }}" ]; then LEAGUE_ARG="--league=${{ inputs.league }}"; fi
+          node scripts/scrape-betexplorer-hockey.mjs $LEAGUE_ARG
+        continue-on-error: true
+
+      - name: Scrape Annabet prematch (h2h + standings)
+        run: |
+          LEAGUE_ARG=""
+          if [ -n "${{ inputs.league }}" ]; then LEAGUE_ARG="--league=${{ inputs.league }}"; fi
+          node scripts/scrape-annabet-hockey-prematch.mjs $LEAGUE_ARG
+        continue-on-error: true
+
+      - name: Scrape EliteProspects (standings + players)
+        run: node scripts/scrape-eliteprospects-hockey.mjs
+        continue-on-error: true
+
+      - name: Detect changes
+        id: diff
+        run: |
+          git add -- data/hockey_prematch_betexplorer.json data/hockey_prematch_annabet.json data/eliteprospects_hockey_standings.json data/eliteprospects_player_stats.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No data changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): refresh hockey prematch [skip ci]"
+          git push
