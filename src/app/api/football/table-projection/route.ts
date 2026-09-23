@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  projectLeagueTable,
+  type TeamRating,
+  type Fixture,
+  type LeagueProjection,
+} from "@/lib/prediction/football/table-projection";
 
 const CACHE_TTL = 10 * 60_000; // 10 min
 
@@ -47,7 +53,7 @@ export async function GET(req: NextRequest) {
   }
 
   const cacheKey = `__tableProj_${leagueId}`;
-  const cached = cacheEntry<{ teams: unknown[]; fixtures: unknown[] }>(cacheKey);
+  const cached = cacheEntry<{ teams: unknown[]; fixtures: unknown[]; projection: LeagueProjection | null }>(cacheKey);
   if (cached) return NextResponse.json(cached);
 
   try {
@@ -57,7 +63,7 @@ export async function GET(req: NextRequest) {
     );
     const seasonId = seasonRes?.season?.id;
     if (!seasonId) {
-      return NextResponse.json({ teams: [], fixtures: [] });
+      return NextResponse.json({ teams: [], fixtures: [], projection: null });
     }
 
     // 2) Standings officiels
@@ -88,10 +94,39 @@ export async function GET(req: NextRequest) {
       }));
 
     const data = { teams, fixtures };
-    cacheSet(cacheKey, data);
-    return NextResponse.json(data);
+    const projection = runProjection(teams, fixtures, leagueId);
+    const payload = { ...data, projection };
+    cacheSet(cacheKey, payload);
+    return NextResponse.json(payload);
   } catch (err) {
     console.error("[table-projection]", (err as Error).message);
-    return NextResponse.json({ teams: [], fixtures: [] });
+    return NextResponse.json({ teams: [], fixtures: [], projection: null });
+  }
+}
+
+// Monte Carlo 5000 sims (Dixon-Coles + λ/match) — seedé par ligue = déterministe
+function runProjection(
+  teams: Array<{ id: string; name: string; played: number; points: number; gf: number; ga: number }>,
+  fixtures: Array<{ homeId: string; awayId: string }>,
+  leagueId: number,
+): LeagueProjection | null {
+  if (teams.length < 2 || fixtures.length === 0) return null;
+  const ratings: TeamRating[] = teams.map((t) => {
+    const gp = Math.max(1, t.played);
+    return {
+      id: t.id,
+      name: t.name,
+      gf: t.gf / gp,
+      ga: t.ga / gp,
+      points: t.points,
+      played: t.played,
+      goalDiff: t.gf - t.ga,
+    };
+  });
+  const fx: Fixture[] = fixtures.map((f) => ({ home: f.homeId, away: f.awayId }));
+  try {
+    return projectLeagueTable(ratings, fx, { sims: 5000, seed: leagueId });
+  } catch {
+    return null;
   }
 }
