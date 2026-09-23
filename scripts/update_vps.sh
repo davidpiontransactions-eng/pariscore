@@ -192,6 +192,17 @@ else
   echo "  cron snooker quotidien déjà présent"
 fi
 
+# Tables calendrier & top10 snooker+hockey — quotidien01:00 UTC.
+# Couvre : flashscore --both, oddsportal NIO, cuetracker, betexplorer/annabet/
+# oddspedia prematch, eliteprospects standings + player-stats (voir cron_daily_tables.sh)
+CRON_DAILY_TABLES="0 1 * * * cd $OPT_DIR && bash scripts/cron_daily_tables.sh >> logs/daily-tables.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q "cron_daily_tables.sh"; then
+  (crontab -l 2>/dev/null; echo "$CRON_DAILY_TABLES") | crontab -
+  echo "  ✅ cron daily-tables ajouté (01:00 UTC)"
+else
+  echo "  cron daily-tables déjà présent"
+fi
+
 echo "[6/6] Health check..."
 HEALTH_OK=0
 # Legacy-only = 4 checks (fast restart), Full build = 8 checks (slower boot)
