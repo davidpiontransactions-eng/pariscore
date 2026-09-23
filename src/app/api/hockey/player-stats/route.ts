@@ -39,9 +39,12 @@ type PlayerStatsPayload = {
 
 const cache = createTtlCache<PlayerStatsPayload>("__hockeyPlayerStats");
 
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
+
 function loadFromFile(): PlayerStatsPayload | null {
   try {
-    const filePath = join(process.cwd(), "data", "eliteprospects_player_stats.json");
+    // DATA_DIR env (VPS: /opt/pariscorebis/data) > cwd (voir standings/route.ts)
+    const filePath = join(DATA_DIR, "eliteprospects_player_stats.json");
     if (!existsSync(filePath)) return null;
     return JSON.parse(readFileSync(filePath, "utf8")) as PlayerStatsPayload;
   } catch {

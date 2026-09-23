@@ -36,35 +36,56 @@ async function fetchBSDHockey(): Promise<unknown[]> {
             }
             return res.json();
           })
-          .then((parsed) => resolve(parsed?.matches || parsed || []))
+          // BSD v2 renvoie {count, results} (parfois {matches} legacy) — un objet
+          // non-array propageait au spread du caller → throw → catch → [].
+          .then((parsed) => {
+            if (Array.isArray(parsed)) return parsed;
+            if (Array.isArray(parsed?.results)) return parsed.results as unknown[];
+            if (Array.isArray(parsed?.matches)) return parsed.matches as unknown[];
+            return [];
+          })
           .catch(reject);
       });
 
     const live = await fetchBSD("/api/v2/matches/live/").catch(() => [] as unknown[]);
     const predictions = await fetchBSD("/api/v2/predictions/").catch(() => [] as unknown[]);
 
-    const normalizeBSDM = (m: Record<string, unknown>) => ({
-      id: m.id || m.event_id || m.match_id || "bsd-" + String(m.home || m.homeTeam || "") + "-" + String(m.away || m.awayTeam || ""),
-      homeName: m.home || m.homeTeam || "Home",
-      awayName: m.away || m.awayTeam || "Away",
-      scheduledAt: m.scheduled_at || m.start_time || m.date || null,
-      isLive: !!m.live || !!m.status_live,
-      leagueId: m.league_id || m.league || "hockey",
-      leagueName: m.league_name || m.competition || "Hockey",
-      countryName: m.country || m.country_name || "International",
-      countryCode: m.country_code || "INT",
-      oddsH: m.odds_home || m.odds1,
-      oddsD: m.odds_draw || m.oddsX,
-      oddsA: m.odds_away || m.odds2,
-      probBSDH: m.prob_home,
-      probBSD: m.prob_draw,
-      probBSDA: m.prob_away,
-      oddsBSDH: m.odds_home,
-      oddsBSDD: m.odds_draw,
-      oddsBSDA: m.odds_away,
-      h2hUrl: m.h2h_url || null,
-      source: "bsd",
-    });
+    const asObj = (v: unknown): Record<string, unknown> | null =>
+      typeof v === "object" && v !== null ? (v as Record<string, unknown>) : null;
+    const str = (v: unknown): string => (typeof v === "string" ? v : v == null ? "" : String(v));
+    const normName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const normalizeBSDM = (m: Record<string, unknown>) => {
+      // BSD v2 : home_team/away_team = objets {name}, league = objet, match_date
+      const homeTeam = asObj(m.home_team);
+      const awayTeam = asObj(m.away_team);
+      const leagueObj = asObj(m.league);
+      const homeName = str(homeTeam?.name) || str(m.home) || str(m.homeTeam) || "Home";
+      const awayName = str(awayTeam?.name) || str(m.away) || str(m.awayTeam) || "Away";
+      return {
+        id: str(m.id || m.event_id || m.match_id) || "bsd-" + str(homeTeam?.id ?? "") + "-" + str(awayTeam?.id ?? "") || "bsd-" + normName(homeName) + "-" + normName(awayName),
+        homeName,
+        awayName,
+        scheduledAt: str(m.match_date || m.scheduled_at || m.start_time || m.date) || null,
+        isLive: !!m.live || !!m.status_live,
+        // Ne JAMAIS passer l'objet league comme leagueId (ancien bug "[object Object]")
+        leagueId: str(m.league_id) || str(leagueObj?.id ?? leagueObj?.slug ?? leagueObj?.name) || "hockey",
+        leagueName: str(m.league_name) || str(leagueObj?.name) || str(m.competition) || "Hockey",
+        countryName: str(m.country || m.country_name) || "International",
+        countryCode: str(m.country_code) || "INT",
+        oddsH: m.odds_home || m.odds1,
+        oddsD: m.odds_draw || m.oddsX,
+        oddsA: m.odds_away || m.odds2,
+        probBSDH: m.prob_home,
+        probBSD: m.prob_draw,
+        probBSDA: m.prob_away,
+        oddsBSDH: m.odds_home,
+        oddsBSDD: m.odds_draw,
+        oddsBSDA: m.odds_away,
+        h2hUrl: str(m.h2h_url) || null,
+        source: "bsd",
+      };
+    };
 
     const matches: unknown[] = [];
     for (const m of [...live, ...predictions]) {

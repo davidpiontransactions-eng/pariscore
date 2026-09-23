@@ -238,9 +238,9 @@ function StandingsTable({ league }: { league: LeagueData }) {
   }, [league]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-[#f0f0f0] bg-white/[0.02]">
+    <div className="overflow-x-auto rounded-lg border border-[#e2e8f0] bg-white">
       <table className="w-full text-sm">
-        <thead><tr className="border-b border-[#f0f0f0] text-[10px] uppercase text-[#222222]">
+        <thead><tr className="border-b-2 border-[#dbe4ee] bg-[#f1f5f9] text-[10px] uppercase tracking-wide text-[#475569]">
           <th className="py-1.5 px-2 text-left w-8">#</th>
           <th className="py-1.5 px-2 text-left">Team</th>
           <th className="py-1.5 px-1 text-center">GP</th>
@@ -256,9 +256,9 @@ function StandingsTable({ league }: { league: LeagueData }) {
         </tr></thead>
         {teams.map(({ conf, teams: confTeams }) => (
           <tbody key={conf || "all"}>
-            {conf && <tr><td colSpan={12} className="py-1.5 px-2 text-xs font-bold text-[#5a5a5a] uppercase tracking-wider bg-[#f5f5f5]">{conf}</td></tr>}
+            {conf && <tr><td colSpan={12} className="py-1.5 px-2 text-xs font-bold text-[#475569] uppercase tracking-wider bg-[#e8eef6]">{conf}</td></tr>}
             {confTeams.map((t) => (
-              <tr key={t.name} className="border-b border-[#f0f0f0] hover:bg-[#f5f5f5] transition-colors">
+              <tr key={t.name} className="border-b border-[#eef2f7] even:bg-[#f8fafc] hover:bg-[#eaf3fb] transition-colors">
                 <td className="py-1.5 px-2 text-[#717171] text-xs">{t.rank}</td>
                 <td className="py-1.5 px-2"><span className="text-sm font-semibold text-[#222222]">{t.name}</span></td>
                 <td className="py-1.5 px-1 text-center text-[#5a5a5a]">{t.gp}</td>
@@ -469,8 +469,12 @@ export function HockeyTabContent() {
   // Joueurs pour top 10
   const players = activeLeague === "nhl" ? nhlPlayers : activeLeague === "khl" ? khlPlayers : magnusPlayers;
 
-  // Clé source unique : prematch/standings stockent Magnus sous "ligue-magnus"
-  const prematchLeague = prematch?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague];
+  // Clés prematch : les scrapers écrivent Magnus sous "magnus"
+  // (betexplorer/annabet/oddspedia), anciens payloads sous "ligue-magnus" → lire les deux.
+  const prematchLeague =
+    activeLeague === "magnus"
+      ? prematch?.leagues?.["magnus"] ?? prematch?.leagues?.["ligue-magnus"]
+      : prematch?.leagues?.[activeLeague];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-3 pb-16 sm:px-5">
@@ -580,6 +584,12 @@ export function HockeyTabContent() {
               <StandingsTable league={khlData} />
             </>
           )}
+          {subView === "standings" && !khlData && (
+            <div className="text-center text-[#222222] text-sm py-10">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+              Classement KHL indisponible — réessayez plus tard.
+            </div>
+          )}
           {subView === "projection" && khlData && (
             <HockeyProjectionGraph teams={khlData.teams} leagueName="KHL" seasonLength={SEASON_LENGTHS.khl} />
           )}
@@ -604,6 +614,12 @@ export function HockeyTabContent() {
               )}
               <StandingsTable league={magnusData} />
             </>
+          )}
+          {subView === "standings" && !magnusData && (
+            <div className="text-center text-[#222222] text-sm py-10">
+              <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+              Classement Magnus indisponible — réessayez plus tard.
+            </div>
           )}
           {subView === "projection" && magnusData && (
             <HockeyProjectionGraph teams={magnusData.teams} leagueName="Ligue Magnus" seasonLength={SEASON_LENGTHS.magnus} />
@@ -685,10 +701,12 @@ export function HockeyTabContent() {
           ) : (
             <div className="text-center text-[#222222] text-sm py-10">
               <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
-{prematch?.leagues?.[activeLeague]?.error
-    ? "Erreur de chargement — source de données indisponible"
-    : "Aucun match prematch disponible"}
-</div>
+              {(activeLeague === "magnus"
+                ? prematch?.leagues?.["magnus"] ?? prematch?.leagues?.["ligue-magnus"]
+                : prematch?.leagues?.[activeLeague])?.error
+                  ? "Erreur de chargement — source de données indisponible"
+                  : "Aucun match prematch disponible"}
+            </div>
           )}
         </>
       )}

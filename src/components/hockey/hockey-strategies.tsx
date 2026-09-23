@@ -259,7 +259,14 @@ export function HockeyStrategies({
   playerStats: { leagues: Record<string, { topScorers: PlayerStat[]; topAssists: PlayerStat[] }> } | null;
   activeLeague: LeagueId;
 }) {
-  const leaguePrematch = prematch?.leagues[activeLeague === "magnus" ? "ligue-magnus" : activeLeague]?.matches ?? [];
+  // Magnus prematch = clé "magnus" (scrapers) avec repli "ligue-magnus" (payloads hérités)
+  const prematchKey =
+    activeLeague === "magnus"
+      ? prematch?.leagues?.["magnus"]
+        ? "magnus"
+        : "ligue-magnus"
+      : activeLeague;
+  const leaguePrematch = prematch?.leagues[prematchKey]?.matches ?? [];
   const leaguePlayers = playerStats?.leagues[activeLeague === "magnus" ? "ligue-magnus" : activeLeague];
 
   const strategyData = useMemo(() => {

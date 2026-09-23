@@ -99,24 +99,27 @@ async function main() {
 
   for (const league of onlyLeagues) {
     const leagueKey = league.id;
-    const url = `https://www.betexplorer.com/hockey/${league.country}/${league.league}/next/`;
+    // URL page ligue SANS /next/ — la variante /next/ 404-style attendait un
+    // datepicker caché → waitForSelector timeout →0 matchs (audit KHL calendar)
+    const url = `https://www.betexplorer.com/hockey/${league.country}/${league.league}/`;
 
     console.log(`[BetExplorer Hockey] ${league.annonce} → ${url}`);
 
     try {
       // Naviguer vers la page hockey - attendre le chargement
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-      
-      // Attendre que le tableau apparaisse
-      await page.waitForSelector("table.table-main, table", { timeout: 30000 });
+
+      // Attendre que le tableau apparaisse (non-blocking : evaluate gère l'absence)
+      await page.waitForSelector("table.table-main, table", { timeout: 30000 }).catch(() => null);
 
       // Vérifier blocage Cloudflare
       if (page.url().includes("/block") || page.url().includes("captcha")) {
         console.log(`  ❌ ${league.annonce}: bloqué par Cloudflare`);
-        output.leagues[leagueKey] = {
-          matches: [],
-          error: "IP potentiellement bloquée par BetExplorer",
-        };
+        const prevLeague = output.leagues[leagueKey];
+        // Ne jamais écraser une bonne.run par un payload vide
+        output.leagues[leagueKey] = prevLeague?.matches?.length
+          ? { ...prevLeague, error: "Cloudflare — anciennes données conservées" }
+          : { matches: [], error: "IP potentiellement bloquée par BetExplorer" };
         continue;
       }
 
@@ -209,17 +212,24 @@ async function main() {
 
       if (matches.matches.length > 0) {
         console.log(`  ✅ ${league.annonce}: ${matches.matches.length} matchs`);
+        output.leagues[leagueKey] = matches;
+      } else if (output.leagues[leagueKey]?.matches?.length) {
+        // 0 matchs sur cette.run → on conserve l'existant (anti-écrasement)
+        console.log(`  ⚠️ ${league.annonce}: aucun match trouvé — anciennes données conservées`);
+        output.leagues[leagueKey] = {
+          ...output.leagues[leagueKey],
+          error: "0 matchs scrapés — payload précédent conservé",
+        };
       } else {
         console.log(`  ⚠️ ${league.annonce}: aucun match trouvé`);
+        output.leagues[leagueKey] = matches;
       }
-
-      output.leagues[leagueKey] = matches;
     } catch (err) {
       console.log(`  ❌ ${league.annonce}: ${err.message}`);
-      output.leagues[leagueKey] = {
-        matches: [],
-        error: err.message,
-      };
+      const prevLeague = output.leagues[leagueKey];
+      output.leagues[leagueKey] = prevLeague?.matches?.length
+        ? { ...prevLeague, error: `Échec — anciennes données conservées (${err.message})` }
+        : { matches: [], error: err.message };
     }
 
     // Petit délai entre les ligues pour éviter le rate limiting

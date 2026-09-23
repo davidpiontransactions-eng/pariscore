@@ -88,7 +88,9 @@ const FILES = {
 
 export function loadSource(source: keyof typeof FILES): PrematchPayload | null {
   try {
-    const filePath = join(process.cwd(), "data", FILES[source]);
+    // DATA_DIR env (VPS: /opt/pariscorebis/data, écrit par les scrapers/crons)
+    const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
+    const filePath = join(dataDir, FILES[source]);
     if (!existsSync(filePath)) return null;
     const data = JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
     return data?.leagues ? data : null;

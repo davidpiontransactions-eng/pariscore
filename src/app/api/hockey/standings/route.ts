@@ -40,9 +40,13 @@ type StandingsPayload = {
 
 const cache = createTtlCache<StandingsPayload>("__hockeyStandingsCache");
 
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
+
 function loadFromFile(): StandingsPayload | null {
   try {
-    const filePath = join(process.cwd(), "data", "eliteprospects_hockey_standings.json");
+    // DATA_DIR env (VPS: /opt/pariscorebis/data, mis à jour par les crons) —
+    // process.cwd() sur le standalone = ~/pariscore/data (fichiers git, plus lents)
+    const filePath = join(DATA_DIR, "eliteprospects_hockey_standings.json");
     if (!existsSync(filePath)) return null;
     return JSON.parse(readFileSync(filePath, "utf8")) as StandingsPayload;
   } catch {
