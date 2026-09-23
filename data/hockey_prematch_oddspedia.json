@@ -1,0 +1,250 @@
+{
+  "updatedAt": "2026-09-23T09:20:00.000Z",
+  "source": "oddspedia.com",
+  "leagues": {
+    "magnus": {
+      "matches": [
+        {
+          "team1Id": 36518,
+          "team1Name": "Aigles de Nice",
+          "team2Id": 23012,
+          "team2Name": "HC Briancon",
+          "date": "2026-09-25T20:00:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Aigles de Nice",
+            "awayTeam": "HC Briancon",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 2, "name": "HC Briancon", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 1, "l": 0, "pts": 7 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": false },
+              { "rank": 6, "name": "Aigles de Nice", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23017,
+          "team1Name": "Dragons de Rouen",
+          "team2Id": 22897,
+          "team2Name": "Rapaces de Gap",
+          "date": "2026-09-25T20:00:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Dragons de Rouen",
+            "awayTeam": "Rapaces de Gap",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 8, "name": "Dragons de Rouen", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 3 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 9, "name": "Rapaces de Gap", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 3 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23014,
+          "team1Name": "Pionniers de Chamonix Mont-Blanc",
+          "team2Id": 88603,
+          "team2Name": "HC Cergy-Pontoise",
+          "date": "2026-09-25T20:05:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Pionniers de Chamonix Mont-Blanc",
+            "awayTeam": "HC Cergy-Pontoise",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 4, "name": "Pionniers de Chamonix Mont-Blanc", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 10, "name": "HC Cergy-Pontoise", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 2 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23009,
+          "team1Name": "Boxers de Bordeaux",
+          "team2Id": 90040,
+          "team2Name": "Marseille",
+          "date": "2026-09-25T20:15:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Boxers de Bordeaux",
+            "awayTeam": "Marseille",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 1, "name": "Boxers de Bordeaux", "gp": 3, "all": { "w": 3, "otw": 0, "otl": 0, "l": 0, "pts": 8 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 5, "name": "Marseille", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 22899,
+          "team1Name": "Brûleurs de loups de Grenoble",
+          "team2Id": 23004,
+          "team2Name": "HC Amiens",
+          "date": "2026-09-25T20:30:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Brûleurs de loups de Grenoble",
+            "awayTeam": "HC Amiens",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 3, "name": "Brûleurs de loups de Grenoble", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 11, "name": "HC Amiens", "gp": 3, "all": { "w": 0, "otw": 0, "otl": 1, "l": 2, "pts": 1 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23018,
+          "team1Name": "Ducs d'Angers",
+          "team2Id": 68315,
+          "team2Name": "Anglet Hormadi",
+          "date": "2026-09-25T20:30:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Ducs d'Angers",
+            "awayTeam": "Anglet Hormadi",
+            "date": "25.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 7, "name": "Ducs d'Angers", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 12, "name": "Anglet Hormadi", "gp": 3, "all": { "w": 0, "otw": 0, "otl": 0, "l": 3, "pts": 0 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 88603,
+          "team1Name": "HC Cergy-Pontoise",
+          "team2Id": 23018,
+          "team2Name": "Ducs d'Angers",
+          "date": "2026-09-27T15:00:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "HC Cergy-Pontoise",
+            "awayTeam": "Ducs d'Angers",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 7, "name": "Ducs d'Angers", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": false },
+              { "rank": 10, "name": "HC Cergy-Pontoise", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 2 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23012,
+          "team1Name": "HC Briancon",
+          "team2Id": 23014,
+          "team2Name": "Pionniers de Chamonix Mont-Blanc",
+          "date": "2026-09-27T16:30:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "HC Briancon",
+            "awayTeam": "Pionniers de Chamonix Mont-Blanc",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 2, "name": "HC Briancon", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 1, "l": 0, "pts": 7 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 4, "name": "Pionniers de Chamonix Mont-Blanc", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23004,
+          "team1Name": "HC Amiens",
+          "team2Id": 22897,
+          "team2Name": "Rapaces de Gap",
+          "date": "2026-09-27T18:00:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "HC Amiens",
+            "awayTeam": "Rapaces de Gap",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 9, "name": "Rapaces de Gap", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 3 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": false },
+              { "rank": 11, "name": "HC Amiens", "gp": 3, "all": { "w": 0, "otw": 0, "otl": 1, "l": 2, "pts": 1 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 23009,
+          "team1Name": "Boxers de Bordeaux",
+          "team2Id": 23017,
+          "team2Name": "Dragons de Rouen",
+          "date": "2026-09-27T18:30:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Boxers de Bordeaux",
+            "awayTeam": "Dragons de Rouen",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 1, "name": "Boxers de Bordeaux", "gp": 3, "all": { "w": 3, "otw": 0, "otl": 0, "l": 0, "pts": 8 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 8, "name": "Dragons de Rouen", "gp": 3, "all": { "w": 1, "otw": 0, "otl": 0, "l": 2, "pts": 3 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        },
+        {
+          "team1Id": 90040,
+          "team1Name": "Marseille",
+          "team2Id": 36518,
+          "team2Name": "Aigles de Nice",
+          "date": "2026-09-27T18:30:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Marseille",
+            "awayTeam": "Aigles de Nice",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 5, "name": "Marseille", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true },
+              { "rank": 6, "name": "Aigles de Nice", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": false }
+            ]
+          }
+        },
+        {
+          "team1Id": 68315,
+          "team1Name": "Anglet Hormadi",
+          "team2Id": 22899,
+          "team2Name": "Brûleurs de loups de Grenoble",
+          "date": "2026-09-27T19:00:00+02:00",
+          "odds1X2": null,
+          "h2h": {
+            "homeTeam": "Anglet Hormadi",
+            "awayTeam": "Brûleurs de loups de Grenoble",
+            "date": "27.09.2026",
+            "summaryHome": null,
+            "summaryAway": null,
+            "h2hStats": null,
+            "standings": [
+              { "rank": 3, "name": "Brûleurs de loups de Grenoble", "gp": 3, "all": { "w": 2, "otw": 0, "otl": 0, "l": 1, "pts": 6 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": false },
+              { "rank": 12, "name": "Anglet Hormadi", "gp": 3, "all": { "w": 0, "otw": 0, "otl": 0, "l": 3, "pts": 0 }, "home": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "away": { "w": 0, "otw": 0, "otl": 0, "l": 0, "pts": 0 }, "highlighted": true }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

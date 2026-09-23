@@ -1,50 +1,35 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM === PROCEDURE DURE — scrapers hockey Ligue Magnus ===
-REM Regles : stop-on-error, 2 retries Annabet (WAF rate-limit), log horodate.
-REM Usage : scripts\run-hockey-scrapers.bat
+REM Console = sortie live. Log = recap. Stop-on-error, 2 retries Annabet.
 cd /d "%~dp0.."
 set "LOG=data\hockey-scrapers-run.log"
 echo [%date% %time%] START > "%LOG%"
 
-echo [1/3] BetExplorer (Playwright + age gate)
-node scripts\scrape-betexplorer-hockey.mjs >> "%LOG%" 2>&1
-if errorlevel 1 (
-  echo [FAIL] BetExplorer — voir %LOG%
-  echo [%date% %time%] FAIL betexplorer >> "%LOG%"
-  exit /b 1
-)
-if not exist data\hockey_prematch_betexplorer.json (
-  echo [FAIL] sortie absente : hockey_prematch_betexplorer.json
-  exit /b 1
-)
+echo [1/4] Oddspedia Magnus D'ABORD (source prioritaire calendrier)
+node scripts\scrape-oddspedia-hockey.mjs --league=magnus
+if errorlevel 1 echo [WARN] Oddspedia magnus KO
 
-echo [2/3] Annabet prematch (WAF — retries imposes)
-set "ANNABET_OK=0"
-for %%A in (1 2) do (
-  if !ANNABET_OK! == 0 (
-    node scripts\scrape-annabet-hockey-prematch.mjs >> "%LOG%" 2>&1
-    if exist data\hockey_prematch_annabet.json set "ANNABET_OK=1"
-    if !ANNABET_OK! == 0 (
-      echo [RETRY %%A/2] Annabet — pause 30s (rate-limit)
-      timeout /t 30 /nobreak >nul
-    )
-  )
-)
-if "%ANNABET_OK%" == "0" (
-  echo [FAIL] Annabet apres 2 tentatives — voir %LOG%
-  echo [%date% %time%] FAIL annabet >> "%LOG%"
-  exit /b 1
-)
+echo [2/4] Annabet Magnus (h2h/odds)
+node scripts\scrape-annabet-hockey-prematch.mjs --league=magnus
+if errorlevel 1 echo [WARN] Annabet magnus KO
+timeout /t 15 /nobreak >nul
 
-echo [3/3] EliteProspects standings + players
-node scripts\scrape-eliteprospects-hockey.mjs >> "%LOG%" 2>&1
-if errorlevel 1 (
-  echo [WARN] EliteProspects KO — fichiers existants conserves
-)
+echo [3/4] Oddspedia + Annabet reste (nhl + khl)
+node scripts\scrape-oddspedia-hockey.mjs
+node scripts\scrape-annabet-hockey-prematch.mjs
+if errorlevel 1 echo [WARN] Annabet reste KO
+
+echo [4/4] BetExplorer + EliteProspects
+node scripts\scrape-betexplorer-hockey.mjs
+if errorlevel 1 echo [WARN] BetExplorer KO
+node scripts\scrape-eliteprospects-hockey.mjs
+if errorlevel 1 echo [WARN] EliteProspects standings KO
+node scripts\scrape-eliteprospects-player-stats.mjs
+if errorlevel 1 echo [WARN] EliteProspects players KO
 
 echo === VERIF SORTIE ===
 dir data\hockey_prematch_betexplorer.json data\hockey_prematch_annabet.json data\eliteprospects_hockey_standings.json data\eliteprospects_player_stats.json
 echo [%date% %time%] OK >> "%LOG%"
-echo === DONE — log : %LOG% ===
+echo === DONE ===
 exit /b 0

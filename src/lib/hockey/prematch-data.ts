@@ -82,6 +82,7 @@ export type PrematchPayload = {
 const FILES = {
   betexplorer: "hockey_prematch_betexplorer.json",
   annabet: "hockey_prematch_annabet.json",
+  oddspedia: "hockey_prematch_oddspedia.json",
 } as const;
 
 export function loadSource(source: keyof typeof FILES): PrematchPayload | null {
@@ -95,40 +96,56 @@ export function loadSource(source: keyof typeof FILES): PrematchPayload | null {
   }
 }
 
-// Union par (team1Id, team2Id) — BetExplorer prioritaire (H2H + summary),
-// Annabet complète odds1X2 / champs manquants.
+// Clé de match : ids source + fallback noms normalisés (ids divergents entre sources)
+function matchKeys(m: MatchPrematch): string[] {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return [
+    `${m.team1Id}-${m.team2Id}`,
+    `n:${norm(m.team1Name)}|${norm(m.team2Name)}`,
+  ];
+}
+
+// Union — prixA prioritaire (BetExplorer > Annabet > Oddspedia)
 export function mergePayloads(
-  bx: PrematchPayload | null,
-  an: PrematchPayload | null
+  prixA: PrematchPayload | null,
+  prixB: PrematchPayload | null
 ): PrematchPayload | null {
-  if (!bx && !an) return null;
+  if (!prixA && !prixB) return null;
   const leagues: PrematchPayload["leagues"] = {};
   const keys = new Set([
-    ...Object.keys(bx?.leagues ?? {}),
-    ...Object.keys(an?.leagues ?? {}),
+    ...Object.keys(prixA?.leagues ?? {}),
+    ...Object.keys(prixB?.leagues ?? {}),
   ]);
   for (const key of keys) {
-    const bxM = bx?.leagues[key]?.matches ?? [];
-    const anM = an?.leagues[key]?.matches ?? [];
+    const aM = prixA?.leagues[key]?.matches ?? [];
+    const bM = prixB?.leagues[key]?.matches ?? [];
     const seen = new Map<string, MatchPrematch>();
-    for (const m of anM) seen.set(`${m.team1Id}-${m.team2Id}`, m);
-    for (const m of bxM) {
-      const k = `${m.team1Id}-${m.team2Id}`;
-      const prev = seen.get(k);
-      seen.set(k, prev ? {
+    const index = (m: MatchPrematch, map: Map<string, MatchPrematch>) => {
+      for (const k of matchKeys(m)) map.set(k, m);
+    };
+    for (const m of bM) index(m, seen);
+    for (const m of aM) {
+      const prev = matchKeys(m).map((k) => seen.get(k)).find(Boolean);
+      const merged: MatchPrematch = prev ? {
         ...prev,
         ...m,
         odds1X2: m.odds1X2 ?? prev.odds1X2,
         h2h: m.h2h ?? prev.h2h,
         summary: m.summary ?? prev.summary,
-      } : m);
+      } : m;
+      index(merged, seen);
     }
-    const error = bx?.leagues[key]?.error ?? an?.leagues[key]?.error;
-    leagues[key] = error ? { matches: [...seen.values()], error } : { matches: [...seen.values()] };
+    const dedup = new Map<string, MatchPrematch>();
+    for (const m of seen.values()) index(m, dedup);
+    const error = prixA?.leagues[key]?.error ?? prixB?.leagues[key]?.error;
+    leagues[key] = error ? { matches: [...dedup.values()], error } : { matches: [...dedup.values()] };
   }
-  return { updatedAt: new Date().toISOString(), source: "betexplorer+annabet", leagues };
+  return { updatedAt: new Date().toISOString(), source: "betexplorer+annabet+oddspedia", leagues };
 }
 
 export function loadMergedPrematch(): PrematchPayload | null {
-  return mergePayloads(loadSource("betexplorer"), loadSource("annabet"));
+  return mergePayloads(
+    mergePayloads(loadSource("betexplorer"), loadSource("annabet")),
+    loadSource("oddspedia")
+  );
 }
