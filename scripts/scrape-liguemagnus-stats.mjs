@@ -40,28 +40,35 @@ function fetchPage(url) {
   });
 }
 
-// Lignes de tableau HTML → arrays de cellules texte
-function tableRows(html) {
+// Lignes de tableau HTML → arrays de cellules texte (alignées ou filtrées)
+function tableRows(html, keepEmpty = false) {
   const rows = [];
   for (const rm of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)) {
-    const cells = [...rm[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
-      .map((c) => c[1].replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim())
-      .filter((c) => c.length > 0);
+    let cells = [...rm[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)]
+      .map((c) => c[1].replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim());
+    if (!keepEmpty) cells = cells.filter((c) => c.length > 0);
     if (cells.length >= 3) rows.push(cells);
   }
   return rows;
 }
 
-// Découpe le HTML par sections titrées (h2/h3/div.section) → { titre: rows }
-function sections(html) {
-  const out = {};
-  const parts = html.split(/<h[23][^>]*>/i);
-  for (const part of parts.slice(1)) {
-    const title = part.split('<')[0].replace(/\s+/g, ' ').trim();
-    if (!title) continue;
-    out[title] = tableRows(part);
+// Toutes les tables du document avec leur en-tête + titre de section voisin
+// (les titres de section ne sont PAS dans h2/h3 — texte brut avant la table)
+function parseTables(html) {
+  const tables = [];
+  for (const tm of html.matchAll(/<table[^>]*>([\s\S]*?)<\/table>/g)) {
+    const rows = tableRows(tm[1], true);
+    if (rows.length < 2) continue;
+    const header = rows[0].map((c) => c.trim());
+    const before = html
+      .slice(Math.max(0, tm.index - 1000), tm.index)
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const title = before.split(/[|.]/).pop()?.trim().slice(-60) ?? '';
+    tables.push({ title, header, rows: rows.slice(1) });
   }
-  return out;
+  return tables;
 }
 
 async function main() {
@@ -103,33 +110,33 @@ async function main() {
   }
   await sleep(3000);
 
-  // 2. Stats individuelles (sections : Meilleurs pointeurs/buteurs/assistants + Gardiens)
+  // 2. Stats individuelles (tables : RG Nom Pos Équipe MJ B A Pts… + gardiens)
   try {
     const html = await fetchPage('https://liguemagnus.com/statistiques-individuelles/');
-    const secs = sections(html);
-    for (const [title, rows] of Object.entries(secs)) {
-      const players = rows
-        .filter((r) => r.length >= 6 && (r.some((c) => /^[A-ZÉÈÊÀÔÛÇ' -]+$/.test(c)) || r.some((c) => /\d/.test(c))))
-        .map((r) => ({ cells: r }));
-      if (players.length > 0) output.players[title] = players;
+    for (const t of parseTables(html)) {
+      const sig = t.header.join('|');
+      const isSkater = /Pos/i.test(sig) && /Pts/i.test(sig);
+      const isGoalie = /D[iî]f|BL|Arr|%|GAA|Moy/i.test(sig) && /MJ|Min/i.test(sig);
+      if (!isSkater && !isGoalie) continue;
+      const key = (t.title || (isGoalie ? 'Gardiens' : 'Joueurs')).slice(0, 60);
+      output.players[key] = { header: t.header, rows: t.rows.filter((r) => /^\d+$/.test(r[0]?.trim())) };
     }
-    console.log(`[liguemagnus] players: ${Object.keys(output.players).length} sections`);
+    console.log(`[liguemagnus] players: ${Object.keys(output.players).length} tables`);
   } catch (e) {
     console.warn(`[liguemagnus] individuelles: ${e.message}`);
   }
   await sleep(3000);
 
-  // 3. Stats collectives (sections : Supériorité/Infériorité numérique, Séries, Tirs, Affluences)
+  // 3. Stats collectives (tables : Equipe MJ … — PP/PK, séries, tirs, affluences)
   try {
     const html = await fetchPage('https://liguemagnus.com/statistiques-collectives/');
-    const secs = sections(html);
-    for (const [title, rows] of Object.entries(secs)) {
-      const teams = rows
-        .filter((r) => r.length >= 3)
-        .map((r) => ({ cells: r }));
-      if (teams.length > 0) output.teams[title] = teams;
+    for (const t of parseTables(html)) {
+      const sig = t.header.join('|');
+      if (!/Equipe|MJ|Affl|Tirs|Nbre|%/i.test(sig)) continue;
+      const key = (t.title || t.header.join(' ')).slice(0, 60);
+      output.teams[key] = { header: t.header, rows: t.rows.filter((r) => r.some((c) => /[A-ZÉÈ]/.test(c))) };
     }
-    console.log(`[liguemagnus] teams: ${Object.keys(output.teams).length} sections`);
+    console.log(`[liguemagnus] teams: ${Object.keys(output.teams).length} tables`);
   } catch (e) {
     console.warn(`[liguemagnus] collectives: ${e.message}`);
   }
