@@ -6,7 +6,7 @@ export const wnbaAdapter: SportAdapter = {
   sport: 'wnba',
 
   async fetch(limit, _timeframe) {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/wnba/matches`, {
       next: { revalidate: 60 },
     });
@@ -14,16 +14,24 @@ export const wnbaAdapter: SportAdapter = {
     const data: any = await res.json();
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
     // Filtrer matchs futurs/live
+    // Fix debug : 'post' = terminé (service Next), pas seulement 'FT'
+    const toStatus = (m: any): 'finished' | 'live' | 'scheduled' =>
+      m.status === 'FT' || m.status === 'post'
+        ? 'finished'
+        : m.is_live || isLiveStatus(m.status, 'wnba')
+          ? 'live'
+          : 'scheduled';
     const now = Date.now();
     const filtered = raw.filter((m: any) => {
-      const st = m.status === 'FT' ? 'finished' : (m.is_live || isLiveStatus(m.status, 'wnba')) ? 'live' : 'scheduled';
+      const st = toStatus(m);
       if (st === 'finished') return false;
       const ko = new Date(m.kickoff || m.date || m.scheduledAt || 0).getTime();
       return st === 'live' || ko >= now - 30 * 60_000;
     });
     const matches = filtered.slice(0, limit).map((m: any) => {
-      const isLive = m.is_live || isLiveStatus(m.status, 'wnba');
-      const imminent = !isLive && isImminent(m.kickoff || m.date || m.scheduledAt, m.status);
+      const st = toStatus(m);
+      const isLive = st === 'live';
+      const imminent = st === 'scheduled' && isImminent(m.kickoff || m.date || m.scheduledAt || '', 'scheduled');
       const liveScore = isLive
         ? {
             current: m.score || undefined,
@@ -43,7 +51,7 @@ export const wnbaAdapter: SportAdapter = {
           logo: m.awayLogo || m.away?.logo || '',
         },
         kickoff: m.kickoff || m.date || m.scheduledAt || '',
-        status: (m.status === 'FT' ? 'finished' : isLive ? 'live' : 'scheduled') as 'scheduled' | 'live' | 'finished',
+        status: st,
         score: m.score || liveScore?.current,
         liveScore,
         odds: m.odds

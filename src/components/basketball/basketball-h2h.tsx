@@ -103,6 +103,16 @@ export function BasketballH2H({ className, defaultLeague = "nba" }: BasketballH2
             netRatingB={h2h.teamB.seasonStats.overall?.avgMargin ?? null}
           />
 
+          {/* Fix audit B21 : enrichment ("pending"/"partial") calculé côté service
+              mais jamais rendu — les "—" de FG%/3P% s'expliquent maintenant. */}
+          {h2h.enrichment && h2h.enrichment !== "ok" && (
+            <div className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-600">
+              Stats H2H{" "}
+              {h2h.enrichment === "pending" ? "en cours d'enrichissement" : "partielles"} —
+              FG%/3P%/AST peuvent être indisponibles pour certains matchs.
+            </div>
+          )}
+
           <div className="flex gap-3 lg:flex-row flex-col">
             {/* Contenu principal */}
             <div className="flex-1 min-w-0">

@@ -7,6 +7,20 @@ import useSWR from "swr";
 // Types
 // ---------------------------------------------------------------------------
 
+/** Four Factors telles que produites par basketballService (shape conservée). */
+export type FourFactorsOut = {
+  p_home: number;
+  efg_home: number | null; efg_away: number | null;
+  tov_home: number | null; tov_away: number | null;
+  orb_home: number | null; orb_away: number | null;
+  ft_home: number | null; ft_away: number | null;
+  off_rating_home: number | null; off_rating_away: number | null;
+  def_rating_home: number | null; def_rating_away: number | null;
+  net_rating_home: number | null; net_rating_away: number | null;
+  pace_home: number | null; pace_away: number | null;
+  complete: boolean;
+};
+
 /** Forme brute renvoyée par /api/nba/matches et /api/wnba/matches (ESPN). */
 type RawESPNMatch = {
   id?: string | number;
@@ -29,6 +43,7 @@ type RawESPNMatch = {
   predictions?: {
     win_prob?: { edge_elo?: number | null };
     blended?: { p_home?: number | null; p_away?: number | null };
+    four_factors?: FourFactorsOut | null;
     kelly?: {
       side?: string;
       fraction?: number;
@@ -91,6 +106,8 @@ export type BasketballMatch = {
   injuries: { home: { nOut: number; starsOut: string[]; penaltyPts: number }; away: { nOut: number; starsOut: string[]; penaltyPts: number } };
   rest: { home: { restDays: number; b2b: boolean; penaltyPts: number } | null; away: { restDays: number; b2b: boolean; penaltyPts: number } | null };
   consensus: { meanPHome: number; stddev: number; nModels: number; label: string; crossesFifty: boolean } | null;
+  /** Fix I11 : Four Factors peuplées (dialog + card) */
+  fourFactors: FourFactorsOut | null;
 };
 
 const REFRESH_OPTS = {
@@ -113,7 +130,19 @@ const fetcher = async (url: string): Promise<RawESPNMatch[]> => {
 // Normalisation ESPN → BasketballMatch
 // ---------------------------------------------------------------------------
 
-function normalizeMatch(raw: RawESPNMatch, league: "NBA" | "WNBA"): BasketballMatch {
+/**
+ * Normalise le vocabulaire de status ESPN → UI.
+ * Fix debug 2026-09-23 : le service émet "in", l'UI teste "in-progress"
+ * → matchs live NBA jamais comptés ni badgeés.
+ */
+export function normalizeEspnStatus(raw: string | undefined): string {
+  if (!raw) return "pre";
+  if (raw === "in") return "in-progress";
+  return raw;
+}
+
+/** Exporté pour tests de régression (boucle debug). */
+export function normalizeMatch(raw: RawESPNMatch, league: "NBA" | "WNBA"): BasketballMatch {
   const home = raw.home ?? {};
   const away = raw.away ?? {};
   const pred = raw.predictions ?? {};
@@ -133,7 +162,7 @@ function normalizeMatch(raw: RawESPNMatch, league: "NBA" | "WNBA"): BasketballMa
     sport: "basketball",
     league,
     scheduledAt: raw.date ?? "",
-    status: raw.status ?? "pre",
+    status: normalizeEspnStatus(raw.status),
     home: {
       id: String(home.id ?? ""),
       abbr: home.abbr ?? "",
@@ -213,6 +242,7 @@ function normalizeMatch(raw: RawESPNMatch, league: "NBA" | "WNBA"): BasketballMa
           crossesFifty: cons.crosses_fifty ?? false,
         }
       : null,
+    fourFactors: pred.four_factors ?? null,
   };
 }
 

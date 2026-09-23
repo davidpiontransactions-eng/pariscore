@@ -144,11 +144,11 @@ export interface SportAdapter {
 const LIVE_STATUS_PATTERNS: Record<string, RegExp[]> = {
   football: [/^live$/i, /^in_play$/i, /^1h$/i, /^2h$/i, /^ht$/i, /^et$/i, /^pen$/i, /^extra_time$/i, /^half[_\s-]?time$/i],
   tennis:   [/^live$/i, /^set[1-5]$/i, /^break$/i, /^tiebreak$/i, /^in_play$/i, /^match[_\s-]?point$/i],
-  nba:      [/^live$/i, /^is_live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
-  wnba:     [/^live$/i, /^is_live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
+  nba:      [/^live$/i, /^is_live$/i, /^in_play$/i, /^in$/i, /^in[-_\s]?progress$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
+  wnba:     [/^live$/i, /^is_live$/i, /^in_play$/i, /^in$/i, /^in[-_\s]?progress$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
   cs2:      [/^live$/i, /^in_progress$/i, /^map[_\s-]?in[_\s-]?progress$/i, /^ongoing$/i],
   mma:      [/^live$/i, /^in_progress$/i, /^round[1-5]$/i, /^fight[_\s-]?in[_\s-]?progress$/i],
-  fiba:     [/^live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i],
+  fiba:     [/^live$/i, /^in_play$/i, /^in$/i, /^in[-_\s]?progress$/i, /^q[1-4]$/i, /^ot$/i],
   cycling:  [], // value bets uniquement
   f1:       [], // value bets uniquement
   baseball: [/^live$/i, /^in_progress$/i, /^bottom$/i, /^top$/i, /^mid$/i],
@@ -170,9 +170,11 @@ export function isLiveStatus(rawStatus: string | undefined | null, sport: string
 
 /**
  * Détermine si un match est "imminent" (début dans < 30 min, statut scheduled).
+ * Fix debug : couvre aussi le status source "pre" (ESPN) avant normalisation.
  */
 export function isImminent(kickoff: string, status: string): boolean {
-  if (status !== 'scheduled' || !kickoff) return false;
+  if (status !== 'scheduled' && status !== 'pre') return false;
+  if (!kickoff) return false;
   const ms = new Date(kickoff).getTime() - Date.now();
   return ms > 0 && ms < 30 * 60_000;
 }

@@ -7,11 +7,15 @@
 const ODDS_API_BASE = "https://api.the-odds-api.com/v4";
 const FETCH_TIMEOUT_MS = 8_000;
 
-/** Mapping ligue PariScore → The Odds API sport key. */
+/** Mapping ligue PariScore → The Odds API sport key (clés documentées). */
 const ODDS_SPORT_KEY: Record<string, string> = {
   nba: "basketball_nba",
   wnba: "basketball_wnba",
   euroleague: "basketball_euroleague",
+  eurocup: "basketball_eurocup",
+  ncaa: "basketball_ncaab",
+  nbl: "basketball_nbl",
+  fiba: "basketball_fiba",
 };
 
 export type BasketballBookmakerOdd = {
@@ -61,10 +65,25 @@ function americanToImplied(ml: number): number {
   return (-ml) / (-ml + 100);
 }
 
-/** Convertir cotes américaines → décimales. */
-function americanToDecimal(ml: number): number {
-  if (ml > 0) return 1 + ml / 100;
-  return 1 + 100 / Math.abs(ml);
+/**
+ * De-vig moneyline américaine → probabilités justes + marge.
+ * Fix debug 2026-09-23 : l'ancienne condition `ml > 0` excluait le favori
+ * négatif (-150/+130) → impliedHome null, feature Value Bet morte.
+ */
+export function devigMl(
+  mlHome: number | null,
+  mlAway: number | null,
+): { impliedHome: number; impliedAway: number; margin: number } | null {
+  if (mlHome == null || mlAway == null || mlHome === 0 || mlAway === 0) return null;
+  const invHome = americanToImplied(mlHome);
+  const invAway = americanToImplied(mlAway);
+  const vig = invHome + invAway;
+  if (!(vig > 0)) return null;
+  return {
+    impliedHome: Math.round((invHome / vig) * 1000) / 10,
+    impliedAway: Math.round((invAway / vig) * 1000) / 10,
+    margin: Math.round((vig - 1) * 1000) / 1000,
+  };
 }
 
 /** Trouver leoutcome par nom (fuzzy: contains). */
@@ -119,18 +138,11 @@ function extractMatchOdds(apiMatch: OddsApiMatch): BasketballBookmakerOdd[] {
     const mlHome = homeOutcome?.price ?? null;
     const mlAway = awayOutcome?.price ?? null;
 
-    // De-vig ML
-    let impliedHome: number | null = null;
-    let impliedAway: number | null = null;
-    let margin = 0;
-    if (mlHome != null && mlAway != null && mlHome > 0 && mlAway > 0) {
-      const invHome = americanToImplied(mlHome);
-      const invAway = americanToImplied(mlAway);
-      const vig = invHome + invAway;
-      impliedHome = Math.round((invHome / vig) * 1000) / 10;
-      impliedAway = Math.round((invAway / vig) * 1000) / 10;
-      margin = Math.round((vig - 1) * 1000) / 1000;
-    }
+    // De-vig ML (devigMl gère favori négatif — fix Value Bet)
+    const devig = devigMl(mlHome, mlAway);
+    const impliedHome = devig?.impliedHome ?? null;
+    const impliedAway = devig?.impliedAway ?? null;
+    const margin = devig?.margin ?? 0;
 
     out.push({
       bookmaker: bmTitle,
@@ -174,10 +186,12 @@ export async function fetchBasketballOdds(
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
+    // Pas de `next.revalidate` : l'URL contient ODDS_API_KEY → le Data Cache
+    // Next persisterait la clé. Le cache vit dans la route (createTtlCache/memory-cache).
     const res = await fetch(url, {
       signal: ctrl.signal,
       headers: { Accept: "application/json" },
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = (await res.json()) as OddsApiMatch[];
@@ -228,10 +242,11 @@ export async function fetchOddsHistory(
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
+    // Même règle : pas de Data Cache Next sur URL portant la clé API.
     const res = await fetch(url, {
       signal: ctrl.signal,
       headers: { Accept: "application/json" },
-      next: { revalidate: 600 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = (await res.json()) as OddsApiMatch[];
@@ -271,15 +286,9 @@ export async function fetchOddsHistory(
 
     const mlHome = homeOutcome?.price ?? null;
     const mlAway = awayOutcome?.price ?? null;
-    let impliedHome: number | null = null;
-    let impliedAway: number | null = null;
-    if (mlHome != null && mlAway != null && mlHome > 0 && mlAway > 0) {
-      const invHome = americanToImplied(mlHome);
-      const invAway = americanToImplied(mlAway);
-      const vig = invHome + invAway;
-      impliedHome = Math.round((invHome / vig) * 1000) / 10;
-      impliedAway = Math.round((invAway / vig) * 1000) / 10;
-    }
+    const devig = devigMl(mlHome, mlAway);
+    const impliedHome = devig?.impliedHome ?? null;
+    const impliedAway = devig?.impliedAway ?? null;
 
     return [{
       timestamp: new Date().toISOString(),

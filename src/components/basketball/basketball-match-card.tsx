@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LEAGUE_CONFIGS } from "@/lib/basketball-league-config";
+import type { BasketballLeagueId } from "@/lib/basketball-data";
 
 type MatchTeam = {
   abbr: string;
@@ -41,6 +43,9 @@ type BasketballMatchCardMatch = {
   away: MatchTeam;
   odds?: MatchOdds;
   predictions?: MatchPredictions;
+  /** Fix B8 : proba blendées directement sur l'UnifiedMatch (sans predictions) */
+  pHome?: number | null;
+  pAway?: number | null;
   injuries?: { home: { nOut: number; starsOut: string[] }; away: { nOut: number; starsOut: string[] } };
   rest?: { home: { restDays: number; b2b: boolean } | null; away: { restDays: number; b2b: boolean } | null };
   consensus?: { label: string; nModels: number } | null;
@@ -58,24 +63,26 @@ const LEAGUE_LABELS: Record<string, string> = {
   wnba: "WNBA",
   euroleague: "EuroLeague",
   eurocup: "EuroCup",
-  lnb: "Betclic Élite",
-  acb: "Liga ACB",
-  lba: "LBA",
-  bsl: "BSL",
-  bbl: "BBL",
-  aba: "ABA League",
-  greek: "Greek League",
   NBA: "NBA",
   WNBA: "WNBA",
   EuroLeague: "EuroLeague",
   EuroCup: "EuroCup",
 };
 
+/** Label ligue unifié via config (fix B23 : labels divergents card/dialog). */
+export function leagueLabel(raw: string): string {
+  if (LEAGUE_LABELS[raw]) return LEAGUE_LABELS[raw];
+  const cfg = LEAGUE_CONFIGS[raw as BasketballLeagueId];
+  return cfg ? cfg.label : raw;
+}
+
 export function BasketballMatchCard({ match, onClick, onDetailRequest, className }: BasketballMatchCardProps) {
   const isLive = match.status === "in-progress";
   const isPost = match.status === "post" || match.status === "finished";
-  const pHome = match.predictions?.blended?.p_home ?? match.predictions?.win_prob?.p_home ?? null;
-  const pAway = match.predictions?.blended?.p_away ?? match.predictions?.win_prob?.p_away ?? null;
+  const pHome =
+    match.predictions?.blended?.p_home ?? match.predictions?.win_prob?.p_home ?? match.pHome ?? null;
+  const pAway =
+    match.predictions?.blended?.p_away ?? match.predictions?.win_prob?.p_away ?? match.pAway ?? null;
 
   const handleClick = () => {
     onClick?.(match);
@@ -97,7 +104,7 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
       {/* Header */}
       <div className="mb-2 flex items-center justify-between">
         <Badge variant="outline" className="text-[10px]">
-          {LEAGUE_LABELS[match.league] ?? match.league}
+          {leagueLabel(match.league)}
         </Badge>
         {isLive && (
           <Badge variant="default" className="bg-emerald-500 text-[10px]">

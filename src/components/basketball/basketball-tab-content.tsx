@@ -4,10 +4,12 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
-import { filterByStartWindow, type MatchViewMode } from "@/lib/match-view";
+import { type MatchViewMode } from "@/lib/match-view";
+import { selectBasketballView } from "@/lib/basketball-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { LeagueSelector } from "./basketball-league-selector";
 import { BasketballMatchCard, BasketballMatchCardSkeleton } from "./basketball-match-card";
+import { BasketballErrorBoundary } from "./basketball-error-boundary";
 import { useBasketballMatches } from "@/hooks/use-basketball-matches";
 import { useEuroLeagueMatches } from "@/hooks/use-euroleague-matches";
 import type { BasketballLeagueId } from "@/lib/basketball-data";
@@ -44,6 +46,9 @@ type UnifiedMatch = {
   pHome: number | null;
   pAway: number | null;
   edgeElo: number | null;
+  /** Fix B8 : fields additionnels mappés depuis le match NBA complet */
+  injuries?: BasketballMatch["injuries"];
+  consensus?: BasketballMatch["consensus"];
 };
 
 type PageView = "matchs" | "h2h" | "fiba";
@@ -79,6 +84,8 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         pHome: m.pHome,
         pAway: m.pAway,
         edgeElo: m.edgeElo,
+        injuries: m.injuries,
+        consensus: m.consensus,
       })));
     }
     if (selectedLeagues.includes("euroleague")) {
@@ -115,12 +122,11 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
   const prematchCount = useMemo(() => allMatches.filter((m) => m.status !== "in-progress").length, [allMatches]);
 
   // Filtrer par view mode
-  const filteredMatches = useMemo(() => {
-    let base = allMatches;
-    if (viewMode === "live") base = base.filter((m) => m.status === "in-progress");
-    else if (viewMode === "prematch") base = base.filter((m) => m.status !== "in-progress");
-    return filterByStartWindow(base, 48, (m) => m.scheduledAt);
-  }, [viewMode, allMatches]);
+  // Fix debug 2026-09-23 : filterByStartWindow inconditionnel drop les live > 15 min
+  const filteredMatches = useMemo(
+    () => selectBasketballView(allMatches, viewMode),
+    [viewMode, allMatches],
+  );
 
   // Sidebar selection
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
@@ -139,9 +145,11 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
     };
     window.addEventListener("open-match-detail", handler);
     return () => window.removeEventListener("open-match-detail", handler);
-  }, [nbaWnbaMatches]);
+    // Fix debug : deps euroMatches/cupMatches ajoutées (closure périmée sur les lookups euro)
+  }, [nbaWnbaMatches, euroMatches, cupMatches]);
 
   return (
+    <BasketballErrorBoundary>
     <div className={cn("flex flex-col gap-3", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -262,5 +270,6 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         </Suspense>
       )}
     </div>
+    </BasketballErrorBoundary>
   );
 }

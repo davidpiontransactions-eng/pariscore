@@ -13,6 +13,9 @@ import { TrendingUp, Activity, DollarSign, Users, Target, Percent } from "lucide
 import { BasketballFourFactors } from "./basketball-four-factors";
 import { useBasketballH2H } from "@/hooks/use-basketball-h2h";
 import type { BasketballBookmakerOdd, OddsSnapshot } from "@/lib/basketball-odds";
+import type { FourFactorsOut } from "@/hooks/use-basketball-matches";
+import { LEAGUE_CONFIGS } from "@/lib/basketball-league-config";
+import type { BasketballLeagueId } from "@/lib/basketball-data";
 
 const BasketballOddsComparator = lazy(() =>
   import("./basketball-odds-comparator").then((m) => ({ default: m.BasketballOddsComparator })),
@@ -36,22 +39,13 @@ type LightMatch = {
   value: { fair_home: number; fair_away: number; vig_pct: number; ev_home: number | null; ev_away: number | null; edge_home: number | null; edge_away: number | null } | null;
   spreadUqd: { exp_margin: number; ats_pick: string | null; ou_lean: string | null } | null;
   totalEdge: { line: number; lean: string | null } | null;
-  injuries: { home: { nOut: number; starsOut: string[]; penaltyPts: number }; away: { nOut: number; starsOut: string[]; penaltyPts: number } };
-  rest: { home: { restDays: number; b2b: boolean; penaltyPts: number } | null; away: { restDays: number; b2b: boolean; penaltyPts: number } | null };
+  injuries?: { home: { nOut: number; starsOut: string[]; penaltyPts: number }; away: { nOut: number; starsOut: string[]; penaltyPts: number } };
+  rest?: { home: { restDays: number; b2b: boolean; penaltyPts: number } | null; away: { restDays: number; b2b: boolean; penaltyPts: number } | null };
   consensus: { meanPHome: number; stddev: number; nModels: number; label: string; crossesFifty: boolean } | null;
+  /** Fix I11 : Four Factors servies directement par le hook */
+  fourFactors?: FourFactorsOut | null;
   predictions?: {
-    four_factors?: {
-      p_home: number;
-      efg_home: number | null; efg_away: number | null;
-      tov_home: number | null; tov_away: number | null;
-      orb_home: number | null; orb_away: number | null;
-      ft_home: number | null; ft_away: number | null;
-      off_rating_home: number | null; off_rating_away: number | null;
-      def_rating_home: number | null; def_rating_away: number | null;
-      net_rating_home: number | null; net_rating_away: number | null;
-      pace_home: number | null; pace_away: number | null;
-      complete: boolean;
-    } | null;
+    four_factors?: FourFactorsOut | null;
   } | null;
 };
 
@@ -61,28 +55,20 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-const LEAGUE_LABELS: Record<string, string> = {
-  nba: "NBA",
-  wnba: "WNBA",
-  NBA: "NBA",
-  WNBA: "WNBA",
-  euroleague: "EuroLeague",
-  eurocup: "EuroCup",
-  lnb: "Betclic Elite",
-  acb: "Liga ACB",
-  lba: "LBA",
-  bsl: "BSL",
-  bbl: "BBL",
-  aba: "ABA League",
-  greek: "Greek League",
-  EuroLeague: "EuroLeague",
-  EuroCup: "EuroCup",
-};
+/** Label ligue unifié (fix B23 — miroir basketball-match-card). */
+function leagueLabel(raw: string): string {
+  const cfg = LEAGUE_CONFIGS[raw as BasketballLeagueId];
+  return cfg ? cfg.label : raw;
+}
 
 export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props) {
   const pHome = match?.pHome ?? null;
   const pAway = match?.pAway ?? null;
-  const fourFactors = match?.predictions?.four_factors ?? null;
+  const fourFactors = match?.fourFactors ?? match?.predictions?.four_factors ?? null;
+  // Fix debug : service kelly.side = nom d'équipe display (pas "home"/"away")
+  const isKellyHome =
+    match?.kelly != null &&
+    (match.kelly.side === "home" || match.kelly.side === match.home.name);
 
   // H2H (NBA/WNBA uniquement)
   const league = match?.league?.toLowerCase() as "nba" | "wnba" | null;
@@ -100,23 +86,24 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
   const [oddsLoading, setOddsLoading] = useState(false);
   const [oddsHistory, setOddsHistory] = useState<OddsSnapshot[]>([]);
 
+  // Fix debug I15 : clé en primitives (id + identité match) — l'objet `match`
+  // change à chaque poll SWR 60s → re-fetch Odds API ×2/min évité.
+  const oddsKey = match ? `${match.id}::${match.league}::${match.home.name}::${match.away.name}` : null;
+
   useEffect(() => {
-    if (!open || !match) {
+    if (!open || !oddsKey) {
       setOdds([]);
       setOddsHistory([]);
       return;
     }
+    const [, leagueRaw, home, away] = oddsKey.split("::");
     // Seulement NBA/WNBA (The Odds API supporte ces ligues)
-    const league = match.league.toLowerCase();
+    const league = leagueRaw.toLowerCase();
     if (league !== "nba" && league !== "wnba") return;
 
     let cancelled = false;
     setOddsLoading(true);
-    const params = new URLSearchParams({
-      league,
-      home: match.home.name,
-      away: match.away.name,
-    });
+    const params = new URLSearchParams({ league, home, away });
     // Fetch current odds
     fetch(`/api/basketball/odds?${params}`)
       .then((r) => r.json())
@@ -130,12 +117,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
         if (!cancelled) setOddsLoading(false);
       });
     // Fetch odds history (line movement)
-    const histParams = new URLSearchParams({
-      league,
-      home: match.home.name,
-      away: match.away.name,
-      history: "true",
-    });
+    const histParams = new URLSearchParams({ league, home, away, history: "true" });
     fetch(`/api/basketball/odds?${histParams}`)
       .then((r) => r.json())
       .then((data) => {
@@ -145,7 +127,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
         if (!cancelled) setOddsHistory([]);
       });
     return () => { cancelled = true; };
-  }, [open, match]);
+  }, [open, oddsKey]);
 
   if (!match) return null;
 
@@ -156,7 +138,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Badge variant="outline" className="text-[10px]">
-              {LEAGUE_LABELS[match.league] ?? match.league}
+              {leagueLabel(match.league)}
             </Badge>
             {match.status === "in-progress" && (
               <Badge variant="default" className="bg-emerald-500 text-[10px]">
@@ -319,41 +301,41 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
                   Recommandation & Value
                 </h3>
                 <div className="grid grid-cols-2 gap-3 text-xs">
-                  {/* Kelly */}
+                  {/* Kelly — fix debug : service émet DÉJÀ des % (capped/ev) ; side = nom d'équipe */}
                   {match.kelly && match.kelly.fraction > 0 && (
                     <div className="space-y-1">
                       <span className="text-muted-foreground">Kelly Criterion</span>
                       <div className="flex items-center gap-1">
-                        <Badge variant={match.kelly.side === "home" ? "default" : "secondary"} className="text-xs">
-                          {match.kelly.side === "home" ? match.home.abbr : match.away.abbr}
+                        <Badge variant={isKellyHome ? "default" : "secondary"} className="text-xs">
+                          {isKellyHome ? match.home.abbr : match.away.abbr}
                         </Badge>
-                        <span className="font-semibold">{(match.kelly.capped * 100).toFixed(1)}%</span>
+                        <span className="font-semibold">{match.kelly.capped.toFixed(1)}%</span>
                       </div>
                       {match.kelly.ev != null && match.kelly.ev > 0 && (
                         <span className="text-green-400">
-                          EV: +{(match.kelly.ev * 100).toFixed(1)}%
+                          EV: +{match.kelly.ev.toFixed(1)}%
                         </span>
                       )}
                     </div>
                   )}
-                  {/* Value */}
+                  {/* Value — fix debug : edges/vig déjà en %, pas de ×100 */}
                   {match.value && (
                     <div className="space-y-1">
                       <span className="text-muted-foreground">Value Bet</span>
                       {match.value.edge_home != null && match.value.edge_home > 0 && (
                         <div>
                           <Badge variant="default" className="text-xs">{match.home.abbr}</Badge>
-                          <span className="ml-1 text-green-400">+{(match.value.edge_home * 100).toFixed(1)}%</span>
+                          <span className="ml-1 text-green-400">+{match.value.edge_home.toFixed(1)}%</span>
                         </div>
                       )}
                       {match.value.edge_away != null && match.value.edge_away > 0 && (
                         <div>
                           <Badge variant="secondary" className="text-xs">{match.away.abbr}</Badge>
-                          <span className="ml-1 text-green-400">+{(match.value.edge_away * 100).toFixed(1)}%</span>
+                          <span className="ml-1 text-green-400">+{match.value.edge_away.toFixed(1)}%</span>
                         </div>
                       )}
                       <span className="text-muted-foreground">
-                        Vig: {(match.value.vig_pct * 100).toFixed(1)}%
+                        Vig: {match.value.vig_pct.toFixed(1)}%
                       </span>
                     </div>
                   )}
@@ -381,7 +363,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
                       <div>
                         <span className="font-semibold">{match.totalEdge.line}</span>
                         {match.totalEdge.lean && (
-                          <span className={`ml-2 ${match.totalEdge.lean === "Over" ? "text-green-400" : "text-orange-400"}`}>
+                          <span className={`ml-2 ${match.totalEdge.lean.toUpperCase() === "OVER" ? "text-green-400" : "text-orange-400"}`}>
                             {match.totalEdge.lean}
                           </span>
                         )}
@@ -431,9 +413,9 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
               </div>
             )}
 
-            {/* Injury & Rest Info */}
-            {(match.injuries.home.nOut > 0 || match.injuries.away.nOut > 0 ||
-              match.rest.home || match.rest.away) && (
+            {/* Injury & Rest Info — fix debug : guards optionnels (matchs Euro sans injuries/rest) */}
+            {((match.injuries?.home?.nOut ?? 0) > 0 || (match.injuries?.away?.nOut ?? 0) > 0 ||
+              match.rest?.home || match.rest?.away) && (
               <div className="rounded-lg border p-3">
                 <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                   <Activity className="h-3.5 w-3.5" />
@@ -441,40 +423,40 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
                 </h3>
                 <div className="space-y-2 text-xs">
                   {/* Injuries */}
-                  {match.injuries.home.nOut > 0 && (
+                  {(match.injuries?.home?.nOut ?? 0) > 0 && (
                     <div className="flex items-center gap-2">
                       <Badge variant="destructive" className="text-[10px]">
                         {match.home.abbr}
                       </Badge>
-                      <span>{match.injuries.home.nOut} joueur{match.injuries.home.nOut > 1 ? "s" : ""} absent{match.injuries.home.nOut > 1 ? "s" : ""}</span>
-                      {match.injuries.home.starsOut.length > 0 && (
+                      <span>{match.injuries!.home.nOut} joueur{match.injuries!.home.nOut > 1 ? "s" : ""} absent{match.injuries!.home.nOut > 1 ? "s" : ""}</span>
+                      {match.injuries!.home.starsOut.length > 0 && (
                         <span className="text-muted-foreground">
-                          ({match.injuries.home.starsOut.join(", ")})
+                          ({match.injuries!.home.starsOut.join(", ")})
                         </span>
                       )}
                       <span className="text-orange-400 ml-auto">
-                        -{match.injuries.home.penaltyPts} pts
+                        -{match.injuries!.home.penaltyPts} pts
                       </span>
                     </div>
                   )}
-                  {match.injuries.away.nOut > 0 && (
+                  {(match.injuries?.away?.nOut ?? 0) > 0 && (
                     <div className="flex items-center gap-2">
                       <Badge variant="destructive" className="text-[10px]">
                         {match.away.abbr}
                       </Badge>
-                      <span>{match.injuries.away.nOut} joueur{match.injuries.away.nOut > 1 ? "s" : ""} absent{match.injuries.away.nOut > 1 ? "s" : ""}</span>
-                      {match.injuries.away.starsOut.length > 0 && (
+                      <span>{match.injuries!.away.nOut} joueur{match.injuries!.away.nOut > 1 ? "s" : ""} absent{match.injuries!.away.nOut > 1 ? "s" : ""}</span>
+                      {match.injuries!.away.starsOut.length > 0 && (
                         <span className="text-muted-foreground">
-                          ({match.injuries.away.starsOut.join(", ")})
+                          ({match.injuries!.away.starsOut.join(", ")})
                         </span>
                       )}
                       <span className="text-orange-400 ml-auto">
-                        -{match.injuries.away.penaltyPts} pts
+                        -{match.injuries!.away.penaltyPts} pts
                       </span>
                     </div>
                   )}
                   {/* Rest */}
-                  {match.rest.home && (
+                  {match.rest?.home && (
                     <div className="flex items-center gap-2">
                       <Badge variant={match.rest.home.b2b ? "destructive" : "outline"} className="text-[10px]">
                         {match.home.abbr}
@@ -489,7 +471,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
                       )}
                     </div>
                   )}
-                  {match.rest.away && (
+                  {match.rest?.away && (
                     <div className="flex items-center gap-2">
                       <Badge variant={match.rest.away.b2b ? "destructive" : "outline"} className="text-[10px]">
                         {match.away.abbr}
