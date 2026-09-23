@@ -90,6 +90,7 @@ type SnookerMatch = {
   /** Best-of de la série (défaut snooker = 9). */
   bestOf: number;
   odds?: { player1: number; player2: number };
+  totalFrames?: { line: number; overOdds: number | null; underOdds: number | null };
   handicap?: { line: unknown; odds_p1: unknown; odds_p2: unknown };
   total?: { line: unknown; over_odds: unknown; under_odds: unknown };
 };
@@ -210,6 +211,16 @@ async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, 
     odds = { player1: m.odds1, player2: m.odds2 };
   }
 
+  // Ligne Over/Under frames proposée par le bookmaker (1xBet/oddsportal) si dispo
+  let totalFrames: { line: number; overOdds: number | null; underOdds: number | null } | undefined;
+  if (m.total && typeof m.total.line === "number") {
+    totalFrames = {
+      line: m.total.line,
+      overOdds: typeof m.total.over_odds === "number" ? m.total.over_odds : null,
+      underOdds: typeof m.total.under_odds === "number" ? m.total.under_odds : null,
+    };
+  }
+
   return {
     id: `nio_${m.id}`,
     source: "oddsportal",
@@ -225,6 +236,7 @@ async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, 
     scoreB: parseFrames(m.scoreAway),
     bestOf: 7,
     odds,
+    totalFrames,
   };
 }
 

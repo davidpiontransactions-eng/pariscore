@@ -29,6 +29,8 @@ interface SnookerMatch {
   pWin?: number;
   edge?: number;
   scheduledAt?: string;
+  /** Ligne O/U frames proposée par le bookmaker (1xBet/oddsportal) si dispo. */
+  totalFrames?: { line: number; overOdds: number | null; underOdds: number | null };
 }
 
 function getStatusColor(status: string) {
@@ -151,18 +153,22 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
           </div>
         )}
 
-        {/* Total De Manches — modèle prédictif */}
+        {/* Total De Manches — probas prematch (+ cotes 1xBet si la ligne est proposée) */}
         {match.pWin != null && match.status !== "finished" && (() => {
           const pFrame = 0.5 + (match.pWin! - 0.5) / 2.2;
           const lines: number[] = [];
           const min = Math.max(3.5, Math.ceil(match.bestOf / 2) - 1.5);
           const max = match.bestOf - 0.5;
           for (let l = min; l <= max; l += 1) lines.push(l);
+          // Ligne bookmaker (1xBet) : ajoutée si hors plage modèle
+          const market = match.totalFrames;
+          if (market && !lines.includes(market.line)) lines.push(market.line);
+          lines.sort((a, b) => a - b);
           if (lines.length === 0) return null;
           return (
             <div className="mt-3 pt-3 border-t border-zinc-800/50">
               <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                <span>🎯</span> Total De Manches
+                <span>🎯</span> Total De Manches {market ? "— 1xBet" : "— modèle"}
               </div>
               <div className="grid grid-cols-3 gap-x-2 gap-y-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Ligne</span>
@@ -171,14 +177,25 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
                 {lines.map((line) => {
                   const over = probTotalFramesOver(match.bestOf, pFrame, line);
                   const under = 1 - over;
+                  const odds = market && market.line === line ? market : null;
                   return (
                     <Fragment key={line}>
                       <span className="font-mono text-[11px] text-zinc-300">{line}</span>
-                      <span className={cn("text-center font-mono text-[11px] font-semibold", over >= 0.6 ? "text-emerald-400" : over <= 0.4 ? "text-red-400" : "text-zinc-400")}>
-                        {Math.round(over * 100)} %
+                      <span className="flex flex-col items-center">
+                        <span className={cn("text-center font-mono text-[11px] font-semibold", over >= 0.6 ? "text-emerald-400" : over <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                          {Math.round(over * 100)} %
+                        </span>
+                        {odds?.overOdds != null && (
+                          <span className="text-center font-mono text-[9px] text-zinc-500">@{odds.overOdds}</span>
+                        )}
                       </span>
-                      <span className={cn("text-center font-mono text-[11px] font-semibold", under >= 0.6 ? "text-emerald-400" : under <= 0.4 ? "text-red-400" : "text-zinc-400")}>
-                        {Math.round(under * 100)} %
+                      <span className="flex flex-col items-center">
+                        <span className={cn("text-center font-mono text-[11px] font-semibold", under >= 0.6 ? "text-emerald-400" : under <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                          {Math.round(under * 100)} %
+                        </span>
+                        {odds?.underOdds != null && (
+                          <span className="text-center font-mono text-[9px] text-zinc-500">@{odds.underOdds}</span>
+                        )}
                       </span>
                     </Fragment>
                   );
