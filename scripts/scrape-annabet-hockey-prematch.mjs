@@ -2,7 +2,7 @@
  * scrape-annabet-hockey-prematch.mjs
  * Scraper les données prematch Annabet (h2h.php) pour NHL, KHL, Ligue Magnus.
  * Sources : ajax_upcoming.php (matchs à venir + IDs) → h2h.php (popup prematch)
- * Sortie : data/annabet_hockey_prematch.json
+ * Sortie : data/hockey_prematch_annabet.json (merge API prematch)
  * Usage : node scripts/scrape-annabet-hockey-prematch.mjs [--league=khl] [--dry-run]
  */
 import http from 'node:http';
@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'annabet_hockey_prematch.json');
+const OUT = join(ROOT, 'data', 'hockey_prematch_annabet.json');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36';
 const FLARE_HOST = process.env.FLARE_HOST || 'localhost';
 const FLARE_PORT = process.env.FLARE_PORT || '8191';
@@ -464,16 +464,32 @@ async function main() {
   const dryRun = args['dry-run'] === true;
   const leagueFilter = args.league;
 
+  // Merge avec le fichier existant pour ne pas écraser les autres ligues
   const output = {
     updatedAt: new Date().toISOString(),
     source: 'annabet.com',
     leagues: {},
   };
+  try {
+    if (existsSync(OUT)) {
+      const prev = JSON.parse(readFileSync(OUT, 'utf-8'));
+      if (prev && typeof prev === 'object' && prev.leagues) {
+        output.leagues = { ...prev.leagues };
+      }
+    }
+  } catch {
+    // fichier corrompu → repart de zéro
+  }
 
   for (const league of LEAGUES) {
     if (leagueFilter && league.id !== leagueFilter) continue;
     output.leagues[league.id] = await scrapeLeague(league, dryRun);
     await sleep(2000);
+  }
+
+  // Toujours writer les 3 clés même si absentes du merge (évite UI vide)
+  for (const l of LEAGUES) {
+    if (!output.leagues[l.id]) output.leagues[l.id] = { matches: [] };
   }
 
   mkdirSync(dirname(OUT), { recursive: true });

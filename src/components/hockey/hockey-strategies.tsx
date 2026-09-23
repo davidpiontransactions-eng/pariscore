@@ -258,7 +258,7 @@ export function HockeyStrategies({
   activeLeague: LeagueId;
 }) {
   const leaguePrematch = prematch?.leagues[activeLeague]?.matches ?? [];
-  const leaguePlayers = playerStats?.leagues[activeLeague];
+  const leaguePlayers = playerStats?.leagues[activeLeague === "magnus" ? "ligue-magnus" : activeLeague];
 
   const strategyData = useMemo(() => {
     const results: StrategyMatch[] = [];

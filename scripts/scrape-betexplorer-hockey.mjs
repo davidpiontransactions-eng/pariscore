@@ -11,14 +11,14 @@
  *   node scripts/scrape-betexplorer-hockey.mjs --league=nhl    # NHL seulement
  *   node scripts/scrape-betexplorer-hockey.mjs --league=magnus # Ligue Magnus seulement
  *
- * Sortie: data/annabet_hockey_prematch.json (format compatible Annabet)
+ * Sortie: data/hockey_prematch_betexplorer.json (merge API prematch)
  */
 
 import { chromium } from "playwright";
-import { writeFileSync, mkdirSync } from "fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 
-const OUT_FILE = join(import.meta.dirname, "..", "data", "annabet_hockey_prematch.json");
+const OUT_FILE = join(import.meta.dirname, "..", "data", "hockey_prematch_betexplorer.json");
 
 // League mappings: BetExplorer slug → display name & Annabet serieId
 const LEAGUES = [
@@ -76,12 +76,23 @@ async function main() {
     // Ignorer - pas de bannière présente ou déjà géré
   }
 
-  // Maintenant naviguer vers la page hockey
-  const output = {
+  // Merge avec le fichier existant pour ne pas écraser les autres ligues
+  // (--league=magnus ne doit pas supprimer nhl/khl)
+  let output = {
     updatedAt: scrapedAt,
     source: "betexplorer.com (hockey next)",
     leagues: {},
   };
+  try {
+    if (existsSync(OUT_FILE)) {
+      const prev = JSON.parse(readFileSync(OUT_FILE, "utf-8"));
+      if (prev && typeof prev === "object" && prev.leagues) {
+        output = { ...output, leagues: { ...prev.leagues } };
+      }
+    }
+  } catch {
+    // fichier corrompu → on repart de zéro
+  }
 
   // S'assurer que le dossier data existe
   mkdirSync(join(import.meta.dirname, "..", "data"), { recursive: true });

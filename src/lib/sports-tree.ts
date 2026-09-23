@@ -854,7 +854,7 @@ export function rugbySportNode(competitions: MinimalRugbyCompetition[] | undefin
 }
 
 // ---------------------------------------------------------------------------
-// Hockey — nœud minimal (données Annabet + SkipOdds)
+// Hockey — nœud minimal (données Prematch BetExplorer+Annabet + BSD)
 // ---------------------------------------------------------------------------
 
 export function hockeySportNode(matches: unknown[] | undefined | null): SportNode {

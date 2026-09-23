@@ -2,7 +2,7 @@
  * Gemini AI — Comparaison de 2 matchs (même sport) via le LLM configuré.
  *
  * POST /api/ai/gemini-insight/compare
- * Body: { sport: "tennis" | "football", matches: [{ matchId, label?, matchData }, { matchId, label?, matchData }] }
+ * Body: { sport: "tennis" | "football" | "hockey", matches: [{ matchId, label?, matchData }, { matchId, label?, matchData }] }
  *  - matches : EXACTEMENT 2 éléments, même sport implicitement (sport unique au body),
  *  - chaque matchData ≤ 10 000 octets, matchId string ≤ 100 chars.
  *
@@ -31,7 +31,7 @@ import {
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const ALLOWED_SPORTS = ["tennis", "football"] as const;
+const ALLOWED_SPORTS = ["tennis", "football", "hockey"] as const;
 const MAX_MATCHES = 2;
 const MAX_MATCHDATA_BYTES = 10_000;
 const MAX_MATCHID_LENGTH = 100;
@@ -234,7 +234,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Body requis : { sport: \"tennis\" | \"football\", matches: [{ matchId, matchData }, { matchId, matchData }] }",
+            "Body requis : { sport: \"tennis\" | \"football\" | \"hockey\", matches: [{ matchId, matchData }, { matchId, matchData }] }",
         },
         { status: 400 },
       );

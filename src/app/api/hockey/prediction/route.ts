@@ -6,10 +6,10 @@ import { join } from "path";
 const CACHE_TTL = 60 * 60_000; // 1h — dérivé des données prematch
 import {
   predictHockeyMatch,
-  estimateLambdas,
   type TeamStats,
   type HockeyPrediction,
 } from "@/lib/prediction/hockey/poisson";
+import { loadMergedPrematch } from "@/lib/hockey/prematch-data";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -49,28 +49,6 @@ type TeamStanding = {
   ppg: number;
 };
 
-type MatchPrematch = {
-  team1Id: number;
-  team1Name: string;
-  team2Id: number;
-  team2Name: string;
-  odds1X2?: { home: number; draw: number; away: number } | null;
-  h2h?: {
-    homeTeam: string;
-    awayTeam: string;
-    date: string;
-    summaryHome: Record<string, unknown> | null;
-    summaryAway: Record<string, unknown> | null;
-    h2hStats: Record<string, unknown> | null;
-    standings: {
-      rank: number;
-      name: string;
-      gp: number;
-      all: { w: number; otw: number; otl: number; l: number; pts: number };
-    }[];
-  } | null;
-};
-
 type PredictionPayload = {
   updatedAt: string;
   source: string;
@@ -101,7 +79,7 @@ type AnnabetStanding = {
 
 function findTeamStats(
   teamName: string,
-  standings: TeamStanding[] | AnnabetStanding[]
+  standings: AnnabetStanding[]
 ): TeamStats | null {
   // Recherche fuzzy par nom
   const normalised = teamName.toLowerCase().replace(/[^a-z]/g, "");
@@ -112,7 +90,7 @@ function findTeamStats(
   );
   if (!found) return null;
 
-  const s = found as AnnabetStanding;
+  const s = found;
   // Calculer GF/GA depuis all si disponible
   const allStats = s.all;
   const gf = allStats ? Math.round((allStats.w * 2.8 + allStats.otw * 2.5) / Math.max(s.gp, 1) * s.gp) : 0;
@@ -140,16 +118,28 @@ function findPlayers(
   );
 }
 
+// Alias de clés de ligue entre sources : prematch "magnus" vs eliteprospects "ligue-magnus"
+function pickLeaguePlayers(
+  playerStats: { leagues: Record<string, { players: PlayerStat[] }> } | null,
+  leagueId: string
+): PlayerStat[] {
+  const leagues = playerStats?.leagues ?? {};
+  return (
+    leagues[leagueId]?.players ??
+    leagues[`ligue-${leagueId}`]?.players ??
+    leagues[leagueId.replace(/^ligue-/, "")]?.players ??
+    []
+  );
+}
+
 // ─── GET /api/hockey/prediction ─────────────────────────────────────────────
 
 export async function GET() {
   const cached = cache.getEntry();
   if (cached?.data && isFresh(cached, CACHE_TTL)) return NextResponse.json(cached.data);
 
-  // Charger les données source
-  const prematch = loadJson<{ leagues: Record<string, { matches: MatchPrematch[] }> }>(
-    "annabet_hockey_prematch.json"
-  );
+  // Charger les données source (merge BetExplorer + Annabet)
+  const prematch = loadMergedPrematch();
   const standings = loadJson<{ leagues: Record<string, { teams: TeamStanding[] }> }>(
     "eliteprospects_hockey_standings.json"
   );
@@ -168,8 +158,7 @@ export async function GET() {
 
   // Pour chaque ligue avec des matchs prematch
   for (const [leagueId, leagueData] of Object.entries(prematch.leagues)) {
-    const leagueStandings = standings.leagues?.[leagueId]?.teams ?? [];
-    const leaguePlayers = playerStats?.leagues?.[leagueId]?.players ?? [];
+    const leaguePlayers = pickLeaguePlayers(playerStats, leagueId);
 
     for (const match of leagueData.matches) {
       if (!match.h2h?.standings) continue;

@@ -19,6 +19,7 @@ import { useHockeyPrematch, type MatchPrematch } from "@/hooks/use-hockey-premat
 import { useHockeyMatches, type HockeyMatch } from "@/hooks/use-hockey-matches";
 import { FOT } from "@/components/football/fotmob-theme";
 import { parisDayLabel, parisKickoff } from "@/lib/football-time";
+import { normalizeHockeyLeagueId } from "@/lib/top-matches/hockey";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -318,7 +319,7 @@ function KhlSpotlight({ teams }: { teams: TeamStanding[] }) {
 
 function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyMatch[]; isLoading: boolean; activeLeague: LeagueId }) {
   const filtered = useMemo(() => {
-    return matches.filter((m) => m.leagueId === activeLeague);
+    return matches.filter((m) => normalizeHockeyLeagueId(m.leagueId) === activeLeague);
   }, [matches, activeLeague]);
 
   const grouped = useMemo(() => {
@@ -359,7 +360,7 @@ function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyM
   return (
     <div className="space-y-4">
       <p className="text-xs mb-3" style={{ color: FOT.muted }}>
-        {filtered.length} matchs {activeLeague.toUpperCase()} — Source: Annabet / BSD / SkipOdds
+        {filtered.length} matchs {activeLeague.toUpperCase()} — Source: Prematch / BSD
       </p>
       {Array.from(grouped.entries()).map(([day, dayMatches]) => (
         <div key={day} className="rounded-xl overflow-hidden" style={{ backgroundColor: FOT.card, border: `1px solid ${FOT.border}` }}>
@@ -374,7 +375,7 @@ function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyM
                 style={{ backgroundColor: FOT.card }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xs uppercase w-10 font-medium" style={{ color: FOT.muted }}>{m.leagueId}</span>
+                  <span className="text-xs uppercase w-10 font-medium" style={{ color: FOT.muted }}>{normalizeHockeyLeagueId(m.leagueId)}</span>
                   <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.homeName}</span>
                   <span className="text-xs" style={{ color: FOT.muted }}>vs</span>
                   <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.awayName}</span>

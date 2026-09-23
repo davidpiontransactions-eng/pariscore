@@ -117,9 +117,9 @@ function filterForStrategy(
     case "doubleChance1X":
     case "doubleChance2X":
     case "doubleChance12":
-      // Double chance : toute victoire ou nul (selon variante)
+      // Double chance : proba DC correcte (≥65%), tri par EV décroissant
       return picks
-        .filter((p) => p.winProbability >= 0.55)
+        .filter((p) => p.winProbability >= 0.65)
         .sort((a, b) => b.expectedValue - a.expectedValue)
         .slice(0, 10);
 
@@ -207,7 +207,18 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const sport = searchParams.get("sport") ?? "football";
+    const timeframe = searchParams.get("timeframe") ?? "today";
+    const limitRaw = parseInt(searchParams.get("limit") ?? "10", 10);
+    const limit = Math.min(50, Math.max(1, isNaN(limitRaw) ? 10 : limitRaw));
     const strategyFilter = searchParams.get("strategy") ?? undefined;
+
+    // Sports non-football : utiliser les adapters multi-sport
+    const ADAPTER_SPORTS = new Set(["handball", "tennis", "basketball", "basket", "nba", "wnba", "f1", "cs2", "mma", "cycling", "fiba", "baseball", "rugby", "snooker", "hockey"]);
+    if (ADAPTER_SPORTS.has(sport)) {
+      const { fetchTopMatches } = await import("@/lib/top-matches");
+      const groups = await fetchTopMatches(sport as Parameters<typeof fetchTopMatches>[0], limit, timeframe);
+      return NextResponse.json({ groups, generated_at: new Date().toISOString() }, { headers: CACHE_HEADERS });
+    }
 
     // Récupérer les matchs BSD pour le scoring
     const bsdMatches = await fetchBSDMatches();
@@ -263,10 +274,7 @@ export async function GET(request: Request) {
             break;
           }
           case "bestAttack":
-          case "bestDefense":
-          case "doubleChance1X":
-          case "doubleChance2X":
-          case "doubleChance12": {
+          case "bestDefense": {
             const maxProb = Math.max(
               prob.models.ensemble.home,
               prob.models.ensemble.away,
@@ -277,6 +285,61 @@ export async function GET(request: Request) {
               prob.models.ensemble.home >= prob.models.ensemble.away
                 ? (input.odds?.home ?? 0)
                 : (input.odds?.away ?? 0);
+            break;
+          }
+          case "doubleChance1X": {
+            // DC 1X = P(domicile) + P(nul) — cote dé-vig depuis 1X2
+            const hP = prob.models.ensemble.home / 100;
+            const dP = prob.models.ensemble.draw / 100;
+            winProb = Math.min(1, hP + dP);
+            pick = "1X";
+            const hO = input.odds?.home ?? 0;
+            const dO = input.odds?.draw ?? 0;
+            if (hO > 1 && dO > 1) {
+              const iH = 1 / hO, iD = 1 / dO;
+              const vig = iH + iD + (1 / (input.odds?.away ?? 2));
+              const fH = iH / vig, fD = iD / vig;
+              odds = 1 / (fH + fD);
+            } else {
+              odds = 0;
+            }
+            break;
+          }
+          case "doubleChance2X": {
+            // DC 2X = P(extérieur) + P(nul)
+            const hP2 = prob.models.ensemble.home / 100;
+            const dP2 = prob.models.ensemble.draw / 100;
+            const aP2 = prob.models.ensemble.away / 100;
+            winProb = Math.min(1, aP2 + dP2);
+            pick = "2X";
+            const aO2 = input.odds?.away ?? 0;
+            const dO2 = input.odds?.draw ?? 0;
+            if (aO2 > 1 && dO2 > 1) {
+              const iA = 1 / aO2, iD = 1 / dO2;
+              const vig = (1 / (input.odds?.home ?? 2)) + iD + iA;
+              const fA = iA / vig, fD = iD / vig;
+              odds = 1 / (fA + fD);
+            } else {
+              odds = 0;
+            }
+            break;
+          }
+          case "doubleChance12": {
+            // DC 12 = P(domicile) + P(extérieur) = 1 − P(nul)
+            const hP12 = prob.models.ensemble.home / 100;
+            const aP12 = prob.models.ensemble.away / 100;
+            winProb = Math.min(1, hP12 + aP12);
+            pick = hP12 >= aP12 ? "1" : "2";
+            const hO12 = input.odds?.home ?? 0;
+            const aO12 = input.odds?.away ?? 0;
+            if (hO12 > 1 && aO12 > 1) {
+              const iH = 1 / hO12, iA = 1 / aO12;
+              const vig = iH + (1 / (input.odds?.draw ?? 2)) + iA;
+              const fH = iH / vig, fA = iA / vig;
+              odds = 1 / (fH + fA);
+            } else {
+              odds = 0;
+            }
             break;
           }
           case "over15": {

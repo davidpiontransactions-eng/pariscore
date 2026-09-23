@@ -13,6 +13,7 @@ import { fibaAdapter } from './fiba';
 import { baseballAdapter } from './baseball';
 import { rugbyAdapter } from './rugby';
 import { handballAdapter } from './handball';
+import { hockeyAdapter } from './hockey';
 
 const adapters: Record<string, { sport: SportType; fetch(limit: number, timeframe: string): Promise<TopLeague[]> }> = {
   football: footballAdapter,
@@ -27,6 +28,7 @@ const adapters: Record<string, { sport: SportType; fetch(limit: number, timefram
   baseball: baseballAdapter,
   rugby: rugbyAdapter,
   handball: handballAdapter,
+  hockey: hockeyAdapter,
 };
 
 const ALL_SPORTS = SPORT_TYPES;

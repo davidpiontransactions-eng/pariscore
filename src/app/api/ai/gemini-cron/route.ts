@@ -4,7 +4,7 @@
  * GET /api/ai/gemini-cron?token=CRON_SECRET
  *
  * Appelé par un cron VPS (ex: 6h, 12h, 18h UTC).
- * Parcourt les matchs tennis/football du jour, vérifie le cache, et pré-calcule
+ * Parcourt les matchs tennis/football/hockey du jour, vérifie le cache, et pré-calcule
  * les analyses manquantes via le LLM configuré (Gemini cloud ou serveur local
  * OpenAI-compatible — src/lib/llm.ts, selon LLM_PROVIDER / LLM_FALLBACK_ENABLED).
  * Respecte le rate limit de l'API Gemini.
@@ -23,7 +23,7 @@ import {
 } from "@/lib/gemini-cache";
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const ALLOWED_SPORTS = ["tennis", "football"] as const;
+const ALLOWED_SPORTS = ["tennis", "football", "hockey"] as const;
 const GEMINI_DELAY_MS = 2_000;
 
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ const GEMINI_DELAY_MS = 2_000;
 
 async function fetchMatches(sport: string): Promise<{ id: string; matchData: Record<string, unknown> }[]> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const endpoint = sport === "tennis" ? "/api/tennis/prematch" : "/api/football/matches";
+  const endpoint = sport === "tennis" ? "/api/tennis/prematch" : sport === "hockey" ? "/api/hockey/matches" : "/api/football/matches";
   const res = await fetch(`${baseUrl}${endpoint}`);
   if (!res.ok) throw new Error(`Failed to fetch ${sport} matches: ${res.status}`);
   const json = await res.json();
@@ -42,7 +42,8 @@ async function fetchMatches(sport: string): Promise<{ id: string; matchData: Rec
 
 function buildCronPrompt(sport: string, matchData: Record<string, unknown>): string {
   const matchStr = JSON.stringify(matchData, null, 2);
-  return `Tu es un analyste sportif expert en ${sport === "tennis" ? "tennis" : "football"}.
+  const sportLabel = sport === "tennis" ? "tennis" : sport === "hockey" ? "hockey sur glace" : "football";
+  return `Tu es un analyste sportif expert en ${sportLabel}.
 Analyse le match suivant de façon concise (max 150 mots). Structure ta réponse en JSON avec :
 - "analysis": texte d'analyse
 - "factors": tableau de {label, value} (max 4)

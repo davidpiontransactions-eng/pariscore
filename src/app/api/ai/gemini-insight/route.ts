@@ -2,7 +2,7 @@
  * Gemini AI Insight — analyse de match via l'API Gemini avec cache VPS 12h.
  *
  * POST /api/ai/gemini-insight
- * Body: { sport: "tennis" | "football", matchId: string, matchData: object }
+ * Body: { sport: "tennis" | "football" | "hockey", matchId: string, matchData: object }
  * Cache key: gemini-insight:{sport}:{matchId}:{YYYY-MM-DD}
  * TTL: 12 heures (cross-utilisateur)
  *
@@ -26,7 +26,7 @@ import {
 // ---------------------------------------------------------------------------
 // Cache config
 // ---------------------------------------------------------------------------
-const ALLOWED_SPORTS = ["tennis", "football"] as const;
+const ALLOWED_SPORTS = ["tennis", "football", "hockey"] as const;
 const MAX_MATCHDATA_BYTES = 10_000;
 
 // Rate limiting: max 10 req/5min per IP
@@ -42,10 +42,11 @@ const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 /** Construit le prompt LLM à partir des données du match. */
 function buildPrompt(sport: string, matchData: Record<string, unknown>): string {
   const matchStr = JSON.stringify(matchData, null, 2);
-  return `Tu es un analyste sportif expert en ${sport === "tennis" ? "tennis" : "football"}.
+  const sportLabel = sport === "tennis" ? "tennis" : sport === "hockey" ? "hockey sur glace" : "football";
+  return `Tu es un analyste sportif expert en ${sportLabel}.
 Analyse le match suivant de façon concise (max 150 mots). Structure ta réponse en JSON avec :
 - "analysis": texte d'analyse (value détectée, points clés, niveau de confiance)
-- "factors": tableau de {label, value} (max 4 facteurs : H2H, surface/domicile, forme, écart Elo)
+- "factors": tableau de {label, value} (max 4 facteurs : ${sport === "hockey" ? "H2H, domicile/extérieur, forme récente, avantage supériorité numérique" : sport === "tennis" ? "H2H, surface/domicile, forme, écart Elo" : "H2H, domicile, forme, écart Elo"})
 - "edge": nombre entier (écart de value en %, positif = value favorable, toujours présent)
 - "confidence": entier 1-5 (niveau de confiance)
 

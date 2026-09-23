@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useRef } from "react";
 import { Star, Sparkles, TrendingUp, Zap, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
+import { useHockeyMatches } from "@/hooks/use-hockey-matches";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,7 +55,7 @@ const DEMO: GeminiResponse = {
 // ---------------------------------------------------------------------------
 
 const SPORT_ICONS: Record<string, string> = {
-  tennis: "🎾", football: "⚽", basketball: "🏀", cs2: "🔫", darts: "🎯",
+  tennis: "🎾", football: "⚽", basketball: "🏀", cs2: "🔫", darts: "🎯", hockey: "🏒",
 };
 
 function renderStars(rating: number, max = 5): React.ReactNode {
@@ -115,6 +116,7 @@ function MatchSelect({
 export function AIInsightCard({ className, id, activeSport }: AIInsightCardProps) {
   const { tennisData } = useDashboardData();
   const { footData } = useDashboardData();
+  const { data: hockeyData } = useHockeyMatches();
 
   const [selectedMatchId, setSelectedMatchId] = useState("");
   const [compareA, setCompareA] = useState("");
@@ -162,8 +164,18 @@ export function AIInsightCard({ className, id, activeSport }: AIInsightCardProps
         });
       }
     }
+    for (const m of hockeyData?.matches ?? []) {
+      if (!activeSport || activeSport === "hockey") {
+        opts.push({
+          id: m.id, sport: "hockey",
+          label: `🏒 ${m.homeName} vs ${m.awayName} (${m.leagueName})`,
+          shortLabel: `${m.homeName} vs ${m.awayName}`,
+          scheduledAt: m.scheduledAt || "", icon: "🏒",
+        });
+      }
+    }
     return opts.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [tennisData?.matches, footData?.matches, activeSport]);
+  }, [tennisData?.matches, footData?.matches, hockeyData?.matches, activeSport]);
 
   // Build matchData payload for API
   const buildMatchData = useCallback((option: MatchOption): Record<string, unknown> => {
@@ -178,6 +190,18 @@ export function AIInsightCard({ className, id, activeSport }: AIInsightCardProps
         tournament: m.tournament, probA: m.probA, probB: m.probB,
       };
     }
+    if (option.sport === "hockey") {
+      const m = hockeyData?.matches?.find((x) => x.id === option.id);
+      if (!m) return {};
+      return {
+        sport: "hockey", matchId: m.id,
+        home: { name: m.homeName },
+        away: { name: m.awayName },
+        league: m.leagueName, country: m.countryName,
+        odds: { home: m.oddsH, draw: m.oddsD, away: m.oddsA },
+        source: m.source,
+      };
+    }
     const m = footData?.matches?.find((x) => x.id === option.id);
     if (!m) return {};
     return {
@@ -186,7 +210,7 @@ export function AIInsightCard({ className, id, activeSport }: AIInsightCardProps
       away: { name: m.away.name, form: m.away.form, rank: m.away.rank },
       prediction: m.prediction, league: m.league.name, round: m.round,
     };
-  }, [tennisData?.matches, footData?.matches]);
+  }, [tennisData?.matches, footData?.matches, hockeyData?.matches]);
 
   // Single match analysis
   const handleSelect = useCallback(async (matchId: string) => {

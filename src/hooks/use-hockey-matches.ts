@@ -26,7 +26,7 @@ type HockeyResponse = {
 
 const POLL_INTERVAL_MS = 60_000;
 
-/** Hook hockey — fetch /api/hockey/matches (Annabet + SkipOdds + BSD). */
+/** Hook hockey — fetch /api/hockey/matches (Prematch BetExplorer+Annabet + BSD). */
 export function useHockeyMatches() {
   const [data, setData] = useState<HockeyResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);

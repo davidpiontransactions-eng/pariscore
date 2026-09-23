@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { loadMergedPrematch } from "@/lib/hockey/prematch-data";
 
 const CACHE_TTL = 5 * 60_000;
 
@@ -12,41 +11,6 @@ type CachePayload = {
 };
 
 const cache = createTtlCache<CachePayload | null>("__hockeyMatchesCache");
-
-async function fetchSkipOdds(): Promise<unknown[]> {
-  try {
-    const res = await fetch("https://skipodds.com/v1/hockey", {
-      method: "GET",
-      headers: { "Accept": "application/json" },
-      next: { revalidate: 30 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (data && data.skipodds) {
-      const { home, away } = data.skipodds;
-      return [{
-        id: "skipodds-auto",
-        homeName: "Home",
-        awayName: "Away",
-        scheduledAt: new Date().toISOString(),
-        isLive: false,
-        leagueId: "skipodds",
-        leagueName: "SkipOdds",
-        countryName: "International",
-        countryCode: "INT",
-        oddsH: 1 / home,
-        oddsA: 1 / away,
-        probSkipH: home * 100,
-        probSkipA: away * 100,
-        source: "skipodds",
-      }];
-    }
-    return [];
-  } catch (e) {
-    console.warn("[hockey] SkipOdds fetch failed:", e);
-    return [];
-  }
-}
 
 async function fetchBSDHockey(): Promise<unknown[]> {
   try {
@@ -111,44 +75,37 @@ async function fetchBSDHockey(): Promise<unknown[]> {
   }
 }
 
-async function fetchAnnabetMock(): Promise<unknown[]> {
+async function fetchPrematchMatches(): Promise<unknown[]> {
   try {
-    const matchPath = join(process.cwd(), "data", "annabet_hockey_prematch.json");
-    if (existsSync(matchPath)) {
-      const data = JSON.parse(readFileSync(matchPath, "utf8"));
-      const matches: unknown[] = [];
-      // Structure: { leagues: { khl: { matches: [...] }, nhl: { matches: [...] }, ... } }
-      if (data.leagues && typeof data.leagues === "object") {
-        const leagues = data.leagues as Record<string, { matches?: Array<Record<string, unknown>> }>;
-        for (const [leagueId, league] of Object.entries(leagues)) {
-          if (league?.matches && Array.isArray(league.matches)) {
-            for (const m of league.matches) {
-              const odds = m.odds1X2 as Record<string, number> | undefined;
-              matches.push({
-                id: `annabet-${leagueId}-${m.team1Id ?? Math.random().toString(36).slice(2)}`,
-                homeName: m.team1Name || "Home",
-                awayName: m.team2Name || "Away",
-                scheduledAt: m.date || new Date().toISOString(),
-                isLive: false,
-                leagueId,
-                leagueName: leagueId.toUpperCase(),
-                countryName: "International",
-                countryCode: "INT",
-                oddsH: odds?.home ?? null,
-                oddsD: odds?.draw ?? null,
-                oddsA: odds?.away ?? null,
-                h2h: m.h2h || null,
-                source: "annabet",
-              });
-            }
-          }
+    const data = loadMergedPrematch();
+    if (!data) return [];
+    const matches: unknown[] = [];
+    for (const [leagueId, league] of Object.entries(data.leagues)) {
+      if (league?.matches && Array.isArray(league.matches)) {
+        for (const m of league.matches) {
+          const odds = m.odds1X2;
+          matches.push({
+            id: `prematch-${leagueId}-${m.team1Id}-${m.team2Id}`,
+            homeName: m.team1Name || "Home",
+            awayName: m.team2Name || "Away",
+            scheduledAt: m.date || new Date().toISOString(),
+            isLive: false,
+            leagueId,
+            leagueName: leagueId.toUpperCase(),
+            countryName: "International",
+            countryCode: "INT",
+            oddsH: odds?.home ?? null,
+            oddsD: odds?.draw ?? null,
+            oddsA: odds?.away ?? null,
+            h2h: m.h2h || null,
+            source: "prematch",
+          });
         }
       }
-      return matches;
     }
-    return [];
+    return matches;
   } catch (e) {
-    console.warn("[hockey] Annabet fetch failed:", e);
+    console.warn("[hockey] Prematch fetch failed:", e);
     return [];
   }
 }
@@ -164,13 +121,12 @@ export async function GET() {
   }
 
   try {
-    const [skipOddsMatches, bsdMatches, annabetMatches] = await Promise.all([
-      fetchSkipOdds(),
+    const [bsdMatches, prematchMatches] = await Promise.all([
       fetchBSDHockey(),
-      fetchAnnabetMock(),
+      fetchPrematchMatches(),
     ]);
 
-    const allMatches = [...skipOddsMatches, ...bsdMatches, ...annabetMatches];
+    const allMatches = [...bsdMatches, ...prematchMatches];
     const seen = new Set<string>();
     const deduped = allMatches.filter((m) => {
       const id = ((m as Record<string, unknown>).id as string) || "";
@@ -179,15 +135,13 @@ export async function GET() {
       return true;
     });
 
-    const hasSkipOdds = skipOddsMatches.length > 0;
     const hasBSD = bsdMatches.length > 0;
-    const hasAnnabet = annabetMatches.length > 0;
-    const degraded = !(hasSkipOdds || hasBSD || hasAnnabet);
+    const hasPrematch = prematchMatches.length > 0;
+    const degraded = !(hasBSD || hasPrematch);
 
     const sourceParts: string[] = [];
-    if (hasSkipOdds) sourceParts.push("skipodds");
     if (hasBSD) sourceParts.push("bsd");
-    if (hasAnnabet) sourceParts.push("annabet");
+    if (hasPrematch) sourceParts.push("prematch");
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
 
     if (!degraded) {
