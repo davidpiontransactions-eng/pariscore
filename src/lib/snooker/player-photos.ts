@@ -111,11 +111,13 @@ export async function fetchPlayerPhoto(cueId: string): Promise<string | undefine
 
   try {
     const url = `${WIKIPEDIA_API}?action=query&titles=${wikiTitle}&prop=pageimages&format=json&pithumbsize=200&origin=*`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return undefined;
-    const data = await res.json() as any;
-    const pages = data?.query?.pages ?? {};
-    const page = Object.values(pages)[0] as any;
+    const data = (await res.json()) as {
+      query?: { pages?: Record<string, { thumbnail?: { source?: string } }> };
+    };
+    const pages = data.query?.pages ?? {};
+    const page = Object.values(pages)[0];
     const thumbUrl = page?.thumbnail?.source;
     if (thumbUrl) {
       const clean = cleanThumbUrl(thumbUrl);

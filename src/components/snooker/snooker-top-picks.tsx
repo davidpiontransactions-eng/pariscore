@@ -63,9 +63,10 @@ function formatDateTimeFr(iso?: string): string {
 }
 
 function probColor(p: number): string {
+  // Seuils alignés Top 10 (70 / 60) — échelle proba unique
   if (p >= 0.70) return "bg-emerald-500/10 text-emerald-400 ring-emerald-500/20";
-  if (p >= 0.58) return "bg-amber-500/10 text-amber-400 ring-amber-500/20";
-  return "bg-zinc-800/60 text-zinc-400 ring-zinc-700";
+  if (p >= 0.60) return "bg-amber-500/10 text-amber-400 ring-amber-500/20";
+  return "bg-zinc-800/50 text-zinc-400 ring-zinc-700";
 }
 
 function ConfidenceDots({ value }: { value: number }) {
@@ -179,7 +180,7 @@ export function SnookerTopPicks({ className }: { className?: string }) {
                     🏆 {pick.pickName} — {(pick.prob * 100).toFixed(1)}%
                   </span>
                   {pick.bets.map((b) => (
-                    <span key={b.type} className={cn("rounded-md px-2 py-0.5 text-[10px] font-medium ring-1", probColor(b.prob))}>
+                    <span key={b.type} className={cn("rounded-md px-2 py-1 text-[11px] font-medium ring-1", probColor(b.prob))}>
                       {b.label} · {Math.round(b.prob * 100)}%
                     </span>
                   ))}

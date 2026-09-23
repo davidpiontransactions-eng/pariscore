@@ -75,6 +75,7 @@ function toPlayerData(p: CuetrackerPlayer) {
     ...(played > 0 ? { winPct: (wins / played) * 100 } : {}),
     ...(p.centuries != null && played > 0 ? { centuryRate: (p.centuries / played) * 100 } : {}),
     ...(p.decider_win_pct != null ? { deciderWinPct: p.decider_win_pct * 100 } : {}),
+    // Champ hérité avgBreak = max_break (pas un avg) — UI: "Max Break", plage 40-147
     ...(p.max_break != null ? { avgBreak: p.max_break } : {}),
   };
 }
@@ -99,6 +100,14 @@ export async function syncPlayers(players: CuetrackerPlayer[] | undefined): Prom
     }
   }
   return counts;
+}
+
+/** Parse un score frames ("6-2" ou 6) → entier, 0 si invalide (audit lot3). */
+function parseScore(v: number | string | undefined): number {
+  if (v == null) return 0;
+  const first = String(v).split("-")[0] ?? "";
+  const n = parseInt(first, 10);
+  return isNaN(n) ? 0 : Math.max(0, n);
 }
 
 /** Upsert atomique des matchs (joueurs FK créés en amont si absents). */
@@ -128,14 +137,21 @@ export async function syncMatches(
         create: { id: id2, name: p2 },
       });
 
-      const scoreA = Number(m.score_a) || 0;
-      const scoreB = Number(m.score_b) || 0;
+      const scoreA = parseScore(m.score_a);
+      const scoreB = parseScore(m.score_b);
       const rawStatus = (m.status || "scheduled").toLowerCase();
-      const status = ["live", "finished", "scheduled"].includes(rawStatus) ? rawStatus : "scheduled";
+      // Whitelist élargie : "in progress" (CueTracker) → live
+      const status =
+        rawStatus === "in progress" || rawStatus === "live"
+          ? "live"
+          : rawStatus === "finished"
+            ? "finished"
+            : "scheduled";
       const winnerId = status === "finished" ? (scoreA > scoreB ? id1 : scoreB > scoreA ? id2 : null) : null;
 
-      const id = `${id1}_vs_${id2}_${fallbackDate.toISOString().slice(0, 10)}`;
       const source = m.source || "cuetracker";
+      // Id inclut la source : 2 matchs même paire/jour sur 2 sources ne se collisionnent plus
+      const id = `${id1}_vs_${id2}_${slug(source)}_${fallbackDate.toISOString().slice(0, 10)}`;
       const tournament = source === "snooker.org" ? "World Tour" : "";
 
       await prisma.snookerMatch.upsert({

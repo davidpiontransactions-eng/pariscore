@@ -182,6 +182,16 @@ else
   echo "  cron weekly-stats déjà présent"
 fi
 
+# Snooker quotidien — Oddsportal NIO + CueTracker complet (08:00 UTC).
+# Sans ce cron : oddsportal_nio.json et cuetracker_matches.json stagnent (audit lot5).
+CRON_DAILY="0 8 * * * cd $OPT_DIR && bash scripts/cron_snooker.sh >> logs/snooker-cron.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q "cron_snooker.sh"; then
+  (crontab -l 2>/dev/null; echo "$CRON_DAILY") | crontab -
+  echo "  ✅ cron snooker quotidien ajouté (08:00 UTC)"
+else
+  echo "  cron snooker quotidien déjà présent"
+fi
+
 echo "[6/6] Health check..."
 HEALTH_OK=0
 # Legacy-only = 4 checks (fast restart), Full build = 8 checks (slower boot)

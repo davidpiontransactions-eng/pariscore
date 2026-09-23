@@ -34,8 +34,9 @@ type BetsResponse = { mode: string; total: number; matches: BetMatch[] };
 const fetcher = (url: string) => fetch(url).then((r) => r.json() as Promise<BetsResponse>);
 
 function probColor(p: number): string {
-  if (p >= 0.75) return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30";
-  if (p >= 0.65) return "bg-amber-500/15 text-amber-400 ring-amber-500/30";
+  // Seuils alignés sur le Top 10 (70 / 60) — échelle proba unique
+  if (p >= 0.70) return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30";
+  if (p >= 0.60) return "bg-amber-500/15 text-amber-400 ring-amber-500/30";
   return "bg-zinc-800/60 text-zinc-400 ring-zinc-700";
 }
 
@@ -60,6 +61,7 @@ export function SnookerBetsPanel() {
             <button
               key={m}
               onClick={() => setMode(m)}
+              aria-pressed={mode === m}
               className={cn(
                 "rounded-md px-3 py-1 transition-colors",
                 mode === m ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30" : "text-zinc-500 hover:text-zinc-300",
@@ -132,7 +134,7 @@ export function SnookerBetsPanel() {
                   </div>
                   <div className="space-y-1">
                     {/* Header */}
-                    <div className="grid grid-cols-3 text-[9px] font-semibold uppercase tracking-wider text-zinc-600 px-1">
+                    <div className="grid grid-cols-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 px-1">
                       <span>Ligne</span>
                       <span className="text-center">Plus de</span>
                       <span className="text-center">Moins de</span>

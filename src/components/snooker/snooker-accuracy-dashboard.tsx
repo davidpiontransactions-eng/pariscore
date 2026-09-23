@@ -37,12 +37,12 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-3 text-center">
-      <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">{label}</div>
+      <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">{label}</div>
       <div className="mt-1 text-2xl font-black tabular-nums" style={{ color }}>
-        {value}
-        <span className="text-sm font-normal text-gray-400">{unit}</span>
+        {Math.round(value * 1000) / 1000}
+        <span className="text-sm font-normal text-gray-500">{unit}</span>
       </div>
-      {subtitle && <div className="mt-0.5 text-[9px] text-gray-400">{subtitle}</div>}
+      {subtitle && <div className="mt-0.5 text-[11px] text-gray-500">{subtitle}</div>}
     </div>
   );
 }
@@ -93,12 +93,12 @@ function CalibrationChart({ data }: { data: CalibrationPoint[] }) {
                 <span className="text-gray-400">/</span>
                 <span className="text-gray-500">{d.avgPredicted.toFixed(0)}%</span>
               </div>
-              <span className="w-6 text-center text-[9px] text-gray-400">n={d.count}</span>
+              <span className="w-6 text-center text-[11px] text-gray-500">n={d.count}</span>
             </div>
           );
         })}
       </div>
-      <div className="mt-3 flex items-center gap-4 text-[9px] text-gray-400">
+      <div className="mt-3 flex items-center gap-4 text-[11px] text-gray-500">
         <span className="flex items-center gap-1">
           <span className="inline-block h-1 w-1 rounded-full bg-[#00985f]" /> Prédit (ligne)
         </span>
@@ -132,19 +132,19 @@ function RecentPredictions({
         {data.map((p, i) => (
           <div
             key={`${p.match}-${i}`}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50"
+              className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50"
           >
             <span
-              className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${
+              className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white ${
                 p.correct ? "bg-emerald-500" : "bg-red-500"
               }`}
             >
               {p.correct ? "✓" : "✗"}
             </span>
             <span className="min-w-0 flex-1 truncate text-[11px] text-gray-700">{p.match}</span>
-            <span className="text-[10px] tabular-nums text-gray-500">{p.predicted}%</span>
+            <span className="text-[11px] tabular-nums text-gray-500">{p.predicted}%</span>
             <span
-              className={`text-[9px] font-semibold ${
+              className={`text-[11px] font-semibold ${
                 p.actual === "win" ? "text-emerald-600" : "text-red-600"
               }`}
             >

@@ -27,7 +27,7 @@ function FormIndicator({ form }: { form: string }) {
         <div
           key={i}
           className={cn(
-            "w-4 h-4 rounded-sm flex items-center justify-center text-[8px] font-bold",
+            "w-5 h-5 rounded-sm flex items-center justify-center text-[11px] font-bold",
             c === "W" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
           )}
         >
@@ -115,7 +115,7 @@ export function SnookerPlayerCard({ player }: { player: SnookerPlayerStats }) {
           {player.deciderWinPct != null && <StatBar label="Decider Win %" value={player.deciderWinPct} />}
           {player.avgBreak != null && (
             <div className="flex justify-between text-[10px] pt-1 border-t border-zinc-800/30">
-              <span className="text-zinc-500">Avg Break</span>
+              <span className="text-zinc-500">Max Break</span>
               <span className="font-mono text-emerald-400 font-semibold">{player.avgBreak.toFixed(0)}</span>
             </div>
           )}

@@ -44,7 +44,10 @@ export function loadBets(): TrackedBet[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    // Garde-fou : valeur corrompu/ancien schéma → crash React sur .filter/.unshift
+    return Array.isArray(parsed) ? (parsed as TrackedBet[]) : [];
   } catch {
     return [];
   }
@@ -67,6 +70,11 @@ function saveBets(bets: TrackedBet[]): void {
  */
 export function addBet(bet: Omit<TrackedBet, "id" | "status" | "createdAt">): TrackedBet {
   const bets = loadBets();
+  // Idempotent : double-clic avant re-render → pas de doublon
+  const existing = bets.find(
+    (b) => b.matchId === bet.matchId && b.market === bet.market && b.status === "pending",
+  );
+  if (existing) return existing;
   const newBet: TrackedBet = {
     ...bet,
     id: generateBetId(bet.matchId, bet.market),

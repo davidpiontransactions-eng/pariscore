@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
@@ -48,8 +49,8 @@ const TUTORIALS: Record<MarketKey, { title: string; lines: string[] }> = {
   overTotal: {
     title: "Over total frames",
     lines: [
-      "Pari gagné si le nombre total de frames dépasse la ligne (défaut : Bo − 1).",
-      "Calculée par loi binomiale depuis la proba de gagner une frame.",
+      "Ligne retenue par match : la plus haute ligne avec une probabilité Over ≥ 60 % (proche de 60 %).",
+      "Calculée par loi binomiale depuis la proba de gagner une frame (proba match inversée par bissection).",
     ],
   },
   handicapP1: {
@@ -112,6 +113,15 @@ function ExplainPopup({
   label: string;
   onClose: () => void;
 }) {
+  // Fermeture Échap (charte a11y popups)
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center"
@@ -176,12 +186,12 @@ function formWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
   return s1 / (s1 + s2) * 100;
 }
 
-/** Modèle Scoring : century rate + avg break */
+/** Modèle Scoring : century rate + max break (plage 40-147, neutre si absent) */
 function scoringWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
   const c1 = normalize(p1.centuryRate ?? 0, 0, 30);
   const c2 = normalize(p2.centuryRate ?? 0, 0, 30);
-  const b1 = normalize(p1.avgBreak ?? 30, 20, 80);
-  const b2 = normalize(p2.avgBreak ?? 30, 20, 80);
+  const b1 = p1.avgBreak != null ? normalize(p1.avgBreak, 40, 147) : 50;
+  const b2 = p2.avgBreak != null ? normalize(p2.avgBreak, 40, 147) : 50;
   const s1 = c1 * 0.55 + b1 * 0.45;
   const s2 = c2 * 0.55 + b2 * 0.45;
   if (s1 + s2 === 0) return 50;
@@ -213,6 +223,30 @@ function logBinomPMF(k: number, n: number, p: number): number {
     logC += Math.log(n - i) - Math.log(i + 1);
   }
   return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
+}
+
+/** Log-coefficient binomial log(C(n,k)) — SEULEMENT la combinaison, sans puissance de p. */
+function logBinomCoeff(n: number, k: number): number {
+  if (k < 0 || k > n) return -Infinity;
+  if (k === 0 || k === n) return 0;
+  if (k > n - k) k = n - k;
+  let result = 0;
+  for (let i = 0; i < k; i++) {
+    result += Math.log(n - i) - Math.log(i + 1);
+  }
+  return result;
+}
+
+/**
+ * P(P1 gagne le match avec le score exact a-b, dernière frame à P1)
+ * = C(a+b-1, b) · pFrame^a · (1-pFrame)^b.
+ * Base de toutes les probabilités de fin de match (over, handicap, total joueur).
+ */
+function scoreWinProb(pFrame: number, a: number, b: number): number {
+  if (a < 1 || b < 0) return 0;
+  if (pFrame <= 0) return 0;
+  if (pFrame >= 1) return b === 0 ? 1 : 0;
+  return Math.exp(logBinomCoeff(a + b - 1, b) + a * Math.log(pFrame) + b * Math.log(1 - pFrame));
 }
 
 /** P(P1 gagne le match) — best-of-N (P(Bin(N) ≥ manches requises)). */
@@ -256,29 +290,36 @@ function liveMatchWinProb(pFrame: number, bestOf: number, scoreA: number, scoreB
 /** P(total frames > threshold) — lo best-of. */
 function overTotalFramesProb(pFrame: number, bestOf: number, threshold: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
-  // Formule négative binomiale : P(match se termine à la frame t)
-  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
+  // P(match se termine à t) = P(P1 gagne winsNeeded-(t-winsNeeded)) + P(P2 gagne).
   let pOver = 0;
-  for (let t = threshold + 1; t <= bestOf; t++) {
-    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
-    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
-    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
-    pOver += coeff * (pA + pB);
+  for (let t = Math.floor(threshold) + 1; t <= bestOf; t++) {
+    const loser = t - winsNeeded;
+    pOver += scoreWinProb(pFrame, winsNeeded, loser) + scoreWinProb(1 - pFrame, winsNeeded, loser);
   }
   return Math.min(100, Math.max(0, pOver * 100));
+}
+
+/** Ligne Over totale par match : plus haute ligne avec Over ≥ 60 % (sinon `need`). */
+function bestOverTotalLine(pFrame: number, bestOf: number): number {
+  const need = Math.ceil(bestOf / 2);
+  let best = need;
+  for (let t = need; t <= bestOf - 1; t++) {
+    if (overTotalFramesProb(pFrame, bestOf, t) >= 60) best = t;
+    else break; // décroissante en t — inutile de continuer
+  }
+  return best;
 }
 
 /** P(P1 gagne avec ≥m frames d'avance sur P2). */
 function handicapProb(pFrame: number, bestOf: number, handicap: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
   let pCover = 0;
-  // Parcourir tous les scores finaux possibles où P1 gagne avec avance ≥ handicap
+  // Scores finaux où P1 gagne avec marge ≥ handicap (b ≤ a - handicap).
   for (let a = winsNeeded; a <= bestOf; a++) {
-    for (let b = 0; b < a - handicap; b++) {
+    for (let b = 0; b <= a - handicap; b++) {
       if (a + b > bestOf) continue;
       if (b >= winsNeeded) continue;
-      // P1 gagne a-b : la dernière frame est gagnée par P1
-      pCover += Math.exp(logBinomPMF(b, a + b - 1, pFrame));
+      pCover += scoreWinProb(pFrame, a, b);
     }
   }
   return Math.min(100, Math.max(0, pCover * 100));
@@ -295,10 +336,12 @@ function handicapProb(pFrame: number, bestOf: number, handicap: number): number 
  * à (p - 0.5) et au nombre de frames nécessaires k.
  */
 function firstToKProb(pFrame: number, k: number): number {
+  if (pFrame <= 0) return 0;
+  if (pFrame >= 1) return 100;
+  // Σᵢ₌₀ᵏ⁻¹ C(k-1+i, i) · pFrame^k · (1-pFrame)^i  (k=2 → p²(3−2p))
   let pFirst = 0;
   for (let i = 0; i < k; i++) {
-    // C(k+i-1, i) * p^k * (1-p)^i
-    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
+    const logP = logBinomCoeff(k - 1 + i, i) + k * Math.log(pFrame) + i * Math.log(1 - pFrame);
     pFirst += Math.exp(logP);
   }
   // Ajustement pressure : favori (p>0.5) reçoit un boost léger en race-to-k
@@ -310,20 +353,17 @@ function firstToKProb(pFrame: number, k: number): number {
 
 /** P(P1 gagne ≥k frames dans le match. */
 function totalFramesOverProb(pFrame: number, bestOf: number, k: number): number {
-  // Formule négative binomiale : P(match se termine à la frame t)
-  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   const winsNeeded = Math.ceil(bestOf / 2);
   let pOver = 0;
   let totalProb = 0;
   for (let t = winsNeeded; t <= bestOf; t++) {
-    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
-    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
-    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
-    const prob = coeff * (pA + pB);
-    // Compter les frames du perdant : si P1 gagne, P2 a (t - winsNeeded) frames
-    const loserFrames = t - winsNeeded;
-    if (loserFrames >= k) pOver += prob;
-    totalProb += prob;
+    const loser = t - winsNeeded;
+    // Si P1 gagne, P1 a winsNeeded frames ; si P2 gagne, P1 a `loser` frames.
+    const p1Wins = scoreWinProb(pFrame, winsNeeded, loser);
+    const p2Wins = scoreWinProb(1 - pFrame, winsNeeded, loser);
+    totalProb += p1Wins + p2Wins;
+    if (winsNeeded >= k) pOver += p1Wins;
+    if (loser >= k) pOver += p2Wins;
   }
   if (totalProb === 0) return 50;
   return Math.min(100, Math.max(0, (pOver / totalProb) * 100));
@@ -368,10 +408,10 @@ function playerScore(p: ApiPlayer): number {
   const century = normalize(p.centuryRate ?? 0, 0, 30);
   // Decider win% : déjà 0-100
   const decider = p.deciderWinPct ?? 50;
-  // Avg break : 20-80 → 0-100
-  const avgBreak = normalize(p.avgBreak ?? 30, 20, 80);
+  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
+  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
 
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + avgBreak * 0.10;
+  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
 }
 
 // ─── Badge PowerScore (sous le nom du joueur) ──────────────────────────────
@@ -386,11 +426,15 @@ function powerScoreColor(score: number): string {
 
 /** Affiche le PowerScore + Elo + Win% sous le nom du joueur. */
 function PowerScoreTag({ player, onInfo }: { player: ApiPlayer; onInfo?: () => void }) {
+  // id "" = résolution fuzzy échouée → defaults Elo 1500/W%50, ne pas afficher comme réels
+  if (!player.id) {
+    return <span className="text-[11px] leading-none text-gray-500">pas de données</span>;
+  }
   const score = Math.round(playerScore(player));
   const elo = player.eloRating;
   const winPct = player.winPct != null ? player.winPct.toFixed(1) : "—";
   return (
-    <span className={`text-[9px] tabular-nums leading-none ${powerScoreColor(score)}`}>
+    <span className={`text-[11px] tabular-nums leading-none ${powerScoreColor(score)}`}>
       PS {score} · E {elo} · W% {winPct}%
       {onInfo && (
         <button
@@ -401,7 +445,7 @@ function PowerScoreTag({ player, onInfo }: { player: ApiPlayer; onInfo?: () => v
           }}
           aria-label="Explications des metrics PS, E, W%"
           title="Explications des metrics"
-          className="ml-0.5 inline-flex h-3 w-3 items-center justify-center rounded-full border border-current align-middle text-[8px] font-bold opacity-60 hover:opacity-100"
+          className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full border border-current align-middle text-[11px] font-bold opacity-60 hover:opacity-100"
         >
           i
         </button>
@@ -416,6 +460,7 @@ function WinBar({ prob1, prob2 }: { prob1: number; prob2: number }) {
   const color2 = prob2 >= 60 ? "#10b981" : prob2 >= 50 ? "#3b82f6" : "#f59e0b";
   return (
     <div
+      aria-hidden="true"
       className="h-1.5 w-full overflow-hidden rounded-full"
       style={{ background: `linear-gradient(to right, ${color1} ${prob1}%, ${color2} ${prob1}%)` }}
     />
@@ -429,17 +474,13 @@ function OverTotalTag({ bestOf, p1, p2 }: { bestOf: number; p1: number; p2: numb
   const pFrame = total > 0 ? p1 / total : 0.5;
   const need = Math.ceil(bestOf / 2);
 
-  // Formule négative binomiale : P(match se termine à la frame t)
-  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
   let cumUnder = 0;
   let totalProb = 0;
   let expectedSum = 0;
 
   for (let t = need; t <= bestOf; t++) {
-    const coeff = Math.exp(logBinomPMF(need - 1, t - 1, pFrame));
-    const pA = Math.pow(pFrame, need) * Math.pow(1 - pFrame, t - need);
-    const pB = Math.pow(1 - pFrame, need) * Math.pow(pFrame, t - need);
-    const prob = coeff * (pA + pB);
+    const loser = t - need;
+    const prob = scoreWinProb(pFrame, need, loser) + scoreWinProb(1 - pFrame, need, loser);
     totalProb += prob;
     if (t <= target) cumUnder += prob;
     expectedSum += t * prob;
@@ -449,9 +490,9 @@ function OverTotalTag({ bestOf, p1, p2 }: { bestOf: number; p1: number; p2: numb
   const expectedFrames = totalProb > 0 ? (expectedSum / totalProb).toFixed(1) : "—";
 
   return (
-    <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[8px] font-semibold text-blue-600">
+    <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-600">
       O{target}F {overProb}%
-      <span className="text-blue-400 font-normal">E:{expectedFrames}</span>
+      <span className="text-blue-700 font-normal">E:{expectedFrames}</span>
     </span>
   );
 }
@@ -586,6 +627,10 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 // ---------------------------------------------------------------------------
 type CalendarFilter = "all" | "live" | "odds" | "finished" | "scheduled";
 
+/** Date ISO (YYYY-MM-DD) en Europe/Paris — le calendrier affiche/filtre Paris, pas UTC. */
+const parisISO = (date: Date): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(date);
+
 const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
   { key: "all", label: "ALL" },
   { key: "live", label: "LIVE" },
@@ -595,14 +640,12 @@ const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
 ];
 
 export function SnookerTabContent() {
+  const router = useRouter();
   const [activeMarket, setActiveMarket] = useState<MarketKey>("matchWinner");
   const [handicapVal, setHandicapVal] = useState(2);
   const [overLine, setOverLine] = useState(6);
   const [calFilter, setCalFilter] = useState<CalendarFilter>("all");
-  const [calDate, setCalDate] = useState<string>(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  });
+  const [calDate, setCalDate] = useState<string>(() => parisISO(new Date()));
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [videoQuery, setVideoQuery] = useState<string | null>(null);
   // Marché affiché dans le popup tutoriel (null = fermé)
@@ -649,7 +692,7 @@ export function SnookerTabContent() {
     const playerLikes: import("@/lib/snooker/player-match").PlayerLike[] = players.map((p) => ({
       id: p.id,
       name: p.name,
-      matches_played: 80,
+      matches_played: 0, // volume inconnu côté API — pas de valeur inventée (audit lot3)
     }));
     return buildPlayerIndex(playerLikes);
   }, [players]);
@@ -658,7 +701,7 @@ export function SnookerTabContent() {
     players.map((p) => ({
       id: p.id,
       name: p.name,
-      matches_played: 80,
+      matches_played: 0,
     })),
   [players]);
 
@@ -670,11 +713,12 @@ export function SnookerTabContent() {
     const [lpa, lpb] = resolvePlayers(lm, players, playerIndex, allPlayerLikes);
     const comp = computeCompositeProb(lm, players, playerIndex, allPlayerLikes, "all");
     const preP1 = comp?.prob1 ?? 50;
-    const fav = Math.max(comp?.prob1 ?? 50, comp?.prob2 ?? 50);
     return {
       player1: lpa.name || lm.player1,
       player2: lpb.name || lm.player2,
-      pFrame: frameProbFromMatchProb(fav / 100, lm.bestOf || 7),
+      // Orientation P1 : liveScoreDistribution/momentum interprètent pFrame côté P1
+      // (pas côté favori — sinon probas live inversées quand P2 est favori).
+      pFrame: frameProbFromMatchProb(preP1 / 100, lm.bestOf || 7),
       preP1,
       match: lm,
     };
@@ -699,8 +743,10 @@ export function SnookerTabContent() {
       const baseProb = computeCompositeProb(m, players, playerIndex, allPlayerLikes, "all");
       if (!baseProb) return null;
 
-      const pFrame = baseProb.prob1 / 100;
       const bo = m.bestOf || 7;
+      // baseProb est une proba MATCH → inversion en proba FRAME (bissection) :
+      // les marchés binomiaux (over, handicap, race-to, total joueur) attendent pFrame.
+      const pFrame = frameProbFromMatchProb(baseProb.prob1 / 100, bo);
       const hasOdds = !!(m.odds && m.odds.player1 > 0 && m.odds.player2 > 0);
 
       let prob: number;
@@ -730,8 +776,10 @@ export function SnookerTabContent() {
           break;
         }
         case "overTotal": {
-          prob = overTotalFramesProb(pFrame, bo, overLine);
-          label = `Over ${overLine}`;
+          // Ligne adaptative par match (plus haute ligne Over ≥ 60 %).
+          const line = bestOverTotalLine(pFrame, bo);
+          prob = overTotalFramesProb(pFrame, bo, line);
+          label = `Over ${line}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
@@ -743,7 +791,7 @@ export function SnookerTabContent() {
         }
         case "handicapP2": {
           prob = 100 - handicapProb(pFrame, bo, handicapVal);
-          label = `P2 -${handicapVal}`;
+          label = `P2 +${handicapVal}`;
           sub = `${prob.toFixed(1)}%`;
           break;
         }
@@ -771,13 +819,12 @@ export function SnookerTabContent() {
 
       if (prob < 45) return null;
 
-      // Edge vs cotes
+      // Edge vs cotes — uniquement matchWinner : les cotes 1X2 ne existent pas
+      // pour over/handicap/first-to (l'ancienne mise à l'échelle était fictive).
       let edge = 0;
-      if (hasOdds) {
+      if (hasOdds && activeMarket === "matchWinner") {
         const implied = oddsWinProb(m.odds!.player1, m.odds!.player2);
-        edge = activeMarket === "matchWinner"
-          ? prob - (side === "p2" ? 100 - implied : implied)
-          : prob - implied * (prob / baseProb.prob1); // adjust for non-winner markets
+        edge = prob - (side === "p2" ? 100 - implied : implied);
       }
       const roi = hasOdds && edge > 0 ? (edge / (100 - prob)) * 100 : 0;
 
@@ -798,9 +845,10 @@ export function SnookerTabContent() {
       p1: ApiPlayer; p2: ApiPlayer; pFrame: number; bestOf: number;
     }>;
 
-    // Tri: edge décroissant si odds, sinon prob décroissante
+    // Tri: edge décroissant si odds (tie-break proba — edge peut être 0 sur
+    // les marchés sans cotes), sinon prob décroissante
     scored.sort((a, b) => {
-      if (a.hasOdds && b.hasOdds) return b.edge - a.edge;
+      if (a.hasOdds && b.hasOdds) return (b.edge - a.edge) || (b.prob - a.prob);
       if (a.hasOdds) return -1;
       if (b.hasOdds) return 1;
       return b.prob - a.prob;
@@ -832,8 +880,7 @@ export function SnookerTabContent() {
     if (calFilter !== "finished") {
       list = list.filter((m) => {
         if (!m.scheduled_at) return true;
-        const d = new Date(m.scheduled_at);
-        return d.toISOString().slice(0, 10) === calDate;
+        return parisISO(new Date(m.scheduled_at)) === calDate;
       });
     }
     return list;
@@ -891,7 +938,7 @@ export function SnookerTabContent() {
   const shiftDate = (n: number) => {
     const d = new Date(calDate + "T12:00:00");
     d.setDate(d.getDate() + n);
-    setCalDate(d.toISOString().slice(0, 10));
+    setCalDate(parisISO(d));
   };
 
   const hasData = !!matchesRes.data?.matches;
@@ -918,8 +965,9 @@ export function SnookerTabContent() {
             <button
               key={f.key}
               type="button"
-              onClick={() => setCalFilter(f.key)}
-              className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                onClick={() => setCalFilter(f.key)}
+                aria-pressed={calFilter === f.key}
+                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${
                 calFilter === f.key
                   ? f.key === "live"
                     ? "bg-rose-500 text-white"
@@ -929,7 +977,7 @@ export function SnookerTabContent() {
             >
               {f.label}
               {f.key === "live" && liveMatches.length > 0 && (
-                <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-white/20 text-[9px]">
+                <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-white/20 text-[11px]">
                   {liveMatches.length}
                 </span>
               )}
@@ -942,7 +990,7 @@ export function SnookerTabContent() {
               <button
                 type="button"
                 onClick={() => shiftDate(-1)}
-                className="flex h-9 w-9 sm:h-7 sm:w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+                className="flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
                 aria-label="Jour précédent"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -955,7 +1003,7 @@ export function SnookerTabContent() {
               <button
                 type="button"
                 onClick={() => shiftDate(1)}
-                className="flex h-9 w-9 sm:h-7 sm:w-7 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
+                className="flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200"
                 aria-label="Jour suivant"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -975,7 +1023,7 @@ export function SnookerTabContent() {
               ))}
             </div>
           ) : calFiltered.length === 0 ? (
-            <div className="py-12 text-center text-[13px] text-gray-400">
+            <div className="py-12 text-center text-[13px] text-gray-500">
               {calFilter === "live"
                 ? "Aucun match en cours"
                 : calFilter === "odds"
@@ -993,7 +1041,7 @@ export function SnookerTabContent() {
                   <span className="text-[11px] font-bold uppercase tracking-wide text-gray-600">
                     {tournament}
                   </span>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[11px] text-gray-500">
                     ({tMatches.length})
                   </span>
                   <svg className="ml-auto h-3 w-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1023,22 +1071,20 @@ export function SnookerTabContent() {
                   const winP2 = compositeProb?.prob2 ?? 50;
 
                   return (
-                    <a
+                    <div
                       key={m.id}
-                      href={`/snooker/h2h/${m.id}`}
-                      className="flex items-center border-b border-gray-100 px-4 py-2 transition-colors hover:bg-[#f9e9cc] last:border-b-0"
+                      role="link"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        // Navigation ligne — un clic sur un contrôle imbriqué ne navigue pas
+                        if ((e.target as HTMLElement).closest("button")) return;
+                        router.push(`/snooker/h2h/${m.id}`);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") router.push(`/snooker/h2h/${m.id}`);
+                      }}
+                      className="flex cursor-pointer items-center border-b border-gray-100 px-4 py-2 transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00985f] last:border-b-0"
                     >
-                      {/* Étoile favori */}
-                      <button
-                        type="button"
-                        className="mr-2 shrink-0 text-gray-300 transition-colors hover:text-yellow-400"
-                        onClick={(e) => e.preventDefault()}
-                        aria-label="Ajouter aux favoris"
-                      >
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                      </button>
 
                       {/* Heure / LIVE (clic = popup live) */}
                       <div className="w-[52px] shrink-0 text-center">
@@ -1047,6 +1093,7 @@ export function SnookerTabContent() {
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
                               setLiveMatchId(m.id);
                             }}
                             aria-label={`Ouvrir le live : ${m.player1} contre ${m.player2}`}
@@ -1057,7 +1104,7 @@ export function SnookerTabContent() {
                               <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-rose-500 opacity-75" />
                               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
                             </span>
-                            <span className="text-[9px] font-bold uppercase text-rose-500">LIVE</span>
+                            <span className="text-[11px] font-bold uppercase text-rose-500">LIVE</span>
                           </button>
                         ) : (
                           <span className="text-[12px] tabular-nums text-gray-500">{timeStr}</span>
@@ -1092,7 +1139,7 @@ export function SnookerTabContent() {
                         {m.player1PhotoUrl ? (
                           <img src={m.player1PhotoUrl} alt="" className="h-3.5 w-3.5 shrink-0 rounded-sm object-cover" />
                         ) : (
-                          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-gray-200 text-[7px] font-bold text-gray-500">
+                          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-gray-200 text-[11px] font-bold text-gray-500">
                             {m.player1.charAt(0)}
                           </span>
                         )}
@@ -1109,7 +1156,7 @@ export function SnookerTabContent() {
                             {m.scoreA} - {m.scoreB}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-gray-400">—</span>
+                          <span className="text-[11px] text-gray-500">—</span>
                         )}
                         <WinBar prob1={winP1} prob2={winP2} />
                       </div>
@@ -1119,7 +1166,7 @@ export function SnookerTabContent() {
                         {m.player2PhotoUrl ? (
                           <img src={m.player2PhotoUrl} alt="" className="h-3.5 w-3.5 shrink-0 rounded-sm object-cover" />
                         ) : (
-                          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-gray-200 text-[7px] font-bold text-gray-500">
+                          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-gray-200 text-[11px] font-bold text-gray-500">
                             {m.player2.charAt(0)}
                           </span>
                         )}
@@ -1149,7 +1196,7 @@ export function SnookerTabContent() {
                       </div>
 
                       {/* Best of / Frames + Over */}
-                      <div className="ml-2 flex w-[50px] shrink-0 flex-col items-center gap-0.5 text-[11px] text-gray-400">
+                      <div className="ml-2 flex w-[50px] shrink-0 flex-col items-center gap-0.5 text-[11px] text-gray-500">
                         <span>{framesLabel}</span>
                         <OverTotalTag bestOf={m.bestOf} p1={pa.winPct ?? 50} p2={pb.winPct ?? 50} />
                       </div>
@@ -1162,7 +1209,7 @@ export function SnookerTabContent() {
                           e.stopPropagation();
                           setVideoQuery(`${pa.name} vs ${pb.name} snooker highlights`);
                         }}
-                        className="ml-1 shrink-0 rounded bg-gray-100 p-1 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-500"
+                        className="ml-1 shrink-0 rounded bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-rose-50 hover:text-rose-500"
                         aria-label="Voir les highlights"
                       >
                         <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -1174,11 +1221,11 @@ export function SnookerTabContent() {
                       <div className="ml-1.5 shrink-0 flex items-center gap-1">
                         {live ? (
                           <>
-                            <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                            <span className="rounded bg-rose-500 px-1.5 py-0.5 text-[11px] font-bold uppercase text-white">
                               LIVE
                             </span>
                             {/* Momentum bar */}
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center gap-0.5" aria-hidden="true">
                               {Array.from({ length: m.bestOf || 7 }).map((_, fi) => {
                                 const total = m.scoreA + m.scoreB;
                                 const isP1Frame = fi < m.scoreA;
@@ -1197,12 +1244,12 @@ export function SnookerTabContent() {
                             </div>
                           </>
                         ) : (
-                          <span className="text-[10px] font-medium text-gray-400 transition-colors group-hover:text-rose-500">
+                          <span className="text-[11px] font-medium text-gray-500 transition-colors group-hover:text-rose-500">
                             LIVE &gt;
                           </span>
                         )}
                       </div>
-                    </a>
+                    </div>
                   );
                 })}
               </div>
@@ -1211,7 +1258,7 @@ export function SnookerTabContent() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2 text-[10px] text-gray-400">
+        <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2 text-[11px] text-gray-500">
           <span>
             Source: FlashScore
             {matchesRes.data?.scraped_at
@@ -1221,55 +1268,6 @@ export function SnookerTabContent() {
           <span>{calFiltered.length} matchs affichés</span>
         </div>
       </section>
-
-      {/* ======== PRÉCISION DU MODÈLE ======== */}
-      {accuracy && accuracy.totalMatches > 0 && (
-        <section
-          aria-label="Précision du modèle"
-          className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
-          style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
-        >
-          <h2 className="text-[13px] font-semibold mb-3" style={{ color: "#000000" }}>
-            Précision du modèle
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                label: "Précision globale",
-                value: `${accuracy.accuracy}%`,
-                sub: `${accuracy.totalMatches} matchs analysés`,
-                color: accuracy.accuracy >= 60 ? "#00985f" : accuracy.accuracy >= 55 ? "#FF6D00" : "#6b7280",
-              },
-              {
-                label: "Haute confiance",
-                value: `${accuracy.highConfidence.accuracy}%`,
-                sub: `${accuracy.highConfidence.count} paris (>65% confiance)`,
-                color: accuracy.highConfidence.accuracy >= 65 ? "#00985f" : "#FF6D00",
-              },
-              {
-                label: "Edge vs cotes",
-                value: `${accuracy.edge.accuracy}%`,
-                sub: `${accuracy.edge.count} paris avec edge >5%`,
-                color: accuracy.edge.accuracy >= 55 ? "#00985f" : "#FF6D00",
-              },
-              {
-                label: "Brier Score",
-                value: accuracy.brierScore.toFixed(3),
-                sub: accuracy.brierScore < 0.2 ? "Excellente calibration" : accuracy.brierScore < 0.25 ? "Bonne calibration" : "À améliorer",
-                color: accuracy.brierScore < 0.2 ? "#00985f" : accuracy.brierScore < 0.25 ? "#FF6D00" : "#6b7280",
-              },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-gray-50 p-3 text-center">
-                <div className="text-[18px] font-bold tabular-nums" style={{ color: stat.color }}>
-                  {stat.value}
-                </div>
-                <div className="text-[10px] font-medium text-gray-500 mt-1">{stat.label}</div>
-                <div className="text-[9px] text-gray-400 mt-0.5">{stat.sub}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ======== PARIS RECOMMANDÉS — Meilleurs paris toutes confiances ======== */}
       {top10.filter(t => t.confidence === "high").length > 0 && (
@@ -1291,11 +1289,11 @@ export function SnookerTabContent() {
                 <span className="text-[11px] font-medium text-gray-700">
                   {t.p1.name} vs {t.p2.name}
                 </span>
-                <span className="text-[10px] text-gray-400">·</span>
+                <span className="text-[11px] text-gray-500">·</span>
                 <span className="text-[11px] font-bold text-emerald-600">{t.label}</span>
                 <span className="text-[11px] font-bold tabular-nums text-emerald-700">{t.prob.toFixed(1)}%</span>
                 {t.hasOdds && t.edge > 0 && (
-                  <span className="text-[9px] font-bold text-emerald-500">+{t.edge.toFixed(1)}%</span>
+                  <span className="text-[11px] font-bold text-emerald-600">+{t.edge.toFixed(1)}%</span>
                 )}
               </div>
             ))}
@@ -1321,6 +1319,7 @@ export function SnookerTabContent() {
                   key={s.key}
                   type="button"
                   onClick={() => setActiveMarket(s.key)}
+                  aria-pressed={activeMarket === s.key}
                   className={`min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5 ${
                     activeMarket === s.key
                       ? "bg-[#00985f]/10 text-[#00985f]"
@@ -1345,7 +1344,12 @@ export function SnookerTabContent() {
                 />
               </div>
             )}
-            {(activeMarket === "overTotal" || activeMarket === "totalOverP1" || activeMarket === "totalOverP2") && (
+            {activeMarket === "overTotal" && (
+              <div className="flex items-center gap-1 rounded border border-gray-200 px-2 py-0.5">
+                <span className="text-[10px] text-gray-500">Ligne auto · Over ≥ 60 %</span>
+              </div>
+            )}
+            {(activeMarket === "totalOverP1" || activeMarket === "totalOverP2") && (
               <div className="flex items-center gap-1 rounded border border-gray-200 px-2 py-0.5">
                 <span className="text-[10px] text-gray-500">Over</span>
                 <input
@@ -1482,7 +1486,7 @@ export function SnookerTabContent() {
                             const need = Math.ceil(bo / 2);
                             const expFrames = need + (bo - need) * pf * (1 - pf) * 4;
                             return (
-                              <span className="ml-1 inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[8px] font-semibold text-blue-600">
+                              <span className="ml-1 inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[11px] font-semibold text-blue-600">
                                 E:{expFrames.toFixed(1)}
                               </span>
                             );
@@ -1513,19 +1517,20 @@ export function SnookerTabContent() {
                         {prob.toFixed(1)}%
                       </span>
                       {hasOdds && edge > 2 && (
-                        <span className="hidden sm:inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-bold text-emerald-600">
+                        <span className="hidden sm:inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-600">
                           +{edge.toFixed(1)}%
                         </span>
                       )}
-                      {(() => {
-                        // Kelly uniquement sur cote réelle du côté recommandé (jamais de cote fictive)
+                      {activeMarket === "matchWinner" && (() => {
+                        // Kelly uniquement sur matchWinner + cote réelle du côté
+                        // recommandé (pas de cote 1X2 appliquée à over/handicap).
                         const sideOdds = side === "p2" ? m.odds?.player2 : m.odds?.player1;
                         if (!sideOdds || sideOdds <= 1) return null;
                         const k = kellyCriterion(prob / 100, sideOdds);
                         if (k.fullKelly <= 0) return null;
                         return (
                           <span
-                            className="hidden sm:inline-flex items-center rounded-full px-1.5 py-0.5 text-[8px] font-bold text-white"
+                            className="hidden sm:inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold text-white"
                             style={{ backgroundColor: verdictColor(k.verdict) }}
                             title={`Kelly: ${k.fullKelly.toFixed(1)}% (half: ${k.halfKelly.toFixed(1)}%)`}
                           >
@@ -1534,13 +1539,12 @@ export function SnookerTabContent() {
                         );
                       })()}
                       {confidence === "high" && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
+                        <span className="inline-flex items-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[11px] font-bold text-white">
                           ★
                         </span>
                       )}
                       {confidence === "medium" && (
-                        <span className="inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-                          M
+                        <span className="inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[11px] font-bold text-white">
                           Moyen
                         </span>
                       )}
@@ -1560,22 +1564,30 @@ export function SnookerTabContent() {
                                   match: `${m.player1} vs ${m.player2}`,
                                   market: activeMarket,
                                   selection: label,
-                                  odds: m.odds?.player1,
+                                  // Cote du côté recommandé seulement sur matchWinner
+                                  // (les autres marchés n'ont pas de cote 1X2 valide)
+                                  odds:
+                                    activeMarket === "matchWinner"
+                                      ? side === "p2"
+                                        ? m.odds?.player2
+                                        : m.odds?.player1
+                                      : undefined,
                                   probability: prob,
                                   edge,
                                   confidence,
                                 });
                               }
                             }}
-                            className={`rounded-full p-1.5 transition-colors ${
+                            className={`flex min-h-11 min-w-11 items-center justify-center rounded-full p-2 transition-colors ${
                               tracked
                                 ? "bg-[#00985f] text-white"
-                                : "bg-gray-100 text-gray-400 hover:bg-[#00985f]/10 hover:text-[#00985f]"
+                                : "bg-gray-100 text-gray-500 hover:bg-[#00985f]/10 hover:text-[#00985f]"
                             }`}
                             title={tracked ? "Pari suivi" : "Suivre ce pari"}
+                            aria-pressed={tracked}
                             disabled={tracked}
                           >
-                            <svg className="h-3 w-3" fill={tracked ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <svg className="h-4 w-4" fill={tracked ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                           </button>

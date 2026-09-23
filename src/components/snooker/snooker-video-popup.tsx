@@ -19,6 +19,15 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
 
+  // Fermeture Échap + dialog ARIA (charte)
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -39,7 +48,13 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
   }, [query]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Highlights vidéo"
+    >
       <div
         className="relative mx-0 w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:mx-4 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -64,6 +79,7 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
             <iframe
               src={`https://www.youtube.com/embed/${selectedVideo}?rel=0`}
               className="h-full w-full"
+              title="Lecteur vidéo highlight"
               allow="autoplay; encrypted-media"
               allowFullScreen
             />
@@ -92,7 +108,7 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
                 <img src={v.thumbnail} alt="" className="h-10 w-16 shrink-0 rounded object-cover" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium text-gray-900">{v.title}</p>
-                  {v.author && <p className="truncate text-[10px] text-gray-500">{v.author}</p>}
+                  {v.author && <p className="truncate text-[11px] text-gray-500">{v.author}</p>}
                 </div>
               </button>
             ))}
@@ -101,7 +117,7 @@ export function SnookerVideoPopup({ query, onClose }: SnookerVideoPopupProps) {
 
         {/* Query */}
         <div className="border-t border-gray-100 px-4 py-2">
-          <p className="text-[10px] text-gray-400 truncate">Recherche: {query}</p>
+          <p className="text-[11px] text-gray-500 truncate">Recherche: {query}</p>
         </div>
       </div>
     </div>

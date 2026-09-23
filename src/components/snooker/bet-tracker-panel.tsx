@@ -17,6 +17,16 @@ export function BetTrackerPanel() {
     setBets(loadBets());
   }, []);
 
+  // Fermeture Échap (popup)
+  useEffect(() => {
+    if (!isOpen) return;
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [isOpen]);
+
   const stats = getStats(bets);
 
   if (bets.length === 0) return null;
@@ -44,7 +54,13 @@ export function BetTrackerPanel() {
 
       {/* Panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center" onClick={() => setIsOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center"
+          onClick={() => setIsOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mes paris suivis"
+        >
           <div
             className="mx-0 max-h-[80vh] sm:max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white sm:mx-4 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
@@ -69,7 +85,7 @@ export function BetTrackerPanel() {
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <div className="text-lg font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
-                  <div className="text-[9px] text-gray-500">{s.label}</div>
+                  <div className="text-[11px] text-gray-500">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -80,24 +96,24 @@ export function BetTrackerPanel() {
                 <div className={`text-sm font-bold tabular-nums ${stats.totalPnl >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   {stats.totalPnl >= 0 ? "+" : ""}{stats.totalPnl.toFixed(2)} units
                 </div>
-                <div className="text-[9px] text-gray-500">P&L total</div>
+                <div className="text-[11px] text-gray-500">P&L total</div>
               </div>
               <div className="text-center">
                 <div className={`text-sm font-bold tabular-nums ${stats.roi >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   {stats.roi >= 0 ? "+" : ""}{stats.roi.toFixed(1)}%
                 </div>
-                <div className="text-[9px] text-gray-500">ROI</div>
+                <div className="text-[11px] text-gray-500">ROI</div>
               </div>
               <div className="text-center">
                 <div className="text-sm font-bold tabular-nums text-gray-700">{stats.winRate}%</div>
-                <div className="text-[9px] text-gray-500">Win rate</div>
+                <div className="text-[11px] text-gray-500">Win rate</div>
               </div>
             </div>
 
             {/* Bet list */}
             <div className="divide-y divide-gray-50">
               {bets.length === 0 ? (
-                <div className="py-10 text-center text-sm text-gray-400">
+                <div className="py-10 text-center text-sm text-gray-500">
                   Aucun pari suivi. Cliquez sur « Suivre » pour commencer.
                 </div>
               ) : (
@@ -106,13 +122,13 @@ export function BetTrackerPanel() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12px] font-medium text-gray-800">{bet.match}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-semibold text-[#00985f]">{bet.selection}</span>
-                        <span className="text-[10px] text-gray-400">·</span>
-                        <span className="text-[10px] text-gray-500">{bet.probability.toFixed(1)}%</span>
+                        <span className="text-[11px] font-semibold text-[#00985f]">{bet.selection}</span>
+                        <span className="text-[11px] text-gray-500">·</span>
+                        <span className="text-[11px] text-gray-500">{bet.probability.toFixed(1)}%</span>
                         {bet.odds && (
                           <>
-                            <span className="text-[10px] text-gray-400">·</span>
-                            <span className="text-[10px] text-gray-500">@{bet.odds.toFixed(2)}</span>
+                            <span className="text-[11px] text-gray-500">·</span>
+                            <span className="text-[11px] text-gray-500">@{bet.odds.toFixed(2)}</span>
                           </>
                         )}
                       </div>
@@ -126,7 +142,7 @@ export function BetTrackerPanel() {
                               updateBetStatus(bet.id, "won", pnl);
                               setBets(loadBets());
                             }}
-                            className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-600 hover:bg-emerald-100"
+                            className="flex min-h-9 min-w-9 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-600 hover:bg-emerald-100"
                           >
                             W
                           </button>
@@ -135,7 +151,7 @@ export function BetTrackerPanel() {
                               updateBetStatus(bet.id, "lost", -1);
                               setBets(loadBets());
                             }}
-                            className="rounded-full bg-red-50 px-2 py-1 text-[9px] font-bold text-red-600 hover:bg-red-100"
+                            className="flex min-h-9 min-w-9 items-center justify-center rounded-full bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-100"
                           >
                             L
                           </button>
@@ -144,14 +160,14 @@ export function BetTrackerPanel() {
                               removeBet(bet.id);
                               setBets(loadBets());
                             }}
-                            className="rounded-full bg-gray-50 px-2 py-1 text-[9px] text-gray-400 hover:bg-gray-100"
+                            className="flex min-h-9 min-w-9 items-center justify-center rounded-full bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500 hover:bg-gray-100"
                           >
                             ×
                           </button>
                         </>
                       ) : (
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
                             bet.status === "won"
                               ? "bg-emerald-500 text-white"
                               : bet.status === "lost"

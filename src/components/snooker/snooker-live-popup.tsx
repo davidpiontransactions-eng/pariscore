@@ -227,12 +227,12 @@ export function SnookerLivePopup({ data, onClose, onRefresh }: Props) {
                     3 · Handicap frames
                   </span>
                   {hc.belowBar ? (
-                    <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[8px] font-bold text-gray-500">
+                    <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[11px] font-bold text-gray-500">
                       sous la barre 65 %
                     </span>
                   ) : (
                     <span
-                      className="rounded-full px-1.5 py-0.5 text-[8px] font-bold text-white"
+                      className="rounded-full px-1.5 py-0.5 text-[11px] font-bold text-white"
                       style={{ backgroundColor: "#00985f" }}
                     >
                       ≥ 65 %
@@ -267,7 +267,7 @@ export function SnookerLivePopup({ data, onClose, onRefresh }: Props) {
           </button>
           <span className="ml-auto tabular-nums">{fmtSynced(data.syncedAt)}</span>
         </div>
-        <div className="mt-1 text-center text-[9px]" style={{ color: "#a0a0a0" }}>
+        <div className="mt-1 text-center text-[11px]" style={{ color: "#a0a0a0" }}>
           Modèle : frames indépendantes (binomiale) — probabilités, pas des cotes.
         </div>
       </div>

@@ -92,6 +92,8 @@ function transformPlayer(p: CueTrackerFile["players"][number]): SnookerPlayer {
     out.deciderWinPct = p.decider_win_pct * 100;
   }
   if (p.max_break != null) {
+    // Champ hérité "avgBreak" = max_break CueTracker (pas un avg) —
+    // labellisé "Max Break" côté UI, normalisé 40-147 dans le PowerScore.
     out.avgBreak = p.max_break;
   }
   return out;

@@ -86,12 +86,13 @@ export function liveOverProb(dist: FinalScore[], line: number): number {
 
 /**
  * P(couvrir le handicap) — en %.
- * P1 "-m" : gagne par au moins m frames (A-B ≥ m).
- * P2 "+m" : ne perd pas par plus de m frames (A-B ≤ m, convention bookmaker).
+ * P1 "-m" : gagne si marge > m ; P2 "+m" : gagne si marge < m.
+ * Marge exacte = push bookmaker (void) : non comptée gagnante des deux côtés
+ * (avant : >= / <= → les deux gagnaient à marge = m, somme > 100 %).
  */
 export function liveHandicapProb(dist: FinalScore[], side: "p1" | "p2", line: number): number {
   const s = dist.reduce(
-    (t, f) => t + ((side === "p1" ? f.a - f.b >= line : f.a - f.b <= line) ? f.prob : 0),
+    (t, f) => t + ((side === "p1" ? f.a - f.b > line : f.a - f.b < line) ? f.prob : 0),
     0,
   );
   return Math.min(100, Math.max(0, s * 100));

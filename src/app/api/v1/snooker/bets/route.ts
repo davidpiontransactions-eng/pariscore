@@ -6,13 +6,14 @@
  *
  * Pre-match (3 paris/match) : handicap frame, total frames O/U, century occurrence.
  * Live (3 paris/match) : race to X frames, next frame winner, expected total frames.
- * Sources : Prisma (matchs) + snooker-analytics (modèle composite) + cotes optionnelles.
+ *
+ * Sources JSON (mêmes fichiers que /matches) — l'ancien backend Prisma n'était
+ * jamais rempli (sync-snooker-db orphelin) → panel vide + EV null (audit lot3).
+ * Cotes FlashScore lues sur le MÊME match que les noms → clés toujours alignées.
  */
 import { NextResponse } from "next/server";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { prisma } from "@/lib/prisma";
-const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 import {
   compositeWinProb,
   expectedValue,
@@ -24,88 +25,141 @@ import {
   winByMarginProb,
   totalFramesLines,
 } from "@/lib/services/snooker-analytics";
+import { buildPlayerIndex, findCuePlayer, type PlayerLike } from "@/lib/snooker/player-match";
+import { quickElo } from "@/lib/snooker/elo-engine";
+
+const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MIN_PROB = 0.58;
+const DEFAULT_BEST_OF = 9;
+
+type FlashMatch = {
+  id: string;
+  tournament?: string;
+  home: string;
+  away: string;
+  scoreHome: string;
+  scoreAway: string;
+  isLive: boolean;
+  odds?: { home?: number; draw?: number | null; away?: number };
+};
+
+type CuePlayer = {
+  id: string;
+  name: string;
+  matches_played?: number;
+  wins?: number;
+  losses?: number;
+  centuries?: number;
+  decider_win_pct?: number | null;
+};
+
+type FlashFile = { matches?: FlashMatch[] };
+type CueFile = { players?: CuePlayer[] };
 
 export async function GET(request: Request) {
   const isLive = new URL(request.url).searchParams.get("live") === "1";
   try {
-    const dbMatches = await prisma.snookerMatch.findMany({
-      where: isLive ? { status: "live" } : { status: { in: ["scheduled", "live"] } },
-      include: { playerA: true, playerB: true },
-      take: 200,
-      orderBy: { scheduledAt: "asc" },
-    });
-
-    // Index cotes optionnel : data/odds_flashscore_snooker.json (EV si cotes dispo).
-    const oddsIndex = new Map<string, { home: number; away: number }>();
-    try {
-      const file = JSON.parse(
-        readFileSync(join(DATA_DIR, "odds_flashscore_snooker.json"), "utf-8"),
-      ) as { matches?: Array<Record<string, unknown>> };
-      for (const r of file.matches ?? []) {
-        if (typeof r.home === "string" && typeof r.away === "string" && r.odds) {
-          const odds = r.odds as { home?: number; away?: number };
-          if (odds.home && odds.away) {
-            oddsIndex.set(`${norm(r.home)}|${norm(r.away)}`, { home: odds.home, away: odds.away });
-          }
-        }
-      }
-    } catch {
-      /* cotes optionnelles — fichier absent ou invalide */
+    const flash = readJson<FlashFile>(join(DATA_DIR, "odds_flashscore_snooker.json"));
+    const cue = readJson<CueFile>(join(DATA_DIR, "cuetracker_matches.json"));
+    if (!flash || !cue) {
+      return NextResponse.json({
+        mode: isLive ? "live" : "prematch",
+        total: 0,
+        min_prob: MIN_PROB,
+        matches: [],
+        generated_at: new Date().toISOString(),
+        message: "Données absentes — lancez les scrapers FlashScore + CueTracker.",
+      });
     }
 
-    const out = dbMatches.map((m) => {
-      const playedA = m.playerA.winPct != null ? 80 : 0;
-      const playedB = m.playerB.winPct != null ? 80 : 0;
+    const cuePlayers = cue.players ?? [];
+    const playerLikes: PlayerLike[] = cuePlayers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matches_played: p.matches_played ?? 0,
+    }));
+    const index = buildPlayerIndex(playerLikes);
+    const byId = new Map(cuePlayers.map((p) => [p.id, p]));
+
+    const out: unknown[] = [];
+    for (const m of flash.matches ?? []) {
+      if (!m.home || !m.away) continue;
+      const scoreA = parseFrames(m.scoreHome);
+      const scoreB = parseFrames(m.scoreAway);
+      const finished =
+        !m.isLive && scoreA + scoreB > 0 && m.scoreHome !== "-" && m.scoreAway !== "-";
+      // Mode prematch = tout sauf terminé (comme l'ancien where scheduled|live) ;
+      // mode live = uniquement en cours.
+      if (finished) continue;
+      if (isLive && !m.isLive) continue;
+
+      const hitA = findCuePlayer(m.home, index, playerLikes);
+      const hitB = findCuePlayer(m.away, index, playerLikes);
+      const cueA = hitA ? byId.get(hitA.id) : undefined;
+      const cueB = hitB ? byId.get(hitB.id) : undefined;
+
+      const winsA = cueA?.wins ?? 0;
+      const lossesA = cueA?.losses ?? 0;
+      const winsB = cueB?.wins ?? 0;
+      const lossesB = cueB?.losses ?? 0;
+      const playedA = cueA?.matches_played ?? winsA + lossesA;
+      const playedB = cueB?.matches_played ?? winsB + lossesB;
+      const eloA = quickElo(winsA, lossesA, cueA?.centuries ?? 0);
+      const eloB = quickElo(winsB, lossesB, cueB?.centuries ?? 0);
+
       const c = compositeWinProb({
-        bestOf: m.bestOf || 9,
-        eloA: m.playerA.eloRating,
-        eloB: m.playerB.eloRating,
-        winPctA: m.playerA.winPct,
-        winPctB: m.playerB.winPct,
+        bestOf: DEFAULT_BEST_OF,
+        eloA,
+        eloB,
+        winPctA: playedA > 0 ? (winsA / playedA) * 100 : null,
+        winPctB: playedB > 0 ? (winsB / playedB) * 100 : null,
         playedA,
         playedB,
       });
       const pWin = c.pWin;
       const pFav = Math.max(pWin, 1 - pWin);
       const pFrame = 0.5 + (pWin - 0.5) / 2.2;
-      const need = Math.ceil((m.bestOf || 9) / 2);
-      const odds = oddsIndex.get(`${norm(m.playerA.name)}|${norm(m.playerB.name)}`);
-      const oddsFav = pWin >= 0.5 ? odds?.home : odds?.away;
+      const need = Math.ceil(DEFAULT_BEST_OF / 2);
+
+      // Cotes sur LE match courant (source identique aux noms → clé toujours hit)
+      const odds = m.odds?.home && m.odds.away ? m.odds : undefined;
+      const oddsFav = odds ? (pWin >= 0.5 ? odds.home : odds.away) : undefined;
 
       const bets = isLive
-        ? buildLiveBets({ winsA: m.scoreA, winsB: m.scoreB, need, pWin, pFrame })
+        ? buildLiveBets({ winsA, winsB, need, pWin, pFrame })
         : buildPreMatchBets({
-            bestOf: m.bestOf || 9,
+            bestOf: DEFAULT_BEST_OF,
             pWin,
-            deciderA: m.playerA.deciderWinPct,
-            deciderB: m.playerB.deciderWinPct,
-            centuryA: m.playerA.centuryRate,
-            centuryB: m.playerB.centuryRate,
+            deciderA: cueA?.decider_win_pct != null ? cueA.decider_win_pct * 100 : null,
+            deciderB: cueB?.decider_win_pct != null ? cueB.decider_win_pct * 100 : null,
+            centuryA: playedA > 0 ? ((cueA?.centuries ?? 0) / playedA) * 100 : null,
+            centuryB: playedB > 0 ? ((cueB?.centuries ?? 0) / playedB) * 100 : null,
+            playedA,
+            playedB,
           });
 
-      return {
+      out.push({
         matchId: m.id,
-        tournament: m.tournament,
-        bestOf: m.bestOf,
-        status: m.status,
-        playerA: { id: m.playerA.id, name: m.playerA.name, elo: Math.round(m.playerA.eloRating) },
-        playerB: { id: m.playerB.id, name: m.playerB.name, elo: Math.round(m.playerB.eloRating) },
-        score: `${m.scoreA}-${m.scoreB}`,
+        tournament: m.tournament || "Snooker",
+        bestOf: DEFAULT_BEST_OF,
+        status: m.isLive ? "live" : "scheduled",
+        playerA: { id: hitA?.id ?? m.home, name: cueA?.name ?? m.home, elo: Math.round(eloA) },
+        playerB: { id: hitB?.id ?? m.away, name: cueB?.name ?? m.away, elo: Math.round(eloB) },
+        score: `${scoreA}-${scoreB}`,
         pWin: round3(pWin),
         pFav: round3(pFav),
-        favourite: pWin >= 0.5 ? m.playerA.name : m.playerB.name,
+        favourite: pWin >= 0.5 ? (cueA?.name ?? m.home) : (cueB?.name ?? m.away),
         confidence: confidenceLevel(pFav, playedA, playedB),
         ev: oddsFav ? round3(expectedValue(pFav, oddsFav)) : null,
-        totalFramesLines: totalFramesLines(m.bestOf || 9, pFrame),
+        totalFramesLines: totalFramesLines(DEFAULT_BEST_OF, pFrame),
         bets: bets.filter((b) => b.prob >= MIN_PROB),
         allBets: bets,
-      };
-    });
+      });
+    }
 
     return NextResponse.json({
       mode: isLive ? "live" : "prematch",
@@ -119,8 +173,20 @@ export async function GET(request: Request) {
   }
 }
 
-function norm(s: string): string {
-  return (s || "").toLowerCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+function readJson<T>(path: string): T | null {
+  try {
+    if (!existsSync(path)) return null;
+    return JSON.parse(readFileSync(path, "utf-8")) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Parse un score frames "6-2" en entier, ou 0 si absent/invalide. */
+function parseFrames(raw: string | undefined): number {
+  if (!raw || raw === "-" || raw === "") return 0;
+  const n = parseInt(raw.split("-")[0] ?? "", 10);
+  return isNaN(n) ? 0 : Math.max(0, n);
 }
 
 function round3(n: number): number {

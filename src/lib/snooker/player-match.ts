@@ -12,8 +12,8 @@
  */
 
 // ─── Mapping FlashScore / Oddsportal → CueTracker ID ──────────────────────
-
-const FS_TO_CUE_ID: Record<string, string> = {
+/** Exporté : réutilisé par matches/route (photos) — une seule source de vérité. */
+export const FS_TO_CUE_ID: Record<string, string> = {
   // Top players
   "osullivan r.": "ronnie-osullivan", "o'sullivan r.": "ronnie-osullivan",
   "trump j.": "judd-trump", "selby m.": "mark-selby",

@@ -42,8 +42,9 @@ function playerScore(p: Player): number {
   const win = p.winPct ?? 50;
   const century = normalize(p.centuryRate ?? 0, 0, 30);
   const decider = p.deciderWinPct ?? 50;
-  const avgBreak = normalize(p.avgBreak ?? 30, 20, 80);
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + avgBreak * 0.10;
+  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
+  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
+  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
 }
 
 function logBinomPMF(k: number, n: number, p: number): number {
@@ -54,6 +55,29 @@ function logBinomPMF(k: number, n: number, p: number): number {
     logC += Math.log(n - i) - Math.log(i + 1);
   }
   return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
+}
+
+/** Log-coefficient binomial log(C(n,k)) — SEULEMENT la combinaison, sans puissance de p. */
+function logBinomCoeff(n: number, k: number): number {
+  if (k < 0 || k > n) return -Infinity;
+  if (k === 0 || k === n) return 0;
+  if (k > n - k) k = n - k;
+  let result = 0;
+  for (let i = 0; i < k; i++) {
+    result += Math.log(n - i) - Math.log(i + 1);
+  }
+  return result;
+}
+
+/**
+ * P(P1 gagne le match avec le score exact a-b, dernière frame à P1)
+ * = C(a+b-1, b) · pFrame^a · (1-pFrame)^b.
+ */
+function scoreWinProb(pFrame: number, a: number, b: number): number {
+  if (a < 1 || b < 0) return 0;
+  if (pFrame <= 0) return 0;
+  if (pFrame >= 1) return b === 0 ? 1 : 0;
+  return Math.exp(logBinomCoeff(a + b - 1, b) + a * Math.log(pFrame) + b * Math.log(1 - pFrame));
 }
 
 function matchWinProb(pFrame: number, bestOf: number): number {
@@ -67,16 +91,28 @@ function matchWinProb(pFrame: number, bestOf: number): number {
 
 function overTotalProb(pFrame: number, bestOf: number, threshold: number): number {
   const winsNeeded = Math.ceil(bestOf / 2);
-  // Formule négative binomiale : P(match se termine à la frame t)
-  // = C(t-1, k-1) * [p^k * (1-p)^(t-k) + (1-p)^k * p^(t-k)]
+  // P(match se termine à t) = P(P1 gagne winsNeeded-(t-winsNeeded)) + P(P2 gagne).
   let pOver = 0;
-  for (let t = threshold + 1; t <= bestOf; t++) {
-    const coeff = Math.exp(logBinomPMF(winsNeeded - 1, t - 1, pFrame));
-    const pA = Math.pow(pFrame, winsNeeded) * Math.pow(1 - pFrame, t - winsNeeded);
-    const pB = Math.pow(1 - pFrame, winsNeeded) * Math.pow(pFrame, t - winsNeeded);
-    pOver += coeff * (pA + pB);
+  for (let t = Math.floor(threshold) + 1; t <= bestOf; t++) {
+    const loser = t - winsNeeded;
+    pOver += scoreWinProb(pFrame, winsNeeded, loser) + scoreWinProb(1 - pFrame, winsNeeded, loser);
   }
   return Math.min(100, Math.max(0, pOver * 100));
+}
+
+/**
+ * Ligne Over totale par match : la plus haute ligne dont P(total > ligne) ≥ 60 %
+ * (proche de 60 %). Fallback si aucune ligne n'atteint 60 % (match très
+ * déséquilibré) : la ligne `need`, non-triviale la plus probable.
+ */
+function bestOverTotalLine(pFrame: number, bestOf: number): number {
+  const need = Math.ceil(bestOf / 2);
+  let best = need;
+  for (let t = need; t <= bestOf - 1; t++) {
+    if (overTotalProb(pFrame, bestOf, t) >= 60) best = t;
+    else break; // décroissante en t — inutile de continuer
+  }
+  return best;
 }
 
 /**
@@ -84,9 +120,12 @@ function overTotalProb(pFrame: number, bestOf: number, threshold: number): numbe
  * Ajustement pressure : favori gère mieux la pression (Collingwood 2023).
  */
 function firstToK(pFrame: number, k: number): number {
+  if (pFrame <= 0) return 0;
+  if (pFrame >= 1) return 100;
+  // Σᵢ₌₀ᵏ⁻¹ C(k-1+i, i) · pFrame^k · (1-pFrame)^i  (k=2 → p²(3−2p))
   let p = 0;
   for (let i = 0; i < k; i++) {
-    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
+    const logP = logBinomCoeff(k - 1 + i, i) + k * Math.log(pFrame) + i * Math.log(1 - pFrame);
     p += Math.exp(logP);
   }
   const edge = pFrame - 0.5;
@@ -167,7 +206,7 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
     const playerLikes: PlayerLike[] = players.map((p) => ({
       id: p.id,
       name: p.name,
-      matches_played: 80, // valeur par défaut pour désambiguïser
+      matches_played: 0, // volume inconnu — pas de valeur inventée (audit lot3)
     }));
     return buildPlayerIndex(playerLikes);
   }, [players]);
@@ -176,9 +215,23 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
     players.map((p) => ({
       id: p.id,
       name: p.name,
-      matches_played: 80,
+      matches_played: 0,
     })),
   [players]);
+
+  if (matchesData && !match) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-700">Match introuvable</p>
+          <p className="mt-1 text-xs text-gray-500">Fixture expirée ou id inconnu.</p>
+          <a href="/?sport=snooker" className="mt-3 inline-block text-xs font-semibold text-[#00985f]">
+            ← Retour Snooker
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (!match) {
     return (
@@ -211,7 +264,8 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
   const finished = match.status === "finished";
 
   const matchProb = matchWinProb(pFrameDec, bo);
-  const overProb = overTotalProb(pFrameDec, bo, bo - 1);
+  const overLine = bestOverTotalLine(pFrameDec, bo);
+  const overProb = overTotalProb(pFrameDec, bo, overLine);
   const first2P1 = firstToK(pFrameDec, 2);
   const first2P2 = firstToK(1 - pFrameDec, 2);
 
@@ -226,6 +280,9 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
       {/* Header */}
       <div className="bg-gradient-to-br from-[#00985f] to-[#005c3a] text-white px-4 py-6">
         <div className="max-w-2xl mx-auto">
+          <h1 className="sr-only">
+            {match.player1} contre {match.player2} — {match.tournament || "Snooker"}
+          </h1>
           <div className="flex items-center gap-2 mb-4">
             <a href="/?sport=snooker" className="text-white/60 hover:text-white text-sm">← Snooker</a>
             <span className="text-white/30">·</span>
@@ -233,8 +290,10 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
           </div>
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <div className="text-lg font-bold">{match.player1}</div>
-              <div className="text-[11px] text-white/60 mt-1">Elo {p1.eloRating} · W% {p1.winPct?.toFixed(1)}</div>
+              <div className="text-lg font-bold truncate min-w-0">{match.player1}</div>
+              <div className="text-[11px] text-white/60 mt-1">
+                {p1.id ? `Elo ${p1.eloRating} · W% ${p1.winPct?.toFixed(1)}` : "pas de données"}
+              </div>
             </div>
             <div className="px-4 text-center">
               {live ? (
@@ -247,8 +306,10 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
               <div className="text-[10px] text-white/50 mt-1">{bo === 11 ? "Bo11" : `Bo${bo}`}</div>
             </div>
             <div className="text-center flex-1">
-              <div className="text-lg font-bold">{match.player2}</div>
-              <div className="text-[11px] text-white/60 mt-1">Elo {p2.eloRating} · W% {p2.winPct?.toFixed(1)}</div>
+              <div className="text-lg font-bold truncate min-w-0">{match.player2}</div>
+              <div className="text-[11px] text-white/60 mt-1">
+                {p2.id ? `Elo ${p2.eloRating} · W% ${p2.winPct?.toFixed(1)}` : "pas de données"}
+              </div>
             </div>
           </div>
           <div className="text-center text-[11px] text-white/50 mt-3">{datetime}</div>
@@ -284,7 +345,7 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
             <StatBar label="Win%" val1={p1.winPct ?? 50} val2={p2.winPct ?? 50} />
             <StatBar label="Century%" val1={p1.centuryRate ?? 0} val2={p2.centuryRate ?? 0} />
             <StatBar label="Décideur%" val1={p1.deciderWinPct ?? 50} val2={p2.deciderWinPct ?? 50} />
-            <StatBar label="Avg Break" val1={p1.avgBreak ?? 30} val2={p2.avgBreak ?? 30} />
+            <StatBar label="Max Break" val1={p1.avgBreak ?? 0} val2={p2.avgBreak ?? 0} />
           </div>
         </div>
 
@@ -294,11 +355,11 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
 
         {/* Predictions */}
         <div className="rounded-xl bg-white p-4 border border-gray-100">
-          <h3 className="text-[12px] font-bold text-gray-900 mb-3">Prédictions 1xBet</h3>
+          <h3 className="text-[12px] font-bold text-gray-900 mb-3">Prédictions modèle</h3>
           <div className="space-y-2">
             {[
               { label: "Gagnant du match", p1: matchProb, name1: match.player1, name2: match.player2 },
-              { label: `Over ${bo - 1} frames`, p1: overProb, name1: "Over", name2: "Under" },
+              { label: `Over ${overLine} frames`, p1: overProb, name1: "Over", name2: "Under" },
               { label: "1er à 2 frames", p1: first2P1, name1: match.player1, name2: match.player2 },
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">

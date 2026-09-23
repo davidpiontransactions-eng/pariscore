@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
+import { FS_TO_CUE_ID } from "@/lib/snooker/player-match";
 const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
@@ -103,52 +104,7 @@ function parseFrames(raw: string | undefined): number {
 const DATA_FILE = join(DATA_DIR, "odds_flashscore_snooker.json");
 const ODDSPORTAL_FILE = join(DATA_DIR, "oddsportal_nio.json");
 
-// ─── Mapping FlashScore → CueTracker ID pour photos Wikipedia ────────────
-// FlashScore returns abbreviated names ("Selby M."). We map to CueTracker IDs.
-const FS_TO_CUE_ID: Record<string, string> = {
-  "osullivan r.": "ronnie-osullivan", "o'sullivan r.": "ronnie-osullivan",
-  "trump j.": "judd-trump", "selby m.": "mark-selby",
-  "robertson n.": "neil-robertson", "higgins j.": "john-higgins",
-  "williams m.": "mark-williams", "murphy s.": "shaun-murphy",
-  "wilson k.": "kyren-wilson", "ding j.": "ding-junhui",
-  "allen m.": "mark-allen", "lisowski j.": "jack-lisowski",
-  "hawkins b.": "barry-hawkins", "carter a.": "ali-carter",
-  "bingham s.": "stuart-bingham", "maguire s.": "stephen-maguire",
-  "zhou y.": "zhou-yuelong", "page j.": "jackson-page",
-  "saengkham n.": "noppon-saengkham", "pang j.": "pang-junxu",
-  "xiao g.": "xiao-guodong", "wu y.": "wu-yize",
-  "gilbert d.": "david-gilbert", "jones j.": "jamie-jones",
-  "ford t.": "tom-ford", "wilson g.": "gary-wilson",
-  "yuan s.": "yuan-sijun", "dale d.": "dominic-dale",
-  "dott g.": "graeme-dott", "holt m.": "michael-holt",
-  "gould m.": "martin-gould", "perry j.": "joe-perry",
-  "un-nooh t.": "thepchaiya-un-nooh", "vafaei h.": "hussain-vafaei",
-  "wakelin c.": "chris-wakelin", "white j.": "jimmy-white",
-  "milkins r.": "rob-milkins", "burden a.": "alfie-burden",
-  "higginson a.": "andrew-higginson", "carty a.": "ashley-carty",
-  "wells d.": "daniel-wells", "slessor e.": "elliott-slessor",
-  "odonnell m.": "martin-odonnell", "carrington s.": "stuart-carrington",
-  "pinhey h.": "haydon-pinhey", "brown j.": "jordan-brown",
-  "kowalski a.": "antoni-kowalski", "zizins a.": "artemijs-zizins",
-  "lei p.": "julian-lei", "muir r.": "ross-muir",
-  "xianbo w.": "wang-xinbo", "fan z.": "fan-zhengyi",
-  "si x.": "si-xiaohan", "yang g.": "yu-yang",
-  "lyu h.": "lyu-haotian", "clarke j.": "james-clarke",
-  "hill a.": "aaron-hill", "davies l.": "liam-davies",
-  "brown o.": "oliver-brown",
-  // NIO Oddsportal players
-  "baranowski m.": "mateusz-baranowski", "gong c.": "chenzhi-gong",
-  "benzey c.": "connor-benzey", "yang l.": "liu-yang",
-  "evans r.": "reanne-evans", "jiahao h.": "jiahao-huang",
-  "graham l.": "liam-graham", "xinbo w.": "wang-xinbo",
-  "boiko i.": "iulian-boiko", "zetao l.": "luo-zetao",
-  "davies l. j.": "liam-james-davies", "miah h.": "hammad-miah",
-  "quinn f.": "fergal-quinn", "burns i.": "ian-burns",
-  "fu m.": "marco-fu", "connolly j.": "james-connolly",
-  "hanyang z.": "zhang-hanyang", "el hareedy m.": "mohamed-elhareedy",
-  "xu yi chen": "xu-yi-chen", "awad m.": "mina-awad",
-};
-
+// Mapping FS → CueTracker ID importé depuis player-match (source unique).
 async function getPhotoForPlayer(name: string): Promise<string | undefined> {
   if (!name) return undefined;
   const key = name.toLowerCase().trim();
@@ -190,7 +146,8 @@ async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<Sn
 
   // Utiliser le champ date du scraper si disponible (pour --both / --tomorrow)
   const matchDate = (m as Record<string, unknown>).date as string | undefined;
-  const baseDate = matchDate ? new Date(matchDate + "T12:00:00") : new Date(scrapedAt);
+  let baseDate = matchDate ? new Date(matchDate + "T12:00:00") : new Date(scrapedAt);
+  if (isNaN(baseDate.getTime())) baseDate = new Date(); // scraped_at malformé → RangeError sur toISOString
 
   if (m.time && m.time !== "-" && m.time !== "") {
     const [hours, minutes] = m.time.split(":").map(Number);
@@ -236,7 +193,8 @@ async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<Sn
 async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, scrapedAt: string): Promise<SnookerMatch> {
   // Construire scheduled_at depuis le champ time (ex: "14:00", "LI", "Finished")
   let scheduledAt: string | null = null;
-  const baseDate = new Date(scrapedAt);
+  let baseDate = new Date(scrapedAt);
+  if (isNaN(baseDate.getTime())) baseDate = new Date();
   if (m.time && /^\d{1,2}:\d{2}$/.test(m.time)) {
     const [hours, minutes] = m.time.split(":").map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
@@ -274,7 +232,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const liveOnly = searchParams.get("live") === "1";
   const tournament = searchParams.get("tournament");
-  const limit = Math.min(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 500);
+  // limit négatif tranchait depuis la fin du tableau (slice(0,-N)) — borné [1,500]
+  const limit = Math.max(1, Math.min(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 500));
 
   // Source 1 : FlashScore
   const data = readData();

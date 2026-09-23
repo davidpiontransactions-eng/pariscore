@@ -95,9 +95,8 @@ export async function GET(
   const centuryRate = played > 0 ? ((player.centuries ?? 0) / played) * 100 : 0;
   const deciderWinPct = (player.decider_win_pct ?? 0.5) * 100;
 
-  // Forme basée sur le win% (déterministe)
-  const formWinPct = Math.round(winPct / 10);
-  const formLast10 = "W".repeat(formWinPct) + "L".repeat(10 - formWinPct);
+  // Pas de forme réelle dans CueTracker — on n'invente pas (audit lot3).
+  const formLast10 = "";
 
   // Fetch photo from Wikipedia
   let photoUrl: string | undefined;

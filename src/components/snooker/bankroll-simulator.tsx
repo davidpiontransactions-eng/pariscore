@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import useSWR from "swr";
-import { kellyCriterion, simulateBankroll, type KellyResult } from "@/lib/snooker/kelly";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
-type AccuracyData = {
-  perMatch: { match: string; predicted: number; actual: "win" | "loss"; correct: boolean }[];
-};
+import { loadBets } from "@/lib/snooker/bet-tracker";
+import { simulateBankroll } from "@/lib/snooker/kelly";
 
 function MiniChart({ data, height = 40 }: { data: number[]; height?: number }) {
   if (data.length < 2) return null;
@@ -56,24 +50,23 @@ export function BankrollSimulator() {
   const [bankroll, setBankroll] = useState(100);
   const [fraction, setFraction] = useState(0.5);
 
-  const { data } = useSWR<AccuracyData>(
-    "/api/v1/snooker/accuracy",
-    fetcher,
-    { refreshInterval: 300_000 }
-  );
-
   const sim = useMemo(() => {
-    if (!data?.perMatch || data.perMatch.length === 0) return null;
-
-    // Convert predictions to bets
-    const bets = data.perMatch.map((p) => ({
-      probability: p.predicted / 100,
-      odds: 1 / (p.predicted / 100), // implied odds from model prob
-      won: p.actual === "win",
+    // Cotes RÉELLES côté recommandé uniquement (bet-tracker) — l'ancienne
+    // version utilisait odds = 1/prob → EV ≡ 0 et Kelly ≡ 0 (audit lot3).
+    const resolved = loadBets().filter(
+      (b) =>
+        typeof b.odds === "number" &&
+        b.odds > 1 &&
+        (b.status === "won" || b.status === "lost"),
+    );
+    if (resolved.length === 0) return null;
+    const bets = resolved.map((b) => ({
+      probability: (b.probability ?? 50) / 100,
+      odds: b.odds as number,
+      won: b.status === "won",
     }));
-
     return simulateBankroll(bets, bankroll, fraction);
-  }, [data, bankroll, fraction]);
+  }, [bankroll, fraction]);
 
   if (!sim) return null;
 
@@ -126,25 +119,25 @@ export function BankrollSimulator() {
           <div className={`text-lg font-black tabular-nums ${sim.final >= bankroll ? "text-[#00985f]" : "text-red-500"}`}>
             {sim.final.toFixed(0)}
           </div>
-          <div className="text-[9px] text-gray-500">Bankroll finale</div>
+          <div className="text-[11px] text-gray-500">Bankroll finale</div>
         </div>
         <div>
           <div className={`text-lg font-black tabular-nums ${sim.roi >= 0 ? "text-[#00985f]" : "text-red-500"}`}>
             {sim.roi >= 0 ? "+" : ""}{sim.roi}%
           </div>
-          <div className="text-[9px] text-gray-500">ROI</div>
+          <div className="text-[11px] text-gray-500">ROI</div>
         </div>
         <div>
           <div className="text-lg font-black tabular-nums text-amber-600">
             {sim.maxDrawdown}%
           </div>
-          <div className="text-[9px] text-gray-500">Max drawdown</div>
+          <div className="text-[11px] text-gray-500">Max drawdown</div>
         </div>
       </div>
 
       {/* Legend */}
-      <div className="mt-3 text-center text-[9px] text-gray-400">
-        Simulation sur {data?.perMatch?.length ?? 0} paris historiques avec {fraction}x Kelly
+      <div className="mt-3 text-center text-[11px] text-gray-500">
+        Simulation sur {sim.bankroll.length - 1} paris suivis résolus (cotes réelles) avec {fraction}x Kelly
       </div>
     </div>
   );

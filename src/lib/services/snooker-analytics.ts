@@ -232,7 +232,6 @@ export function buildPreMatchBets(args: {
   const dA = (args.deciderA ?? 50) / 100;
   const dB = (args.deciderB ?? 50) / 100;
   const closeness = (dA + dB) / 2; // >0.5 → va au décider
-  const eTotal = expectedTotalFrames(0, 0, need, pFrame);
   const overLine = args.bestOf - 0.5; // bo9 → Over 8.5
   if (closeness >= 0.55) {
     bets.push({ type: "total_frames", label: `Over ${overLine} frames`, prob: probTotalFramesOver(args.bestOf, pFrame, overLine) });
@@ -244,8 +243,9 @@ export function buildPreMatchBets(args: {
   const cA = (args.centuryA ?? 0) / 100; // centuryRate stocké en %
   const cB = (args.centuryB ?? 0) / 100;
   if (cA + cB > 0.25) {
-    // Poisson approx : P(≥1 century) = 1 − e^−λ, λ = taux combiné × E[frames]
-    const lambda = (cA + cB) * eTotal;
+    // Poisson approx : P(≥1 century) = 1 − e^−λ, λ = taux combiné PAR MATCH
+    // (centuryRate = centuries/match — pas un taux par frame : pas de × E[frames]).
+    const lambda = cA + cB;
     bets.push({ type: "century", label: "Au moins un century", prob: 1 - Math.exp(-lambda) });
   }
 

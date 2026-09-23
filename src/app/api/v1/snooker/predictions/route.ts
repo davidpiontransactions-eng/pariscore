@@ -3,6 +3,8 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { expectedScore, calculateEdge, kellyStake } from "../../../../../lib/snooker/elo";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
+import { buildPreMatchBets } from "@/lib/services/snooker-analytics";
+import { buildPlayerIndex, findCuePlayer, type PlayerLike } from "@/lib/snooker/player-match";
 const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
@@ -19,7 +21,7 @@ export const dynamic = "force-dynamic";
  *     vers 50 % pour les petits échantillons (shrinkage played/(played+20)),
  *     puis converti : 1 point de % victoires ≈ 12 points Elo.
  *   - Probabilité = logistique Elo standard (expectedScore, src/lib/snooker/elo.ts).
- *   - Pick retenu si probabilité favori >= 65 %.
+ *   - Pick retenu si probabilité favori >= 58 % (MIN_PROB).
  *   - Edge + Kelly calculés vs cotes FlashScore quand disponibles.
  *
  * Seuls les matchs programmés (prematch) sont considérés : ni live, ni terminés.
@@ -99,70 +101,30 @@ type TopPick = {
 // Constantes & helpers
 // ---------------------------------------------------------------------------
 // ─── Génération de 3 paris pré-match ───────────────────────────────────────
-/**
- * Log-binomiale PMF : log(P(X=k)) pour X ~ Binomial(n, p).
- * Utilisée pour la binomiale négative (race to k frames).
- */
-function logBinomPMF(k: number, n: number, p: number): number {
-  if (p <= 0) return k === 0 ? 0 : -Infinity;
-  if (p >= 1) return k === n ? 0 : -Infinity;
-  let logC = 0;
-  for (let i = 0; i < k; i++) {
-    logC += Math.log(n - i) - Math.log(i + 1);
-  }
-  return logC + k * Math.log(p) + (n - k) * Math.log(1 - p);
-}
+// Les probabilités proviennent de snooker-analytics.buildPreMatchBets
+// (formules binomiales réelles) — plus de constantes hardcodées.
 
-/**
- * P(P1 atteint k frames avant P2) — race to k frames.
- * Formule binomiale négative avec ajustement pressure (Collingwood 2023).
- */
-function firstToKProb(pFrame: number, k: number): number {
-  let pFirst = 0;
-  for (let i = 0; i < k; i++) {
-    const logP = logBinomPMF(i, k + i - 1, pFrame) + (k - i - 1) * Math.log(pFrame);
-    pFirst += Math.exp(logP);
-  }
-  const edge = pFrame - 0.5;
-  const pressureBoost = edge > 0 ? edge * 0.03 * k : edge * 0.02 * k;
-  return Math.min(0.95, Math.max(0.5, pFirst + pressureBoost));
-}
-
-function buildPickBets(probA: number, probB: number, eloA: number, eloB: number): Array<{ type: string; label: string; prob: number }> {
+function buildPickBets(
+  probA: number,
+  probB: number,
+  cueA: CuePlayer,
+  cueB: CuePlayer,
+): Array<{ type: string; label: string; prob: number }> {
   const favProb = Math.max(probA, probB);
-  const favIsA = probA >= probB;
-  const pFrame = favIsA ? favProb : 1 - favProb;
-  const eloDiff = Math.abs(eloA - eloB);
-  const bets: Array<{ type: string; label: string; prob: number }> = [];
-
-  // 1. Handicap frames (si favori large)
-  if (favProb >= 0.75) {
-    const pHandicap = 0.4 + (favProb - 0.5) * 0.5;
-    bets.push({ type: "handicap", label: "Handicap -2.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
-  } else if (favProb >= 0.65) {
-    const pHandicap = 0.35 + (favProb - 0.5) * 0.4;
-    bets.push({ type: "handicap", label: "Handicap -1.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
-  }
-
-  // 2. 1er à 2 frames (race to 2 — binomiale négative, ajusté pressure)
-  const pFirst2 = firstToKProb(pFrame, 2);
-  bets.push({ type: "first_to_2", label: "1er à 2 frames", prob: Math.min(0.95, Math.max(0.5, pFirst2)) });
-
-  // 3. Total frames over/under
-  const isClose = favProb < 0.70;
-  if (isClose) {
-    const pOver = 0.45 + (0.70 - favProb) * 0.3;
-    bets.push({ type: "total_frames", label: "Over 8.5 frames", prob: Math.min(0.95, Math.max(0.5, pOver)) });
-  } else {
-    const pUnder = 0.35 + favProb * 0.25;
-    bets.push({ type: "total_frames", label: "Under 7.5 frames", prob: Math.min(0.95, Math.max(0.5, pUnder)) });
-  }
-
-  // 4. Century in match (si joueurs actifs + gros breakeurs)
-  const centuryProb = 0.25 + (eloDiff > 300 ? 0.15 : 0) + (favProb > 0.7 ? 0.10 : 0);
-  bets.push({ type: "century", label: "Century in match — Oui", prob: Math.min(0.95, Math.max(0.5, centuryProb)) });
-
-  return bets;
+  const playedA = cueA.matches_played ?? 0;
+  const playedB = cueB.matches_played ?? 0;
+  // Formules réelles snooker-analytics (handicap/over/century) — l'ancienne
+  // version mélangeait des constantes arbitraires (audit lot3).
+  return buildPreMatchBets({
+    bestOf: 9,
+    pWin: favProb,
+    deciderA: cueA.decider_win_pct != null ? cueA.decider_win_pct * 100 : null,
+    deciderB: cueB.decider_win_pct != null ? cueB.decider_win_pct * 100 : null,
+    centuryA: playedA > 0 ? ((cueA.centuries ?? 0) / playedA) * 100 : null,
+    centuryB: playedB > 0 ? ((cueB.centuries ?? 0) / playedB) * 100 : null,
+    playedA,
+    playedB,
+  });
 }
 
 // ─── Parse l'heure FlashScore "11:00" → ISO string (date du scrape) ────────
@@ -194,17 +156,6 @@ function readJson<T>(path: string): T | null {
   }
 }
 
-/** Normalise un nom : minuscules, sans accents ni ponctuation, espaces compactés. */
-function normalizeName(raw: string): string {
-  return (raw || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 /**
  * Elo proxy : 1500 + (winPct rétréci − 50) × 12.
  * Le shrinkage vers 50 % évite de surestimer les petits échantillons
@@ -217,76 +168,6 @@ function strengthElo(p: CuePlayer): number {
   const rawPct = (wins / played) * 100;
   const shrunkPct = 50 + (rawPct - 50) * (played / (played + SHRINK_N));
   return 1500 + (shrunkPct - 50) * 12;
-}
-
-/**
- * Index des joueurs CueTracker par nom de famille candidat.
- * Chaque joueur est indexé sous son premier ET son dernier token : couvre
- * l'ordre western (« Judd Trump ») et l'ordre surname-first (« Ding Junhui »).
- */
-function buildPlayerIndex(players: CuePlayer[]): Map<string, CuePlayer[]> {
-  const index = new Map<string, CuePlayer[]>();
-  for (const p of players) {
-    const tokens = normalizeName(p.name).split(" ").filter(Boolean);
-    if (tokens.length === 0) continue;
-    const surnames = new Set<string>();
-    const first = tokens[0];
-    const last = tokens[tokens.length - 1];
-    if (first) surnames.add(first);
-    if (last && tokens.length > 1) surnames.add(last);
-    for (const s of surnames) {
-      const list = index.get(s);
-      if (list) list.push(p);
-      else index.set(s, [p]);
-    }
-  }
-  return index;
-}
-
-/**
- * Retrouve un joueur CueTracker depuis un nom FlashScore (« Trump J. »,
- * « J. Trump », « Kyren Wilson », « Ding J. »...).
- * Stratégie : extraire nom de famille + initiale du prénom selon la forme,
- * filtrer les homonymes par l'initiale ; ambiguïté résiduelle → joueur le
- * plus expérimenté (matches_played max).
- */
-function findCuePlayer(fsName: string, index: Map<string, CuePlayer[]>): CuePlayer | null {
-  const tokens = normalizeName(fsName).split(" ").filter(Boolean);
-  if (tokens.length === 0) return null;
-  const first = tokens[0] ?? "";
-  const last = tokens[tokens.length - 1] ?? "";
-
-  let surnames: string[];
-  let initial: string | null = null;
-  if (tokens.length === 1) {
-    surnames = [first];
-  } else if (last.length === 1) {
-    // « Trump J. » → nom de famille d'abord, initiale ensuite
-    surnames = [first];
-    initial = last;
-  } else if (first.length === 1) {
-    // « J. Trump » → initiale d'abord, nom de famille ensuite
-    surnames = [last];
-    initial = first;
-  } else {
-    // Nom complet : ordre ambigu (western vs surname-first) — essayer les deux
-    surnames = [last, first];
-  }
-
-  for (const surname of surnames) {
-    const candidates = (index.get(surname) ?? []).filter((p) => {
-      if (!initial) return true;
-      // L'initiale doit correspondre à un token ≠ nom de famille recherché
-      const playerTokens = normalizeName(p.name).split(" ").filter(Boolean);
-      return playerTokens.some((tok) => tok !== surname && tok.startsWith(initial));
-    });
-    if (candidates.length > 0) {
-      // Désambiguïsation : le plus de matchs joués (échantillon le plus fiable)
-      const sorted = candidates.slice().sort((a, b) => (b.matches_played ?? 0) - (a.matches_played ?? 0));
-      return sorted[0] ?? null;
-    }
-  }
-  return null;
 }
 
 /** Confiance 1-5 : niveau de probabilité + fiabilité des échantillons. */
@@ -320,7 +201,14 @@ export async function GET() {
     );
   }
 
-  const index = buildPlayerIndex(playersData.players ?? []);
+  const cueList = playersData.players ?? [];
+  const playerLikes: PlayerLike[] = cueList.map((p) => ({
+    id: p.id,
+    name: p.name,
+    matches_played: p.matches_played ?? 0,
+  }));
+  const index = buildPlayerIndex(playerLikes);
+  const cueById = new Map(cueList.map((p) => [p.id, p]));
   const picks: TopPick[] = [];
 
   for (const m of matchesData.matches ?? []) {
@@ -331,8 +219,11 @@ export async function GET() {
     if (finished) continue;
     if (!m.home || !m.away) continue;
 
-    const cueA = findCuePlayer(m.home, index);
-    const cueB = findCuePlayer(m.away, index);
+    // Résolution partagée (player-match — mapping FS_TO_CUE_ID + fuzzy)
+    const hitA = findCuePlayer(m.home, index, playerLikes);
+    const hitB = findCuePlayer(m.away, index, playerLikes);
+    const cueA = hitA ? cueById.get(hitA.id) : undefined;
+    const cueB = hitB ? cueById.get(hitB.id) : undefined;
     // Sans stats carrière pour les deux joueurs, pas de prédiction possible
     if (!cueA || !cueB) continue;
 
@@ -341,7 +232,7 @@ export async function GET() {
     const probA = expectedScore(eloA, eloB);
     const probB = 1 - probA;
 
-    // Pick = favori ; filtré sous le seuil de 65 %
+    // Pick = favori ; filtré sous le seuil MIN_PROB
     const pickSide: "A" | "B" = probA >= probB ? "A" : "B";
     const prob = Math.max(probA, probB);
     if (prob < MIN_PROB) continue;
@@ -379,7 +270,7 @@ export async function GET() {
       ...(odds !== undefined ? { odds, edge, kelly } : {}),
       confidence: toConfidence(prob, cueA.matches_played ?? 0, cueB.matches_played ?? 0),
       scheduledAt,
-      bets: buildPickBets(probA, probB, eloA, eloB),
+      bets: buildPickBets(probA, probB, cueA, cueB),
     });
   }
 

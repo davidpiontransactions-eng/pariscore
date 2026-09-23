@@ -94,18 +94,6 @@ export function verdictColor(v: KellyResult["verdict"]): string {
 }
 
 /**
- * Calcule le Kelly avec probabilité du modèle ET cotes marché réelles
- * @param modelProb - Probabilité estimée par le modèle (0-1)
- * @param marketOdds - Cotes du marché (décimales, ex: 2.10)
- */
-export function kellyFromProb(modelProb: number, marketOdds?: number): KellyResult {
-  if (!marketOdds || marketOdds <= 1) {
-    return { fullKelly: 0, halfKelly: 0, ev: 0, roi: 0, verdict: "no_edge" };
-  }
-  return kellyCriterion(modelProb, marketOdds);
-}
-
-/**
  * Simule un bankroll sur N paris avec Kelly sizing
  * @param bets - Array de { probability, odds, won }
  * @param initialBankroll - Bankroll initiale en units

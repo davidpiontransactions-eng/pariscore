@@ -165,9 +165,9 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
                 <span>🎯</span> Total De Manches
               </div>
               <div className="grid grid-cols-3 gap-x-2 gap-y-1">
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600">Ligne</span>
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Plus de</span>
-                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Moins de</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Ligne</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Plus de</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Moins de</span>
                 {lines.map((line) => {
                   const over = probTotalFramesOver(match.bestOf, pFrame, line);
                   const under = 1 - over;

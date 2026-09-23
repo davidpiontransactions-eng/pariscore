@@ -237,10 +237,9 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | Component | File | Role |
 |-----------|------|------|
 | snooker-tab-content | snooker-tab-content.tsx | Conteneur onglet snooker (top picks prédictifs + calendrier + cartes matchs + tracker live + top joueurs) |
-| snooker-top-picks | snooker-top-picks.tsx | Tableau Top-10 picks prédictifs (prob ≥ 65 %, Elo, edge, Kelly) |
+| snooker-top-picks | snooker-top-picks.tsx | Tableau Top-10 picks prédictifs (prob ≥ 58 %, Elo, edge, Kelly) |
 | snooker-top-picks-banner | snooker-top-picks-banner.tsx | Bannière carousel Top Picks du jour (jauge certitude, badge confiance, cote) |
 | snooker-bets-panel | snooker-bets-panel.tsx | Grille paris prédictifs pre-match/live (handicap, O/U frames, century, race-to-X, toggle Pre-match/Live) |
-| snooker-calendar | snooker-calendar.tsx | Calendrier des matchs snooker |
 | snooker-match-card | snooker-match-card.tsx | Carte de match snooker (joueurs, score BoX, Elo, probabilités, edge) |
 | snooker-live-tracker | snooker-live-tracker.tsx | Suivi live frame par frame (points, breaks, progression) |
 | snooker-live-popup | snooker-live-popup.tsx | Popup live interactif : scoreboard + 3 bets prédictifs (vainqueur, O/U frames, handicap ≥65 %), refresh 15 min |

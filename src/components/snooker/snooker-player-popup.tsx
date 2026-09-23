@@ -83,7 +83,7 @@ function PowerScoreRing({ score }: { score: number }) {
           <span className="text-3xl font-extrabold tabular-nums" style={{ color: grade.color }}>
             {score}
           </span>
-          <span className="mt-0.5 rounded-full bg-black/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+          <span className="mt-0.5 rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest text-gray-500">
             {grade.label}
           </span>
         </div>
@@ -121,7 +121,7 @@ function StatCard3D({
         >
           {icon}
         </div>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{label}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">{label}</span>
       </div>
       <div className="text-2xl font-extrabold tabular-nums" style={{ color }}>
         {value}
@@ -154,7 +154,7 @@ function ProgressBar3D({
         <div className="flex items-center gap-1.5">
           {rank != null && (
             <span
-              className="rounded px-1 py-0.5 text-[9px] font-bold tabular-nums"
+              className="rounded px-1 py-0.5 text-[11px] font-bold tabular-nums"
               style={{
                 background: rank <= 10 ? "linear-gradient(135deg, #fbbf24, #f59e0b)" : rank <= 50 ? "rgba(0,0,0,.06)" : "transparent",
                 color: rank <= 10 ? "#78350f" : rank <= 50 ? "#64748b" : "#9ca3af",
@@ -394,7 +394,7 @@ export function SnookerPlayerPopup({
               >
                 <PowerScoreRing score={powerScore} />
                 <div className="mt-3 text-center">
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                   <div className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
                     Power Score
                   </div>
                   {psRank && (
@@ -414,7 +414,7 @@ export function SnookerPlayerPopup({
                       </span>
                     </div>
                   )}
-                  <div className="mt-1 text-[9px] text-gray-300">
+                  <div className="mt-1 text-[11px] text-gray-500">
                     Elo {(player.eloRating / 1800 * 30).toFixed(0)} · Win {player.winPct.toFixed(0)} · C{player.centuryRate.toFixed(0)} · D{player.deciderWinPct.toFixed(0)}
                   </div>
                 </div>
@@ -423,7 +423,7 @@ export function SnookerPlayerPopup({
 
             {/* Métriques Betting — 3D Bars */}
             <div>
-              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
                 <span className="inline-block h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
                 Métriques Betting
                 <span className="inline-block h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent" />
@@ -437,7 +437,7 @@ export function SnookerPlayerPopup({
 
             {/* Stats Clés — 3D Cards */}
             <div>
-              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
                 <span className="inline-block h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
                 Stats Clés
                 <span className="inline-block h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent" />
@@ -484,7 +484,7 @@ export function SnookerPlayerPopup({
 
             {/* Win/Loss ratio bar */}
             <div>
-              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
                 <span className="inline-block h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
                 Ratio Victoires / Défaites
                 <span className="inline-block h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent" />
@@ -513,10 +513,10 @@ export function SnookerPlayerPopup({
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-between px-3">
-                  <span className="text-[9px] font-bold text-white drop-shadow-sm">
+                  <span className="text-[11px] font-bold text-white drop-shadow-sm">
                     {player.winPct.toFixed(0)}% W
                   </span>
-                  <span className="text-[9px] font-bold text-white/80 drop-shadow-sm">
+                  <span className="text-[11px] font-bold text-white/80 drop-shadow-sm">
                     {(100 - player.winPct).toFixed(0)}% L
                   </span>
                 </div>
@@ -525,7 +525,7 @@ export function SnookerPlayerPopup({
 
             {/* Forme récente */}
             <div>
-              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
                 <span className="inline-block h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
                 Forme (10 derniers)
                 <span className="inline-block h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent" />
@@ -534,21 +534,30 @@ export function SnookerPlayerPopup({
                 {player.formLast10.split("").map((char, i) => (
                   <FormBadge3D key={i} char={char} index={i} />
                 ))}
+                {!player.formLast10 && (
+                  <span className="text-[11px] text-gray-500">Forme non disponible</span>
+                )}
               </div>
-              <div className="mt-3 flex items-center justify-center gap-4 text-[10px]">
-                <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="font-semibold text-emerald-700">
-                    +{player.winStreak} série
-                  </span>
+              {(player.winStreak > 0 || player.lossStreak > 0) && (
+                <div className="mt-3 flex items-center justify-center gap-4 text-[10px]">
+                  {player.winStreak > 0 && (
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="font-semibold text-emerald-700">
+                        +{player.winStreak} série
+                      </span>
+                    </div>
+                  )}
+                  {player.lossStreak > 0 && (
+                    <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1">
+                      <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <span className="font-semibold text-red-600">
+                        -{player.lossStreak} série
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                  <span className="font-semibold text-red-600">
-                    -{player.lossStreak} série
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Lien Comparer */}
@@ -586,7 +595,7 @@ export function SnookerPlayerPopup({
             </a>
           </div>
         ) : (
-          <div className="p-6 text-center text-sm text-gray-400">
+          <div className="p-6 text-center text-sm text-gray-500">
             Joueur introuvable
           </div>
         )}

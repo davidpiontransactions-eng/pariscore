@@ -62,8 +62,9 @@ function powerScore(p: Player): number {
   const win = p.winPct ?? 50;
   const century = normalize(p.centuryRate ?? 0, 0, 30);
   const decider = p.deciderWinPct ?? 50;
-  const avgBreak = normalize(p.avgBreak ?? 30, 20, 80);
-  return Math.round(elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + avgBreak * 0.10);
+  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
+  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
+  return Math.round(elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10);
 }
 
 function playerScore(p: Player): number {
@@ -71,8 +72,8 @@ function playerScore(p: Player): number {
   const win = p.winPct ?? 50;
   const century = normalize(p.centuryRate ?? 0, 0, 30);
   const decider = p.deciderWinPct ?? 50;
-  const avgBreak = normalize(p.avgBreak ?? 30, 20, 80);
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + avgBreak * 0.10;
+  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
+  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
 }
 
 // ── UI Components ─────────────────────────────────────────────────────────
@@ -387,7 +388,7 @@ export default function SnookerComparePage() {
               <MetricRow label="Win%" val1={p1.winPct ?? 50} val2={p2.winPct ?? 50} />
               <MetricRow label="Century%" val1={p1.centuryRate ?? 0} val2={p2.centuryRate ?? 0} />
               <MetricRow label="Décideur%" val1={p1.deciderWinPct ?? 50} val2={p2.deciderWinPct ?? 50} />
-              <MetricRow label="Avg Break" val1={p1.avgBreak ?? 30} val2={p2.avgBreak ?? 30} />
+              <MetricRow label="Max Break" val1={p1.avgBreak ?? 0} val2={p2.avgBreak ?? 0} />
               <MetricRow label="Matchs" val1={p1.totalMatches ?? 0} val2={p2.totalMatches ?? 0} />
               <MetricRow label="PS" val1={prediction.ps1} val2={prediction.ps2} />
             </div>
