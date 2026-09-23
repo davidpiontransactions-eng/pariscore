@@ -25,7 +25,7 @@ export const handballAdapter: SportAdapter = {
   sport: 'handball',
 
   async fetch(limit) {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/handball/matches`, {
       next: { revalidate: 60 },
     });
@@ -96,13 +96,11 @@ export const handballAdapter: SportAdapter = {
 
     const groups: TopLeague[] = [];
     for (const [leagueName, leagueMatches] of byLeague) {
-      const country = leagueMatches[0]?.home?.name ? undefined : undefined;
       groups.push({
         league: leagueName,
         leagueIcon: '🤾',
         leagueColor: getLeagueColor(leagueName),
         sport: 'handball',
-        country,
         matches: leagueMatches,
       });
     }

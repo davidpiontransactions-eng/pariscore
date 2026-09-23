@@ -2,9 +2,22 @@
 
 import type { HandballMatch } from "@/lib/handball-data";
 
-export function HandballMatchCard({ match }: { match: HandballMatch }) {
+export function HandballMatchCard({
+  match,
+  onClick,
+}: {
+  match: HandballMatch;
+  /** Fix wiring UX : ouvre le dialog détail au clic */
+  onClick?: (match: HandballMatch) => void;
+}) {
   return (
-    <div className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow">
+    <div
+      className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-pointer hover:border-primary/30"
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(match)}
+      onKeyDown={(e) => e.key === "Enter" && onClick?.(match)}
+    >
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
         <span>🤾 {match.league.name}</span>
         <span>

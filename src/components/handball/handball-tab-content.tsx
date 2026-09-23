@@ -2,30 +2,34 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useHandballMatches } from "@/hooks/use-handball-matches";
-import { useHandballLive } from "@/hooks/use-handball-live";
 import { HandballMatchCard } from "./handball-match-card";
 import { HandballLiveCard } from "./handball-live-card";
+import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
 import { HandballStrategyBar } from "./handball-strategy-bar";
 import { HandballTop8Widget } from "./handball-top8-widget";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
-import { HandballRankings } from "./handball-rankings";
+import { HandballErrorBoundary } from "./handball-error-boundary";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
+import type { HandballMatch } from "@/lib/handball-data";
 
 export function HandballTabContent() {
   const { matches: allMatches, isLoading } = useHandballMatches();
-  const { matches: liveMatches } = useHandballLive();
+  // Fix debug : useHandballLive retiré (fetch 15s jamais consommé)
   const [mode, setMode] = useState<"live" | "prematch">("prematch");
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
+  // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
+  const [detailMatch, setDetailMatch] = useState<HandballMatch | null>(null);
 
   const isLive = (m: { status: string }) =>
     m.status === "live" || m.status === "halftime";
 
   const live = useMemo(() => allMatches.filter(isLive), [allMatches]);
+  // Fix debug : "À venir" exclut les terminés (statut = not_started seulement)
   const prematch = useMemo(
-    () => allMatches.filter((m) => !isLive(m)),
+    () => allMatches.filter((m) => m.status === "not_started"),
     [allMatches],
   );
   const displayed = mode === "live" ? live : prematch;
@@ -39,6 +43,7 @@ export function HandballTabContent() {
   }, [mode, live.length]);
 
   return (
+    <HandballErrorBoundary>
     <div className="space-y-6">
       {/* Header live/prematch */}
       <div className="flex gap-2">
@@ -100,11 +105,23 @@ export function HandballTabContent() {
             mode === "live" ? (
               <HandballLiveCard key={m.id} match={m} />
             ) : (
-              <HandballMatchCard key={m.id} match={m} />
+              <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} />
             ),
           )}
         </div>
       )}
+
+      {/* Dialog détail (wiring manquant depuis la Phase 6) */}
+      {detailMatch && (
+        <HandballMatchDetailDialog
+          match={detailMatch}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDetailMatch(null);
+          }}
+        />
+      )}
     </div>
+    </HandballErrorBoundary>
   );
 }

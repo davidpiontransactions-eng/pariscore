@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
+import { isFlashscoreFresh } from "@/lib/handball-flashscore";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
 const CACHE_TTL = 5 * 60_000;
 
-type CachedPayload = { matches: unknown[]; degraded: boolean; source: string };
+type CachedPayload = {
+  matches: unknown[];
+  degraded: boolean;
+  source: string;
+  scrapedAt?: string;
+  stale?: boolean;
+};
 const cache = createTtlCache<CachedPayload>("__handballMatchesCache");
 
 type FlashscoreMatch = {
@@ -91,6 +98,18 @@ function loadFlashscoreHandball(): Array<{
   }
 }
 
+/** scraped_at racine du snapshot (fraîcheur honnête — fix audit 2026-09-23). */
+function loadFlashscoreScrapedAt(): string | null {
+  try {
+    const filePath = join(process.cwd(), "data", "flashscore_handball.json");
+    if (!existsSync(filePath)) return null;
+    const data = JSON.parse(readFileSync(filePath, "utf-8"));
+    return typeof data.scraped_at === "string" ? data.scraped_at : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const now = Date.now();
 
@@ -100,24 +119,39 @@ export async function GET() {
       matches: cached.data.matches,
       source: cached.data.source,
       degraded: cached.data.degraded,
-      updatedAt: new Date(cached.at).toISOString(),
+      scrapedAt: cached.data.scrapedAt ?? null,
+      stale: cached.data.stale ?? false,
+      updatedAt: cached.data.scrapedAt ?? new Date(cached.at).toISOString(),
     });
   }
 
-  // Flashscore est la source principale (API-Sports handball nécessite un abonnement séparé)
+  // Flashscore = source principale (API-Sports handball = abonnement séparé).
+  // Fix audit I13 : gate scraped_at > 20h → stale déclaré, fallback tenté,
+  // puis stale servi honnête (jamais d'onglet vide silencieux).
   const flashscoreMatches = loadFlashscoreHandball();
+  const scrapedAt = loadFlashscoreScrapedAt();
+  const stale = flashscoreMatches.length > 0 && !isFlashscoreFresh(scrapedAt);
 
-  if (flashscoreMatches.length > 0) {
-    cache.set({ matches: flashscoreMatches, degraded: false, source: "flashscore" });
-    return NextResponse.json({
+  if (flashscoreMatches.length > 0 && !stale) {
+    const payload: CachedPayload = {
       matches: flashscoreMatches,
-      source: "flashscore",
       degraded: false,
-      updatedAt: new Date(now).toISOString(),
+      source: "flashscore",
+      scrapedAt: scrapedAt ?? undefined,
+      stale: false,
+    };
+    cache.set(payload);
+    return NextResponse.json({
+      matches: payload.matches,
+      source: payload.source,
+      degraded: false,
+      scrapedAt: payload.scrapedAt ?? null,
+      stale: false,
+      updatedAt: payload.scrapedAt ?? new Date(now).toISOString(),
     });
   }
 
-  // Fallback API-Sports (si configuré)
+  // Snapshot stale ou vide → fallback API-Sports
   try {
     const { fetchHandballFixtures, fetchHandballLive } = await import("@/lib/handball-api");
     const [fixtures, live] = await Promise.all([
@@ -127,11 +161,14 @@ export async function GET() {
     const liveIds = new Set(live.map((m) => m.id));
     const merged = [...live, ...fixtures.filter((m) => !liveIds.has(m.id))];
     if (merged.length > 0) {
-      cache.set({ matches: merged, degraded: false, source: "api-sports" });
+      const payload: CachedPayload = { matches: merged, degraded: false, source: "api-sports" };
+      cache.set(payload);
       return NextResponse.json({
         matches: merged,
         source: "api-sports",
         degraded: false,
+        scrapedAt: null,
+        stale: false,
         updatedAt: new Date(now).toISOString(),
       });
     }
@@ -139,11 +176,33 @@ export async function GET() {
     // API-Sports indisponible
   }
 
+  // Stale servi honnête (cache 5 min → le fallback est retenté régulièrement)
+  if (flashscoreMatches.length > 0) {
+    const payload: CachedPayload = {
+      matches: flashscoreMatches,
+      degraded: false,
+      source: "flashscore",
+      scrapedAt: scrapedAt ?? undefined,
+      stale: true,
+    };
+    cache.set(payload);
+    return NextResponse.json({
+      matches: payload.matches,
+      source: payload.source,
+      degraded: false,
+      scrapedAt: payload.scrapedAt ?? null,
+      stale: true,
+      updatedAt: payload.scrapedAt ?? new Date(now).toISOString(),
+    });
+  }
+
   // Aucune source disponible
   return NextResponse.json({
     matches: [],
     source: "none",
     degraded: true,
+    scrapedAt: null,
+    stale: true,
     updatedAt: new Date(now).toISOString(),
   });
 }

@@ -155,19 +155,6 @@ export async function fetchHandballLive(): Promise<HandballMatch[]> {
   return [];
 }
 
-export async function fetchHandballStandings(leagueId: number): Promise<unknown> {
-  const key = process.env.API_FOOTBALL_KEY;
-  if (!key) return null;
-  try {
-    const season = new Date().getFullYear();
-    const res = await fetch(`${HANDBALL_BASE}/standings?league=${leagueId}&season=${season}`, {
-      headers: { "x-apisports-key": key },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const json: unknown = await res.json();
-    return (json as { response?: unknown })?.response ?? null;
-  } catch {
-    return null;
-  }
-}
+// fetchHandballStandings supprimé (fix audit 2026-09-23) : seul consummer =
+// route standings, elle-même non montée + contrat cassé (row.ppg crash) +
+// fallback API-Sports handball = 403 (abonnement séparé requis).

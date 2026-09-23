@@ -30,9 +30,18 @@ type StrategyResponse = {
   window: string;
 };
 
-export function useHandballTop8() {
+/**
+ * Top8 stratégies handball.
+ * @param strat — filter serveur `?strat=` (fix audit : le hook téléchargeait
+ * tout le payload alors que la route exposait déjà le filtre). Le Banker
+ * l'appelle sans param → payload complet (2 stratégies+ nécessaires).
+ */
+export function useHandballTop8(strat?: string) {
+  const url = strat
+    ? `/api/handball/strategy-top8?strat=${encodeURIComponent(strat)}`
+    : "/api/handball/strategy-top8";
   const { data, error, isLoading } = useSWR<StrategyResponse>(
-    "/api/handball/strategy-top8",
+    url,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 5 * 60_000 },
   );

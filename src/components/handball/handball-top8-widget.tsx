@@ -37,7 +37,8 @@ export function HandballTop8Widget({
 }: {
   strategy: HandballStrategyKey;
 }) {
-  const { matchesFor, isLoading, isReady } = useHandballTop8();
+  // Filtre serveur ?strat= (payload = stratégie active seulement)
+  const { matchesFor, isLoading, isReady } = useHandballTop8(strategy);
   const entries = matchesFor(strategy);
   const meta = STRATEGY_META[strategy];
 

@@ -3,7 +3,7 @@
 // Architecture : pure scoring lib (no I/O), miroir football-strategy-top5.ts
 
 import type { HandballMatch, HandballLeague, HandballTeam } from "./handball-data";
-import { realExpectedTotal, getRealHandballOver, type OverResult } from "./handball-real-data";
+import { realExpectedTotal } from "./handball-real-data";
 
 // ─── Types ───
 
@@ -97,13 +97,22 @@ function avgLast(arr: number[], n: number): number {
   return slice.reduce((a, b) => a + b, 0) / slice.length;
 }
 
-/** PPG sur N derniers matchs */
-function ppg(f: TeamForm, n: number): number {
-  const total = f.wins + f.draws + f.losses;
+/**
+ * PPG sur N derniers matchs.
+ * Fix debug 2026-09-23 : `slice` calculé mais jamais utilisé → ppg(5) === ppg(10),
+ * le pondération L5 60% / L10 40% de bestTeam était un no-op.
+ */
+export function ppg(f: TeamForm, n: number): number {
+  const total = f.gf.length;
   if (total === 0) return 0;
-  const slice = Math.min(n, total);
-  const pts = (f.wins / total) * 2 + (f.draws / total) * 1;
-  return pts;
+  const sliceGf = f.gf.slice(-n);
+  const sliceGa = f.ga.slice(-n);
+  let pts = 0;
+  for (let i = 0; i < sliceGf.length; i++) {
+    if (sliceGf[i] > sliceGa[i]) pts += 2;
+    else if (sliceGf[i] === sliceGa[i]) pts += 1;
+  }
+  return pts / sliceGf.length;
 }
 
 // ─── Math helpers ───
@@ -236,15 +245,22 @@ function expectedGoalDiff(
   return (hStrength - aStrength) + HOME_ADV;
 }
 
-/** Form summary W/D/L sur N */
-function formSummaryStr(f: TeamForm | undefined, n: number): string {
+/**
+ * Form summary W/D/L chronologique sur les N derniers matchs.
+ * Fix debug 2026-09-23 : plafonnait les TOTAUX carrière (W=min(wins,n)) →
+ * une équipe 5W+5L affichait "WWWWW" quel que soit le slice.
+ */
+export function formSummaryStr(f: TeamForm | undefined, n: number): string {
   if (!f) return "---";
-  const total = f.wins + f.draws + f.losses;
+  const total = f.gf.length;
   if (total === 0) return "---";
-  const w = Math.min(f.wins, n);
-  const d = Math.min(f.draws, n - w);
-  const l = Math.min(f.losses, n - w - d);
-  return `${"W".repeat(w)}${"D".repeat(d)}${"L".repeat(l)}`.slice(0, n);
+  const sliceGf = f.gf.slice(-n);
+  const sliceGa = f.ga.slice(-n);
+  let out = "";
+  for (let i = 0; i < sliceGf.length; i++) {
+    out += sliceGf[i] > sliceGa[i] ? "W" : sliceGf[i] === sliceGa[i] ? "D" : "L";
+  }
+  return out;
 }
 
 // ─── Main scoring engine ───
@@ -311,7 +327,9 @@ function scoreMatch(
           }
         }
       }
-      const ev = match.odds?.home && match.odds?.away ? bestProb * (match.odds.home + match.odds.away) / 2 - 1 : null;
+      // Fix debug : ev = null tant que vraies cotes Over/Under indisponibles
+      // (l'ancien calcul utilisait les cotes 1X2 home/away comme prix de total → EV fabriquée)
+      const ev = null;
       return { value: bestProb * 100, pick: null, probPct: bestProb * 100, ev, bestLine };
     }
 
@@ -320,15 +338,18 @@ function scoreMatch(
       const lambda = hasForm ? expectedTotal(formStore, match) : TOTAL_LINE;
       const adjustedLambda = lambda / Math.pow(CMP_NU, 0.5);
       const prob = poissonLe(62, adjustedLambda);
-      const ev = match.odds?.home && match.odds?.away ? prob * (match.odds.home + match.odds.away) / 2 - 1 : null;
+      // Fix debug : EV null (cotes 1X2 ≠ prix total Over/Under)
+      const ev = null;
       return { value: prob * 100, pick: null, probPct: prob * 100, ev };
     }
 
     case "handicap": {
       // Skellam goal difference (Karlis 2026)
+      // Fix debug 2026-09-23 : away favori avait prob ≡ 0 (condition diff >= 0)
+      // + HOME_ADV compté 2× (déjà dans expectedGoalDiff). Symétrique ici.
       const diff = hasForm ? expectedGoalDiff(formStore, match) : 0;
-      // P(home gagne avec handicap -4.5) = P(diff >= 5)
-      const prob = diff >= 0 ? poissonGe(Math.ceil(HANDICAP_LINE + 0.5), Math.abs(diff) + HOME_ADV) : 0;
+      const lambda = Math.abs(diff);
+      const prob = poissonGe(Math.ceil(HANDICAP_LINE + 0.5), lambda);
       const pick: HandballSide = diff >= 0 ? "home" : "away";
       return { value: prob * 100, pick, probPct: prob * 100 };
     }
@@ -358,12 +379,19 @@ function scoreMatch(
     }
 
     case "valueBet": {
-      // EV+ = P(model) > P(market)
+      // EV+ = P(model) > P(market de-viggé)
+      // Fix debug 2026-09-23 : pas de forme → null (l'ancien prior 0.45/0.50
+      // fabriquait des edges ; marché 1/odds non de-viggé → edge biaisé).
       if (!match.odds?.home || !match.odds?.away) return null;
+      if (!hasForm) return null;
       const pModelHome = winProb(formStore, match, "home");
       const pModelAway = winProb(formStore, match, "away");
-      const pMarketHome = 1 / match.odds.home;
-      const pMarketAway = 1 / match.odds.away;
+      const invH = 1 / match.odds.home;
+      const invD = match.odds.draw ? 1 / match.odds.draw : 0;
+      const invA = 1 / match.odds.away;
+      const overround = invH + invD + invA;
+      const pMarketHome = invH / overround;
+      const pMarketAway = invA / overround;
       const edgeHome = pModelHome - pMarketHome;
       const edgeAway = pModelAway - pMarketAway;
       const bestEdge = Math.max(edgeHome, edgeAway);

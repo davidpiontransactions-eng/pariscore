@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
+import { isFlashscoreFresh } from "@/lib/handball-flashscore";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -71,6 +72,18 @@ function loadFlashscoreLive(): Array<{
   }
 }
 
+/** scraped_at du snapshot — gate anti-zombie (fix audit C-H7). */
+function loadFlashscoreScrapedAt(): string | null {
+  try {
+    const filePath = join(process.cwd(), "data", "flashscore_handball.json");
+    if (!existsSync(filePath)) return null;
+    const data = JSON.parse(readFileSync(filePath, "utf-8"));
+    return typeof data.scraped_at === "string" ? data.scraped_at : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const now = Date.now();
 
@@ -82,8 +95,10 @@ export async function GET() {
     });
   }
 
-  // Flashscore live
-  const liveMatches = loadFlashscoreLive();
+  // Fix audit C-H7 : un snapshot stale ne produit PAS de faux lives gelés —
+  // on saute direct au fallback, puis on renvoie une liste live vide honnête.
+  const stale = !isFlashscoreFresh(loadFlashscoreScrapedAt());
+  const liveMatches = stale ? [] : loadFlashscoreLive();
   if (liveMatches.length > 0) {
     cache.set({ matches: liveMatches });
     return NextResponse.json({

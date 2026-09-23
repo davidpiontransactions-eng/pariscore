@@ -3,6 +3,7 @@ import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { toHandballMatch, type FlashscoreMatch } from "@/lib/handball-flashscore";
 
 type CachePayload = {
   strategies: Record<string, unknown[]>;
@@ -11,22 +12,6 @@ type CachePayload = {
 };
 
 const cache = createTtlCache<CachePayload>("__handballStrategyCache");
-
-type FlashscoreMatch = {
-  id?: string;
-  time?: string;
-  home: string;
-  away: string;
-  score?: string | null;
-  isLive?: boolean;
-  isFinished?: boolean;
-  league?: string;
-  country?: string;
-  odds?: number[];
-  homeHalf?: number;
-  awayHalf?: number;
-  minute?: number;
-};
 
 function loadFlashscoreHandball() {
   try {
@@ -37,44 +22,6 @@ function loadFlashscoreHandball() {
   } catch {
     return [] as FlashscoreMatch[];
   }
-}
-
-function toHandballMatch(m: FlashscoreMatch, idx: number) {
-  let score: { home: number; away: number; homeHalf?: number; awayHalf?: number } | undefined;
-  if (m.score && m.score !== "- - -") {
-    const parts = m.score.split(/\s*-\s*/);
-    if (parts.length >= 2) {
-      const home = parseInt(parts[0]) || 0;
-      const away = parseInt(parts[1]) || 0;
-      if (home > 0 || away > 0) {
-        score = { home, away };
-        if (m.homeHalf != null) score.homeHalf = m.homeHalf;
-        if (m.awayHalf != null) score.awayHalf = m.awayHalf;
-      }
-    }
-  }
-
-  let status: "live" | "finished" | "not_started" = "not_started";
-  if (m.isLive) status = "live";
-  else if (m.isFinished) status = "finished";
-
-  let odds: { home?: number; draw?: number; away?: number } | undefined;
-  if (m.odds && m.odds.length >= 2) {
-    odds = { home: m.odds[0], away: m.odds[m.odds.length >= 3 ? 2 : 1] };
-    if (m.odds.length >= 3) odds.draw = m.odds[1];
-  }
-
-  return {
-    id: idx,
-    league: { id: 0, name: m.league || "Handball", country: m.country || "", countryCode: "" },
-    home: { id: 0, name: m.home || "" },
-    away: { id: 0, name: m.away || "" },
-    kickoff: m.time || new Date().toISOString(),
-    status,
-    score,
-    minute: m.minute,
-    odds,
-  };
 }
 
 export async function GET(request: Request) {

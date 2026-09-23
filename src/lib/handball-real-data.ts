@@ -1,31 +1,6 @@
-// Scraper FlashScore handball — données réelles via Playwright MCP
-// Récupère les matchs du jour + scores terminés pour calcul Over/Under
-
-import type { HandballMatch, HandballLeague, HandballTeam } from "./handball-data";
-
-type FlashScoreMatch = {
-  id: string;
-  league: string;
-  country: string;
-  home: string;
-  away: string;
-  homeScore?: number;
-  awayScore?: number;
-  homeHalf?: number;
-  awayHalf?: number;
-  status: "finished" | "live" | "scheduled";
-  minute?: number;
-};
-
-// Matchs réels EHF Champions League 2026/2027 — données du jour (17 sept)
-const REAL_EHF_CL_FIXTURES: FlashScoreMatch[] = [
-  { id: "fs-1", league: "EHF Champions League", country: "Europe", home: "Wisla Plock", away: "MT Melsungen", status: "scheduled" },
-  { id: "fs-2", league: "EHF Champions League", country: "Europe", home: "Celje", away: "Aalborg", status: "scheduled" },
-  { id: "fs-3", league: "EHF Champions League", country: "Europe", home: "Porto", away: "Partizan", status: "scheduled" },
-  { id: "fs-4", league: "EHF Champions League", country: "Europe", home: "Montpellier", away: "Barcelona", status: "scheduled" },
-  { id: "fs-5", league: "EHF Champions League", country: "Europe", home: "Skanderborg AGF", away: "Din. Bucuresti", status: "scheduled" },
-  { id: "fs-6", league: "EHF Champions League", country: "Europe", home: "HC Kriens", away: "SC Magdeburg", status: "scheduled" },
-];
+// Stats d'équipes EHF CL pour les totaux Over/Under — source du modèle over55.
+// Fix audit 2026-09-23 : fixtures figées du 17 sept + getRealHandballOver /
+// findBestOverLine morts (0 importateur) supprimés (tag delete:).
 
 // Historique réel EHF CL 2025/2026 — moyennes de buts par équipe (saison dernière)
 // Source: FlashScore + EHF officiel
@@ -65,78 +40,4 @@ export function realExpectedTotal(home: string, away: string): number {
   const awayExpected = (aStats.avgGoalsFor + hStats.avgGoalsAgainst) / 2;
 
   return homeExpected + awayExpected;
-}
-
-/**
- * Calcule la probabilité Over pour une ligne donnée
- * Utilise Poisson (simplification — CMP nécessiterait plus de données)
- */
-function poissonProb(k: number, lambda: number): number {
-  return Math.exp(-lambda) * Math.pow(lambda, k) / factorial(k);
-}
-
-function factorial(n: number): number {
-  if (n <= 1) return 1;
-  let r = 1;
-  for (let i = 2; i <= n; i++) r *= i;
-  return r;
-}
-
-function poissonOver(line: number, lambda: number): number {
-  let prob = 0;
-  for (let k = Math.ceil(line); k <= lambda * 3; k++) {
-    prob += poissonProb(k, lambda);
-  }
-  return Math.min(prob, 1);
-}
-
-export type OverResult = {
-  matchId: string;
-  home: string;
-  away: string;
-  league: string;
-  expectedTotal: number;
-  bestLine: number;
-  bestProb: number;
-  allLines: { line: number; prob: number }[];
-};
-
-/**
- * Trouve la meilleure ligne Over pour chaque match
- * Cible: probabilité ≥ 55%
- */
-export function findBestOverLine(home: string, away: string, league: string, matchId: string): OverResult {
-  const lambda = realExpectedTotal(home, away);
-  const lines: { line: number; prob: number }[] = [];
-
-  // Tester lignes de 45.5 à 65.5
-  for (let line = 45.5; line <= 65.5; line += 1) {
-    const prob = poissonOver(line, lambda);
-    lines.push({ line, prob });
-  }
-
-  // Trouver la ligne qui donne ≥ 55%
-  const best = lines.reduce((acc, l) => {
-    if (l.prob >= 0.55 && l.line > acc.line) return l;
-    return acc;
-  }, { line: 0, prob: 0 });
-
-  // Si aucune ligne ≥ 55%, prendre la plus proche
-  if (best.line === 0) {
-    const closest = lines.reduce((acc, l) => {
-      return Math.abs(l.prob - 0.55) < Math.abs(acc.prob - 0.55) ? l : acc;
-    });
-    return { matchId, home, away, league, expectedTotal: lambda, bestLine: closest.line, bestProb: closest.prob, allLines: lines };
-  }
-
-  return { matchId, home, away, league, expectedTotal: lambda, bestLine: best.line, bestProb: best.prob, allLines: lines };
-}
-
-/**
- * Récupère les vrais matchs du jour + calcule les Over
- */
-export function getRealHandballOver(): OverResult[] {
-  return REAL_EHF_CL_FIXTURES.map(m =>
-    findBestOverLine(m.home, m.away, m.league, m.id)
-  );
 }
