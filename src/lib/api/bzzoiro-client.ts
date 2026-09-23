@@ -108,6 +108,8 @@ export type FootballH2H = {
 
 export type FootballOdds = {
   match_id: number;
+  /** Fix Bzzoiro 2026-09 : peut être null (flux agrégé interne mort le 21/08). */
+  updated_at?: string | null;
   bookmakers: Array<{
     name: string;
     markets: Array<{
@@ -234,9 +236,14 @@ export const football = {
     return bsdFetch<FootballH2H>(`${FOOTBALL_BASE}/events/${matchId}/h2h/`);
   },
 
-  /** Cotes multi-bookmakers */
+  /** Cotes multi-bookmakers (consensus — inclus live, Football API) */
   odds(matchId: number) {
     return bsdFetch<FootballOdds>(`${FOOTBALL_BASE}/events/${matchId}/odds/`);
+  },
+
+  /** Vue comparison per-bookmaker (Unlimited) — mêmes lignes, in-play = rows séparées */
+  oddsComparison(matchId: number) {
+    return bsdFetch<FootballOdds>(`${FOOTBALL_BASE}/events/${matchId}/odds/comparison/`);
   },
 
   /** Prédictions ML */

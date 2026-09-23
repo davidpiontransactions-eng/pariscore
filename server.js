@@ -4325,9 +4325,21 @@ function recordPrematchOddsSnapshot(match) {
 // ── Persistance odds → DB (odds_snapshots table) ─────────────────────────────
 // Appelé après recordPrematchOddsSnapshot pour créer un historique persistant.
 // INSERT direct SQLite (pas de Prisma bridge — server.js utilise better-sqlite3).
+//
+// Fix 2026-09 (cf. incident Bzzoiro in-play) : les prix IN-PLAY sont leurs
+// propres lignes (source 'bsd-compare-live') — ils ne peuvent PAS écraser la
+// closing line prematch ('bsd-compare').
+function isMatchStarted(match) {
+  if (!match) return false;
+  if (match.status === 'live' || match.status === 'finished') return true;
+  const ko = match.commence_time ? new Date(match.commence_time).getTime() : NaN;
+  return Number.isFinite(ko) && ko < Date.now();
+}
+
 function persistOddsToDB(match, summary) {
   try {
     if (!sqldb || !match || !match.id || !summary) return;
+    const source = isMatchStarted(match) ? 'bsd-compare-live' : 'bsd-compare';
     // Dedup : ignorer si dernier snapshot pour ce match < 10 min
     const last = sqldb.prepare('SELECT scrapedAt FROM odds_snapshots WHERE matchId = ? ORDER BY scrapedAt DESC LIMIT 1').get(match.id);
     if (last) {
@@ -4362,7 +4374,7 @@ function persistOddsToDB(match, summary) {
     for (const [market, outcome, odds, bookmaker] of rows) {
       const id = `${match.id}_${market}_${outcome}_${bookmaker}_${Date.now()}`;
       const impliedProb = odds > 0 ? 1 / odds : 0;
-      stmt.run(id, match.id, 'football', homeTeam, awayTeam, bookmaker, market, outcome, odds, impliedProb, 'bsd-compare', now);
+      stmt.run(id, match.id, 'football', homeTeam, awayTeam, bookmaker, market, outcome, odds, impliedProb, source, now);
     }
   } catch (_) { /* best-effort */ }
 }
@@ -4398,8 +4410,9 @@ async function enrichMatchWithBSDFullStack(match) {
         match.odds._source = 'bsd_compare';
         match.odds._books_count = summary.books_count;
       }
-      // Insights v2 — capturer le snapshot de cotes pour la sparkline mouvement
-      recordPrematchOddsSnapshot(match);
+      // Insights v2 — snapshot sparkline = PREMATCH uniquement (pas en live :
+      // le mouvement de closing se fige au coup d'envoi, cf. incident Bzzoiro)
+      if (!isMatchStarted(match)) recordPrematchOddsSnapshot(match);
       // Persistance odds → DB (historique persistant, survit aux restarts)
       persistOddsToDB(match, summary);
       // Market depth bonus: patch reliability_score after BSD books count known
@@ -18206,7 +18219,13 @@ async function fetchOdds(force = false, opts = {}) {
   if (!force && cacheData && db.matches.length > 0) {
     const now = Date.now();
     const upcoming = db.matches.filter(m => new Date(m.commence_time).getTime() > now).length;
-    if (upcoming > 0) {
+    // Fix 2026-09 (bug jumeau incident Bzzoiro) : un match commencé depuis < 3h
+    // DOIT continuer à se rafraîchir — sinon la cote live gèle au coup d'envoi.
+    const inPlayWindow = db.matches.filter(m => {
+      const ko = new Date(m.commence_time).getTime();
+      return Number.isFinite(ko) && ko <= now && now - ko < 3 * 60 * 60 * 1000;
+    }).length;
+    if (upcoming > 0 && inPlayWindow === 0) {
       console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API [key=${cacheKey}]`);
       // WOM enrich même sur cache-hit — betwatch first-pass (sync), Betfair fallback async
       { const _needsWOM = db.matches.filter(m => m && !m.betfair_wom);
