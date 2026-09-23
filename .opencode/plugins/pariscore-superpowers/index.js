@@ -77,6 +77,22 @@ export const PariScoreSuperpowersPlugin = async ({ client, directory }) => {
     const fullContent = fs.readFileSync(skillPath, "utf8");
     const { content } = extractAndStripFrontmatter(fullContent);
 
+    // Caveman skill — mode communication obligatoire dès le démarrage
+    let cavemanBlock = "";
+    const cavemanPath = path.join(directory, ".opencode", "skills", "caveman", "SKILL.md");
+    if (fs.existsSync(cavemanPath)) {
+      const cavemanRaw = fs.readFileSync(cavemanPath, "utf8");
+      const { content: cavemanBody } = extractAndStripFrontmatter(cavemanRaw);
+      cavemanBlock = `
+
+## CAVEMAN MODE — OBLIGATOIRE (chargé au démarrage)
+
+Apply the caveman skill below to EVERY response (telegraphic, minimal tokens).
+Active from this session until the user says "normal mode".
+
+${cavemanBody}`;
+    }
+
     // PariScore-specific tool mapping
     const toolMapping = `**Tool Mapping for OpenCode (PariScore):**
 When skills request actions, substitute OpenCode equivalents:
@@ -85,15 +101,15 @@ When skills request actions, substitute OpenCode equivalents:
 - Invoke a skill → OpenCode's native \`skill\` tool
 - Read files → \`read\`
 - Create, edit, or delete files → \`apply_patch\` or \`write\`/\`edit\`
-- Run shell commands → \`oc_bash\` (CMD, NOT bash — bash freezes on Windows)
+- Run shell commands → \`oc_bash\` (CMD, NOT bash — bash freezes on Windows) ; si absent : \`ps_shell\` (plugin de secours, même syntaxe CMD)
 - Search files → \`grep\`, \`oc_glob\`
 - Fetch a URL → \`webfetch\`
 
 **CRITICAL PariScore conventions:**
 - Always use CMD syntax, never bash (Windows environment)
-- Use \`oc_bash\` not \`bash\` (bash tool is disabled)
+- Use \`oc_bash\` not \`bash\` (bash tool is disabled) ; fallback \`ps_shell\`
 - Project: Next.js 16 + Bun + React 19 + Prisma
-- Skills in \`.agents/tools-active/\` (47 skills)`;
+- Skills in \`.agents/tools-active/\` ; runtime Bun → commands \`bun run lint\`, \`bun run typecheck\` (skill bun-runtime)`;
 
     _bootstrapCache = `<EXTREMELY_IMPORTANT>
 You have PariScore Superpowers — a structured development methodology.
@@ -102,7 +118,7 @@ You have PariScore Superpowers — a structured development methodology.
 
 ${content}
 
-${toolMapping}
+${toolMapping}${cavemanBlock}
 </EXTREMELY_IMPORTANT>`;
 
     return _bootstrapCache;
