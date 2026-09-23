@@ -15,6 +15,7 @@ import {
 import { eloProb, predictPrematch } from "../prediction/football/engine";
 import { round2, clamp01 } from "../prediction/football/math-utils";
 import type { Markets } from "../prediction/football/types";
+import { marketValueSignal, blendMarketValue } from "../prediction/football/market-value";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types d'entrée
@@ -84,6 +85,16 @@ export type MatchProbability = {
   odds: number;
   ev: number;
   confidence: number; // 1-5
+  /**
+   * Feature « valeur de marché effectif » appliquée (Csurilla & Csató arXiv:2609.21674).
+   * applied=false → aucune donnée club → ensemble inchangé.
+   */
+  marketValue?: {
+    signal: number;
+    applied: boolean;
+    homeValueM: number | null;
+    awayValueM: number | null;
+  };
 };
 
 export type StrategyPick = {
@@ -472,12 +483,17 @@ export function computeProbabilities(input: MatchInput): MatchProbability {
   const psP = powerScoreProbs(input);
 
   // 5. Ensemble
-  const ens = ensembleProbs(
+  let ens = ensembleProbs(
     { home: mkPoisson.homeWin, draw: mkPoisson.draw, away: mkPoisson.awayWin },
     { home: mkDC.homeWin, draw: mkDC.draw, away: mkDC.awayWin },
     eloP,
     psP,
   );
+
+  // 6. Feature faible « valeur de marché des effectifs » (papier TM vs Elo :
+  //    signal orthogonal mercato — Elo de saison y est aveugle). Identité si absente.
+  const mv = marketValueSignal(input.homeTeam, input.awayTeam);
+  ens = blendMarketValue(ens, mv);
 
   // Marchés over/btts (Poisson, fiable pour les totaux)
   const markets = {
@@ -508,6 +524,12 @@ export function computeProbabilities(input: MatchInput): MatchProbability {
     odds: pick.odds,
     ev: pick.ev,
     confidence: computeConfidence(pick.probability, pick.ev),
+    marketValue: {
+      signal: Math.round(mv.signal * 100) / 100,
+      applied: mv.available,
+      homeValueM: mv.homeValueM,
+      awayValueM: mv.awayValueM,
+    },
   };
 }
 

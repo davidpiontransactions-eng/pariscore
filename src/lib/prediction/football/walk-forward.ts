@@ -10,7 +10,7 @@
  */
 
 import type { FootballMatch } from "@/lib/football-data";
-import { brierScore, logLoss, accuracy } from "./brier-score";
+import { brierScore, logLoss, accuracy, rankedProbabilityScore } from "./brier-score";
 import { round2 } from "./math-utils";
 
 // ---------------------------------------------------------------------------
@@ -39,6 +39,8 @@ export type WalkForwardPrediction = {
   odds: number | null;
   /** true si le pari gagne. */
   won: boolean;
+  /** Distribution 1X2 complète [dom, nul, ext] (0-1) — requise pour le RPS. */
+  probs3?: [number, number, number];
 };
 
 export type MarketMetrics = {
@@ -47,6 +49,8 @@ export type MarketMetrics = {
   accuracy: number;
   roi: number;
   sampleSize: number;
+  /** Ranked Probability Score (1X2 uniquement — cible ordonnée ; NaN ailleurs). */
+  rps: number;
 };
 
 export type WalkForwardResult = {
@@ -57,6 +61,11 @@ export type WalkForwardResult = {
     logLoss: number;
     accuracy: number;
     roi: number;
+    /**
+     * Ranked Probability Score global (1X2 — Constantinou & Fenton2012) :
+     * respecte l'ordre V/N/D contrairement au Brier. Standard football.
+     */
+    rps: number;
     /** Détail par marché. */
     markets: {
       "1X2": MarketMetrics;
@@ -107,7 +116,7 @@ function trainAndPredict(
   trainMatches: FootballMatch[],
   _testMatch: FootballMatch,
 ): {
-  "1X2": { pick: string; prob: number };
+  "1X2": { pick: string; prob: number; probs: [number, number, number] };
   BTTS: { pick: string; prob: number };
   O25: { pick: string; prob: number };
 } {
@@ -127,7 +136,7 @@ function trainAndPredict(
 
   if (total === 0) {
     return {
-      "1X2": { pick: "1", prob: 0.33 },
+      "1X2": { pick: "1", prob: 0.33, probs: [0.33, 0.34, 0.33] },
       BTTS: { pick: "YES", prob: 0.50 },
       O25: { pick: "OVER", prob: 0.50 },
     };
@@ -145,7 +154,7 @@ function trainAndPredict(
   if (pA > prob1X2) { pick1X2 = "2"; prob1X2 = pA; }
 
   return {
-    "1X2": { pick: pick1X2, prob: round2(prob1X2) },
+    "1X2": { pick: pick1X2, prob: round2(prob1X2), probs: [pH, pD, pA] },
     BTTS: { pick: pBTTS >= 0.5 ? "YES" : "NO", prob: round2(pBTTS >= 0.5 ? pBTTS : 1 - pBTTS) },
     O25: { pick: pO25 >= 0.5 ? "OVER" : "UNDER", prob: round2(pO25 >= 0.5 ? pO25 : 1 - pO25) },
   };
@@ -181,10 +190,11 @@ export function walkForwardValidation(
         logLoss: NaN,
         accuracy: NaN,
         roi: NaN,
+        rps: NaN,
         markets: {
-          "1X2": { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0 },
-          BTTS: { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0 },
-          O25: { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0 },
+          "1X2": { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0, rps: NaN },
+          BTTS: { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0, rps: NaN },
+          O25: { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0, rps: NaN },
         },
       },
       windows: 0,
@@ -216,6 +226,7 @@ export function walkForwardValidation(
           pick: pred["1X2"].pick,
           odds: m.odds ? m.odds.home : null,
           won: outcome1X2 === o1x2,
+          probs3: pred["1X2"].probs,
         });
       }
 
@@ -258,7 +269,7 @@ export function walkForwardValidation(
 
   const computeMetrics = (preds: WalkForwardPrediction[]): MarketMetrics => {
     if (preds.length === 0) {
-      return { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0 };
+      return { brier: NaN, logLoss: NaN, accuracy: NaN, roi: NaN, sampleSize: 0, rps: NaN };
     }
     const predicted = preds.map((p) => p.predicted);
     const actualVals = preds.map((p) => p.actual);
@@ -273,12 +284,27 @@ export function walkForwardValidation(
       accuracy: round2(accuracy(predicted, actualVals)),
       roi: round2((pnl / preds.length) * 100),
       sampleSize: preds.length,
+      rps: NaN, // remplacé ci-dessous pour le1X2 (seul marché à cible ordonnée)
     };
   };
 
   const m1X2 = computeMetrics(filter1X2);
   const mBTTS = computeMetrics(filterBTTS);
   const mO25 = computeMetrics(filterO25);
+
+  // RPS1X2 (Constantinou & Fenton2012) : CDF [P1, P1+PX, 1], outcome indexé
+  // dans l'ordre V/N/D (actual 1/0.5/0 →0/1/2). Métrique headline football.
+  const rpsRows = filter1X2.filter((p) => p.probs3 != null);
+  const rpsValue = rpsRows.length > 0
+    ? rankedProbabilityScore(
+        rpsRows.map((p) => {
+          const [h, d, a] = p.probs3 as [number, number, number];
+          return [h, h + d, h + d + a];
+        }),
+        rpsRows.map((p) => (p.actual === 1 ? 0 : p.actual === 0.5 ? 1 : 2)),
+      )
+    : NaN;
+  m1X2.rps = Number.isFinite(rpsValue) ? round2(rpsValue) : NaN;
 
   const allPred = allPredictions.map((p) => p.predicted);
   const allAct = allPredictions.map((p) => p.actual);
@@ -289,6 +315,7 @@ export function walkForwardValidation(
       brierScore: allPred.length > 0 ? round2(brierScore(allPred, allAct)) : NaN,
       logLoss: allPred.length > 0 ? round2(logLoss(allPred, allAct)) : NaN,
       accuracy: allPred.length > 0 ? round2(accuracy(allPred, allAct)) : NaN,
+      rps: m1X2.rps,
       roi: allPredictions.length > 0
         ? round2(
             (allPredictions.reduce((sum, p) => {

@@ -202,6 +202,34 @@ function PowerBlock({ title, score, rank, rankTotal, metrics, color }: {
 
 /* ─── Composant : Header stade avec silhouettes ─── */
 function StadiumHeader({ team, venueLabel }: { team: string; venueLabel: string }) {
+  const [valueM, setValueM] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setValueM(null);
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/football/market-value?team=${encodeURIComponent(team)}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { valueM: number | null };
+        if (!cancelled && typeof data.valueM === "number") setValueM(data.valueM);
+      } catch {
+        /* silencieux — valeur TM optionnelle */
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [team]);
+
+  const valueLabel =
+    valueM == null
+      ? null
+      : valueM >= 1000
+        ? `${(valueM / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Md €`
+        : `${valueM.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M€`;
+
   return (
     <div className="relative overflow-hidden rounded-t-xl">
       {/* Fond stade SVG */}
@@ -298,7 +326,14 @@ function StadiumHeader({ team, venueLabel }: { team: string; venueLabel: string 
           </div>
           <div>
             <h2 className="text-xl font-black text-white drop-shadow-lg">{team}</h2>
-            <p className="text-xs font-medium text-white/80 drop-shadow">{venueLabel}</p>
+            <p className="text-xs font-medium text-white/80 drop-shadow">
+              {venueLabel}
+              {valueLabel && (
+                <span className="ml-2 rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-emerald-300 ring-1 ring-emerald-400/40">
+                  💰 {valueLabel}
+                </span>
+              )}
+            </p>
           </div>
         </div>
       </div>

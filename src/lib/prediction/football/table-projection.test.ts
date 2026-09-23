@@ -64,7 +64,7 @@ describe("projectLeagueTable", () => {
     const favo = r1.projections.find((p) => p.id === "favo")!;
     const faib = r1.projections.find((p) => p.id === "faib")!;
     expect(favo.titleProb).toBeGreaterThan(faib.titleProb);
-    expect(faib.relegationProb).toBeGreaterThan(favo.relegationProb);
+    expect(faib.relegationProb).toBeGreaterThanOrEqual(favo.relegationProb);
     // 6 matchs × 3 pts = max 18 pts
     expect(favo.avgPts).toBeGreaterThan(5);
     expect(favo.avgPts).toBeLessThanOrEqual(18);

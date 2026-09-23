@@ -22,12 +22,16 @@ type MarketAccuracy = {
   accuracy: number;
   roi: number;
   sampleSize: number;
+  /** RPS —1X2 uniquement (cible ordonnée) ; NaN sur BTTS/O2.5. */
+  rps?: number;
 };
 
 type AccuracyResponse = {
   brierScore: number;
   logLoss: number;
   accuracy: number;
+  /** Ranked Probability Score global1X2 (headlinemétrique football — papier Csurilla&Csató2026). */
+  rps?: number;
   calibration: CalibrationBin[];
   sampleSize: number;
   period: { from: string; to: string; matchCount: number };
@@ -135,6 +139,7 @@ export async function GET(request: Request) {
       brierScore: m.brierScore,
       logLoss: m.logLoss,
       accuracy: m.accuracy,
+      rps: m.rps,
       calibration,
       sampleSize: wfResult.predictions.length,
       period,
