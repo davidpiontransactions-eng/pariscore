@@ -8,7 +8,7 @@
  * Usage : node scripts/scrape-eliteprospects-hockey.mjs [--season=2026-2027]
  */
 import https from 'node:https';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -170,9 +170,19 @@ async function main() {
     }
   }
 
-  mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, JSON.stringify(results, null, 2));
-  console.log(`[ep] Saved to ${OUT}`);
+  // Anti-écrasement : IP datacenter reçoit HTTP403 d'éliteprospects → 0 teams.
+  // Écrire un fichier vide détruirait les tables KHL/Magnus fraîches (GH workflow
+  // ou dernier run OK) — on conserve l'existant tant que le résultat est vide.
+  const totalTeams = Object.values(results.leagues).reduce(
+    (n, lg) => n + ((lg && lg.teams) ? lg.teams.length : 0), 0,
+  );
+  if (totalTeams === 0 && existsSync(OUT)) {
+    console.log('[ep] ⚠️ 0 teams (403 ?) — fichier existant conservé, pas d\'écriture');
+  } else {
+    mkdirSync(dirname(OUT), { recursive: true });
+    writeFileSync(OUT, JSON.stringify(results, null, 2));
+    console.log(`[ep] Saved to ${OUT}`);
+  }
 
   // Resume
   for (const [leagueId, leagueData] of Object.entries(results.leagues)) {

@@ -6,7 +6,7 @@
  * Usage : node scripts/scrape-eliteprospects-player-stats.mjs [--season=2026-2027]
  */
 import https from 'node:https';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -201,9 +201,18 @@ async function main() {
     }
   }
 
-  mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, JSON.stringify(results, null, 2));
-  console.log(`[ep-stats] Saved to ${OUT}`);
+  // Anti-écrasement (idem standings) :403 éliteprospects depuis IP datacenter
+  // → toutes les ligues vides → ne pas écraser les top10 fraîchis.
+  const totalPlayers = Object.values(results.leagues).reduce(
+    (n, lg) => n + ((lg && lg.topScorers) ? lg.topScorers.length : 0), 0,
+  );
+  if (totalPlayers === 0 && existsSync(OUT)) {
+    console.log('[ep-stats] ⚠️ 0 joueurs (403 ?) — fichier existant conservé, pas d\'écriture');
+  } else {
+    mkdirSync(dirname(OUT), { recursive: true });
+    writeFileSync(OUT, JSON.stringify(results, null, 2));
+    console.log(`[ep-stats] Saved to ${OUT}`);
+  }
 
   // Resume
   for (const [id, data] of Object.entries(results.leagues)) {
