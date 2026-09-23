@@ -16,6 +16,7 @@ on:
       - "scripts/scrape-annabet-hockey-prematch.mjs"
       - "scripts/scrape-eliteprospects-hockey.mjs"
       - "scripts/scrape-oddspedia-hockey.mjs"
+      - "scripts/scrape-liguemagnus-stats.mjs"
   schedule:
     - cron: "0 5 * * *"
   workflow_dispatch:
@@ -58,6 +59,10 @@ jobs:
           node scripts/scrape-oddspedia-hockey.mjs $LEAGUE_ARG
         continue-on-error: true
 
+      - name: Scrape Ligue Magnus stats (officiel) — zero dep
+        run: node scripts/scrape-liguemagnus-stats.mjs
+        continue-on-error: true
+
       - name: Scrape Annabet prematch (h2h + standings) — zero dep
         run: |
           LEAGUE_ARG=""
@@ -86,7 +91,7 @@ jobs:
       - name: Detect changes
         id: diff
         run: |
-          git add -- data/hockey_prematch_betexplorer.json data/hockey_prematch_annabet.json data/hockey_prematch_oddspedia.json data/eliteprospects_hockey_standings.json data/eliteprospects_player_stats.json 2>/dev/null || true
+          git add -- data/hockey_prematch_betexplorer.json data/hockey_prematch_annabet.json data/hockey_prematch_oddspedia.json data/liguemagnus_stats.json data/eliteprospects_hockey_standings.json data/eliteprospects_player_stats.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No data changes — skipping commit"
