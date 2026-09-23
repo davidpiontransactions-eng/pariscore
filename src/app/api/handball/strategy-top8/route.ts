@@ -12,83 +12,75 @@ type CachePayload = {
 
 const cache = createTtlCache<CachePayload>("__handballStrategyCache");
 
-// Charger les données Flashscore pour le fallback
-function loadFlashscoreHandball(): Array<{
-  id: string;
-  league: { name: string; country: string };
-  home: { name: string };
-  away: { name: string };
-  kickoff: string;
-  status: string;
-  score?: { home: number; away: number };
+type FlashscoreMatch = {
+  id?: string;
+  time?: string;
+  home: string;
+  away: string;
+  score?: string | null;
+  isLive?: boolean;
+  isFinished?: boolean;
+  league?: string;
+  country?: string;
+  odds?: number[];
+  homeHalf?: number;
+  awayHalf?: number;
   minute?: number;
-}> {
+};
+
+function loadFlashscoreHandball() {
   try {
-    const filePath = join(process.cwd(), "..", "..", "data", "flashscore_handball.json");
-    if (!existsSync(filePath)) return [];
+    const filePath = join(process.cwd(), "data", "flashscore_handball.json");
+    if (!existsSync(filePath)) return [] as FlashscoreMatch[];
     const data = JSON.parse(readFileSync(filePath, "utf-8"));
-    const matches = (data.matches || []) as Array<{
-      id?: string;
-      time?: string;
-      home?: string;
-      away?: string;
-      score?: string | null;
-      isLive?: boolean;
-      isFinished?: boolean;
-      league?: string;
-      country?: string;
-    }>;
-    return matches
-      .filter((m) => m.home && m.away)
-      .map((m) => {
-        let scoreObj: { home: number; away: number } | undefined;
-        if (m.score && m.score !== "- - -") {
-          const parts = m.score.split(/\s*-\s*/);
-          if (parts.length >= 2) {
-            const home = parseInt(parts[0]) || 0;
-            const away = parseInt(parts[1]) || 0;
-            if (home > 0 || away > 0) scoreObj = { home, away };
-          }
-        }
-        let minute: number | undefined;
-        if (m.time) {
-          const minuteMatch = m.time.match(/(\d+)/);
-          if (minuteMatch) minute = parseInt(minuteMatch[1]);
-        }
-        let status: "live" | "finished" | "not_started" = "not_started";
-        if (m.isLive) status = "live";
-        else if (m.isFinished) status = "finished";
-        const now = new Date();
-        let kickoff = now.toISOString();
-        if (m.time && m.time.includes(":")) {
-          const [hours, mins] = m.time.split(":").map(Number);
-          if (!isNaN(hours) && !isNaN(mins)) {
-            const ko = new Date(now);
-            ko.setHours(hours, mins, 0, 0);
-            kickoff = ko.toISOString();
-          }
-        }
-        return {
-          id: m.id || `fs-${m.home}-${m.away}`.replace(/\s+/g, "-").toLowerCase(),
-          league: { name: m.league || "Flashscore Handball", country: m.country || "" },
-          home: { name: m.home || "Dom." },
-          away: { name: m.away || "Ext." },
-          kickoff,
-          status,
-          score: scoreObj,
-          minute,
-        };
-      });
+    return (data.matches || []) as FlashscoreMatch[];
   } catch {
-    return [];
+    return [] as FlashscoreMatch[];
   }
+}
+
+function toHandballMatch(m: FlashscoreMatch, idx: number) {
+  let score: { home: number; away: number; homeHalf?: number; awayHalf?: number } | undefined;
+  if (m.score && m.score !== "- - -") {
+    const parts = m.score.split(/\s*-\s*/);
+    if (parts.length >= 2) {
+      const home = parseInt(parts[0]) || 0;
+      const away = parseInt(parts[1]) || 0;
+      if (home > 0 || away > 0) {
+        score = { home, away };
+        if (m.homeHalf != null) score.homeHalf = m.homeHalf;
+        if (m.awayHalf != null) score.awayHalf = m.awayHalf;
+      }
+    }
+  }
+
+  let status: "live" | "finished" | "not_started" = "not_started";
+  if (m.isLive) status = "live";
+  else if (m.isFinished) status = "finished";
+
+  let odds: { home?: number; draw?: number; away?: number } | undefined;
+  if (m.odds && m.odds.length >= 2) {
+    odds = { home: m.odds[0], away: m.odds[m.odds.length >= 3 ? 2 : 1] };
+    if (m.odds.length >= 3) odds.draw = m.odds[1];
+  }
+
+  return {
+    id: idx,
+    league: { id: 0, name: m.league || "Handball", country: m.country || "", countryCode: "" },
+    home: { id: 0, name: m.home || "" },
+    away: { id: 0, name: m.away || "" },
+    kickoff: m.time || new Date().toISOString(),
+    status,
+    score,
+    minute: m.minute,
+    odds,
+  };
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const strat = searchParams.get("strat") || "all";
-    const win = searchParams.get("win") || "all";
 
     const entry = cache.getEntry();
     if (isFresh(entry, 5 * 60_000)) {
@@ -98,34 +90,32 @@ export async function GET(request: Request) {
     }
 
     const { computeHandballStrategyTop8 } = await import("@/lib/handball-strategy-top8");
-    const { fetchHandballFixtures, fetchHandballLive } = await import("@/lib/handball-api");
 
-    let fixtures: any[] = [];
-    let live: any[] = [];
+    // Charger les données Flashscore (source principale)
+    const rawMatches = loadFlashscoreHandball();
+    const allMatches = rawMatches.map((m, i) => toHandballMatch(m, i));
 
-    try {
-      [fixtures, live] = await Promise.all([
-        fetchHandballFixtures().catch(() => []),
-        fetchHandballLive().catch(() => []),
-      ]);
-    } catch {
-      // API-Sports indisponible
-    }
+    const finished = allMatches.filter((m) => m.status === "finished");
+    const upcoming = allMatches.filter((m) => m.status === "not_started" || m.status === "live");
 
-    // Si API-Sports ne retourne rien, utiliser Flashscore
-    if (fixtures.length === 0 && live.length === 0) {
-      const flashscoreMatches = loadFlashscoreHandball();
-      if (flashscoreMatches.length > 0) {
-        fixtures = flashscoreMatches.filter((m) => m.status === "finished");
-        live = flashscoreMatches.filter((m) => m.status === "live");
-        // Les matchs "not_started" sont considérés comme upcoming
-        const upcoming = flashscoreMatches.filter((m) => m.status === "not_started");
-        fixtures = [...fixtures, ...upcoming];
+    // Fallback API-Sports si Flashscore vide
+    if (finished.length === 0 && upcoming.length === 0) {
+      try {
+        const { fetchHandballFixtures, fetchHandballLive } = await import("@/lib/handball-api");
+        const [fixtures, live] = await Promise.all([
+          fetchHandballFixtures().catch(() => []),
+          fetchHandballLive().catch(() => []),
+        ]);
+        const fFinished = fixtures.filter((m) => m.status === "finished");
+        const fUpcoming = [...fixtures.filter((m) => m.status === "not_started"), ...live];
+        const result = computeHandballStrategyTop8(fFinished, fUpcoming);
+        cache.set(result);
+        if (strat === "all") return NextResponse.json(result);
+        return NextResponse.json({ ...result, strategies: { [strat]: result.strategies[strat as keyof typeof result.strategies] ?? [] } });
+      } catch {
+        // API-Sports indisponible
       }
     }
-
-    const finished = fixtures.filter(m => m.status === "finished");
-    const upcoming = [...fixtures.filter(m => m.status === "not_started"), ...live];
 
     const result = computeHandballStrategyTop8(finished, upcoming);
     cache.set(result);
