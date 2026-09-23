@@ -468,6 +468,9 @@ export function HockeyTabContent() {
   // Joueurs pour top 10
   const players = activeLeague === "nhl" ? nhlPlayers : activeLeague === "khl" ? khlPlayers : magnusPlayers;
 
+  // Clé source unique : prematch/standings stockent Magnus sous "ligue-magnus"
+  const prematchLeague = prematch?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague];
+
   return (
     <div className="mx-auto w-full max-w-7xl px-3 pb-16 sm:px-5">
       {/* Header */}
@@ -643,12 +646,12 @@ export function HockeyTabContent() {
       )}
       {!loading && subView === "prematch" && (
         <>
-          {prematch?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague]?.matches?.length ? (
+          {prematchLeague?.matches?.length ? (
             <div className="space-y-2">
               <p className="text-xs text-[#717171] mb-3">
-                Source: annabet.com — {prematch.leagues[activeLeague].matches.length} matchs à venir
+                Source: annabet.com — {prematchLeague.matches.length} matchs à venir
               </p>
-              {prematch.leagues[activeLeague].matches.map((m, i) => (
+              {prematchLeague.matches.map((m, i) => (
                 <button
                   key={`${m.team1Id}-${m.team2Id}-${i}`}
                   onClick={() => setSelectedMatch(m)}
