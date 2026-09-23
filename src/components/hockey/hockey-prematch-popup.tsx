@@ -83,12 +83,12 @@ type HockeyPrematchPopupProps = {
 function StatRow({ label, values, colors }: { label: string; values: string[]; colors?: string[] }) {
   return (
     <div className="flex items-center gap-2 py-0.5">
-      <span className="text-[10px] text-white/40 w-8 text-right shrink-0">{label}</span>
+      <span className="text-[10px] text-[#717171] w-8 text-right shrink-0">{label}</span>
       <div className="flex gap-1 flex-1">
         {values.map((v, i) => (
           <span
             key={i}
-            className={cn("text-xs font-mono", colors?.[i] || "text-white/70")}
+            className={cn("text-xs font-mono", colors?.[i] || "text-[#3d3d3d]")}
           >
             {v}
           </span>
@@ -102,16 +102,16 @@ function OddsBadges({ home, draw, away }: { home: number; draw: number; away: nu
   return (
     <div className="flex items-center gap-2 justify-center py-1">
       <div className="text-center">
-        <div className="text-[10px] text-white/40">1</div>
-        <div className="text-sm font-bold text-[#00e676]">{home.toFixed(2)}</div>
+        <div className="text-[10px] text-[#717171]">1</div>
+        <div className="text-sm font-bold text-[#00a344]">{home.toFixed(2)}</div>
       </div>
       <div className="text-center">
-        <div className="text-[10px] text-white/40">X</div>
+        <div className="text-[10px] text-[#717171]">X</div>
         <div className="text-sm font-bold text-[#ffd93d]">{draw.toFixed(2)}</div>
       </div>
       <div className="text-center">
-        <div className="text-[10px] text-white/40">2</div>
-        <div className="text-sm font-bold text-[#5fbfff]">{away.toFixed(2)}</div>
+        <div className="text-[10px] text-[#717171]">2</div>
+        <div className="text-sm font-bold text-[#0288d1]">{away.toFixed(2)}</div>
       </div>
     </div>
   );
@@ -123,11 +123,11 @@ function GoalsDistribution({ label, data }: { label: string; data: { goals: numb
 
   return (
     <div>
-      <div className="text-[10px] text-white/40 mb-1">{label}</div>
+      <div className="text-[10px] text-[#717171] mb-1">{label}</div>
       <div className="flex items-end gap-0.5 h-12">
         {data.map((d) => (
           <div key={d.goals} className="flex-1 flex flex-col items-center gap-0.5">
-            <span className="text-[8px] text-white/30">{d.pct}%</span>
+            <span className="text-[8px] text-[#9a9a9a]">{d.pct}%</span>
             <div
               className="w-full rounded-t-sm transition-all"
               style={{
@@ -135,7 +135,7 @@ function GoalsDistribution({ label, data }: { label: string; data: { goals: numb
                 backgroundColor: d.pct > 0 ? "rgba(0,230,118,0.6)" : "transparent",
               }}
             />
-            <span className="text-[8px] text-white/50">{d.goals === 6 ? "6+" : d.goals}</span>
+            <span className="text-[8px] text-[#717171]">{d.goals === 6 ? "6+" : d.goals}</span>
           </div>
         ))}
       </div>
@@ -152,11 +152,11 @@ function GoalDiffBars({ data }: { data: { diff: number; pct: number }[] }) {
       {data.map((d) => (
         <div key={d.diff} className="flex items-center gap-2">
           <span className={cn("text-[10px] w-6 text-right font-mono",
-            d.diff > 0 ? "text-[#00e676]" : d.diff < 0 ? "text-red-400" : "text-[#ffd93d]"
+            d.diff > 0 ? "text-[#00a344]" : d.diff < 0 ? "text-red-500" : "text-[#ffd93d]"
           )}>
             {d.diff > 0 ? "+" : ""}{d.diff}
           </span>
-          <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+          <div className="flex-1 h-2 bg-[#f5f5f5] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full"
               style={{
@@ -165,7 +165,7 @@ function GoalDiffBars({ data }: { data: { diff: number; pct: number }[] }) {
               }}
             />
           </div>
-          <span className="text-[10px] text-white/40 w-8">{d.pct}%</span>
+          <span className="text-[10px] text-[#717171] w-8">{d.pct}%</span>
         </div>
       ))}
     </div>
@@ -179,7 +179,7 @@ function StandingsTable({ standings }: { standings: Standing[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-[10px]">
         <thead>
-          <tr className="text-white/40 border-b border-white/10">
+          <tr className="text-[#717171] border-b border-[#f0f0f0]">
             <th className="py-1 px-1 text-left w-6">#</th>
             <th className="py-1 px-1 text-left">Team</th>
             <th className="py-1 px-1 text-center">GP</th>
@@ -195,20 +195,20 @@ function StandingsTable({ standings }: { standings: Standing[] }) {
             <tr
               key={t.name}
               className={cn(
-                "border-b border-white/5",
+                "border-b border-[#f0f0f0]",
                 t.highlighted && "bg-[#00e676]/10"
               )}
             >
-              <td className="py-0.5 px-1 text-white/40">{t.rank}</td>
-              <td className={cn("py-0.5 px-1 font-semibold", t.highlighted ? "text-[#00e676]" : "text-white/80")}>
+              <td className="py-0.5 px-1 text-[#717171]">{t.rank}</td>
+              <td className={cn("py-0.5 px-1 font-semibold", t.highlighted ? "text-[#00a344]" : "text-[#2a2a2a]")}>
                 {t.name}
               </td>
-              <td className="py-0.5 px-1 text-center text-white/50">{t.gp}</td>
-              <td className="py-0.5 px-1 text-center text-white/60">{t.all.w}</td>
-              <td className="py-0.5 px-1 text-center text-white/50">{t.all.otw}</td>
-              <td className="py-0.5 px-1 text-center text-white/50">{t.all.otl}</td>
-              <td className="py-0.5 px-1 text-center text-white/50">{t.all.l}</td>
-              <td className="py-0.5 px-1 text-center font-bold text-[#5fbfff]">{t.all.pts}</td>
+              <td className="py-0.5 px-1 text-center text-[#717171]">{t.gp}</td>
+              <td className="py-0.5 px-1 text-center text-[#5a5a5a]">{t.all.w}</td>
+              <td className="py-0.5 px-1 text-center text-[#717171]">{t.all.otw}</td>
+              <td className="py-0.5 px-1 text-center text-[#717171]">{t.all.otl}</td>
+              <td className="py-0.5 px-1 text-center text-[#717171]">{t.all.l}</td>
+              <td className="py-0.5 px-1 text-center font-bold text-[#0288d1]">{t.all.pts}</td>
             </tr>
           ))}
         </tbody>
@@ -222,14 +222,14 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
 
   return (
     <div className="space-y-2">
-      <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider">{title}</div>
+      <div className="text-[10px] font-bold text-[#5a5a5a] uppercase tracking-wider">{title}</div>
 
       {/* 1x2 */}
       {block.oneXtwo && (
-        <div className="bg-white/5 rounded-md p-2">
+        <div className="bg-[#f5f5f5] rounded-md p-2">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-white/40">1X2</span>
-            <span className="text-[10px] text-white/30">
+            <span className="text-[10px] text-[#717171]">1X2</span>
+            <span className="text-[10px] text-[#9a9a9a]">
               {block.oneXtwo.homeWins}W-{block.oneXtwo.draws}D-{block.oneXtwo.awayWins}L
             </span>
           </div>
@@ -238,7 +238,7 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
             draw={block.oneXtwo.odds[1]}
             away={block.oneXtwo.odds[2]}
           />
-          <div className="flex justify-center gap-3 text-[10px] text-white/40">
+          <div className="flex justify-center gap-3 text-[10px] text-[#717171]">
             <span>{block.oneXtwo.pcts[0]}%</span>
             <span>{block.oneXtwo.pcts[1]}%</span>
             <span>{block.oneXtwo.pcts[2]}%</span>
@@ -248,21 +248,21 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
 
       {/* 12 */}
       {block.oneTwo && (
-        <div className="bg-white/5 rounded-md p-2">
+        <div className="bg-[#f5f5f5] rounded-md p-2">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-white/40">12 (Home/Away)</span>
-            <span className="text-[10px] text-white/30">
+            <span className="text-[10px] text-[#717171]">12 (Home/Away)</span>
+            <span className="text-[10px] text-[#9a9a9a]">
               {block.oneTwo.homeWins}W-{block.oneTwo.awayWins}L
             </span>
           </div>
           <div className="flex justify-center gap-4">
             <div className="text-center">
-              <div className="text-[10px] text-white/40">1</div>
-              <div className="text-sm font-bold text-[#00e676]">{block.oneTwo.odds[0].toFixed(2)}</div>
+              <div className="text-[10px] text-[#717171]">1</div>
+              <div className="text-sm font-bold text-[#00a344]">{block.oneTwo.odds[0].toFixed(2)}</div>
             </div>
             <div className="text-center">
-              <div className="text-[10px] text-white/40">2</div>
-              <div className="text-sm font-bold text-[#5fbfff]">{block.oneTwo.odds[1].toFixed(2)}</div>
+              <div className="text-[10px] text-[#717171]">2</div>
+              <div className="text-sm font-bold text-[#0288d1]">{block.oneTwo.odds[1].toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -270,10 +270,10 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
 
       {/* Total Goals */}
       {block.totalGoals && (
-        <div className="bg-white/5 rounded-md p-2 text-center">
-          <span className="text-[10px] text-white/40">Total Goals U/O </span>
-          <span className="text-xs font-bold text-[#5fbfff]">{block.totalGoals.line}</span>
-          <span className="text-[10px] text-white/30"> : {block.totalGoals.underPct}% - {block.totalGoals.overPct}%</span>
+        <div className="bg-[#f5f5f5] rounded-md p-2 text-center">
+          <span className="text-[10px] text-[#717171]">Total Goals U/O </span>
+          <span className="text-xs font-bold text-[#0288d1]">{block.totalGoals.line}</span>
+          <span className="text-[10px] text-[#9a9a9a]"> : {block.totalGoals.underPct}% - {block.totalGoals.overPct}%</span>
         </div>
       )}
 
@@ -285,8 +285,8 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
 
       {/* BTTS */}
       {block.btts !== undefined && (
-        <div className="text-center text-[10px] text-white/40">
-          Both Teams To Score: <span className="text-[#00e676] font-bold">{block.btts}%</span>
+        <div className="text-center text-[10px] text-[#717171]">
+          Both Teams To Score: <span className="text-[#00a344] font-bold">{block.btts}%</span>
         </div>
       )}
 
@@ -297,9 +297,9 @@ function StatBlockView({ block, title }: { block: StatBlock | null; title: strin
 
       {/* Goal Average */}
       {block.goalAverage && (
-        <div className="text-center text-[10px] text-white/40">
-          Goal Average: <span className="text-[#5fbfff] font-bold">{block.goalAverage.home} - {block.goalAverage.away}</span>
-          <span className="text-white/30"> ({block.goalAverage.total})</span>
+        <div className="text-center text-[10px] text-[#717171]">
+          Goal Average: <span className="text-[#0288d1] font-bold">{block.goalAverage.home} - {block.goalAverage.away}</span>
+          <span className="text-[#9a9a9a]"> ({block.goalAverage.total})</span>
         </div>
       )}
     </div>
@@ -381,41 +381,41 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#0a1628] border border-white/10 rounded-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[85dvh] overflow-hidden flex flex-col">
+      <div className="bg-white border border-[#f0f0f0] rounded-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[85dvh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
           <div className="flex items-center gap-3">
-            <TrendingUp className="w-4 h-4 text-[#00e676]" />
+            <TrendingUp className="w-4 h-4 text-[#00a344]" />
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-[#222222]">
                 {match.team1Name} vs {match.team2Name}
               </h3>
               {h2h?.date && (
-                <span className="text-[10px] text-white/40">{h2h.date}</span>
+                <span className="text-[10px] text-[#717171]">{h2h.date}</span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-md transition-colors">
-            <X className="w-4 h-4 text-white/40" />
+          <button onClick={onClose} className="p-1 hover:bg-[#ebebeb] rounded-md transition-colors">
+            <X className="w-4 h-4 text-[#717171]" />
           </button>
         </div>
 
         {/* Odds bar */}
         {match.odds1X2 && (
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02]">
+          <div className="px-4 py-2 border-b border-[#f0f0f0] bg-white/[0.02]">
             <OddsBadges home={match.odds1X2.home} draw={match.odds1X2.draw} away={match.odds1X2.away} />
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-white/5 overflow-x-auto">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#f0f0f0] overflow-x-auto">
           {(["home", "away", "h2h", "standings", "spider"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
                 "px-3 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap",
-                tab === t ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+                tab === t ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
               )}
             >
               {t === "home" ? match.team1Name : t === "away" ? match.team2Name : t === "h2h" ? "H2H" : t === "standings" ? "Classement" : "⚔ Spider"}
@@ -430,13 +430,13 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
           {tab === "h2h" && <StatBlockView block={h2hStats} title="Confrontations directes" />}
           {tab === "standings" && (
             <div>
-              <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">Classement</div>
+              <div className="text-[10px] font-bold text-[#5a5a5a] uppercase tracking-wider mb-2">Classement</div>
               <StandingsTable standings={standings} />
             </div>
           )}
           {tab === "spider" && spiderData && (
             <div className="space-y-4">
-              <div className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-2">
+              <div className="text-[10px] font-bold text-[#5a5a5a] uppercase tracking-wider mb-2">
                 ⚔ Spider Match — Forces & Faiblesses
               </div>
               <SpiderMatch
@@ -448,18 +448,18 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
               {/* Résumé forces/faiblesses */}
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <div className="bg-[#00e676]/5 border border-[#00e676]/10 rounded-lg p-3">
-                  <div className="text-[10px] font-bold text-[#00e676] mb-1.5">🟢 {spiderData.homeTeam}</div>
+                  <div className="text-[10px] font-bold text-[#00a344] mb-1.5">🟢 {spiderData.homeTeam}</div>
                   <div className="space-y-1">
                     {spiderData.summary.homeStrengths.length > 0 && (
                       <div className="text-[10px]">
-                        <span className="text-white/40">Forces: </span>
-                        <span className="text-[#00e676]">{spiderData.summary.homeStrengths.join(", ")}</span>
+                        <span className="text-[#717171]">Forces: </span>
+                        <span className="text-[#00a344]">{spiderData.summary.homeStrengths.join(", ")}</span>
                       </div>
                     )}
                     {spiderData.summary.homeWeaknesses.length > 0 && (
                       <div className="text-[10px]">
-                        <span className="text-white/40">Faiblesses: </span>
-                        <span className="text-red-400">{spiderData.summary.homeWeaknesses.join(", ")}</span>
+                        <span className="text-[#717171]">Faiblesses: </span>
+                        <span className="text-red-500">{spiderData.summary.homeWeaknesses.join(", ")}</span>
                       </div>
                     )}
                   </div>
@@ -469,26 +469,26 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
                   <div className="space-y-1">
                     {spiderData.summary.awayStrengths.length > 0 && (
                       <div className="text-[10px]">
-                        <span className="text-white/40">Forces: </span>
+                        <span className="text-[#717171]">Forces: </span>
                         <span className="text-[#448aff]">{spiderData.summary.awayStrengths.join(", ")}</span>
                       </div>
                     )}
                     {spiderData.summary.awayWeaknesses.length > 0 && (
                       <div className="text-[10px]">
-                        <span className="text-white/40">Faiblesses: </span>
-                        <span className="text-red-400">{spiderData.summary.awayWeaknesses.join(", ")}</span>
+                        <span className="text-[#717171]">Faiblesses: </span>
+                        <span className="text-red-500">{spiderData.summary.awayWeaknesses.join(", ")}</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-              <div className="text-center text-[10px] text-white/40 mt-2 italic">
+              <div className="text-center text-[10px] text-[#717171] mt-2 italic">
                 {spiderData.summary.verdict}
               </div>
             </div>
           )}
           {tab === "spider" && !spiderData && (
-            <div className="text-center py-8 text-white/30 text-xs">
+            <div className="text-center py-8 text-[#9a9a9a] text-xs">
               Données insuffisantes pour le Spider Match (standings requis)
             </div>
           )}
@@ -496,13 +496,13 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
 
         {/* Summary table */}
         {match.summary?.overUnderLines && match.summary.overUnderLines.length > 0 && (
-          <div className="px-4 py-2 border-t border-white/5 bg-white/[0.02]">
-            <div className="text-[10px] text-white/40 mb-1">Total Goals Under/Over</div>
+          <div className="px-4 py-2 border-t border-[#f0f0f0] bg-white/[0.02]">
+            <div className="text-[10px] text-[#717171] mb-1">Total Goals Under/Over</div>
             <div className="flex gap-2 flex-wrap">
               {match.summary.overUnderLines.map((l) => (
-                <div key={l.line} className="text-[10px] bg-white/5 rounded px-2 py-1">
-                  <span className="text-[#5fbfff] font-bold">{l.line}</span>
-                  <span className="text-white/30"> U:{l.underPct}% O:{l.overPct}%</span>
+                <div key={l.line} className="text-[10px] bg-[#f5f5f5] rounded px-2 py-1">
+                  <span className="text-[#0288d1] font-bold">{l.line}</span>
+                  <span className="text-[#9a9a9a]"> U:{l.underPct}% O:{l.overPct}%</span>
                 </div>
               ))}
             </div>

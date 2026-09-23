@@ -56,15 +56,15 @@ function PlayerRow({
   const barWidth = Math.min((value / maxStat) * 100, 100);
 
   return (
-    <div className="flex items-center gap-3 py-1.5 px-3 hover:bg-white/5 transition-colors rounded-md">
+    <div className="flex items-center gap-3 py-1.5 px-3 hover:bg-[#f5f5f5] transition-colors rounded-md">
       <span className={cn(
         "w-6 text-center text-xs font-bold",
-        rank <= 3 ? "text-[#00e676]" : "text-white/40"
+        rank <= 3 ? "text-[#00a344]" : "text-[#717171]"
       )}>
         {rank}
       </span>
       {/* Photo joueur */}
-      <div className="w-8 h-8 rounded-full overflow-hidden bg-white/10 shrink-0 flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-[#ebebeb] shrink-0 flex items-center justify-center">
         {player.photoUrl ? (
           <img
             src={player.photoUrl}
@@ -74,21 +74,21 @@ function PlayerRow({
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
-          <span className="text-[10px] text-white/30">{player.name.charAt(0)}</span>
+          <span className="text-[10px] text-[#9a9a9a]">{player.name.charAt(0)}</span>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-white truncate">{player.name}</span>
-          <span className="text-[10px] text-white/30 shrink-0">{player.position}</span>
+          <span className="text-sm font-semibold text-[#222222] truncate">{player.name}</span>
+          <span className="text-[10px] text-[#9a9a9a] shrink-0">{player.position}</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[10px] text-white/40">{player.team}</span>
-          <span className="text-[10px] text-white/30">GP:{player.gp}</span>
+          <span className="text-[10px] text-[#717171]">{player.team}</span>
+          <span className="text-[10px] text-[#9a9a9a]">GP:{player.gp}</span>
         </div>
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="w-20 h-1.5 bg-[#f5f5f5] rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${barWidth}%`, backgroundColor: color }}
@@ -128,8 +128,8 @@ export function HockeyTopPlayers({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
                 view === key
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                  ? "bg-[#ebebeb] text-[#222222]"
+                  : "text-[#717171] hover:text-[#3d3d3d] hover:bg-[#f5f5f5]"
               )}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export function HockeyTopPlayers({
 
       {/* Content */}
       {!hasData ? (
-        <div className="text-center text-white/40 text-sm py-8">
+        <div className="text-center text-[#717171] text-sm py-8">
           Aucune stats disponible — la saison {leagueName} n&apos;a pas encore commence
         </div>
       ) : (

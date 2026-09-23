@@ -77,7 +77,7 @@ export function HockeyProjectionGraph({
 
   if (chartData.length === 0 || topTeams.length === 0) {
     return (
-      <div className="text-center text-white/40 text-sm py-8">
+      <div className="text-center text-[#717171] text-sm py-8">
         Aucune donnee de projection disponible
       </div>
     );
@@ -88,31 +88,31 @@ export function HockeyProjectionGraph({
       <div className="h-[350px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
             <XAxis
               dataKey="gp"
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 10, fill: "rgba(255,255,255,0.5)" }}
-              label={{ value: "Matchs joues", position: "insideBottom", offset: -5, fill: "rgba(255,255,255,0.4)", fontSize: 11 }}
+              stroke="rgba(0,0,0,0.25)"
+              tick={{ fontSize: 10, fill: "rgba(0,0,0,0.5)" }}
+              label={{ value: "Matchs joues", position: "insideBottom", offset: -5, fill: "rgba(0,0,0,0.45)", fontSize: 11 }}
             />
             <YAxis
-              stroke="rgba(255,255,255,0.3)"
-              tick={{ fontSize: 10, fill: "rgba(255,255,255,0.5)" }}
-              label={{ value: "Points", angle: -90, position: "insideLeft", fill: "rgba(255,255,255,0.4)", fontSize: 11 }}
+              stroke="rgba(0,0,0,0.25)"
+              tick={{ fontSize: 10, fill: "rgba(0,0,0,0.5)" }}
+              label={{ value: "Points", angle: -90, position: "insideLeft", fill: "rgba(0,0,0,0.45)", fontSize: 11 }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(10,22,40,0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                backgroundColor: "#ffffff",
+                border: "1px solid #f0f0f0",
                 borderRadius: "8px",
                 fontSize: "12px",
               }}
-              labelStyle={{ color: "rgba(255,255,255,0.6)" }}
-              itemStyle={{ color: "#fff" }}
+              labelStyle={{ color: "#717171" }}
+              itemStyle={{ color: "#222222" }}
               labelFormatter={(v) => `${v} matchs`}
             />
             <Legend
-              wrapperStyle={{ fontSize: "10px", color: "rgba(255,255,255,0.6)" }}
+              wrapperStyle={{ fontSize: "10px", color: "rgba(0,0,0,0.6)" }}
               iconSize={8}
             />
             {topTeams.map((t, i) => (
@@ -129,7 +129,7 @@ export function HockeyProjectionGraph({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-[10px] text-white/30 mt-2 text-center">
+      <p className="text-[10px] text-[#9a9a9a] mt-2 text-center">
         Projection basee sur le PPG actuel — {teams.length} equipes — Saison {seasonLength} matchs
       </p>
     </div>

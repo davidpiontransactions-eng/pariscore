@@ -141,20 +141,20 @@ const DIV_LABELS: Record<string, string> = {
 
 function getOddsColor(value: number): string {
   if (value >= 100) return "bg-[#5fbfff] text-[#0a1628]";
-  if (value >= 75) return "bg-[#3d8fd9] text-white";
-  if (value >= 50) return "bg-[#2563eb] text-white";
-  if (value >= 25) return "bg-[#1e40af] text-white/90";
-  if (value > 0) return "bg-[#1e3a5f] text-white/70";
-  return "bg-white/5 text-white/40";
+  if (value >= 75) return "bg-[#3d8fd9] text-[#222222]";
+  if (value >= 50) return "bg-[#2563eb] text-[#222222]";
+  if (value >= 25) return "bg-[#1e40af] text-[#222222]";
+  if (value > 0) return "bg-[#1e3a5f] text-[#3d3d3d]";
+  return "bg-[#f5f5f5] text-[#717171]";
 }
 
 function getPointsColor(tp: number, gp: number): string {
-  if (gp === 0) return "text-white/40";
+  if (gp === 0) return "text-[#717171]";
   const ppg = tp / gp;
-  if (ppg >= 1.8) return "text-[#00e676]";
-  if (ppg >= 1.5) return "text-[#5fbfff]";
-  if (ppg >= 1.2) return "text-white";
-  return "text-white/40";
+  if (ppg >= 1.8) return "text-[#00a344]";
+  if (ppg >= 1.5) return "text-[#0288d1]";
+  if (ppg >= 1.2) return "text-[#222222]";
+  return "text-[#717171]";
 }
 
 // ─── NHL Components ──────────────────────────────────────────────────────────
@@ -171,11 +171,11 @@ function OddsBadge({ value, label }: { value: number; label: string }) {
 
 function NhlTeamRow({ team }: { team: TeamProjection }) {
   return (
-    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+    <tr className="border-b border-[#f0f0f0] hover:bg-[#f5f5f5] transition-colors">
       <td className="py-1.5 px-2">
         <div className="flex items-center gap-2">
           <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" loading="lazy" />
-          <span className="text-sm font-semibold text-white">{team.abbr}</span>
+          <span className="text-sm font-semibold text-[#222222]">{team.abbr}</span>
         </div>
       </td>
       <OddsBadge value={team.winR1} label={`${team.name} R1`} />
@@ -190,7 +190,7 @@ function NhlDivisionSection({ teams, division }: { teams: TeamProjection[]; divi
   if (teams.length === 0) return null;
   return (
     <tbody>
-      <tr><td colSpan={5} className="py-1.5 px-2 text-xs font-bold text-white/60 uppercase tracking-wider bg-white/5">{DIV_LABELS[division] || division}</td></tr>
+      <tr><td colSpan={5} className="py-1.5 px-2 text-xs font-bold text-[#5a5a5a] uppercase tracking-wider bg-[#f5f5f5]">{DIV_LABELS[division] || division}</td></tr>
       {teams.map((t) => <NhlTeamRow key={t.id} team={t} />)}
     </tbody>
   );
@@ -206,10 +206,10 @@ function NhlConferenceTable({ conf, teams }: { conf: "west" | "east"; teams: Tea
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Trophy className="w-4 h-4 text-[#00e676]" /> {label}</h3>
-      <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
+      <h3 className="text-sm font-bold mb-2 flex items-center gap-2" style={{ color: FOT.ink }}><Trophy className="w-4 h-4 text-[#00a344]" /> {label}</h3>
+      <div className="overflow-x-auto rounded-lg border border-[#f0f0f0] bg-white/[0.02]">
         <table className="w-full text-sm">
-          <thead><tr className="border-b border-white/10 text-[10px] uppercase text-[#222222]">
+          <thead><tr className="border-b border-[#f0f0f0] text-[10px] uppercase text-[#222222]">
             <th className="py-1.5 px-2 text-left">Team</th>
             <th className="py-1.5 px-1 text-center">R1</th>
             <th className="py-1.5 px-1 text-center">R2</th>
@@ -238,9 +238,9 @@ function StandingsTable({ league }: { league: LeagueData }) {
   }, [league]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-white/10 bg-white/[0.02]">
+    <div className="overflow-x-auto rounded-lg border border-[#f0f0f0] bg-white/[0.02]">
       <table className="w-full text-sm">
-        <thead><tr className="border-b border-white/10 text-[10px] uppercase text-[#222222]">
+        <thead><tr className="border-b border-[#f0f0f0] text-[10px] uppercase text-[#222222]">
           <th className="py-1.5 px-2 text-left w-8">#</th>
           <th className="py-1.5 px-2 text-left">Team</th>
           <th className="py-1.5 px-1 text-center">GP</th>
@@ -256,23 +256,23 @@ function StandingsTable({ league }: { league: LeagueData }) {
         </tr></thead>
         {teams.map(({ conf, teams: confTeams }) => (
           <tbody key={conf || "all"}>
-            {conf && <tr><td colSpan={12} className="py-1.5 px-2 text-xs font-bold text-white/60 uppercase tracking-wider bg-white/5">{conf}</td></tr>}
+            {conf && <tr><td colSpan={12} className="py-1.5 px-2 text-xs font-bold text-[#5a5a5a] uppercase tracking-wider bg-[#f5f5f5]">{conf}</td></tr>}
             {confTeams.map((t) => (
-              <tr key={t.name} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="py-1.5 px-2 text-white/40 text-xs">{t.rank}</td>
-                <td className="py-1.5 px-2"><span className="text-sm font-semibold text-white">{t.name}</span></td>
-                <td className="py-1.5 px-1 text-center text-white/60">{t.gp}</td>
-                <td className="py-1.5 px-1 text-center text-white/70">{t.w}</td>
+              <tr key={t.name} className="border-b border-[#f0f0f0] hover:bg-[#f5f5f5] transition-colors">
+                <td className="py-1.5 px-2 text-[#717171] text-xs">{t.rank}</td>
+                <td className="py-1.5 px-2"><span className="text-sm font-semibold text-[#222222]">{t.name}</span></td>
+                <td className="py-1.5 px-1 text-center text-[#5a5a5a]">{t.gp}</td>
+                <td className="py-1.5 px-1 text-center text-[#3d3d3d]">{t.w}</td>
                 <td className="py-1.5 px-1 text-center text-[#222222]">{t.l}</td>
-                <td className="py-1.5 px-1 text-center text-white/60">{t.otw}</td>
+                <td className="py-1.5 px-1 text-center text-[#5a5a5a]">{t.otw}</td>
                 <td className="py-1.5 px-1 text-center text-[#222222]">{t.otl}</td>
-                <td className="py-1.5 px-1 text-center text-white/60">{t.gf}</td>
+                <td className="py-1.5 px-1 text-center text-[#5a5a5a]">{t.gf}</td>
                 <td className="py-1.5 px-1 text-center text-[#222222]">{t.ga}</td>
-                <td className={cn("py-1.5 px-1 text-center text-xs", t.plusMinus > 0 ? "text-[#00e676]" : t.plusMinus < 0 ? "text-red-400" : "text-white/40")}>
+                <td className={cn("py-1.5 px-1 text-center text-xs", t.plusMinus > 0 ? "text-[#00a344]" : t.plusMinus < 0 ? "text-red-500" : "text-[#717171]")}>
                   {t.plusMinus > 0 ? "+" : ""}{t.plusMinus}
                 </td>
                 <td className={cn("py-1.5 px-1 text-center font-bold", getPointsColor(t.tp, t.gp))}>{t.tp}</td>
-                <td className="py-1.5 px-1 text-center text-white/60">{t.ppg.toFixed(2)}</td>
+                <td className="py-1.5 px-1 text-center text-[#5a5a5a]">{t.ppg.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -290,10 +290,10 @@ function NhlSpotlight({ teams }: { teams: TeamProjection[] }) {
   return (
     <div className="rounded-xl border border-[#00e676]/30 bg-[#00e676]/5 p-4 mb-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Flame className="w-5 h-5 text-[#00e676]" /></div>
+        <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Flame className="w-5 h-5 text-[#00a344]" /></div>
         <div>
           <p className="text-xs text-[#222222] uppercase tracking-wider">Stanley Cup Favorite</p>
-          <p className="text-sm font-bold text-white">{top.name} — <span className="text-[#00e676]">{top.winCup}%</span></p>
+          <p className="text-sm font-bold text-[#222222]">{top.name} — <span className="text-[#00a344]">{top.winCup}%</span></p>
         </div>
       </div>
     </div>
@@ -306,10 +306,10 @@ function KhlSpotlight({ teams }: { teams: TeamStanding[] }) {
   return (
     <div className="rounded-xl border border-[#00e676]/30 bg-[#00e676]/5 p-4 mb-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Trophy className="w-5 h-5 text-[#00e676]" /></div>
+        <div className="w-10 h-10 rounded-full bg-[#00e676]/20 flex items-center justify-center"><Trophy className="w-5 h-5 text-[#00a344]" /></div>
         <div>
           <p className="text-xs text-[#222222] uppercase tracking-wider">KHL Leader</p>
-          <p className="text-sm font-bold text-white">{top.name} — <span className="text-[#00e676]">{top.tp} pts</span> ({top.ppg.toFixed(2)} PPG)</p>
+          <p className="text-sm font-bold text-[#222222]">{top.name} — <span className="text-[#00a344]">{top.tp} pts</span> ({top.ppg.toFixed(2)} PPG)</p>
         </div>
       </div>
     </div>
@@ -389,9 +389,9 @@ function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyM
                   </span>
                   {m.oddsH != null && (
                     <div className="flex gap-2 text-[10px]">
-                      <span className="text-[#00e676]">{m.oddsH?.toFixed(2)}</span>
+                      <span className="text-[#00a344]">{m.oddsH?.toFixed(2)}</span>
                       {m.oddsD != null && <span className="text-[#ffd93d]">{m.oddsD?.toFixed(2)}</span>}
-                      <span className="text-[#5fbfff]">{m.oddsA?.toFixed(2)}</span>
+                      <span className="text-[#0288d1]">{m.oddsA?.toFixed(2)}</span>
                     </div>
                   )}
                   {m.isLive && <span className="text-[10px] text-red-500 font-bold">LIVE</span>}
@@ -466,14 +466,14 @@ export function HockeyTabContent() {
       {/* Header */}
       <div className="pt-6 mb-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#00e676]" /> Hockey
+          <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: FOT.ink }}>
+            <TrendingUp className="w-5 h-5 text-[#00a344]" /> Hockey
           </h2>
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-[#f5f5f5] rounded-lg p-1">
             {LEAGUES.map((l) => (
               <button key={l.id} onClick={() => setActiveLeague(l.id)}
                 className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                  activeLeague === l.id ? "bg-[#00e676] text-[#0a1628]" : "text-white/60 hover:text-white hover:bg-white/10"
+                  activeLeague === l.id ? "bg-[#0288d1] text-white" : "text-[#5a5a5a] hover:text-[#222222] hover:bg-[#ebebeb]"
                 )}>
                 <span className="mr-1 inline-flex align-middle"><HockeyLeagueMark league={l.id} size={16} /></span>{l.label}
               </button>
@@ -485,37 +485,37 @@ export function HockeyTabContent() {
         <div className="flex items-center gap-1 mt-3">
           <button onClick={() => setSubView("standings")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "standings" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "standings" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <Trophy className="w-3.5 h-3.5" /> Classement
           </button>
           <button onClick={() => setSubView("projection")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "projection" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "projection" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <BarChart3 className="w-3.5 h-3.5" /> Projection
           </button>
           <button onClick={() => setSubView("top10")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "top10" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "top10" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <Users className="w-3.5 h-3.5" /> Top 10
           </button>
           <button onClick={() => setSubView("prematch")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "prematch" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "prematch" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <FileText className="w-3.5 h-3.5" /> Pré-match
           </button>
           <button onClick={() => setSubView("calendrier")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "calendrier" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "calendrier" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <Calendar className="w-3.5 h-3.5" /> Calendrier
           </button>
           <button onClick={() => setSubView("strategies")}
             className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              subView === "strategies" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+              subView === "strategies" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
             )}>
             <Zap className="w-3.5 h-3.5" /> Stratégies
           </button>
@@ -525,8 +525,8 @@ export function HockeyTabContent() {
       {/* Loading */}
       {loading && (
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-white/10 rounded w-48" />
-          <div className="h-64 bg-white/5 rounded-lg" />
+          <div className="h-6 bg-[#ebebeb] rounded w-48" />
+          <div className="h-64 bg-[#f5f5f5] rounded-lg" />
         </div>
       )}
 
@@ -535,7 +535,7 @@ export function HockeyTabContent() {
         <>
           {subView === "standings" && projections && (
             <>
-              <p className="text-xs text-white/40 mb-3">
+              <p className="text-xs text-[#717171] mb-3">
                 Saison {projections.season} — Source: {projections.source} — {new Date(projections.updatedAt).toLocaleDateString("fr-FR")}
               </p>
               <NhlSpotlight teams={[...westTeams, ...eastTeams]} />
@@ -552,7 +552,7 @@ export function HockeyTabContent() {
             <HockeyTopPlayers topScorers={nhlPlayers.topScorers} topAssists={nhlPlayers.topAssists} topPoints={nhlPlayers.topPoints} leagueName="NHL" />
           )}
           {subView === "top10" && !nhlPlayers && (
-            <div className="text-center text-white/40 text-sm py-8">Stats NHL indisponibles — saison pas encore commencee</div>
+            <div className="text-center text-[#717171] text-sm py-8">Stats NHL indisponibles — saison pas encore commencee</div>
           )}
         </>
       )}
@@ -562,7 +562,7 @@ export function HockeyTabContent() {
         <>
           {subView === "standings" && khlData && (
             <>
-              <p className="text-xs text-white/40 mb-3">
+              <p className="text-xs text-[#717171] mb-3">
                 Saison {khlData.season} — Source: {standings?.source} — {new Date(standings?.updatedAt ?? "").toLocaleDateString("fr-FR")}
               </p>
               <KhlSpotlight teams={khlData.teams} />
@@ -583,11 +583,11 @@ export function HockeyTabContent() {
         <>
           {subView === "standings" && magnusData && (
             <>
-              <p className="text-xs text-white/40 mb-3">
+              <p className="text-xs text-[#717171] mb-3">
                 Saison {magnusData.season} — Source: {standings?.source} — {new Date(standings?.updatedAt ?? "").toLocaleDateString("fr-FR")}
               </p>
               {magnusData.teams[0]?.gp === 0 && (
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-4">
+                <div className="rounded-xl border border-[#f0f0f0] bg-white/[0.02] p-4 mb-4">
                   <p className="text-sm text-[#222222] text-center">La saison Ligue Magnus 2026-27 n&apos;a pas encore commence.</p>
                 </div>
               )}
@@ -601,7 +601,7 @@ export function HockeyTabContent() {
             <HockeyTopPlayers topScorers={magnusPlayers.topScorers} topAssists={magnusPlayers.topAssists} topPoints={magnusPlayers.topPoints} leagueName="Magnus" />
           )}
           {subView === "top10" && !magnusPlayers && (
-            <div className="text-center text-white/40 text-sm py-8">Stats Magnus indisponibles — saison pas encore commencee</div>
+            <div className="text-center text-[#717171] text-sm py-8">Stats Magnus indisponibles — saison pas encore commencee</div>
           )}
         </>
       )}
@@ -623,32 +623,32 @@ export function HockeyTabContent() {
         <>
           {prematch?.leagues?.[activeLeague]?.matches?.length ? (
             <div className="space-y-2">
-              <p className="text-xs text-white/40 mb-3">
+              <p className="text-xs text-[#717171] mb-3">
                 Source: annabet.com — {prematch.leagues[activeLeague].matches.length} matchs à venir
               </p>
               {prematch.leagues[activeLeague].matches.map((m, i) => (
                 <button
                   key={`${m.team1Id}-${m.team2Id}-${i}`}
                   onClick={() => setSelectedMatch(m)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-lg transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.03] hover:bg-white/[0.06] border border-[#f0f0f0] rounded-lg transition-colors text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-white">{m.team1Name}</span>
+                    <span className="text-sm font-semibold text-[#222222]">{m.team1Name}</span>
                     <span className="text-xs text-[#717171]">vs</span>
-                    <span className="text-sm font-semibold text-white">{m.team2Name}</span>
+                    <span className="text-sm font-semibold text-[#222222]">{m.team2Name}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     {m.odds1X2 && (
                       <div className="flex gap-2 text-[10px]">
-                        <span className="text-[#00e676]">{m.odds1X2.home.toFixed(2)}</span>
+                        <span className="text-[#00a344]">{m.odds1X2.home.toFixed(2)}</span>
                         <span className="text-[#ffd93d]">{m.odds1X2.draw.toFixed(2)}</span>
-                        <span className="text-[#5fbfff]">{m.odds1X2.away.toFixed(2)}</span>
+                        <span className="text-[#0288d1]">{m.odds1X2.away.toFixed(2)}</span>
                       </div>
                     )}
                     {m.h2h ? (
-                      <span className="text-[10px] text-[#00e676]">✓ Stats</span>
+                      <span className="text-[10px] text-[#00a344]">✓ Stats</span>
                     ) : m.error ? (
-                      <span className="text-[10px] text-red-400">✗ Erreur</span>
+                      <span className="text-[10px] text-red-500">✗ Erreur</span>
                     ) : (
                       <span className="text-[10px] text-[#717171]">—</span>
                     )}

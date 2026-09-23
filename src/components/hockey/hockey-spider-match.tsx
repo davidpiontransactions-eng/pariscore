@@ -22,13 +22,13 @@ export type SpiderMatchProps = {
 // ─── Couleurs ───────────────────────────────────────────────────────────────
 
 const COLORS = {
-  home: "#00e676",      // Vert neon (home)
-  homeFill: "rgba(0,230,118,0.15)",
+  home: "#00c853",      // Vert (home)
+  homeFill: "rgba(0,200,83,0.15)",
   away: "#448aff",      // Bleu (away)
   awayFill: "rgba(68,138,255,0.15)",
-  grid: "rgba(255,255,255,0.08)",
-  axis: "rgba(255,255,255,0.4)",
-  label: "rgba(255,255,255,0.7)",
+  grid: "rgba(0,0,0,0.08)",
+  axis: "rgba(0,0,0,0.35)",
+  label: "rgba(0,0,0,0.6)",
 };
 
 // ─── Tooltip ────────────────────────────────────────────────────────────────
@@ -36,12 +36,12 @@ const COLORS = {
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }> }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="bg-[#0d1117] border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs">
+    <div className="bg-white border border-[#f0f0f0] rounded-lg px-3 py-2 shadow-xl text-xs">
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="text-white/60">{entry.name}:</span>
-          <span className="font-bold text-white">{entry.value}%</span>
+          <span className="text-[#5a5a5a]">{entry.name}:</span>
+          <span className="font-bold text-[#222222]">{entry.value}%</span>
         </div>
       ))}
     </div>
@@ -69,12 +69,12 @@ export function SpiderMatch({
       <div className="flex items-center justify-center gap-4 mb-2 text-xs">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.home }} />
-          <span className="text-white/70 font-medium">{homeTeam}</span>
+          <span className="text-[#3d3d3d] font-medium">{homeTeam}</span>
         </div>
-        <span className="text-white/30">vs</span>
+        <span className="text-[#9a9a9a]">vs</span>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.away }} />
-          <span className="text-white/70 font-medium">{awayTeam}</span>
+          <span className="text-[#3d3d3d] font-medium">{awayTeam}</span>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export function SpiderMatch({
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 8 }}
+            tick={{ fill: "rgba(0,0,0,0.4)", fontSize: 8 }}
             stroke="none"
             tickCount={5}
           />
@@ -118,10 +118,10 @@ export function SpiderMatch({
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 px-2">
         {metrics.map((m) => (
           <div key={m.metric} className="flex items-center justify-between text-[10px]">
-            <span className="text-white/40 truncate" title={m.label}>{m.metric}</span>
+            <span className="text-[#717171] truncate" title={m.label}>{m.metric}</span>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[#00e676] font-mono w-7 text-right">{m.home}</span>
-              <span className="text-white/20">-</span>
+              <span className="text-[#00a344] font-mono w-7 text-right">{m.home}</span>
+              <span className="text-[#222222]/20">-</span>
               <span className="text-[#448aff] font-mono w-7 text-right">{m.away}</span>
             </div>
           </div>
