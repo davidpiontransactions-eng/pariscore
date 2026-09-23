@@ -40,6 +40,13 @@
         "@upstash/context7-mcp@latest"
       ]
     },
+    "football-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "football-docs"
+      ]
+    },
     "bzzoiro-sports": {
       "type": "http",
       "url": "https://sports.bzzoiro.com/mcp",

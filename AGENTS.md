@@ -833,7 +833,7 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## MCP Servers — Capacités Disponibles
 
-Ce projet utilise **11 serveurs MCP** configurés dans `.mcp.json`, plus **Langflow** (service web optionnel, MCP bidirectionnel via HTTP). Les clients MCP (opencode, Claude Code, Cline) les chargent automatiquement au démarrage.
+Ce projet utilise **12 serveurs MCP** recensés ci-dessous dans `.mcp.json` (35 entrées au total), plus **Langflow** (service web optionnel, MCP bidirectionnel via HTTP). Les clients MCP (opencode, Claude Code, Cline) les chargent automatiquement au démarrage.
 
 ### Serveurs Installés
 
@@ -851,6 +851,7 @@ Ce projet utilise **11 serveurs MCP** configurés dans `.mcp.json`, plus **Langf
 | `crawl4ai` | `python scripts/crawl4ai-mcp-server.py` | Scraping web via Crawl4AI (markdown, logos équipes) |
 | `scrapling` | `scrapling mcp` (natif) | **Scraping adaptatif 3 modes** (statique/dynamique/stealth Camoufox) — bypass anti-bot sur sources autorisées. Skill `/scrapling`. |
 | `scrapy` | `python scripts/scrapy-mcp-server.py` | **Framework de crawling massif** (spiders + pipelines + autothrottle). Skill `/scrapy`. |
+| `football-docs` | `npx football-docs` | **Docs API football** (24 providers, 2 325 chunks, validés CI) — « Context7 pour la donnée foot » : endpoints, schémas, identifiants fournisseurs. Release v0.11.1 corrige Driblab. |
 
 ### Service web IA (démarrage à la demande)
 
