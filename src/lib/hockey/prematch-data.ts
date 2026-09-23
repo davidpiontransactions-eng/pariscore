@@ -33,6 +33,7 @@ export type OverUnderLine = {
   overOdds: number | null;
   underOddsHome: number | null;
   underOddsAway: number | null;
+  underOddsAll: number | null;
   overOddsHome: number | null;
   overOddsAway: number | null;
   overOddsAll: number | null;

@@ -128,9 +128,13 @@ export async function GET() {
 
     const allMatches = [...bsdMatches, ...prematchMatches];
     const seen = new Set<string>();
+    const norm = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
     const deduped = allMatches.filter((m) => {
-      const id = ((m as Record<string, unknown>).id as string) || "";
-      if (seen.has(id)) return false;
+      const id = String((m as Record<string, unknown>).id);
+      // Clé étendue : ids divergents BSD↔prematch pour un même fixture
+      const key = id + "|" + norm((m as Record<string, unknown>).homeName as string) + "|" + norm((m as Record<string, unknown>).awayName as string);
+      if (seen.has(key) || seen.has(id)) return false;
+      seen.add(key);
       seen.add(id);
       return true;
     });

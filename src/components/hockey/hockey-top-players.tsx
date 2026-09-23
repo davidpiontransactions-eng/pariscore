@@ -69,6 +69,8 @@ function PlayerRow({
           <img
             src={player.photoUrl}
             alt={player.name}
+            width={32}
+            height={32}
             className="w-full h-full object-cover"
             loading="lazy"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

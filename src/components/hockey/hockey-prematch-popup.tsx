@@ -381,7 +381,7 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white border border-[#f0f0f0] rounded-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[85dvh] overflow-hidden flex flex-col">
+      <div className="bg-white border border-[#f0f0f0] rounded-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[85dvh] overflow-hidden flex flex-col" style={{ overscrollBehavior: "contain" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
           <div className="flex items-center gap-3">
@@ -395,7 +395,7 @@ export function HockeyPrematchPopup({ match, onClose, standingsOverride }: Hocke
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-[#ebebeb] rounded-md transition-colors">
+          <button onClick={onClose} aria-label="Fermer" className="p-1 hover:bg-[#ebebeb] rounded-md transition-colors">
             <X className="w-4 h-4 text-[#717171]" />
           </button>
         </div>

@@ -174,6 +174,10 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://app.posthog.com" />
         {/* Preconnect club/team logo CDNs (calendrier foot) */}
         <link rel="preconnect" href="https://sports.bzzoiro.com" />
+        <link rel="preconnect" href="https://cdn.oddspedia.com" />
+        <link rel="preconnect" href="https://frozenpool.dobbersports.com" />
+        <link rel="preconnect" href="https://liguemagnus.com" />
+        <link rel="preconnect" href="https://uncut.wtf" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://sports.bzzoiro.com" />
         <link rel="preconnect" href="https://api.dicebear.com" />
         <link rel="dns-prefetch" href="https://api.dicebear.com" />

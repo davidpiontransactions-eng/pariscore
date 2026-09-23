@@ -233,8 +233,8 @@ function StandingsTable({ league }: { league: LeagueData }) {
       if (!confs.has(c)) confs.set(c, []);
       confs.get(c)!.push(t);
     }
-    if (confs.size <= 1) return [{ conf: "", teams: league.teams.sort((a, b) => a.rank - b.rank) }];
-    return Array.from(confs.entries()).map(([conf, t]) => ({ conf, teams: t.sort((a, b) => a.rank - b.rank) }));
+    if (confs.size <= 1) return [{ conf: "", teams: [...league.teams].sort((a, b) => a.rank - b.rank) }];
+    return Array.from(confs.entries()).map(([conf, t]) => ({ conf, teams: [...t].sort((a, b) => a.rank - b.rank) }));
   }, [league]);
 
   return (
@@ -416,7 +416,7 @@ export function HockeyTabContent() {
   const [loadingProj, setLoadingProj] = useState(true);
   const [loadingStand, setLoadingStand] = useState(true);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
-  const { prematch } = useHockeyPrematch();
+  const { prematch, isLoading: loadingPrematch, error: errorPrematch } = useHockeyPrematch();
   const { data: matchesData, isLoading: loadingMatches } = useHockeyMatches();
   const [selectedMatch, setSelectedMatch] = useState<MatchPrematch | null>(null);
 
@@ -451,8 +451,8 @@ export function HockeyTabContent() {
 
   const loading = activeLeague === "nhl" ? loadingProj : (loadingStand || loadingPlayers);
 
-  // Donnees pour projection graph
-  const projectionTeams = activeLeague === "nhl"
+  // Donnees pour projection graph (mémoïsé : évite re-render du graphe)
+  const projectionTeams = useMemo(() => activeLeague === "nhl"
     ? [...westTeams, ...eastTeams].map((t) => ({
         rank: 0,
         name: t.abbr,
@@ -463,7 +463,7 @@ export function HockeyTabContent() {
       }))
     : activeLeague === "khl"
     ? khlData?.teams ?? []
-    : magnusData?.teams ?? [];
+    : magnusData?.teams ?? [], [activeLeague, westTeams, eastTeams, khlData, magnusData]);
 
   // Joueurs pour top 10
   const players = activeLeague === "nhl" ? nhlPlayers : activeLeague === "khl" ? khlPlayers : magnusPlayers;
@@ -617,15 +617,30 @@ export function HockeyTabContent() {
       {!loading && !standings && !projections && activeLeague === "nhl" && subView === "standings" && (
 <div className="text-center text-[#222222] text-sm py-10">
   <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+  Données indisponibles — réessayez plus tard.
 </div>
       )}
       {!loading && activeLeague !== "nhl" && !standings && (
 <div className="text-center text-[#222222] text-sm py-10">
   <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+  Classement indisponible pour cette ligue.
 </div>
       )}
 
       {/* ─── PREMATCH ────────────────────────────────────────────────── */}
+      {subView === "prematch" && loadingPrematch && (
+        <div className="animate-pulse space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-14 rounded-lg" style={{ backgroundColor: FOT.soft }} />
+          ))}
+        </div>
+      )}
+      {subView === "prematch" && !loadingPrematch && errorPrematch && (
+        <div className="text-center text-[#222222] text-sm py-10">
+          <FileText className="w-5 h-5 mx-auto mb-2 text-[#717171]" />
+          Prématch indisponible — source de données hors ligne.
+        </div>
+      )}
       {!loading && subView === "prematch" && (
         <>
           {prematch?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague]?.matches?.length ? (

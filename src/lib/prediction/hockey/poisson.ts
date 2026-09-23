@@ -20,6 +20,7 @@ export function poissonPMF(lambda: number, k: number): number {
 }
 
 /** P(X > k) — probabilité que les buts depassent le seuil */
+// Attention : poissonOver/playerScoreAny renvoient un % (0-100), les marchés = fraction ×100 — harmoniser les appels.
 export function poissonOver(k: number, lambda: number): number {
   if (lambda <= 0 || !Number.isFinite(lambda)) return 0;
   if (k < 0) return lambda > 0 ? 100 : 0;
