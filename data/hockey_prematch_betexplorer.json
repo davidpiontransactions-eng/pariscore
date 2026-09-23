@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-09-23T10:17:09.840Z",
+  "updatedAt": "2026-09-23T15:08:35.106Z",
   "source": "betexplorer.com (hockey next)",
   "leagues": {
     "nhl": {
       "matches": [],
-      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('table.table-main, table') to be visible\n"
+      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('table.table-main, table') to be visible\u001b[22m\n\u001b[2m    59 × locator resolved to hidden <table class=\"ui-datepicker-calendar\">…</table>\u001b[22m\n"
     },
     "khl": {
       "matches": [],
-      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('table.table-main, table') to be visible\n"
+      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('table.table-main, table') to be visible\u001b[22m\n"
     },
     "magnus": {
       "matches": [],
-      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('table.table-main, table') to be visible\n"
+      "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('table.table-main, table') to be visible\u001b[22m\n"
     }
   }
 }
