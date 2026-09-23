@@ -36,9 +36,12 @@ type BSDStandingsRow = {
 };
 type BSDEvent = {
   id?: number; home_team?: string; away_team?: string;
+  home_team_id?: number; away_team_id?: number;
   home_team_obj?: { id?: number; name?: string };
   away_team_obj?: { id?: number; name?: string };
   status?: string; event_date?: string;
+  league?: { id?: number };
+  season?: { id?: number };
 };
 
 export async function GET(req: NextRequest) {
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "invalid leagueId" }, { status: 400 });
   }
 
-  const cacheKey = `__tableProj_${leagueId}`;
+  const cacheKey = `__tableProj_v2_${leagueId}`;
   const cached = cacheEntry<{ teams: unknown[]; fixtures: unknown[]; projection: LeagueProjection | null }>(cacheKey);
   if (cached) return NextResponse.json(cached);
 
@@ -81,17 +84,22 @@ export async function GET(req: NextRequest) {
         ga: Number(r.ga) || 0,
       }));
 
-    // 3) Matchs restants (scheduled)
+    // 3) Matchs restants — endpoint /api/v2/events/ (LE filtrant : league_id +
+    // season_id OK, count=306 pour L1) ; /api/events/ = legacy non filtrant.
+    // Status BSD = "notstarted" (pas "scheduled"). Ids = home_team_id/away_team_id
+    // (shape v2 ; *_obj = shape legacy) — probes 2026-09-23.
     const eventsRes = await bsdFetch<{ results?: BSDEvent[] }>(
-      `/events/?league_id=${leagueId}&season_id=${seasonId}&status=scheduled&limit=200`
+      `/v2/events/?league_id=${leagueId}&season_id=${seasonId}&limit=500`
     );
     const rows = Array.isArray(eventsRes) ? eventsRes : (eventsRes?.results ?? []);
     const fixtures = rows
-      .filter((e) => e.home_team_obj?.id && e.away_team_obj?.id)
+      .filter((e) => e.status === "notstarted")
       .map((e) => ({
-        homeId: String(e.home_team_obj!.id),
-        awayId: String(e.away_team_obj!.id),
-      }));
+        homeId: e.home_team_id ?? e.home_team_obj?.id,
+        awayId: e.away_team_id ?? e.away_team_obj?.id,
+      }))
+      .filter((f) => f.homeId && f.awayId)
+      .map((f) => ({ homeId: String(f.homeId), awayId: String(f.awayId) }));
 
     const data = { teams, fixtures };
     const projection = runProjection(teams, fixtures, leagueId);
