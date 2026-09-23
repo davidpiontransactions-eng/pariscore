@@ -152,7 +152,7 @@ export function HockeyHeroHeader({ className }: { className?: string }) {
       className={cn("relative overflow-hidden rounded-2xl", className)}
       style={{ backgroundColor: FOT.card, border: `1px solid ${FOT.border}` }}
     >
-      <style>{`@keyframes hockeyOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}@media (prefers-reduced-motion: reduce){span[style*="hockeyOrbFloat"]{animation:none}}`}</style>
+      <style>{`@font-face{font-family:"Uncut Sans";src:url("https://uncut.wtf/assets/fonts/UncutSans-Regular.woff2?v=1.3.4opt") format("woff2");font-weight:400;font-display:swap}@keyframes hockeyOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}@media (prefers-reduced-motion: reduce){span[style*="hockeyOrbFloat"]{animation:none}}`}</style>
       <motion.div initial="hidden" animate="visible" variants={containerVariants}>
         <GrainMesh />
         <RinkLines />
@@ -173,7 +173,7 @@ export function HockeyHeroHeader({ className }: { className?: string }) {
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f0f0f0]">
                   <PuckMark className="h-4 w-4" />
                 </span>
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "#0288d1" }}>
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "#0288d1", fontFamily: '"Uncut Sans", system-ui, sans-serif' }}>
                   Hockey
                 </span>
                 <span
@@ -190,7 +190,7 @@ export function HockeyHeroHeader({ className }: { className?: string }) {
               <motion.h1
                 variants={itemVariants}
                 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl"
-                style={{ color: FOT.ink }}
+                style={{ color: FOT.ink, fontFamily: '"Uncut Sans", system-ui, sans-serif', letterSpacing: "-0.03em" }}
               >
                 La glace n&apos;a plus de secrets
                 <br />
