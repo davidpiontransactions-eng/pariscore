@@ -10,7 +10,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, TrendingUp, Flame, Info, BarChart3, Users, FileText, Calendar, Zap } from "lucide-react";
+import { Trophy, TrendingUp, Flame, BarChart3, Users, FileText, Calendar, Zap } from "lucide-react";
 import { HockeyProjectionGraph } from "./hockey-projection-graph";
 import { HockeyTopPlayers } from "./hockey-top-players";
 import { HockeyPrematchPopup } from "./hockey-prematch-popup";
@@ -687,7 +687,9 @@ export function HockeyTabContent() {
         <HockeyPrematchPopup
           match={selectedMatch}
           onClose={() => setSelectedMatch(null)}
-          standingsOverride={standings?.leagues?.[activeLeague]?.teams ?? []}
+          standingsOverride={
+            standings?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague]?.teams ?? []
+          }
         />
       )}
     </div>
