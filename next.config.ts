@@ -110,8 +110,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "sports.bzzoiro.com" },
       // Imgur — certains logos équipes fournis par BSD (ex: Bundesliga 2)
       { protocol: "https", hostname: "i.imgur.com" },
-      // Wikipedia / Commons — fallback logos ligues (CC)
+      // Wikipedia / Commons — fallback logos ligues (CC) + photos joueurs
+      // (fetchPlayerPhoto → cleanThumbUrl sert thumb.wikimedia.org, distinct
+      // de upload.wikimedia.org → runtime error next-image si absent)
       { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "thumb.wikimedia.org" },
       // Placeholder local (fallback ultime)
       { protocol: "https", hostname: "placehold.co" },
       // DiceBear — avatars initiales (fallback photos joueurs tennis)
