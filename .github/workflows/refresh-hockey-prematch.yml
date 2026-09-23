@@ -50,27 +50,29 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Playwright (BetExplorer age gate + DOM)
-        run: |
-          npm i playwright@1.61.1 --no-save
-          npx playwright install chromium --with-deps
-
-      - name: Scrape BetExplorer (1X2 odds)
-        run: |
-          LEAGUE_ARG=""
-          if [ -n "${{ inputs.league }}" ]; then LEAGUE_ARG="--league=${{ inputs.league }}"; fi
-          node scripts/scrape-betexplorer-hockey.mjs $LEAGUE_ARG
-        continue-on-error: true
-
-      - name: Scrape Annabet prematch (h2h + standings)
+      - name: Scrape Annabet prematch (h2h + standings) — zero dep
         run: |
           LEAGUE_ARG=""
           if [ -n "${{ inputs.league }}" ]; then LEAGUE_ARG="--league=${{ inputs.league }}"; fi
           node scripts/scrape-annabet-hockey-prematch.mjs $LEAGUE_ARG
         continue-on-error: true
 
-      - name: Scrape EliteProspects (standings + players)
+      - name: Scrape EliteProspects (standings + players) — zero dep
         run: node scripts/scrape-eliteprospects-hockey.mjs
+        continue-on-error: true
+
+      - name: Install Playwright (isole — projet = bun, npm ERESOLVE)
+        run: |
+          mkdir -p /tmp/pw
+          cd /tmp/pw && npm init -y && npm i playwright@1.63.0
+          ln -s /tmp/pw/node_modules "$GITHUB_WORKSPACE/node_modules"
+          node /tmp/pw/node_modules/playwright/cli.js install chromium --with-deps
+
+      - name: Scrape BetExplorer (1X2 odds)
+        run: |
+          LEAGUE_ARG=""
+          if [ -n "${{ inputs.league }}" ]; then LEAGUE_ARG="--league=${{ inputs.league }}"; fi
+          node scripts/scrape-betexplorer-hockey.mjs $LEAGUE_ARG
         continue-on-error: true
 
       - name: Detect changes
