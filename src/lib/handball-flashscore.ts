@@ -5,7 +5,31 @@
  * Ids d'équipe = hash déterministe du nom (join finished ↔ upcoming).
  */
 
+import { existsSync } from "fs";
+import { join } from "path";
 import type { HandballMatch } from "./handball-data";
+
+/**
+ * Résout data/<name> quel que soit le cwd.
+ * Prod standalone : cwd = <repo>/.next/standalone → remonte de 2 niveaux.
+ * Dev : cwd = racine repo → candidat direct.
+ */
+export function resolveHandballDataFile(name: string): string | null {
+  const candidates = [
+    join(process.cwd(), "data", name),
+    join(process.cwd(), "..", "data", name),
+    join(process.cwd(), "..", "..", "data", name),
+    join(process.cwd(), "..", "..", "..", "data", name),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (existsSync(candidate)) return candidate;
+    } catch {
+      // chemin illisible → candidat suivant
+    }
+  }
+  return null;
+}
 
 export type FlashscoreMatch = {
   id?: string;

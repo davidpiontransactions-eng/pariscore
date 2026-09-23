@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
-import { isFlashscoreFresh } from "@/lib/handball-flashscore";
+import { isFlashscoreFresh, resolveHandballDataFile } from "@/lib/handball-flashscore";
 import { readFileSync, existsSync } from "fs";
-import { join } from "path";
 
 const CACHE_TTL = 30_000;
 
@@ -36,8 +35,8 @@ function loadFlashscoreLive(): Array<{
   minute?: number;
 }> {
   try {
-    const filePath = join(process.cwd(), "data", "flashscore_handball.json");
-    if (!existsSync(filePath)) return [];
+    const filePath = resolveHandballDataFile("flashscore_handball.json");
+    if (!filePath) return [];
     const data = JSON.parse(readFileSync(filePath, "utf-8"));
     const matches = (data.matches || []) as FlashscoreMatch[];
     return matches
@@ -75,8 +74,8 @@ function loadFlashscoreLive(): Array<{
 /** scraped_at du snapshot — gate anti-zombie (fix audit C-H7). */
 function loadFlashscoreScrapedAt(): string | null {
   try {
-    const filePath = join(process.cwd(), "data", "flashscore_handball.json");
-    if (!existsSync(filePath)) return null;
+    const filePath = resolveHandballDataFile("flashscore_handball.json");
+    if (!filePath) return null;
     const data = JSON.parse(readFileSync(filePath, "utf-8"));
     return typeof data.scraped_at === "string" ? data.scraped_at : null;
   } catch {
