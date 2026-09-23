@@ -240,15 +240,15 @@ export function computeSpiderMetrics(
     {
       metric: "Domicile",
       label: "Force au domicile (win% à domicile)",
-      home: home.home ? Math.round(winPct(home.home.w, home.home.gp)) : 60,
-      away: away.away ? Math.round(winPct(away.away.w, away.away.gp)) : 40,
+      home: home.home ? Math.round(winPct(home.home.w, home.home.gp)) : 50,
+      away: away.home ? Math.round(winPct(away.home.w, away.home.gp)) : 50,
       category: "special",
     },
     {
       metric: "Extérieur",
       label: "Performance à l'extérieur (win% à l'extérieur)",
-      home: home.away ? Math.round(winPct(home.away.w, home.away.gp)) : 40,
-      away: away.home ? Math.round(winPct(away.home.w, away.home.gp)) : 60,
+      home: home.away ? Math.round(winPct(home.away.w, home.away.gp)) : 50,
+      away: away.away ? Math.round(winPct(away.away.w, away.away.gp)) : 50,
       category: "special",
     },
   ];
@@ -285,7 +285,7 @@ export function summarizeStrengths(metrics: SpiderMetric[]): StrengthSummary {
   const gap = homeTotal - awayTotal;
 
   let verdict: string;
-  if (gap > 40) verdict = `Domination ${metrics[0]?.home ? "home" : "away"} — écart significatif`;
+  if (gap > 40) verdict = `Domination home — écart significatif`;
   else if (gap > 15) verdict = "Avantage home — match équilibré avec léger favori";
   else if (gap < -40) verdict = "Domination away — écart significatif";
   else if (gap < -15) verdict = "Avantage away — match équilibré avec léger favori";

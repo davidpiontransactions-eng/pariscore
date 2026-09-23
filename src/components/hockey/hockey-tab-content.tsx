@@ -628,7 +628,7 @@ export function HockeyTabContent() {
       {/* ─── PREMATCH ────────────────────────────────────────────────── */}
       {!loading && subView === "prematch" && (
         <>
-          {prematch?.leagues?.[activeLeague]?.matches?.length ? (
+          {prematch?.leagues?.[activeLeague === "magnus" ? "ligue-magnus" : activeLeague]?.matches?.length ? (
             <div className="space-y-2">
               <p className="text-xs text-[#717171] mb-3">
                 Source: annabet.com — {prematch.leagues[activeLeague].matches.length} matchs à venir

@@ -264,7 +264,7 @@ export function lineStrengthFactor(
   const total = gf + ga;
   if (total === 0) return 1;
   const share = gf / total;
-  return Math.max(0.85, Math.min(1.15, 0.85 + share * 0.6));
+  return Math.max(0.85, Math.min(1.15, 0.85 + share * 0.3));
 }
 
 /**

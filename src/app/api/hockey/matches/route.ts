@@ -42,7 +42,7 @@ async function fetchBSDHockey(): Promise<unknown[]> {
     const predictions = await fetchBSD("/hockey/api/v2/predictions/").catch(() => [] as unknown[]);
 
     const normalizeBSDM = (m: Record<string, unknown>) => ({
-      id: m.id || m.event_id || m.match_id || "bsd-" + Math.random().toString(36).slice(2),
+      id: m.id || m.event_id || m.match_id || "bsd-" + String(m.home || m.homeTeam || "") + "-" + String(m.away || m.awayTeam || ""),
       homeName: m.home || m.homeTeam || "Home",
       awayName: m.away || m.awayTeam || "Away",
       scheduledAt: m.scheduled_at || m.start_time || m.date || null,
@@ -88,7 +88,7 @@ async function fetchPrematchMatches(): Promise<unknown[]> {
             id: `prematch-${leagueId}-${m.team1Id}-${m.team2Id}`,
             homeName: m.team1Name || "Home",
             awayName: m.team2Name || "Away",
-            scheduledAt: m.date || new Date().toISOString(),
+            scheduledAt: m.date || "",
             isLive: false,
             leagueId,
             leagueName: leagueId.toUpperCase(),
