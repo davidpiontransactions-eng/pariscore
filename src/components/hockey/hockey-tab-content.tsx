@@ -416,7 +416,8 @@ export function HockeyTabContent() {
   const [loadingProj, setLoadingProj] = useState(true);
   const [loadingStand, setLoadingStand] = useState(true);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
-  const { prematch, isLoading: loadingPrematch, error: errorPrematch } = useHockeyPrematch();
+  // useHockeyPrematch renvoie { prematch, loading, error } (pas isLoading — TS2339 bloquait next build)
+  const { prematch, loading: loadingPrematch, error: errorPrematch } = useHockeyPrematch();
   const { data: matchesData, isLoading: loadingMatches } = useHockeyMatches();
   const [selectedMatch, setSelectedMatch] = useState<MatchPrematch | null>(null);
 

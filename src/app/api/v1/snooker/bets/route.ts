@@ -130,7 +130,8 @@ export async function GET(request: Request) {
       const oddsFav = odds ? (pWin >= 0.5 ? odds.home : odds.away) : undefined;
 
       const bets = isLive
-        ? buildLiveBets({ winsA, winsB, need, pWin, pFrame })
+        // Live = SCORE du match (scoreA/scoreB), PAS les wins carrière (audit QA)
+        ? buildLiveBets({ winsA: scoreA, winsB: scoreB, need, pWin, pFrame })
         : buildPreMatchBets({
             bestOf: DEFAULT_BEST_OF,
             pWin,
