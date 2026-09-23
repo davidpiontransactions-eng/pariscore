@@ -9,9 +9,13 @@
  * Source : data/football_market_values.json — scripts/scrape-football-market-values.mjs
  * (pages Transfermarkt « marktwerte » : valeur d'effectif total par club, M€).
  * Fichier absent/vide → signal indisponible = identité stricte (zéro régression).
+ *
+ * IO via process.getBuiltinModule("node:fs") et NON un import statique :
+ * ce module est joignable depuis le bundle client (page → besoccer-matrix →
+ * predictive-engine) — un import statique node:fs panic Turbopack
+ * (« chunking context does not support external modules »). getBuiltinModule
+ * est invisible pour le bundler ; côté client il est absent → null → identité.
  */
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 
 /** Poids du signal valeur-marché dans l'ensemble (% déplacés max = MV_WEIGHT*100 borné ±5pp). */
 export const MV_WEIGHT = 0.10;
@@ -22,18 +26,40 @@ export type ClubMarketValues = {
   leagues: Record<string, Record<string, number>>;
 };
 
+type NodeFs = {
+  readFileSync(path: string, encoding: "utf-8"): string;
+  existsSync(path: string): boolean;
+};
+
+/** node:fs sans import statique (cf. en-tête) — null si indisponible (client). */
+function nodeFs(): NodeFs | null {
+  try {
+    const p = (globalThis as { process?: { getBuiltinModule?: (id: string) => unknown } }).process;
+    if (typeof p?.getBuiltinModule !== "function") return null;
+    return p.getBuiltinModule("node:fs") as NodeFs;
+  } catch {
+    return null;
+  }
+}
+
 let cache: ClubMarketValues | null | undefined;
 
 /** Charge (avec cache mémoire) le JSON des valeurs d'effectif. null = indisponible. */
 export function loadClubMarketValues(): ClubMarketValues | null {
   if (cache !== undefined) return cache;
   try {
-    const p = join(process.cwd(), "data", "football_market_values.json");
-    if (!existsSync(p)) {
+    const fs = nodeFs();
+    const cwd = (globalThis as { process?: { cwd?: () => string } }).process?.cwd;
+    if (!fs || typeof cwd !== "function") {
       cache = null;
       return null;
     }
-    cache = JSON.parse(readFileSync(p, "utf-8")) as ClubMarketValues;
+    const path = `${cwd()}/data/football_market_values.json`;
+    if (!fs.existsSync(path)) {
+      cache = null;
+      return null;
+    }
+    cache = JSON.parse(fs.readFileSync(path, "utf-8")) as ClubMarketValues;
     return cache;
   } catch {
     cache = null;
