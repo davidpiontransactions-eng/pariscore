@@ -51,6 +51,58 @@ function ROIBadge({ roi }: { roi: number | null }) {
   );
 }
 
+/** Grainy mesh gradient (langage Grainient — SwiftGlow light) + noise SVG. */
+function GrainMesh() {
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(900px 380px at 12% -10%, rgba(125,211,252,0.45), transparent 60%)," +
+            "radial-gradient(700px 340px at 88% 0%, rgba(196,181,253,0.38), transparent 62%)," +
+            "radial-gradient(800px 420px at 55% 115%, rgba(2,132,199,0.16), transparent 65%)," +
+            "linear-gradient(180deg, #f8fbfe 0%, #eef6fb 55%, #f8fbfe 100%)",
+        }}
+      />
+      <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]" aria-hidden>
+        <filter id="hockeyGrain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#hockeyGrain)" />
+      </svg>
+    </>
+  );
+}
+
+/** Sphère glass flottante 3D (langage Shapefest — Neon/Frosted Glass). */
+function GlassOrb({
+  className,
+  size,
+  hue,
+  delay = 0,
+}: {
+  className?: string;
+  size: number;
+  hue: string;
+  delay?: number;
+}) {
+  return (
+    <span
+      className={cn("pointer-events-none absolute rounded-full", className)}
+      style={{
+        width: size,
+        height: size,
+        background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95), ${hue} 42%, rgba(255,255,255,0.12) 78%)`,
+        boxShadow: `inset 0 -${size / 5}px ${size / 3}px rgba(2,132,199,0.25), 0 ${size / 6}px ${size / 2.2}px rgba(2,132,199,0.18)`,
+        animation: `hockeyOrbFloat 7s ease-in-out ${delay}s infinite`,
+      }}
+      aria-hidden
+    />
+  );
+}
+
 /** Illustration patinoire — traits SVG authored (zone, rond central, buts). */
 function RinkLines() {
   return (
@@ -100,12 +152,17 @@ export function HockeyHeroHeader({ className }: { className?: string }) {
       className={cn("relative overflow-hidden rounded-2xl", className)}
       style={{ backgroundColor: FOT.card, border: `1px solid ${FOT.border}` }}
     >
+      <style>{`@keyframes hockeyOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}@media (prefers-reduced-motion: reduce){span[style*="hockeyOrbFloat"]{animation:none}}`}</style>
       <motion.div initial="hidden" animate="visible" variants={containerVariants}>
+        <GrainMesh />
         <RinkLines />
+        <GlassOrb className="right-[8%] top-[12%]" size={88} hue="rgba(125,211,252,0.55)" />
+        <GlassOrb className="right-[22%] top-[52%]" size={54} hue="rgba(196,181,253,0.5)" delay={1.2} />
+        <GlassOrb className="left-[4%] bottom-[8%]" size={38} hue="rgba(2,132,199,0.4)" delay={2.1} />
         {/* Voile glace */}
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ background: "linear-gradient(105deg, rgba(255,255,255,0.85) 0%, rgba(232,245,252,0.55) 55%, rgba(255,255,255,0.85) 100%)" }}
+          style={{ background: "linear-gradient(105deg, rgba(255,255,255,0.72) 0%, rgba(232,245,252,0.35) 55%, rgba(255,255,255,0.72) 100%)" }}
         />
 
         <div className="relative px-5 py-5 sm:px-8 sm:py-6">
