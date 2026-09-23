@@ -35966,17 +35966,13 @@ if (pathname === '/api/v1/multi-matches') {
       break;
     case 'basketball':
       try {
-        const balRes = await fetch('/api/basketball/matches?status=FT', {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-        });
-        if (balRes.ok) {
-          const balData = await balRes.json();
-          matches = (balData.matches ?? []).filter(
-            (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
-          );
-          source = 'basketball-api';
-        }
+        // Fix audit S9 : /api/basketball/matches N'EXISTE PAS (404 permanent)
+        // → appel direct du service déjà require() en tête de fichier.
+        const svcMatches = await basketballService.getNbaMatches();
+        matches = (svcMatches || []).filter(
+          (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
+        );
+        source = 'basketballService';
       } catch {}
       break;
   }

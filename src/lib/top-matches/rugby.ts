@@ -27,7 +27,7 @@ export const rugbyAdapter: SportAdapter = {
   sport: 'rugby',
 
   async fetch(limit, _timeframe) {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const groups: TopLeague[] = [];
     const nowMs = Date.now();
 

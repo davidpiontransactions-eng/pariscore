@@ -10,7 +10,7 @@ export const baseballAdapter: SportAdapter = {
     const now = new Date();
     const parisDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Paris' }).format(now);
 
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/baseball/schedule?date=${parisDate}&league=ALL`, {
       next: { revalidate: 60 },
     });

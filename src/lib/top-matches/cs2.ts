@@ -6,7 +6,7 @@ export const cs2Adapter: SportAdapter = {
   sport: 'cs2',
 
   async fetch(limit, _timeframe) {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/cs2/matches`, {
       next: { revalidate: 60 },
     });

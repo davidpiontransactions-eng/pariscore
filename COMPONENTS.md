@@ -125,7 +125,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tennis-market-filters | tennis-market-filters.tsx | Filtres marchés tennis (catégorie, probabilité min, live/prematch) |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 14 components
+## Football (`src/components/football/`) — 28 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -156,6 +156,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
 | top-strategies-table | top-strategies-table.tsx | Tableau Top stratégies (badges confiance ≥70/60, cotes, EV, tendance) |
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
+| projected-standings-card | projected-standings-card.tsx | Carte « Classement projeté fin de saison » (ExtraTrees offline, JSON rank-projector, papier JISTA 2026) |
 
 ## Handball (`src/components/handball/`) — 12 components
 
@@ -168,10 +169,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-calendar | handball-calendar.tsx | Calendrier matchs groupés par date |
 | handball-top8-widget | handball-top8-widget.tsx | Top 8 matchs par stratégie (tableau avec prob/EV/trend) |
 | handball-strategy-bar | handball-strategy-bar.tsx | Sélecteur pills 8 stratégies (Équipe, 1X2, O55.5, U62.5, HC, BTTS, HT, EV+) |
-| handball-multi-sport-card | handball-multi-sport-card.tsx | Carte pour TopMultiSport dashboard |
 | handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail match (score, MT, stats live, cotes) |
 | handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
-| handball-rankings | handball-rankings.tsx | Classement ligue (V/N/D/BP/BC/Diff/Pts/PPG) |
 | handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
 
 ## Leagues (`src/components/leagues/`) — 12 components
@@ -269,6 +268,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | basketball-four-factors | basketball-four-factors.tsx | Tableau Four Factors Off/Def (eFG%, TOV%, ORB%, FT, ORtg, DRtg, NetRtg, Pace) |
 | basketball-league-selector | basketball-league-selector.tsx | Sélecteur de ligues (NBA/WNBA/EuroLeague/EuroCup/domestique) |
 | basketball-h2h | basketball-h2h.tsx | Conteneur page H2H complet (sélecteur + header duel + 3 tabs + side panel standings) |
+| basketball-error-boundary | basketball-error-boundary.tsx | Error boundary onglet basket (fallback UI anti-crash) |
 | h2h-standings-panel | h2h-standings-panel.tsx | Panel classement ligue (desktop lg:+, sticky) |
 | h2h-team-selector | h2h-team-selector.tsx | Sélecteur de paire d'équipes (2 dropdowns + bouton ⇄) |
 | h2h-header | h2h-header.tsx | Hero duel : badges forme, split H2H, verdict |

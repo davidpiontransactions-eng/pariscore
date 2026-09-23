@@ -189,11 +189,36 @@ function _periods(m, side) {
 
 // ── Fetchers saisons ────────────────────────────────────────────────────────
 
+// Découpe une plage YYYYMMDD en chunks mensuels.
+// Fix audit I10 : ESPN scoreboard limit=500 tronquait la saison NBA
+// (~1330 matchs) → stats H2H sans les matchs post-janvier.
+function _monthChunks(start, end) {
+  const out = [];
+  let y = Number(start.slice(0, 4));
+  let m = Number(start.slice(4, 6));
+  const ey = Number(end.slice(0, 4));
+  const em = Number(end.slice(4, 6));
+  const lastDay = (yy, mm) => new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+  while (y < ey || (y === ey && m <= em)) {
+    const mm = String(m).padStart(2, '0');
+    const s = `${y}${mm}01`;
+    const e = y === ey && m === em ? end : `${y}${mm}${String(lastDay(y, m)).padStart(2, '0')}`;
+    out.push([s, e]);
+    m += 1;
+    if (m > 12) { m = 1; y += 1; }
+  }
+  return out;
+}
+
 async function _fetchScoreboardRange(league, start, end) {
   const cfg = LEAGUES[league];
-  const d = await _espnGet(`/apis/site/v2/sports/${cfg.sportPath}/scoreboard?dates=${start}-${end}&limit=500`);
-  const evs = (d && Array.isArray(d.events)) ? d.events : [];
-  return evs.map((e) => _normEvent(e, league)).filter(Boolean);
+  const out = [];
+  for (const [s, e] of _monthChunks(start, end)) {
+    const d = await _espnGet(`/apis/site/v2/sports/${cfg.sportPath}/scoreboard?dates=${s}-${e}&limit=500`);
+    const evs = (d && Array.isArray(d.events)) ? d.events : [];
+    out.push(...evs.map((x) => _normEvent(x, league)).filter(Boolean));
+  }
+  return out;
 }
 
 /** Saison courante (cache disque 6h). Matchs complétés uniquement. */

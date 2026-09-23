@@ -1,0 +1,72 @@
+name: Refresh NBA/WNBA Elo
+
+# Quotidien : Elo MOV-adjusted (538-style, K=20, HCA 46) → data/nba_elo.json
+# + data/wnba_elo.json. Source ESPN scoreboard gratuite. Backtest Brier inclus.
+# Fix audit 2026-09-23 : zéro automation trouvée → Elo stale depuis le 15/08.
+#
+# Triggers:
+#   - schedule: quotidien 12:00 UTC (après les matchs de la veille)
+#   - workflow_dispatch: manuel (+ seasonStart pour reborner la fenêtre d'ingestion)
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      seasonStart:
+        description: "NBA season start YYYY-MM-DD (vide = défaut outil)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: refresh-nba-elo
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Compute NBA/WNBA Elo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Refresh Elo (NBA + WNBA)
+        env:
+          NBA_SEASON_START: ${{ inputs.seasonStart }}
+        run: |
+          node tools/refresh_nba_elo.js
+          node tools/refresh_wnba_elo.js
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- data/nba_elo.json data/wnba_elo.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- data/nba_elo.json data/wnba_elo.json
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nba_elo.json data/wnba_elo.json
+          git commit -m "chore(data): refresh nba/wnba elo [skip ci]"
+          git push

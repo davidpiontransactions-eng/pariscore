@@ -384,6 +384,28 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job Flashscore Handball (routine matinale) ===
+      // Scrape le feed Flashscore handball (J-1..J+7, zéro-dép node:https,
+      // sport=7) → data/flashscore_handball.json — source principale de
+      // l'onglet Handball (routes matches/strategy-top8 + gate scraped_at 20h).
+      // Fix audit 2026-09-23 : cron réclamé par le scraper mais ABSENT du repo.
+      name: 'pariscore-cron-flashscore-handball',
+      script: 'scripts/scrape-flashscore-handball.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 6 * * *', // quotidien 06:30 UTC ( créneau revendiqué par le scraper)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-flashscore-handball.err.log',
+      out_file: 'logs/cron-flashscore-handball.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job TennisAbstract MCP (routine matinale serve/retour) ===
       // Scrape les 4 leaderboards MCP (serve/return × hommes/dames, last52)
       // et dérive SPW/RPW → data/ta-mcp.json, fallback leaderboard du moteur
