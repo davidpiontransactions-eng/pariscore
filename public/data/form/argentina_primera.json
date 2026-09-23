@@ -4,7 +4,7 @@
     "leagueId": "argentina_primera",
     "leagueName": "Argentina",
     "season": "2026/27",
-    "lastUpdated": "2026-09-21T10:09:16.794869Z",
+    "lastUpdated": "2026-09-22T09:26:32.942652Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,24 @@
     "partial": true
   },
   "home": [
+    {
+      "teamName": "G. Mendoza",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 8,
+      "ga": 3
+    },
+    {
+      "teamName": "Instituto",
+      "gp": 5,
+      "w": 5,
+      "d": 0,
+      "l": 0,
+      "gf": 9,
+      "ga": 3
+    },
     {
       "teamName": "I. Rivadavia",
       "gp": 4,
@@ -31,15 +49,6 @@
       "ga": 3
     },
     {
-      "teamName": "G. Mendoza",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 8,
-      "ga": 3
-    },
-    {
       "teamName": "Velez Sarsfield",
       "gp": 5,
       "w": 4,
@@ -47,18 +56,18 @@
       "l": 0,
       "gf": 7,
       "ga": 3
-    },
-    {
-      "teamName": "Instituto",
-      "gp": 5,
-      "w": 5,
-      "d": 0,
-      "l": 0,
-      "gf": 9,
-      "ga": 3
     }
   ],
   "away": [
+    {
+      "teamName": "Barracas C.",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 3,
+      "ga": 3
+    },
     {
       "teamName": "Rosario Central",
       "gp": 5,
@@ -67,6 +76,15 @@
       "l": 1,
       "gf": 6,
       "ga": 4
+    },
+    {
+      "teamName": "A. Tucuman",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 5,
+      "ga": 2
     },
     {
       "teamName": "Argentinos Jrs",
@@ -84,24 +102,6 @@
       "d": 0,
       "l": 1,
       "gf": 8,
-      "ga": 3
-    },
-    {
-      "teamName": "A. Tucuman",
-      "gp": 4,
-      "w": 3,
-      "d": 1,
-      "l": 0,
-      "gf": 5,
-      "ga": 1
-    },
-    {
-      "teamName": "Barracas C.",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 3,
       "ga": 3
     }
   ]
