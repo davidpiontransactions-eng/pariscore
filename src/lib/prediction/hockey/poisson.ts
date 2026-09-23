@@ -251,18 +251,37 @@ export type TeamStats = {
 };
 
 /**
+ * Facteur de force de ligne depuis les trios EV Frozen Tools
+ * (data/nhl_frozenpool.json → lines[TEAM].ev_forwards : gf/ga par trio).
+ * Part de buts des trios EV → facteur 0.85-1.15 (0.5 = neutre).
+ */
+export function lineStrengthFactor(
+  evForwards: { gf: number | null; ga: number | null }[]
+): number {
+  if (!evForwards?.length) return 1;
+  const gf = evForwards.reduce((a, l) => a + (l.gf ?? 0), 0);
+  const ga = evForwards.reduce((a, l) => a + (l.ga ?? 0), 0);
+  const total = gf + ga;
+  if (total === 0) return 1;
+  const share = gf / total;
+  return Math.max(0.85, Math.min(1.15, 0.85 + share * 0.6));
+}
+
+/**
  * Estime λ (lambda) pour chaque equipe d'un match.
  *
  * Formule:
- *   λ_home = (home_gf / home_gp + away_ga / away_gp) / 2 × homeAdvantage
- *   λ_away = (away_gf / away_gp + home_ga / home_gp) / 2
+ *   λ_home = (home_gf / home_gp + away_ga / away_gp) / 2 × homeAdvantage × lineFactor
+ *   λ_away = (away_gf / away_gp + home_ga / home_gp) / 2 × lineFactor
  *
  * homeAdvantage ≈ 1.05-1.10 au hockey (5-10% de bonus home)
+ * lineFactor (optionnel) = lineStrengthFactor(trios EV Frozen Tools)
  */
 export function estimateLambdas(
   homeTeam: TeamStats,
   awayTeam: TeamStats,
-  homeAdvantage: number = 1.07
+  homeAdvantage: number = 1.07,
+  lineFactors?: { home?: number; away?: number }
 ): { home: number; away: number } {
   // Attaque home (domicile) vs Défense away (extérieur)
   const homeAttHome = homeTeam.home && homeTeam.home.gp > 0
@@ -283,8 +302,8 @@ export function estimateLambdas(
   // Moyenne defensives de la ligue pour normaliser
   const leagueAvg = 2.5; // ~5 buts total / 2 equipes
 
-  const lambdaHome = ((homeAttHome + awayDefAway) / 2) * homeAdvantage;
-  const lambdaAway = (awayAttAway + homeDefHome) / 2;
+  const lambdaHome = ((homeAttHome + awayDefAway) / 2) * homeAdvantage * (lineFactors?.home ?? 1);
+  const lambdaAway = ((awayAttAway + homeDefHome) / 2) * (lineFactors?.away ?? 1);
 
   return {
     home: Math.max(0.5, Math.min(lambdaHome, 6)),
@@ -316,10 +335,11 @@ export function predictHockeyMatch(
   awayTeam: TeamStats,
   players: { name: string; team: string; position: string; gp: number; g: number; a: number }[],
   homeOdds?: number,
-  awayOdds?: number
+  awayOdds?: number,
+  lineFactors?: { home?: number; away?: number }
 ): HockeyPrediction {
-  // 1. Estimer les lambdas
-  const lambda = estimateLambdas(homeTeam, awayTeam);
+  // 1. Estimer les lambdas (facteurs de lignes EV Frozen Tools si fournis)
+  const lambda = estimateLambdas(homeTeam, awayTeam, 1.07, lineFactors);
 
   // 2. Si cotes disponibles, calibrer via implied probabilities
   if (homeOdds && awayOdds && homeOdds > 0 && awayOdds > 0) {

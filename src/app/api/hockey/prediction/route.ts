@@ -6,6 +6,7 @@ import { join } from "path";
 const CACHE_TTL = 60 * 60_000; // 1h — dérivé des données prematch
 import {
   predictHockeyMatch,
+  lineStrengthFactor,
   type TeamStats,
   type HockeyPrediction,
 } from "@/lib/prediction/hockey/poisson";
@@ -138,8 +139,11 @@ export async function GET() {
   const cached = cache.getEntry();
   if (cached?.data && isFresh(cached, CACHE_TTL)) return NextResponse.json(cached.data);
 
-  // Charger les données source (merge BetExplorer + Annabet)
+  // Charger les données source (merge BetExplorer + Annabet + Oddspedia)
   const prematch = loadMergedPrematch();
+  const frozen = loadJson<{ lines: Record<string, { ev_forwards: { gf: number | null; ga: number | null }[] }> }>(
+    "nhl_frozenpool.json"
+  );
   const standings = loadJson<{ leagues: Record<string, { teams: TeamStanding[] }> }>(
     "eliteprospects_hockey_standings.json"
   );
@@ -159,6 +163,10 @@ export async function GET() {
   // Pour chaque ligue avec des matchs prematch
   for (const [leagueId, leagueData] of Object.entries(prematch.leagues)) {
     const leaguePlayers = pickLeaguePlayers(playerStats, leagueId);
+    const teamLines = (code: string) => {
+      const key = Object.keys(frozen?.lines ?? {}).find((k) => code.toUpperCase().includes(k) || k.includes(code.toUpperCase().slice(0, 3)));
+      return lineStrengthFactor(key ? frozen?.lines[key]?.ev_forwards ?? [] : []);
+    };
 
     for (const match of leagueData.matches) {
       if (!match.h2h?.standings) continue;
@@ -191,7 +199,8 @@ export async function GET() {
           a: p.a,
         })),
         homeOdds,
-        awayOdds
+        awayOdds,
+        { home: teamLines(match.team1Name), away: teamLines(match.team2Name) }
       );
 
       const key = `${match.team1Id}-${match.team2Id}`;
