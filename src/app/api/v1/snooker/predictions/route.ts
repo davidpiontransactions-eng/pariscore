@@ -210,6 +210,7 @@ export async function GET() {
   const index = buildPlayerIndex(playerLikes);
   const cueById = new Map(cueList.map((p) => [p.id, p]));
   const picks: TopPick[] = [];
+  const seenIds = new Set<string>();
 
   for (const m of matchesData.matches ?? []) {
     // Prematch uniquement : pas live, pas de score final
@@ -218,6 +219,9 @@ export async function GET() {
       m.scoreHome !== "-" && m.scoreAway !== "-" && m.scoreHome !== "" && m.scoreAway !== "";
     if (finished) continue;
     if (!m.home || !m.away) continue;
+    // Le JSON source contient des ids en double (--both) → dédup (QA post-deploy)
+    if (seenIds.has(m.id)) continue;
+    seenIds.add(m.id);
 
     // Résolution partagée (player-match — mapping FS_TO_CUE_ID + fuzzy)
     const hitA = findCuePlayer(m.home, index, playerLikes);

@@ -169,7 +169,11 @@ export async function GET() {
       correct: boolean;
     }[] = [];
 
+    const seenIds = new Set<string>();
     for (const m of finished) {
+      // Ids en double dans le JSON source → dédup (sinon métriques ×2, QA post-deploy)
+      if (seenIds.has(m.id)) continue;
+      seenIds.add(m.id);
       // Résolution fuzzy FlashScore → CueTracker ("Gilbert D." → "David Gilbert")
       const hit1 = findCuePlayer(m.player1, cueIndex, playerLikes);
       const hit2 = findCuePlayer(m.player2, cueIndex, playerLikes);
