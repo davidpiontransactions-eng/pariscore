@@ -42,6 +42,7 @@ function getDb(): BSD | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- détection runtime Bun (bun:sqlite) vs Node (better-sqlite3)
     const { Database } = require("bun:sqlite") as {
       Database: new (file: string, opts?: object) => BSD;
     };
@@ -49,6 +50,7 @@ function getDb(): BSD | null {
     return _db;
   } catch {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports -- fallback Node quand bun:sqlite indisponible
       const Database = require("better-sqlite3") as unknown as {
         new (
           file: string,
