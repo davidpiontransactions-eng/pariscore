@@ -3,7 +3,12 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { BasketballLeagueId } from "@/lib/basketball-data";
-import { getLeagueConfig, getLeagueGroup, type LeagueGroup } from "@/lib/basketball-league-config";
+import {
+  getLeagueConfig,
+  getLeaguesByGroup,
+  GROUP_ORDER,
+  type LeagueGroup,
+} from "@/lib/basketball-league-config";
 
 type LeagueSelectorProps = {
   selected: BasketballLeagueId[];
@@ -12,12 +17,13 @@ type LeagueSelectorProps = {
 };
 
 const GROUP_LABELS: Record<LeagueGroup, string> = {
-  nba: "NBA/WNBA",
+  usa: "USA",
   euro: "Euro",
   domestic: "Domestique",
+  world: "Mondial",
+  americas: "Amériques",
+  asia: "Asie-Pac",
 };
-
-const GROUP_ORDER: LeagueGroup[] = ["nba", "euro", "domestic"];
 
 export function LeagueSelector({ selected, onChange, className }: LeagueSelectorProps) {
   const toggleLeague = (league: BasketballLeagueId) => {
@@ -29,33 +35,41 @@ export function LeagueSelector({ selected, onChange, className }: LeagueSelector
   };
 
   const toggleGroup = (group: LeagueGroup) => {
-    const groupLeagues = getGroupLeagues(group);
+    // Seules les ligues avec feed participent au toggle groupe (état explicite)
+    const groupLeagues = getLeaguesByGroup(group).filter(
+      (l) => getLeagueConfig(l).hasFeed,
+    );
+    if (groupLeagues.length === 0) return;
     const allSelected = groupLeagues.every((l) => selected.includes(l));
     if (allSelected) {
       onChange(selected.filter((l) => !groupLeagues.includes(l)));
     } else {
-      const newSelected = [...new Set([...selected, ...groupLeagues])];
-      onChange(newSelected);
+      onChange([...new Set([...selected, ...groupLeagues])]);
     }
   };
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
       {GROUP_ORDER.map((group) => {
-        const leagues = getGroupLeagues(group);
-        const allSelected = leagues.every((l) => selected.includes(l));
+        const leagues = getLeaguesByGroup(group);
+        const feedLeagues = leagues.filter((l) => getLeagueConfig(l).hasFeed);
+        const allSelected =
+          feedLeagues.length > 0 && feedLeagues.every((l) => selected.includes(l));
         const someSelected = leagues.some((l) => selected.includes(l));
+        const groupEmpty = feedLeagues.length === 0;
         return (
           <div key={group} className="flex items-center gap-1">
             <Button
               variant={allSelected ? "default" : someSelected ? "secondary" : "outline"}
               size="sm"
               onClick={() => toggleGroup(group)}
+              disabled={groupEmpty}
               className="h-7 text-xs font-medium"
+              title={groupEmpty ? "Aucune source de matchs câblée pour ce groupe" : undefined}
             >
               {GROUP_LABELS[group]}
             </Button>
-            <div className="flex gap-0.5">
+            <div className="flex flex-wrap gap-0.5">
               {leagues.map((league) => {
                 const cfg = getLeagueConfig(league);
                 const isSelected = selected.includes(league);
@@ -64,10 +78,17 @@ export function LeagueSelector({ selected, onChange, className }: LeagueSelector
                     key={league}
                     variant={isSelected ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => toggleLeague(league)}
+                    onClick={() => cfg.hasFeed && toggleLeague(league)}
+                    disabled={!cfg.hasFeed}
+                    title={
+                      cfg.hasFeed
+                        ? cfg.label
+                        : `${cfg.label} — catalogue 1xbet, source de matchs à venir`
+                    }
                     className={cn(
                       "h-7 text-xs",
                       isSelected && "bg-primary/20 text-primary",
+                      !cfg.hasFeed && "opacity-40 cursor-not-allowed",
                     )}
                   >
                     {cfg.shortLabel}
@@ -80,9 +101,4 @@ export function LeagueSelector({ selected, onChange, className }: LeagueSelector
       })}
     </div>
   );
-}
-
-function getGroupLeagues(group: LeagueGroup): BasketballLeagueId[] {
-  const all: BasketballLeagueId[] = ["nba", "wnba", "euroleague", "eurocup", "lnb", "acb", "lba", "bsl", "bbl", "aba", "greek"];
-  return all.filter((l) => getLeagueGroup(l) === group);
 }

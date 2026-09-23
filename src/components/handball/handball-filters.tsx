@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { HandballMatch } from "@/lib/handball-data";
+import { sortHandballLeagueEntries } from "@/lib/handball-leagues";
 
 export function HandballFilters({
   matches,
@@ -16,7 +17,10 @@ export function HandballFilters({
     const map = new Map<string, number>();
     for (const m of matches)
       map.set(m.league.name, (map.get(m.league.name) || 0) + 1);
-    return [...map.entries()].sort((a, b) => b[1] - a[1]);
+    // Tri 1xbet : ligues majeures en tête (tier), puis volume
+    return sortHandballLeagueEntries(
+      [...map.entries()].map(([name, count]) => ({ name, count })),
+    );
   }, [matches]);
 
   if (leagues.length <= 1) return null;
@@ -33,7 +37,7 @@ export function HandballFilters({
       >
         🌍 Tous ({matches.length})
       </button>
-      {leagues.map(([name, count]) => (
+      {leagues.map(({ name, count }) => (
         <button
           key={name}
           onClick={() => onSelect(name)}

@@ -4,7 +4,49 @@
  * Source : basketballService.js (NBA/WNBA) + euroleague_api (EuroLeague/EuroCup).
  */
 
-export type BasketballLeagueId = "nba" | "wnba" | "euroleague" | "eurocup" | "lnb" | "acb" | "lba" | "bsl" | "bbl" | "aba" | "greek" | "fiba";
+/**
+ * Ids de ligues basket couvertes — catalogue élargi 1xbet (debug/audit 2026-09-23).
+ * Feed = source de matchs câblée (voir hasFeed dans basketball-league-config) ;
+ * les autres ligues sont listées pour navigation mais n'ont pas encore de fetcher.
+ */
+export type BasketballLeagueId =
+  // USA / feeds principaux
+  | "nba"
+  | "wnba"
+  | "ncaa"
+  // Euro / coupes
+  | "euroleague"
+  | "eurocup"
+  | "bcl"
+  // Compétitions mondiales
+  | "fiba"
+  | "olympics"
+  | "bal"
+  // Domestiques Europe
+  | "lnb"
+  | "acb"
+  | "lba"
+  | "bsl"
+  | "bbl"
+  | "aba"
+  | "greek"
+  | "lkl"
+  | "plk"
+  | "lpb"
+  | "isr"
+  | "hun"
+  | "swe"
+  | "den"
+  // Amériques
+  | "cebl"
+  | "nbb"
+  | "arg"
+  // Asie-Pacifique
+  | "nbl"
+  | "cba"
+  | "kbl"
+  | "jbl"
+  | "pba";
 
 export type BasketballLeagueInfo = {
   id: BasketballLeagueId;

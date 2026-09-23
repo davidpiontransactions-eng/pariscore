@@ -1,7 +1,10 @@
 /**
- * Configuration par ligue pour le basketball.
+ * Configuration par ligue pour le basketball — catalogue élargi 1xbet (2026-09-23).
  * Calibrations NBA vs FIBA : pace baseline, 3PT line, rules, pourcentages de moyenne ligue.
- * Source : AGENTS.md session Basketball Engineering Loop + research académique.
+ * Saisons dérivées de la date (fin du hardcode "2025-26" — fix audit).
+ * hasFeed = source de matchs câblée (ESPN/euroleague_api) ; les autres ligues
+ * du catalogue 1xbet sont affichées mais sans fetcher (état explicite, plus de
+ * chip silencieusement vide sans signal).
  */
 
 import type { BasketballLeagueId } from "./basketball-data";
@@ -13,27 +16,91 @@ export type LeagueConfig = {
   country: string;
   countryCode: string;
   season: string;
-  espnKey: string; // clé ESPN API (nba, wnba, euroleague)
+  espnKey: string; // clé ESPN API si disponible (nba, wnba, mens-college-basketball…)
+  /** Groupe UI (chip row du sélecteur) */
+  group: LeagueGroup;
+  /** Feed de matchs réellement câblé dans BasketballTabContent */
+  hasFeed: boolean;
   paceBaseline: number; // possessions par 48 min (normalisé NBA)
   threePointLine: number; // mètres
   quarterMinutes: number;
   foulLimit: number;
   usesFibaRules: boolean;
-  hcaPoints: number; // home-court advantage en points (littérature : NBA 2.5-3.5, EuroLeague 3-5)
+  hcaPoints: number; // home-court advantage en points
   sdMargin: number; // écart-type marge (pts)
   sdTotal: number; // écart-type total (pts)
   leagueAvgPf: number; // PF moyen ligue (pour normalisation pace)
 };
 
+/** Groupe de ligues pour l'UI (modèle 1xbet : géographie/compétition). */
+export type LeagueGroup = "usa" | "euro" | "domestic" | "world" | "americas" | "asia";
+
+/** Ordre des groupes dans le sélecteur. */
+export const GROUP_ORDER: LeagueGroup[] = ["usa", "euro", "domestic", "world", "americas", "asia"];
+
+/** Saison Europe/étendues : campagne août→juillet (ex: oct 2026 → "2026-27"). */
+function euroSeason(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const start = now.getMonth() >= 7 ? y : y - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
+}
+
+/** Saison calendaires (WNBA, Asie, Amériques, tournois FIBA). */
+function calendarSeason(): string {
+  return String(new Date().getFullYear());
+}
+
+/** Saison NCAA : même campagne août→juillet. */
+function ncaaSeason(): string {
+  return euroSeason();
+}
+
+/** Défaut FIBA générique pour les ligues du catalogue sans calibrage dédié. */
+function fibaLeague(
+  id: BasketballLeagueId,
+  label: string,
+  shortLabel: string,
+  country: string,
+  countryCode: string,
+  group: LeagueGroup,
+  overrides: Partial<LeagueConfig> = {},
+): LeagueConfig {
+  return {
+    id,
+    label,
+    shortLabel,
+    country,
+    countryCode,
+    season: euroSeason(),
+    espnKey: "",
+    group,
+    hasFeed: false,
+    paceBaseline: 83.0,
+    threePointLine: 6.75,
+    quarterMinutes: 10,
+    foulLimit: 5,
+    usesFibaRules: true,
+    hcaPoints: 3.5,
+    sdMargin: 10.0,
+    sdTotal: 14.5,
+    leagueAvgPf: 82.0,
+    ...overrides,
+  };
+}
+
 export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
+  // ── USA ──────────────────────────────────────────────
   nba: {
     id: "nba",
     label: "NBA",
     shortLabel: "NBA",
     country: "USA",
     countryCode: "US",
-    season: "2025-26",
+    season: euroSeason(),
     espnKey: "nba",
+    group: "usa",
+    hasFeed: true,
     paceBaseline: 107.4,
     threePointLine: 7.24,
     quarterMinutes: 12,
@@ -50,10 +117,12 @@ export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
     shortLabel: "WNBA",
     country: "USA",
     countryCode: "US",
-    season: "2026",
+    season: calendarSeason(),
     espnKey: "wnba",
+    group: "usa",
+    hasFeed: true,
     paceBaseline: 98.0,
-    threePointLine: 6.75, // FIBA distance (WNBA utilise la ligne FIBA)
+    threePointLine: 6.75,
     quarterMinutes: 10,
     foulLimit: 5,
     usesFibaRules: true,
@@ -62,20 +131,36 @@ export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
     sdTotal: 16.0,
     leagueAvgPf: 84.0,
   },
+  ncaa: fibaLeague("ncaa", "NCAA Men's", "NCAA", "USA", "US", "usa", {
+    season: ncaaSeason(),
+    espnKey: "mens-college-basketball",
+    usesFibaRules: false,
+    quarterMinutes: 20, // mi-temps de 20 min (règles NCAA)
+    foulLimit: 5,
+    hcaPoints: 4.5, // HCA college plus marqué (salle pleine, fouls house)
+    paceBaseline: 70.0,
+    leagueAvgPf: 75.0,
+    sdMargin: 11.0,
+    sdTotal: 16.0,
+  }),
+
+  // ── Euro / coupes clubs ──────────────────────────────
   euroleague: {
     id: "euroleague",
     label: "EuroLeague",
     shortLabel: "EUL",
     country: "Pan-européen",
     countryCode: "EU",
-    season: "2025-26",
+    season: euroSeason(),
     espnKey: "euroleague",
+    group: "euro",
+    hasFeed: true,
     paceBaseline: 83.0,
     threePointLine: 6.75,
     quarterMinutes: 10,
     foulLimit: 5,
     usesFibaRules: true,
-    hcaPoints: 4.0, // HCA plus élevé en Europe (crowd, travel)
+    hcaPoints: 4.0,
     sdMargin: 10.5,
     sdTotal: 15.0,
     leagueAvgPf: 80.0,
@@ -86,8 +171,10 @@ export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
     shortLabel: "EUC",
     country: "Pan-européen",
     countryCode: "EU",
-    season: "2025-26",
+    season: euroSeason(),
     espnKey: "eurocup",
+    group: "euro",
+    hasFeed: true,
     paceBaseline: 82.0,
     threePointLine: 6.75,
     quarterMinutes: 10,
@@ -98,166 +185,129 @@ export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
     sdTotal: 15.0,
     leagueAvgPf: 79.0,
   },
-  lnb: {
-    id: "lnb",
-    label: "Betclic Élite",
-    shortLabel: "LNB",
-    country: "France",
-    countryCode: "FR",
-    season: "2025-26",
-    espnKey: "lnb", // API-Sports ou scraping
-    paceBaseline: 84.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
+  bcl: fibaLeague("bcl", "Basketball Champions League", "BCL", "Pan-européen", "EU", "euro", {
     hcaPoints: 3.5,
-    sdMargin: 10.0,
-    sdTotal: 14.5,
-    leagueAvgPf: 82.0,
-  },
-  acb: {
-    id: "acb",
-    label: "Liga ACB",
-    shortLabel: "ACB",
-    country: "Espagne",
-    countryCode: "ES",
-    season: "2025-26",
-    espnKey: "acb",
-    paceBaseline: 85.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 3.5,
-    sdMargin: 10.0,
-    sdTotal: 14.5,
-    leagueAvgPf: 83.0,
-  },
-  lba: {
-    id: "lba",
-    label: "LBA",
-    shortLabel: "LBA",
-    country: "Italie",
-    countryCode: "IT",
-    season: "2025-26",
-    espnKey: "lba",
-    paceBaseline: 83.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 3.5,
-    sdMargin: 10.0,
-    sdTotal: 14.5,
-    leagueAvgPf: 81.0,
-  },
-  bsl: {
-    id: "bsl",
-    label: "BSL",
-    shortLabel: "BSL",
-    country: "Turquie",
-    countryCode: "TR",
-    season: "2025-26",
-    espnKey: "bsl",
-    paceBaseline: 84.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 4.0, // HCA élevé en Turquie (foules agressives)
     sdMargin: 10.5,
     sdTotal: 15.0,
-    leagueAvgPf: 82.0,
-  },
-  bbl: {
-    id: "bbl",
-    label: "BBL",
-    shortLabel: "BBL",
-    country: "Allemagne",
-    countryCode: "DE",
-    season: "2025-26",
-    espnKey: "bbl",
-    paceBaseline: 83.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 3.5,
-    sdMargin: 10.0,
-    sdTotal: 14.5,
-    leagueAvgPf: 81.0,
-  },
-  aba: {
-    id: "aba",
-    label: "ABA League",
-    shortLabel: "ABA",
-    country: "Ex-Yougoslavie",
-    countryCode: "BA",
-    season: "2025-26",
-    espnKey: "aba",
-    paceBaseline: 83.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 3.8,
-    sdMargin: 10.5,
-    sdTotal: 15.0,
-    leagueAvgPf: 80.0,
-  },
-  greek: {
-    id: "greek",
-    label: "Greek Basket League",
-    shortLabel: "GBL",
-    country: "Grèce",
-    countryCode: "GR",
-    season: "2025-26",
-    espnKey: "greek",
-    paceBaseline: 82.0,
-    threePointLine: 6.75,
-    quarterMinutes: 10,
-    foulLimit: 5,
-    usesFibaRules: true,
-    hcaPoints: 4.0,
-    sdMargin: 10.0,
-    sdTotal: 14.5,
-    leagueAvgPf: 79.0,
-  },
+    leagueAvgPf: 79.5,
+  }),
+
+  // ── Mondial ──────────────────────────────────────────
   fiba: {
     id: "fiba",
     label: "FIBA Women's WC",
     shortLabel: "FIBA",
     country: "International",
     countryCode: "INT",
-    season: "2026",
+    season: calendarSeason(),
     espnKey: "fiba",
-    paceBaseline: 72.0, // Plus lent que NBA (40 min vs 48 min)
-    threePointLine: 6.75, // Ligne FIBA standard
-    quarterMinutes: 10, // Quarts de 10 min (FIBA)
-    foulLimit: 5, // Limite FIBA (5 fautes = disqualification)
+    group: "world",
+    hasFeed: false,
+    paceBaseline: 72.0,
+    threePointLine: 6.75,
+    quarterMinutes: 10,
+    foulLimit: 5,
     usesFibaRules: true,
-    hcaPoints: 2.5, // Home court advantage réduit en tournoi neutre
-    sdMargin: 12.5, // Plus grande variance (tournoi knockout)
+    hcaPoints: 2.5,
+    sdMargin: 12.5,
     sdTotal: 17.0,
-    leagueAvgPf: 78.0, // Moyenne FIBA Women's (plus bas que NBA)
+    leagueAvgPf: 78.0,
   },
+  olympics: fibaLeague("olympics", "Jeux Olympiques", "OLY", "International", "INT", "world", {
+    season: calendarSeason(),
+    hcaPoints: 2.0, // tournoi neutre
+    sdMargin: 12.5,
+    sdTotal: 17.0,
+    leagueAvgPf: 80.0,
+  }),
+  bal: fibaLeague("bal", "Basketball Africa League", "BAL", "Afrique", "INT", "world", {
+    season: calendarSeason(),
+    leagueAvgPf: 78.0,
+  }),
+
+  // ── Domestiques Europe ───────────────────────────────
+  lnb: fibaLeague("lnb", "Betclic Élite", "LNB", "France", "FR", "domestic", {
+    espnKey: "lnb",
+    leagueAvgPf: 82.0,
+  }),
+  acb: fibaLeague("acb", "Liga ACB", "ACB", "Espagne", "ES", "domestic", { espnKey: "acb" }),
+  lba: fibaLeague("lba", "LBA", "LBA", "Italie", "IT", "domestic", {
+    espnKey: "lba",
+    leagueAvgPf: 81.0,
+  }),
+  bsl: fibaLeague("bsl", "BSL", "BSL", "Turquie", "TR", "domestic", {
+    espnKey: "bsl",
+    hcaPoints: 4.0,
+    sdMargin: 10.5,
+    sdTotal: 15.0,
+  }),
+  bbl: fibaLeague("bbl", "BBL", "BBL", "Allemagne", "DE", "domestic", {
+    espnKey: "bbl",
+    leagueAvgPf: 81.0,
+  }),
+  aba: fibaLeague("aba", "ABA League", "ABA", "Ex-Yougoslavie", "BA", "domestic", {
+    espnKey: "aba",
+    hcaPoints: 3.8,
+    sdMargin: 10.5,
+    sdTotal: 15.0,
+    leagueAvgPf: 80.0,
+  }),
+  greek: fibaLeague("greek", "Greek Basket League", "GBL", "Grèce", "GR", "domestic", {
+    espnKey: "greek",
+    hcaPoints: 4.0,
+    leagueAvgPf: 79.0,
+  }),
+  lkl: fibaLeague("lkl", "LKL", "LKL", "Lituanie", "LT", "domestic", { leagueAvgPf: 80.0 }),
+  plk: fibaLeague("plk", "PLK", "PLK", "Pologne", "PL", "domestic"),
+  lpb: fibaLeague("lpb", "LPB", "LPB", "Portugal", "PT", "domestic"),
+  isr: fibaLeague("isr", "Winner League", "WLN", "Israël", "IL", "domestic", { hcaPoints: 4.5 }),
+  hun: fibaLeague("hun", "NB I", "NBI", "Hongrie", "HU", "domestic"),
+  swe: fibaLeague("swe", "Basketligan", "SWE", "Suède", "SE", "domestic", {
+    leagueAvgPf: 84.0,
+  }),
+  den: fibaLeague("den", "Basketligaen", "DEN", "Danemark", "DK", "domestic", {
+    leagueAvgPf: 84.0,
+  }),
+
+  // ── Amériques ────────────────────────────────────────
+  cebl: fibaLeague("cebl", "CEBL", "CEBL", "Canada", "CA", "americas", {
+    season: calendarSeason(),
+    paceBaseline: 86.0,
+    leagueAvgPf: 90.0,
+  }),
+  nbb: fibaLeague("nbb", "NBB", "NBB", "Brésil", "BR", "americas", {
+    season: calendarSeason(),
+    leagueAvgPf: 80.0,
+  }),
+  arg: fibaLeague("arg", "Liga Nacional", "LIGA", "Argentine", "AR", "americas", {
+    season: calendarSeason(),
+  }),
+
+  // ── Asie-Pacifique ───────────────────────────────────
+  nbl: fibaLeague("nbl", "NBL", "NBL", "Australie", "AU", "asia", {
+    espnKey: "nbl",
+    season: calendarSeason(),
+    leagueAvgPf: 87.0,
+  }),
+  cba: fibaLeague("cba", "CBA", "CBA", "Chine", "CN", "asia", {
+    season: calendarSeason(),
+    leagueAvgPf: 100.0,
+    paceBaseline: 88.0,
+  }),
+  kbl: fibaLeague("kbl", "KBL", "KBL", "Corée du Sud", "KR", "asia", {
+    season: calendarSeason(),
+    leagueAvgPf: 82.0,
+  }),
+  jbl: fibaLeague("jbl", "B.League", "JBL", "Japon", "JP", "asia", {
+    season: calendarSeason(),
+    leagueAvgPf: 81.0,
+  }),
+  pba: fibaLeague("pba", "PBA", "PBA", "Philippines", "PH", "asia", {
+    season: calendarSeason(),
+    leagueAvgPf: 95.0,
+    paceBaseline: 86.0,
+  }),
 };
-
-/** Normalise le pace d'une ligue FIBA vers l'échelle NBA (107.4 baseline). */
-export function normalizePace(rawPace: number, league: BasketballLeagueId): number {
-  const cfg = LEAGUE_CONFIGS[league];
-  if (!cfg || cfg.paceBaseline === 0) return rawPace;
-  return rawPace * (107.4 / cfg.paceBaseline);
-}
-
-/** Calcule le spread attendu en points depuis le rating diff (calibré par ligue). */
-export function ratingDiffToSpread(ratingDiff: number, league: BasketballLeagueId): number {
-  const cfg = LEAGUE_CONFIGS[league];
-  // NBA: ~28 pts spread par 400 Elo. FIBA: ajusté pour pace plus bas.
-  const ptsPerElo = league === "nba" ? 28 : 24; // FIBA: fewer possessions → slightly less spread per Elo
-  return (ratingDiff * ptsPerElo) / 400;
-}
 
 /** Retourne la config d'une ligue. */
 export function getLeagueConfig(league: BasketballLeagueId): LeagueConfig {
@@ -276,17 +326,12 @@ export const ESPN_LEAGUES: BasketballLeagueId[] = ["nba", "wnba"];
 export const EUROLEAGUE_LEAGUES: BasketballLeagueId[] = ["euroleague", "eurocup"];
 
 /** Ligues domestiques (API-Sports payant). */
-export const DOMESTIC_LEAGUES: BasketballLeagueId[] = ["lnb", "acb", "lba", "bsl", "bbl", "aba", "greek"];
-
-/** Groupe de ligues pour l'UI. */
-export type LeagueGroup = "nba" | "euro" | "domestic";
+export const DOMESTIC_LEAGUES: BasketballLeagueId[] = getLeaguesByGroup("domestic");
 
 export function getLeagueGroup(league: BasketballLeagueId): LeagueGroup {
-  if (league === "nba" || league === "wnba") return "nba";
-  if (league === "euroleague" || league === "eurocup") return "euro";
-  return "domestic";
+  return LEAGUE_CONFIGS[league].group;
 }
 
 export function getLeaguesByGroup(group: LeagueGroup): BasketballLeagueId[] {
-  return getAllLeagueIds().filter((l) => getLeagueGroup(l) === group);
+  return getAllLeagueIds().filter((l) => LEAGUE_CONFIGS[l].group === group);
 }
