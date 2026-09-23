@@ -51,13 +51,14 @@ type OddsportalMatch = {
   id: string;
   home: string;
   away: string;
-  time: string;
   scoreHome: string;
   scoreAway: string;
-  status: "scheduled" | "live" | "finished";
-  odds1: number | null;
-  odds2: number | null;
-  href: string;
+  status: string;
+  time?: string;
+  odds1?: number;
+  odds2?: number;
+  /** Ligne O/U frames bookmaker (optionnelle, scraper oddsportal) */
+  total?: { line?: number; over_odds?: number; under_odds?: number } | null;
 };
 
 type OddsportalFile = {
@@ -231,7 +232,8 @@ async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, 
     player1PhotoUrl: await getPhotoForPlayer(m.home),
     player2PhotoUrl: await getPhotoForPlayer(m.away),
     scheduled_at: scheduledAt,
-    status: m.status,
+    // Normalisation vers l'union SnookerMatch (JSON scraper = string libre)
+    status: m.status === "live" || m.status === "finished" ? m.status : "scheduled",
     scoreA: parseFrames(m.scoreHome),
     scoreB: parseFrames(m.scoreAway),
     bestOf: 7,

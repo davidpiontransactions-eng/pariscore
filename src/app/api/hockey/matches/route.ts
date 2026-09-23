@@ -14,7 +14,9 @@ const cache = createTtlCache<CachePayload | null>("__hockeyMatchesCache");
 
 async function fetchBSDHockey(): Promise<unknown[]> {
   try {
-    const BSD_BASE_URL = "https://sports.bzzoiro.com/api";
+    // Pattern tennis (bsd-tennis-service.ts) : base = /hockey, endpoints = /api/v2/...
+    // Ancien : base=/api + endpoint=/hockey/api/v2/... → /api/hockey/api/v2/... = 404 systématique
+    const BSD_BASE_URL = "https://sports.bzzoiro.com/hockey";
     const BSD_API_KEY = process.env.BSD_API_KEY || "";
     if (!BSD_API_KEY) return [];
 
@@ -38,8 +40,8 @@ async function fetchBSDHockey(): Promise<unknown[]> {
           .catch(reject);
       });
 
-    const live = await fetchBSD("/hockey/api/v2/matches/live/").catch(() => [] as unknown[]);
-    const predictions = await fetchBSD("/hockey/api/v2/predictions/").catch(() => [] as unknown[]);
+    const live = await fetchBSD("/api/v2/matches/live/").catch(() => [] as unknown[]);
+    const predictions = await fetchBSD("/api/v2/predictions/").catch(() => [] as unknown[]);
 
     const normalizeBSDM = (m: Record<string, unknown>) => ({
       id: m.id || m.event_id || m.match_id || "bsd-" + String(m.home || m.homeTeam || "") + "-" + String(m.away || m.awayTeam || ""),
