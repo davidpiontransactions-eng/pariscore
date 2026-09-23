@@ -56,15 +56,17 @@ function getWinnerRecommendation(match: MatchPrematch): StrategyMatch["winner"] 
   const stats = match.h2h?.h2hStats;
   if (stats?.oneXtwo && stats.oneXtwo.pcts.length >= 3) {
     const pcts = stats.oneXtwo.pcts;
-    const maxPct = Math.max(pcts[0], pcts[1], pcts[2]);
-    const side = pcts[0] === maxPct ? "home" : pcts[1] === maxPct ? "away" : "home";
+    // Winner = meilleur des 2 côtés (nul ignoré pour la reco vainqueur)
+    const side = pcts[2] > pcts[0] ? "away" : "home";
+    const maxPct = side === "home" ? pcts[0] : pcts[2];
     const label = side === "home" ? match.team1Name : match.team2Name;
     return { side, pct: maxPct, label };
   }
   if (match.odds1X2) {
-    const probs = [oddsToProb(match.odds1X2.home), oddsToProb(match.odds1X2.draw), oddsToProb(match.odds1X2.away)];
-    const maxPct = Math.max(...probs);
-    const side = probs[0] === maxPct ? "home" : probs[2] === maxPct ? "away" : "home";
+    const homePct = oddsToProb(match.odds1X2.home);
+    const awayPct = oddsToProb(match.odds1X2.away);
+    const side = awayPct > homePct ? "away" : "home";
+    const maxPct = side === "home" ? homePct : awayPct;
     const label = side === "home" ? match.team1Name : match.team2Name;
     return { side, pct: maxPct, label };
   }

@@ -135,10 +135,10 @@ export function mergePayloads(
       } : m;
       index(merged, seen);
     }
-    const dedup = new Map<string, MatchPrematch>();
-    for (const m of seen.values()) index(m, dedup);
+    // Set de références : chaque match indexé sous 2 clés → valeurs uniques seulement
+    const uniq = [...new Set(seen.values())];
     const error = prixA?.leagues[key]?.error ?? prixB?.leagues[key]?.error;
-    leagues[key] = error ? { matches: [...dedup.values()], error } : { matches: [...dedup.values()] };
+    leagues[key] = error ? { matches: uniq, error } : { matches: uniq };
   }
   return { updatedAt: new Date().toISOString(), source: "betexplorer+annabet+oddspedia", leagues };
 }

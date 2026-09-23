@@ -453,7 +453,14 @@ export function HockeyTabContent() {
 
   // Donnees pour projection graph
   const projectionTeams = activeLeague === "nhl"
-    ? [...westTeams, ...eastTeams].map((t) => ({ rank: 0, name: t.abbr, gp: 0, tp: 0, ppg: 0 }))
+    ? [...westTeams, ...eastTeams].map((t) => ({
+        rank: 0,
+        name: t.abbr,
+        gp: 0,
+        // Proxy borné : winCup% → PPG projeté (2 pts/match max au hockey)
+        tp: 0,
+        ppg: (t.winCup / 100) * 2,
+      }))
     : activeLeague === "khl"
     ? khlData?.teams ?? []
     : magnusData?.teams ?? [];
