@@ -10,8 +10,6 @@ export const dynamic = "force-dynamic";
 const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 
 export async function GET() {
-  cache.invalidate();
-
   // Merge BetExplorer (prioritaire) + Annabet (complément)
   const data = loadMergedPrematch();
 

@@ -386,69 +386,7 @@ export function predictHockeyMatch(
   };
 }
 
-// ─── Live Prediction ────────────────────────────────────────────────────────
 
-export type HockeyLivePrediction = {
-  minute: number;
-  scoreHome: number;
-  scoreAway: number;
-  markets: HockeyMarkets;
-  lambdaRemaining: { home: number; away: number };
-  totalGoalsLine: { line: number; overProb: number; underProb: number };
-};
-
-/**
- * Prediction live: recalcule λ restant en fonction du score et du temps ecoule.
- *
- * @param homeLambda - Lambda prematch home
- * @param awayLambda - Lambda prematch away
- * @param minute - Minute actuelle (0-60)
- * @param scoreHome - Buts home actuels
- * @param scoreAway - Buts away actuels
- * @param totalRegMinutes - Minutes totales regulation (60 par defaut)
- */
-export function predictHockeyLive(
-  homeLambda: number,
-  awayLambda: number,
-  minute: number,
-  scoreHome: number,
-  scoreAway: number,
-  totalRegMinutes: number = 60
-): HockeyLivePrediction {
-  const remaining = Math.max(0, totalRegMinutes - minute);
-  const fraction = remaining / totalRegMinutes;
-
-  // Lambda restant = lambda original × fraction du temps restant
-  const lambdaRemaining = {
-    home: Math.max(0.1, homeLambda * fraction),
-    away: Math.max(0.1, awayLambda * fraction),
-  };
-
-  // Recalculer les marchés avec le score actuel + lambda restant
-  const matrix = buildHockeyScoreMatrix(
-    scoreHome + lambdaRemaining.home,
-    scoreAway + lambdaRemaining.away
-  );
-  const markets = hockeyMarketsFromMatrix(matrix);
-
-  // Total goals line (live)
-  const totalCurrent = scoreHome + scoreAway;
-  const totalLambda = lambdaRemaining.home + lambdaRemaining.away;
-  const over55 = poissonOver(5 - totalCurrent, totalLambda);
-
-  return {
-    minute,
-    scoreHome,
-    scoreAway,
-    markets,
-    lambdaRemaining,
-    totalGoalsLine: {
-      line: 5.5,
-      overProb: Math.round(over55 * 10) / 10,
-      underProb: Math.round((100 - over55) * 10) / 10,
-    },
-  };
-}
 
 function r(v: number): number {
   return Math.round(v * 100) / 100;

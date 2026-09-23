@@ -43,13 +43,17 @@ const NHL_ABBR: Record<string, string> = {
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9à-ÿ]/g, "");
 
+// Maps pré-normalisées (évite le scan regex par logo rendu)
+const MAGNUS_NORM = Object.fromEntries(Object.entries(MAGNUS_LOGOS).map(([k, v]) => [norm(k), v]));
+const NHL_NORM = Object.fromEntries(Object.entries(NHL_ABBR).map(([k, v]) => [norm(k), v]));
+
 export function teamLogoUrl(teamName: string): string | null {
   const n = norm(teamName);
-  for (const [key, id] of Object.entries(MAGNUS_LOGOS)) {
-    if (n.includes(norm(key))) return `https://cdn.oddspedia.com/images/teams/small/2/${id}.png`;
+  for (const [key, id] of Object.entries(MAGNUS_NORM)) {
+    if (n.includes(key)) return `https://cdn.oddspedia.com/images/teams/small/2/${id}.png`;
   }
-  for (const [key, abbr] of Object.entries(NHL_ABBR)) {
-    if (n.includes(norm(key))) return `https://frozenpool.dobbersports.com/images/logos/${abbr}_logo.svgz`;
+  for (const [key, abbr] of Object.entries(NHL_NORM)) {
+    if (n.includes(key)) return `https://frozenpool.dobbersports.com/images/logos/${abbr}_logo.svgz`;
   }
   return null;
 }

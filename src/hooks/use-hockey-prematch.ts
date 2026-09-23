@@ -90,7 +90,7 @@ export function useHockeyPrematch() {
   const { data, error, isLoading } = useSWR<PrematchPayload>(
     "/api/hockey/prematch",
     fetcher,
-    { refreshInterval: 30 * 60 * 1000 } // 30min
+    { refreshInterval: 30 * 60 * 1000, revalidateOnFocus: false } // 30min
   );
 
   return {
