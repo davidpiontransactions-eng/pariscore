@@ -6,7 +6,16 @@ import { simulateTable, type SimResult } from "@/lib/table-projection";
 type TeamRow = { id: string; name: string; played: number; points: number; gf: number; ga: number };
 type Fixture = { homeId: string; awayId: string };
 
-type ProjectionData = { teams: TeamRow[]; fixtures: Fixture[] };
+// Projection serveur (5000 sims Dixon-Coles + xG, seedée) — prioritaire sur la sim locale
+type ServerProjection = {
+  projections: Array<{
+    id: string; name: string; avgPts: number; stdPts: number; avgRank: number;
+    titleProb: number; top4Prob: number; relegationProb: number;
+  }>;
+  sims: number;
+};
+
+type ProjectionData = { teams: TeamRow[]; fixtures: Fixture[]; projection?: ServerProjection | null };
 
 type Props = {
   leagueId: string;
@@ -40,8 +49,32 @@ export function BesoccerTablePanel({ leagueId, homeName, awayName }: Props) {
 
   const sim = useMemo(() => {
     if (!data || data.teams.length < 2) return null;
+    // Priorité : projection serveur (Dixon-Coles, 5000 sims, déterministe).
+    // Unités serveur = % (0-100) → converties en fractions pour l'affichage.
+    if (data.projection && data.projection.projections.length > 0) {
+      const n = data.teams.length;
+      const byId = new Map(data.projection.projections.map((p) => [p.id, p]));
+      const out: Record<string, SimResult> = {};
+      for (const t of data.teams) {
+        const p = byId.get(t.id);
+        if (!p) continue;
+        out[t.id] = {
+          expPts: p.avgPts,
+          best: 1,
+          worst: n,
+          expRank: p.avgRank,
+          titleProb: p.titleProb / 100,
+          top4Prob: p.top4Prob / 100,
+          relegProb: p.relegationProb / 100,
+        };
+      }
+      return Object.keys(out).length > 0 ? out : null;
+    }
+    // Fallback : sim locale (Poisson simple)
     return simulateTable(data.teams, data.fixtures, 1500);
   }, [data]);
+
+  const isServerSim = Boolean(data?.projection?.projections?.length);
 
   const sorted = useMemo(() => {
     if (!sim || !data) return [];
@@ -210,7 +243,9 @@ export function BesoccerTablePanel({ leagueId, homeName, awayName }: Props) {
       </div>
 
       <div className="mt-3 text-center text-[10px]" style={{ color: "#717171" }}>
-        Monte Carlo simulation — {sorted.length} teams, 1500 iterations
+        {isServerSim
+          ? `Monte Carlo serveur — ${data?.projection?.sims ?? 5000} sims Dixon-Coles (seedé)`
+          : `Monte Carlo simulation — ${sorted.length} teams, 1500 iterations`}
       </div>
     </div>
   );
