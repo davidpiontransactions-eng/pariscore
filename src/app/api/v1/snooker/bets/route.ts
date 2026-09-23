@@ -86,8 +86,13 @@ export async function GET(request: Request) {
     const byId = new Map(cuePlayers.map((p) => [p.id, p]));
 
     const out: unknown[] = [];
+    const seenIds = new Set<string>();
     for (const m of flash.matches ?? []) {
       if (!m.home || !m.away) continue;
+      // JSON source peut porter des ids en double (scrape --both, audit QA) :
+      // garde le 1er — sinon React key `matchId` dupliqué dans snooker-bets-panel.
+      if (seenIds.has(m.id)) continue;
+      seenIds.add(m.id);
       const scoreA = parseFrames(m.scoreHome);
       const scoreB = parseFrames(m.scoreAway);
       const finished =

@@ -205,7 +205,15 @@ async function main() {
     allMatches = matches;
   }
 
-  const matches = allMatches;
+  // Dédup par id FlashScore : le mode --both peut lister la même fixture sur
+  // J et J+1 (fixture à cheval sur minuit / fuseau) → id répété = React key
+  // crash (snooker-bets-panel key={matchId}) + comptes gonflés (audit QA).
+  const seenIds = new Set();
+  const matches = allMatches.filter((m) => {
+    if (seenIds.has(m.id)) return false;
+    seenIds.add(m.id);
+    return true;
+  });
 
   // 2. Optionnel : récupérer les cotes détaillées pour chaque match
   if (!noOdds && matches.length > 0) {
