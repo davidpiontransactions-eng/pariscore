@@ -1,0 +1,111 @@
+# Pattern AX (google/ax) — scrapers hockey déclarés en manifestes uniques.
+# Source de vérité : une Task YAML par scraper + Gateway egress allowlist.
+# Quand AX/K8s dispo : `ax apply -f ax/hockey-scrapers.yaml`. En attendant,
+# les CI/.bat/.bat-consommants lisent CE fichier comme contrat (hôtes + commandes).
+# Schéma exact ax.io/v1alpha1 = évolutif (alpha) — adapter les clés au merge.
+apiVersion: ax.io/v1alpha1
+kind: Workspace
+metadata:
+  name: pariscore
+spec:
+  git:
+    - repo: https://github.com/davidpiontransactions-eng/pariscore.git
+      branch: main
+---
+apiVersion: ax.io/v1alpha1
+kind: Gateway
+metadata:
+  name: hockey-sources
+spec:
+  # Allowlist egress — UNIQUEMENT les sources scrapées (network fencing)
+  allowlist:
+    - host: oddspedia.com
+      proto: https
+    - host: cdn.oddspedia.com
+      proto: https
+    - host: annabet.com
+      proto: https
+    - host: www.betexplorer.com
+      proto: https
+    - host: frozenpool.dobbersports.com
+      proto: https
+    - host: liguemagnus.com
+      proto: https
+    - host: www.eliteprospects.com
+      proto: https
+    - host: api-web.nhle.com
+      proto: https
+    - host: khl.shayy.workers.dev
+      proto: https
+    - host: sports.bzzoiro.com
+      proto: https
+    - host: localhost
+      port: 8191
+      note: FlareSolverr local (conteneur) pour WAF
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-oddspedia
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Calendrier + standings Magnus/KHL/NHL (JSON-LD, zéro dep)"
+  command: node scripts/scrape-oddspedia-hockey.mjs
+  schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-annabet
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "H2H + odds 1X2 prematch (WAF — FlareSolverr + pacing)"
+  command: node scripts/scrape-annabet-hockey-prematch.mjs
+  retries: 2
+  schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-betexplorer
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Odds 1X2 Ligue Magnus (Playwright + age gate)"
+  command: node scripts/scrape-betexplorer-hockey.mjs
+  schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-eliteprospects
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Standings + stats joueurs NHL/KHL/Magnus"
+  command: node scripts/scrape-eliteprospects-hockey.mjs && node scripts/scrape-eliteprospects-player-stats.mjs
+  schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-liguemagnus
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Stats officielles Synerglace (classement, individuelles, collectives)"
+  command: node scripts/scrape-liguemagnus-stats.mjs
+  schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: scrape-frozenpool
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Fixtures JSON + trios EV NHL (lambdas Poisson)"
+  command: node scripts/scrape-frozenpool-nhl.mjs
+  schedule: "0 5 * * *"
