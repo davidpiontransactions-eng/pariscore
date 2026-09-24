@@ -1,6 +1,8 @@
 "use client";
 
 import type { HandballMatch } from "@/lib/handball-data";
+import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
+import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 
 export function HandballMatchCard({
   match,
@@ -11,15 +13,17 @@ export function HandballMatchCard({
   onClick?: (match: HandballMatch) => void;
 }) {
   return (
-    <div
-      className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-pointer hover:border-primary/30"
-      role="button"
-      tabIndex={0}
+    // Carte cliquable accessible : bouton natif (clavier Enter/Espace inclus)
+    <button
+      type="button"
+      className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-pointer hover:border-primary/30 focus-visible:ring-2 ring-[#00e676] text-left w-full"
       onClick={() => onClick?.(match)}
-      onKeyDown={(e) => e.key === "Enter" && onClick?.(match)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick?.(match);
+      }}
     >
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-        <span>🤾 {match.league.name}</span>
+        <HandballLeagueBadge leagueName={match.league.name} country={match.league.country} />
         <span>
           {new Date(match.kickoff).toLocaleDateString("fr-FR", {
             day: "2-digit",
@@ -33,17 +37,25 @@ export function HandballMatchCard({
 
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <span className="font-medium text-sm">{match.home.name}</span>
+          <span className="font-medium text-sm inline-flex items-center gap-1.5 min-w-0">
+            <HandballTeamLogo name={match.home.name} size={18} />
+            <span className="truncate">{match.home.name}</span>
+          </span>
           {match.odds?.home && (
-            <span className="text-xs bg-muted px-2 py-0.5 rounded">
+            // Cote : chasse fixe pour alignement vertical
+            <span className="text-xs bg-muted px-2 py-0.5 rounded font-mono tabular-nums">
               {match.odds.home}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-medium text-sm">{match.away.name}</span>
+          <span className="font-medium text-sm inline-flex items-center gap-1.5 min-w-0">
+            <HandballTeamLogo name={match.away.name} size={18} />
+            <span className="truncate">{match.away.name}</span>
+          </span>
           {match.odds?.away && (
-            <span className="text-xs bg-muted px-2 py-0.5 rounded">
+            // Cote : chasse fixe pour alignement vertical
+            <span className="text-xs bg-muted px-2 py-0.5 rounded font-mono tabular-nums">
               {match.odds.away}
             </span>
           )}
@@ -53,22 +65,22 @@ export function HandballMatchCard({
       {match.odds && (
         <div className="flex gap-1 mt-2">
           {match.odds.home && (
-            <span className="flex-1 text-center text-xs bg-emerald-500/10 text-emerald-600 rounded py-0.5">
+            <span className="flex-1 text-center text-xs bg-emerald-500/10 text-emerald-600 rounded py-0.5 font-mono tabular-nums">
               1 {match.odds.home}
             </span>
           )}
           {match.odds.draw && (
-            <span className="flex-1 text-center text-xs bg-yellow-500/10 text-yellow-600 rounded py-0.5">
+            <span className="flex-1 text-center text-xs bg-yellow-500/10 text-yellow-600 rounded py-0.5 font-mono tabular-nums">
               X {match.odds.draw}
             </span>
           )}
           {match.odds.away && (
-            <span className="flex-1 text-center text-xs bg-blue-500/10 text-blue-600 rounded py-0.5">
+            <span className="flex-1 text-center text-xs bg-blue-500/10 text-blue-600 rounded py-0.5 font-mono tabular-nums">
               2 {match.odds.away}
             </span>
           )}
         </div>
       )}
-    </div>
+    </button>
   );
 }

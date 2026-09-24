@@ -3,20 +3,7 @@
 import { useHandballTop8 } from "@/hooks/use-handball-top8";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 
-/* Teintes FotMob clair */
-const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  rowSep: "#f5f5f5",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  meta: "#717171",
-  league: "#9e9e9e",
-  accent: "#00985f",
-  accentBg: "rgba(0,152,95,0.08)",
-  rank: "#9e9e9e",
-} as const;
+// Couleurs via tokens dark (bg-card/border-border/text-*) — pas de hex en dur
 
 const STRATEGY_META: Record<
   HandballStrategyKey,
@@ -44,106 +31,97 @@ export function HandballTop8Widget({
 
   if (isLoading)
     return (
-      <div className="text-center py-4" style={{ color: C.meta }}>
-        Chargement stratégies...
+      // État async annoncé aux lecteurs d'écran
+      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
+        Chargement stratégies…
       </div>
     );
   if (!isReady || entries.length === 0)
     return (
-      <div className="text-center py-4" style={{ color: C.meta }}>
+      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
         Aucune donnée stratégie
       </div>
     );
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold" style={{ color: C.headerText }}>
+      <h3 className="text-sm font-semibold text-foreground">
         {meta.emoji} {meta.label}
-        <span className="ml-2 text-xs font-normal" style={{ color: C.league }}>
+        <span className="ml-2 text-xs font-normal text-muted-foreground">
           {meta.metric}
         </span>
       </h3>
-      <div
-        className="rounded border overflow-hidden"
-        style={{ borderColor: C.cardBorder, backgroundColor: C.card }}
-      >
+      <div className="rounded border border-border bg-card overflow-hidden divide-y divide-border">
         {entries.map((e, i) => (
           <div
             key={e.matchId}
-            className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-[#f8f8f8]"
-            style={{
-              borderBottom:
-                i < entries.length - 1 ? `1px solid ${C.rowSep}` : undefined,
-            }}
+            className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-muted"
           >
             {/* Rang */}
-            <span
-              className="w-5 text-center font-bold tabular-nums"
-              style={{ color: C.rank }}
-            >
+            <span className="w-5 text-center font-bold tabular-nums text-muted-foreground">
               {i + 1}
             </span>
 
             {/* Équipes */}
             <div className="flex-1 min-w-0">
               <span
-                className={e.pick === "home" ? "font-bold" : "font-medium"}
-                style={{ color: e.pick === "home" ? C.accent : C.team }}
+                className={
+                  e.pick === "home"
+                    ? "font-bold text-primary"
+                    : "font-medium text-foreground"
+                }
               >
                 {e.home.shortName ?? e.home.name}
               </span>
-              <span className="mx-1" style={{ color: C.meta }}>
+              <span className="mx-1 text-muted-foreground">
                 vs
               </span>
               <span
-                className={e.pick === "away" ? "font-bold" : "font-medium"}
-                style={{ color: e.pick === "away" ? C.accent : C.team }}
+                className={
+                  e.pick === "away"
+                    ? "font-bold text-primary"
+                    : "font-medium text-foreground"
+                }
               >
                 {e.away.shortName ?? e.away.name}
               </span>
             </div>
 
             {/* Ligue */}
-            <span className="text-right truncate w-28" style={{ color: C.league }}>
+            <span className="text-right truncate w-28 text-muted-foreground">
               {e.league}
             </span>
 
             {/* Form */}
             {e.formSummary && (
-              <span className="w-12 text-center tabular-nums" style={{ color: C.meta }}>
+              <span className="w-12 text-center tabular-nums text-muted-foreground">
                 {e.formSummary.home}
               </span>
             )}
 
             {/* Métrique principale */}
-            <span
-              className="font-mono font-semibold px-1.5 py-0.5 rounded tabular-nums"
-              style={{ backgroundColor: C.accentBg, color: C.accent }}
-            >
+            <span className="font-mono font-semibold px-1.5 py-0.5 rounded tabular-nums bg-primary/10 text-primary">
               {e.value.toFixed(1)}
               {meta.unit}
             </span>
 
             {/* Over pill */}
             {strategy === "over55" && e.bestLine != null && (
-              <span
-                className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums"
-                style={{ backgroundColor: "rgba(0,152,95,0.12)", color: C.accent }}
-              >
+              <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums bg-primary/10 text-primary">
                 O{e.bestLine} {e.probPct?.toFixed(0)}%
               </span>
             )}
 
             {/* Prob % */}
             {e.probPct != null && (
-              <span className="tabular-nums" style={{ color: C.meta }}>
+              <span className="tabular-nums text-muted-foreground">
                 {e.probPct.toFixed(0)}%
               </span>
             )}
 
             {/* EV+ */}
             {e.ev != null && e.ev > 0 && (
-              <span className="font-mono tabular-nums" style={{ color: C.accent }}>
+              <span className="font-mono tabular-nums text-primary">
                 +{e.ev.toFixed(2)}
               </span>
             )}

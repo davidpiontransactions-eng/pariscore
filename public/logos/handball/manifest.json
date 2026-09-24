@@ -1,0 +1,222 @@
+{
+  "generated_at": "2026-09-24T09:36:58.295Z",
+  "total_bytes": 2115606,
+  "assets": [
+    {
+      "file": "leagues/starligue.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/league/logo/x2sc0p1626495340.png",
+      "label": "French LNH Division 1",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 137149
+    },
+    {
+      "file": "leagues/herre-handbold.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/league/logo/zw7jvy1729077282.png",
+      "label": "Danish Mens Handball League",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 20450
+    },
+    {
+      "file": "leagues/ehf-champions-league.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/league/logo/03iuwj1704207321.png",
+      "label": "EHF Champions League",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 13335
+    },
+    {
+      "file": "leagues/ehf-european-league.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/league/badge/oil7my1704209758.png",
+      "label": "EHF European League",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 71278
+    },
+    {
+      "file": "teams/kiel.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/pd6juv1643118768.png",
+      "label": "THW Kiel",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 31473
+    },
+    {
+      "file": "teams/flensburg.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/rejkxb1567621804.png",
+      "label": "SG Flensburg-Handewitt",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 67920
+    },
+    {
+      "file": "teams/fuechse-berlin.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/kz5cc71567091572.png",
+      "label": "Füchse Berlin",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 116513
+    },
+    {
+      "file": "teams/goeppingen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/gcp6ko1643117660.png",
+      "label": "TPSG Frisch Auf Göppingen",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 23995
+    },
+    {
+      "file": "teams/gummersbach.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/o8ikpz1662032900.png",
+      "label": "VfL Gummersbach",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 84162
+    },
+    {
+      "file": "teams/wetzlar.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/300ejw1643119992.png",
+      "label": "HSG Wetzlar",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 85723
+    },
+    {
+      "file": "teams/erlangen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/gy48wf1567031066.png",
+      "label": "HC Erlangen",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 126662
+    },
+    {
+      "file": "teams/lemgo.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/2yin7i1567542157.png",
+      "label": "TBV Lemgo",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 85749
+    },
+    {
+      "file": "teams/hamburg.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/tvtppt1473453296.png",
+      "label": "Hamburg",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 9818
+    },
+    {
+      "file": "teams/stuttgart.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/j0ozde1567031362.png",
+      "label": "TVB 1898 Stuttgart",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 162734
+    },
+    {
+      "file": "teams/nantes.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/6l4ruw1560677096.png",
+      "label": "HBC Nantes",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 115879
+    },
+    {
+      "file": "teams/montpellier.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/tc3t4q1560677396.png",
+      "label": "Montpellier Handball",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 108941
+    },
+    {
+      "file": "teams/chartres.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/h7rna01686127790.png",
+      "label": "C Chartres Métropole Handball",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 234089
+    },
+    {
+      "file": "teams/barcelona.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/r2j4y31703595502.png",
+      "label": "FC Barcelona Handbol",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 80725
+    },
+    {
+      "file": "teams/magdeburg.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/7fk4f61643120710.png",
+      "label": "SC Magdeburg",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 78073
+    },
+    {
+      "file": "teams/kielce.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/gbi5ie1651171680.png",
+      "label": "Vive Kielce",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 117184
+    },
+    {
+      "file": "teams/szeged.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/3tvasb1775320723.png",
+      "label": "Szeged",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 67014
+    },
+    {
+      "file": "teams/aalborg.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/spbaqc1783668224.png",
+      "label": "Aalborg Håndbold",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 45214
+    },
+    {
+      "file": "teams/vardar.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/8vj1d11738559246.png",
+      "label": "Vardar",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 124481
+    },
+    {
+      "file": "teams/celje.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/amvs371681106952.png",
+      "label": "Celje",
+      "licence": "TheSportsDB (CC BY-NC)",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 107045
+    }
+  ]
+}

@@ -2,18 +2,10 @@
 
 import { useMemo } from "react";
 import type { HandballMatch } from "@/lib/handball-data";
+import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
+import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 
-/* Teintes FotMob clair */
-const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  rowSep: "#f5f5f5",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  time: "#717171",
-  league: "#9e9e9e",
-} as const;
+// Couleurs via tokens dark (bg-card/border-border/text-*) — pas de hex en dur
 
 export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
   const byDate = useMemo(() => {
@@ -34,7 +26,8 @@ export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
 
   if (byDate.length === 0)
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      // État vide annoncé aux lecteurs d'écran
+      <div className="text-center py-8 text-muted-foreground" aria-live="polite">
         Aucun match programmé
       </div>
     );
@@ -43,57 +36,39 @@ export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
     <div className="space-y-4">
       {byDate.map(([date, dayMatches]) => (
         <div key={date}>
-          <h3
-            className="text-sm font-semibold mb-2 capitalize px-3 py-1.5 rounded-t"
-            style={{ backgroundColor: C.headerBg, color: C.headerText }}
-          >
+          <h3 className="text-sm font-semibold mb-2 capitalize px-3 py-1.5 rounded-t bg-muted text-foreground">
             {date}
           </h3>
-          <div
-            className="rounded-b border overflow-hidden"
-            style={{ borderColor: C.cardBorder, backgroundColor: C.card }}
-          >
-            {dayMatches.map((m, i) => (
+          <div className="rounded-b border border-border bg-card overflow-hidden divide-y divide-border">
+            {dayMatches.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-[#f8f8f8]"
-                style={{
-                  borderBottom:
-                    i < dayMatches.length - 1
-                      ? `1px solid ${C.rowSep}`
-                      : undefined,
-                }}
+                className="flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-muted"
               >
-                <span
-                  className="text-xs w-16 tabular-nums"
-                  style={{ color: C.time }}
-                >
+                <span className="text-xs w-16 tabular-nums text-muted-foreground">
                   {new Date(m.kickoff).toLocaleTimeString("fr-FR", {
                     hour: "2-digit",
                     minute: "2-digit",
                     timeZone: "Europe/Paris",
                   })}
                 </span>
-                <span
-                  className="flex-1 text-right font-medium truncate"
-                  style={{ color: C.team }}
-                >
-                  {m.home.name}
+                <span className="flex-1 text-right font-medium truncate text-foreground inline-flex items-center justify-end gap-1.5">
+                  <HandballTeamLogo name={m.home.name} size={18} />
+                  <span className="truncate">{m.home.name}</span>
                 </span>
-                <span className="mx-2 text-xs" style={{ color: C.time }}>
+                <span className="mx-2 text-xs text-muted-foreground">
                   vs
                 </span>
-                <span
-                  className="flex-1 font-medium truncate"
-                  style={{ color: C.team }}
-                >
-                  {m.away.name}
+                <span className="flex-1 font-medium truncate text-foreground inline-flex items-center gap-1.5">
+                  <HandballTeamLogo name={m.away.name} size={18} />
+                  <span className="truncate">{m.away.name}</span>
                 </span>
-                <span
-                  className="text-xs w-32 text-right truncate"
-                  style={{ color: C.league }}
-                >
-                  🤾 {m.league.name}
+                <span className="text-xs w-32 text-right truncate text-muted-foreground inline-flex justify-end">
+                  <HandballLeagueBadge
+                    leagueName={m.league.name}
+                    country={m.league.country}
+                    className="max-w-full"
+                  />
                 </span>
               </div>
             ))}

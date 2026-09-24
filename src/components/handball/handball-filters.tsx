@@ -27,9 +27,11 @@ export function HandballFilters({
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* Pills accessibles : état pressed + cible tactile 44px */}
       <button
         onClick={() => onSelect(null)}
-        className={`whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${
+        aria-pressed={!selected}
+        className={`whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors min-h-[44px] ${
           !selected
             ? "bg-foreground text-background"
             : "hover:bg-muted"
@@ -41,7 +43,8 @@ export function HandballFilters({
         <button
           key={name}
           onClick={() => onSelect(name)}
-          className={`whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${
+          aria-pressed={selected === name}
+          className={`whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors min-h-[44px] ${
             selected === name
               ? "bg-foreground text-background"
               : "hover:bg-muted"

@@ -23,6 +23,7 @@ import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { FootballHeroHeader } from "@/components/football/football-hero-header";
 import { HockeyHeroHeader } from "@/components/hockey/hockey-hero-header";
+import { HandballHeroHeader } from "@/components/handball/handball-hero-header";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import { PersonalDashboard } from "@/components/dashboard/personal-dashboard";
@@ -313,6 +314,13 @@ function HomeInner() {
           </section>
         )}
 
+        {/* Encart Handball — accroche + 3 stratégies pick, tout en haut */}
+        {activeTab === "handball" && (
+          <section className="w-full px-4 sm:px-6 pt-6">
+            <HandballHeroHeader />
+          </section>
+        )}
+
         {/* Calendrier des matchs — filtré par sport + mode */}
         <section className="w-full px-4 sm:px-6 pt-6">
           {activeTab === "tennis" ? (
@@ -320,7 +328,7 @@ function HomeInner() {
               <TennisTop10MatchesWidget />
               <TennisCalendarSection />
             </div>
-          ) : activeTab === "hockey" || activeTab === "snooker" ? null : (
+          ) : activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}

@@ -1,6 +1,8 @@
 "use client";
 
 import type { HandballMatch } from "@/lib/handball-data";
+import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
+import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 
 export function HandballLiveCard({ match }: { match: HandballMatch }) {
   const isLive = match.status === "live" || match.status === "halftime";
@@ -13,18 +15,21 @@ export function HandballLiveCard({ match }: { match: HandballMatch }) {
       </span>
 
       <div className="text-xs text-muted-foreground mb-2">
-        🤾 {match.league.name}
+        <HandballLeagueBadge leagueName={match.league.name} country={match.league.country} />
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="font-medium text-sm flex-1">
-          {match.home.name}
+        <span className="font-medium text-sm flex-1 inline-flex items-center gap-1.5 min-w-0">
+          <HandballTeamLogo name={match.home.name} size={20} />
+          <span className="truncate">{match.home.name}</span>
         </span>
-        <span className="text-2xl font-bold mx-3">
+        {/* Score live : classe charte .score-hero (Archivo bold, tabular-nums) */}
+        <span className="score-hero font-mono mx-3">
           {match.score?.home ?? 0} - {match.score?.away ?? 0}
         </span>
-        <span className="font-medium text-sm flex-1 text-right">
-          {match.away.name}
+        <span className="font-medium text-sm flex-1 text-right inline-flex items-center justify-end gap-1.5 min-w-0">
+          <span className="truncate">{match.away.name}</span>
+          <HandballTeamLogo name={match.away.name} size={20} />
         </span>
       </div>
 

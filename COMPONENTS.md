@@ -158,7 +158,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 | projected-standings-card | projected-standings-card.tsx | Carte « Classement projeté fin de saison » (ExtraTrees offline, JSON rank-projector, papier JISTA 2026) |
 
-## Handball (`src/components/handball/`) — 12 components
+## Handball (`src/components/handball/`) — 14 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -171,7 +171,11 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-strategy-bar | handball-strategy-bar.tsx | Sélecteur pills 8 stratégies (Équipe, 1X2, O55.5, U62.5, HC, BTTS, HT, EV+) |
 | handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail match (score, MT, stats live, cotes) |
 | handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
+| handball-hero-header | handball-hero-header.tsx | Hero onglet Handball (miroir hockey : accroche 60 min, 3 stratégies pick, visuel silhouette/photo + halo #00e676) |
 | handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
+| handball-backtest-widget | handball-backtest-widget.tsx | Backtest ROI visuel (table triée, bar-chart CSS, sparkline SVG, filtre ligue, disclaimer simulé) |
+| handball-league-badge | handball-league-badge.tsx | Badge ligue : logo local + drapeau + nom (remplace "🤾 NomLigue") |
+| handball-team-logo | handball-team-logo.tsx | Badge équipe local + fallback initiales (miroir hockey-team-logo) |
 
 ## Leagues (`src/components/leagues/`) — 12 components
 

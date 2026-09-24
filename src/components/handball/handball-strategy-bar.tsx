@@ -17,10 +17,12 @@ export function HandballStrategyBar({ active, onChange }: { active: HandballStra
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1">
       {STRATEGIES.map(s => (
+        // Pills stratégie : état pressed + cible tactile 44px
         <button
           key={s.key}
           onClick={() => onChange(s.key)}
-          className={`whitespace-nowrap px-2.5 py-1.5 rounded-full text-xs border transition-colors ${active === s.key ? "bg-foreground text-background" : "hover:bg-muted"}`}
+          aria-pressed={active === s.key}
+          className={`whitespace-nowrap px-2.5 py-1.5 rounded-full text-xs border transition-colors min-h-[44px] ${active === s.key ? "bg-foreground text-background" : "hover:bg-muted"}`}
         >
           {s.emoji} {s.label}
         </button>
