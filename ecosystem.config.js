@@ -392,7 +392,7 @@ module.exports = {
       name: 'pariscore-cron-flashscore-handball',
       script: 'scripts/scrape-flashscore-handball.js',
       cwd: '/home/ubuntu/pariscore',
-      cron_restart: '30 6 * * *', // quotidien 06:30 UTC ( créneau revendiqué par le scraper)
+      cron_restart: '0 23 * * *', // quotidien 00:00 heure de Paris (23:00 UTC = 00:00 CET hiver, 01:00 CEST été)
       autorestart: false,         // cron-only, meurt après exécution
       instances: 1,
       exec_mode: 'fork',
