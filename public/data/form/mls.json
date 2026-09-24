@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-09-23T09:27:06.591213Z",
+    "lastUpdated": "2026-09-24T09:27:34.198811Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,15 @@
     "partial": false
   },
   "home": [
+    {
+      "teamName": "Philadelphia",
+      "gp": 8,
+      "w": 5,
+      "d": 3,
+      "l": 0,
+      "gf": 17,
+      "ga": 6
+    },
     {
       "teamName": "Nashville Sc",
       "gp": 8,
@@ -31,24 +40,6 @@
       "ga": 10
     },
     {
-      "teamName": "Colorado Rapids",
-      "gp": 8,
-      "w": 6,
-      "d": 1,
-      "l": 1,
-      "gf": 11,
-      "ga": 5
-    },
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 5,
-      "d": 3,
-      "l": 0,
-      "gf": 17,
-      "ga": 6
-    },
-    {
       "teamName": "Houston Dynamo",
       "gp": 8,
       "w": 5,
@@ -56,18 +47,18 @@
       "l": 0,
       "gf": 11,
       "ga": 4
+    },
+    {
+      "teamName": "Colorado Rapids",
+      "gp": 8,
+      "w": 6,
+      "d": 1,
+      "l": 1,
+      "gf": 11,
+      "ga": 5
     }
   ],
   "away": [
-    {
-      "teamName": "St. Louis City",
-      "gp": 8,
-      "w": 4,
-      "d": 3,
-      "l": 1,
-      "gf": 14,
-      "ga": 9
-    },
     {
       "teamName": "Philadelphia",
       "gp": 8,
@@ -84,6 +75,15 @@
       "d": 1,
       "l": 2,
       "gf": 18,
+      "ga": 9
+    },
+    {
+      "teamName": "St. Louis City",
+      "gp": 8,
+      "w": 4,
+      "d": 3,
+      "l": 1,
+      "gf": 14,
       "ga": 9
     },
     {

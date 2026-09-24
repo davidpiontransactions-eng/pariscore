@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-09-23T09:27:03.466241Z",
+    "lastUpdated": "2026-09-24T09:27:31.165949Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,6 +13,15 @@
   },
   "home": [
     {
+      "teamName": "Ulsan",
+      "gp": 8,
+      "w": 5,
+      "d": 0,
+      "l": 3,
+      "gf": 15,
+      "ga": 12
+    },
+    {
       "teamName": "Daejeon Citizen",
       "gp": 8,
       "w": 4,
@@ -20,15 +29,6 @@
       "l": 1,
       "gf": 17,
       "ga": 11
-    },
-    {
-      "teamName": "Incheon Utd",
-      "gp": 8,
-      "w": 3,
-      "d": 4,
-      "l": 1,
-      "gf": 11,
-      "ga": 6
     },
     {
       "teamName": "Jeju Utd",
@@ -40,15 +40,6 @@
       "ga": 8
     },
     {
-      "teamName": "Ulsan",
-      "gp": 8,
-      "w": 5,
-      "d": 0,
-      "l": 3,
-      "gf": 15,
-      "ga": 12
-    },
-    {
       "teamName": "Seoul",
       "gp": 8,
       "w": 5,
@@ -56,18 +47,18 @@
       "l": 1,
       "gf": 11,
       "ga": 6
+    },
+    {
+      "teamName": "Incheon Utd",
+      "gp": 8,
+      "w": 3,
+      "d": 4,
+      "l": 1,
+      "gf": 11,
+      "ga": 6
     }
   ],
   "away": [
-    {
-      "teamName": "Anyang",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 11,
-      "ga": 13
-    },
     {
       "teamName": "Jeonbuk",
       "gp": 8,
@@ -76,6 +67,15 @@
       "l": 2,
       "gf": 9,
       "ga": 7
+    },
+    {
+      "teamName": "Gangwon",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 12,
+      "ga": 11
     },
     {
       "teamName": "Jeju Utd",
@@ -87,6 +87,15 @@
       "ga": 7
     },
     {
+      "teamName": "Anyang",
+      "gp": 8,
+      "w": 3,
+      "d": 2,
+      "l": 3,
+      "gf": 11,
+      "ga": 13
+    },
+    {
       "teamName": "Seoul",
       "gp": 8,
       "w": 4,
@@ -94,15 +103,6 @@
       "l": 2,
       "gf": 18,
       "ga": 7
-    },
-    {
-      "teamName": "Gangwon",
-      "gp": 8,
-      "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 12,
-      "ga": 11
     }
   ]
 }
