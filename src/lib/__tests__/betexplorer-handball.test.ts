@@ -13,6 +13,7 @@ import {
   type BetExplorerHandballSnapshot,
 } from "../betexplorer-handball";
 import {
+  TARGET_LEAGUES,
   parseHalftime,
   parseMutualTable,
   parseResultsRows,
@@ -282,6 +283,32 @@ describe("getRecentForm — derniers FT de l'équipe", () => {
     expect(getRecentForm(snap, "Kiel")).toEqual([]);
     expect(getRecentForm(snap, "Nantes")).toEqual([]);
     expect(getRecentForm(null, "Erlangen")).toEqual([]);
+  });
+});
+
+describe("TARGET_LEAGUES — config ligues cibles (G13 StarLigue)", () => {
+  test("les 4 ligues cibles sont en dur, slug « pays/ligue »", () => {
+    const slugs = TARGET_LEAGUES.map((l) => l.slug);
+    expect(slugs).toEqual([
+      "germany/bundesliga",
+      "france/starligue",
+      "spain/liga-asobal",
+      "europe/champions-league",
+    ]);
+    for (const l of TARGET_LEAGUES) {
+      expect(l.slug).toMatch(/^[a-z]+\/[a-z0-9-]+$/);
+      expect(l.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("france/starligue résolu par --league= (slash ou tirets)", () => {
+    const want = "france/starligue";
+    const asDashes = want.replace(/\//g, "-");
+    expect(
+      TARGET_LEAGUES.filter(
+        (l) => l.slug === want || l.slug.replace(/\//g, "-") === asDashes,
+      ),
+    ).toHaveLength(1);
   });
 });
 

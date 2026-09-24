@@ -1,5 +1,5 @@
 {
- "scraped_at": "2026-09-24T17:47:12.421Z",
+ "scraped_at": "2026-09-24T20:59:58.963Z",
  "source": "betexplorer",
  "base": "https://www.betexplorer.com",
  "days": 7,
@@ -9728,9 +9728,15 @@
    "away": "Erlangen",
    "league": "Germany: DHB Pokal",
    "date": "2026-09-24T18:00:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 26,
+    "away": 29
+   },
+   "halftime": {
+    "home": 9,
+    "away": 13
+   }
   },
   {
    "url": "/handball/greece/a1/paok-ionikos/jmDGc5gt/",
@@ -9771,9 +9777,15 @@
    "away": "Kopavogur",
    "league": "Iceland: Olis Deildin",
    "date": "2026-09-24T19:00:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 34,
+    "away": 35
+   },
+   "halftime": {
+    "home": 19,
+    "away": 21
+   }
   },
   {
    "url": "/handball/iceland/olis-deildin/stjarnan-fram/MLSl9BMq/",
@@ -9781,9 +9793,15 @@
    "away": "Fram",
    "league": "Iceland: Olis Deildin",
    "date": "2026-09-24T19:30:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 37,
+    "away": 29
+   },
+   "halftime": {
+    "home": 17,
+    "away": 15
+   }
   },
   {
    "url": "/handball/iceland/olis-deildin/afturelding-selfoss/SKUcRArS/",
@@ -9791,9 +9809,15 @@
    "away": "Selfoss",
    "league": "Iceland: Olis Deildin",
    "date": "2026-09-24T19:45:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 42,
+    "away": 34
+   },
+   "halftime": {
+    "home": 20,
+    "away": 13
+   }
   },
   {
    "url": "/handball/iceland/olis-deildin/fh-hafnarfjordur-haukar/fZQd7kid/",
@@ -10162,9 +10186,15 @@
    "away": "Wolsztyn",
    "league": "Poland: I Liga",
    "date": "2026-09-24T18:00:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 43,
+    "away": 42
+   },
+   "halftime": {
+    "home": 15,
+    "away": 17
+   }
   },
   {
    "url": "/handball/poland/central-league-women/sms-zprp-plock-handball-warszawa/rLpTaSZR/",
@@ -10398,9 +10428,15 @@
    "away": "Stavropol",
    "league": "Russia: Superleague",
    "date": "2026-09-24T17:30:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 31,
+    "away": 25
+   },
+   "halftime": {
+    "home": 15,
+    "away": 15
+   }
   },
   {
    "url": "/handball/russia/superleague-women/luch-moscow-cska-moscow/boMDhMk2/",
@@ -10622,9 +10658,15 @@
    "away": "Aklimat Ptuj W",
    "league": "Slovenia: 1. SRL Women",
    "date": "2026-09-24T18:30:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 31,
+    "away": 28
+   },
+   "halftime": {
+    "home": 16,
+    "away": 15
+   }
   },
   {
    "url": "/handball/slovenia/1-srl-women/velenje-celje-z-dezele/6BsMEu6D/",
@@ -10632,9 +10674,15 @@
    "away": "Celje W",
    "league": "Slovenia: 1. SRL Women",
    "date": "2026-09-24T18:30:00",
-   "status": "NS",
-   "score": null,
-   "halftime": null
+   "status": "FT",
+   "score": {
+    "home": 37,
+    "away": 28
+   },
+   "halftime": {
+    "home": 18,
+    "away": 12
+   }
   },
   {
    "url": "/handball/spain/liga-asobal/ademar-morrazo-cangas/AaC7ZdmC/",
@@ -11028,6 +11076,22 @@
    "away": "El Zamalek",
    "league": "World: Club World Championship",
    "date": "2026-09-24T18:00:00",
+   "status": "FT",
+   "score": {
+    "home": 17,
+    "away": 40
+   },
+   "halftime": {
+    "home": 11,
+    "away": 21
+   }
+  },
+  {
+   "url": "/handball/world/club-world-championship/los-angeles-sydney-university/6yeTB9aK/",
+   "home": "Los Angeles",
+   "away": "Sydney University",
+   "league": "World: Club World Championship",
+   "date": "2026-09-25T09:00:00",
    "status": "NS",
    "score": null,
    "halftime": null
@@ -11038,6 +11102,16 @@
    "away": "Barcelona",
    "league": "World: Club World Championship",
    "date": "2026-09-25T11:15:00",
+   "status": "NS",
+   "score": null,
+   "halftime": null
+  },
+  {
+   "url": "/handball/world/club-world-championship/al-ahly-veszprem/MRy3kXAG/",
+   "home": "Al Ahly",
+   "away": "Veszprem",
+   "league": "World: Club World Championship",
+   "date": "2026-09-25T16:30:00",
    "status": "NS",
    "score": null,
    "halftime": null
@@ -14968,35 +15042,26 @@
     "away": 28
    },
    "halftime": null
-  },
-  {
-   "url": "/handball/netherlands/eredivisie/hv-unitas-hv-bfc/rLzPKI3j/",
-   "home": "HV Unitas",
-   "away": "BFC",
-   "league": "Netherlands: Eredivisie",
-   "date": "2026-09-19T19:30:00",
-   "status": "FT",
-   "score": {
-    "home": 34,
-    "away": 19
-   },
-   "halftime": null
-  },
-  {
-   "url": "/handball/netherlands/eredivisie/psv-handbal-aalsmeer/zFNArMec/",
-   "home": "PSV Handbal",
-   "away": "Aalsmeer 2",
-   "league": "Netherlands: Eredivisie",
-   "date": "2026-09-19T20:00:00",
-   "status": "FT",
-   "score": {
-    "home": 29,
-    "away": 37
-   },
-   "halftime": null
   }
  ],
  "h2h": [
+  {
+   "home": "Stuttgart",
+   "away": "Erlangen",
+   "meeting_date": "2026-09-24T18:00:00",
+   "league": "DHB Pokal 2026/2027",
+   "score": {
+    "home": 26,
+    "away": 29
+   },
+   "halftime": {
+    "home": 9,
+    "away": 13
+   },
+   "url": "/handball/germany/dhb-pokal/stuttgart-erlangen/YwJew1Ft/",
+   "pair_home": "Stuttgart",
+   "pair_away": "Erlangen"
+  },
   {
    "home": "Stuttgart",
    "away": "Erlangen",

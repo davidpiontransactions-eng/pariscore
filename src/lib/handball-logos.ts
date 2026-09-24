@@ -56,6 +56,23 @@ const TEAM_LOGOS: Record<string, string> = {
   nantes: "/logos/handball/teams/nantes.png",
   montpellier: "/logos/handball/teams/montpellier.png",
   chartres: "/logos/handball/teams/chartres.png",
+  // StarLigue 2026/27 — 15/16 clubs (Caen : site officiel derrière challenge
+  // Cloudflare → fallback initiales ; sources scripts/fetch-handball-logos.mjs)
+  chamberysavoie: "/logos/handball/teams/chambery-savoie.png",
+  cessonrennesmetropole: "/logos/handball/teams/cesson-rennes-metropole.png",
+  cessonrennes: "/logos/handball/teams/cesson-rennes-metropole.png", // variante « HBC Cesson-Rennes »
+  dunkerque: "/logos/handball/teams/dunkerque.png",
+  limoges: "/logos/handball/teams/limoges.png",
+  nimes: "/logos/handball/teams/nimes.png",
+  provenceaix: "/logos/handball/teams/provence-aix.png",
+  aix: "/logos/handball/teams/provence-aix.png",
+  saran: "/logos/handball/teams/saran.png",
+  selestat: "/logos/handball/teams/selestat.png",
+  straphael: "/logos/handball/teams/st-raphael.png",
+  saintraphael: "/logos/handball/teams/st-raphael.png",
+  paris: "/logos/handball/teams/psg.png", // variante « Paris » (BE/LNH) vs « PSG » (flashscore)
+  toulouse: "/logos/handball/teams/toulouse.png",
+  tremblay: "/logos/handball/teams/tremblay.png",
   barcelona: "/logos/handball/teams/barcelona.png",
   magdeburg: "/logos/handball/teams/magdeburg.png",
   kielce: "/logos/handball/teams/kielce.png",

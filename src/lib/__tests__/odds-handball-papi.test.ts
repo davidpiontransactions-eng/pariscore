@@ -14,6 +14,7 @@ import {
   type OddsPapiSnapshot,
 } from "../odds-handball-papi";
 import type { HandballMatch, HandballMatchStatus, HandballOpeningOdds } from "../handball-data";
+import { priorityScore } from "../../../scripts/fetch-odds-papi";
 
 const KICKOFF = "2026-09-25T18:00:00.000Z";
 
@@ -202,5 +203,21 @@ describe("loadOddsPapiSnapshot — loader readonly", () => {
       expect(snap).toBeNull();
     }
     clearOddsPapiCache();
+  });
+});
+
+describe("priorityScore — ligues cibles OddsPapi (G13 StarLigue/LNH)", () => {
+  test("StarLigue et LNH Division 1 scorées 2 (après Bundesliga, avant ASOBAL)", () => {
+    expect(priorityScore("StarLigue")).toBe(2);
+    expect(priorityScore("LNH Division 1")).toBe(2);
+    expect(priorityScore("Liqui Moly StarLigue")).toBe(2);
+    expect(priorityScore("Bundesliga")).toBeLessThan(priorityScore("StarLigue"));
+    expect(priorityScore("StarLigue")).toBeLessThan(priorityScore("Liga ASOBAL"));
+    expect(priorityScore("StarLigue")).toBeLessThan(priorityScore("EHF Champions League"));
+  });
+
+  test("femmes dépriorisées (hors périmètre de la boucle quotidienne)", () => {
+    expect(priorityScore("StarLigue Women")).toBe(99);
+    expect(priorityScore("Liga ASOBAL Women")).toBe(99);
   });
 });

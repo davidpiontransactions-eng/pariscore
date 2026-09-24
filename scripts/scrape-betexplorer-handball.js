@@ -757,6 +757,7 @@ async function main() {
 // Utilitaires purs exportés pour les tests (src/lib/__tests__ — bun:test) :
 // main() ne s'exécute que si le script est lancé directement.
 module.exports = {
+  TARGET_LEAGUES,
   parseHalftime,
   parseScore,
   parseResultsRows,

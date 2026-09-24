@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-24T10:56:55.413Z",
-  "total_bytes": 16877964,
+  "generated_at": "2026-09-24T21:03:12.271Z",
+  "total_bytes": 18120990,
   "assets": [
     {
       "file": "leagues/ehf-champions-league.png",
@@ -174,6 +174,24 @@
       "size": 107045
     },
     {
+      "file": "teams/cesson-rennes-metropole.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/d9lkng1560675244.png",
+      "label": "Cesson Rennes MHB",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 75957
+    },
+    {
+      "file": "teams/chambery-savoie.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/37hct01560675390.png",
+      "label": "Chambéry Savoie Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 93814
+    },
+    {
       "file": "teams/chartres.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/h7rna01686127790.png",
       "label": "C Chartres Métropole Handball",
@@ -244,6 +262,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 157994
+    },
+    {
+      "file": "teams/dunkerque.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/i12vzf1560675649.png",
+      "label": "Dunkerque Handball Grand Littoral",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 226510
     },
     {
       "file": "teams/elverum.png",
@@ -624,6 +651,15 @@
       "size": 85749
     },
     {
+      "file": "teams/limoges.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/d7f4r81686127469.png",
+      "label": "Limoges Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 33071
+    },
+    {
       "file": "teams/lubeck-schwartau.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/bxy9d21627155501.png",
       "label": "VfL Lübeck-Schwartau",
@@ -750,6 +786,15 @@
       "size": 80925
     },
     {
+      "file": "teams/nimes.png",
+      "url_source": "https://usam-nimesgard.fr/wp-content/uploads/2025/10/LOGO-USAM-BLANC-pour-fond-sombre.png",
+      "label": "Nimes",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 52603
+    },
+    {
       "file": "teams/nordsjaelland.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/dz7yil1638046821.png",
       "label": "Nordsjælland Håndbold",
@@ -811,6 +856,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 225951
+    },
+    {
+      "file": "teams/provence-aix.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/djhq8y1560675002.png",
+      "label": "PAUC Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 91602
     },
     {
       "file": "teams/psg.png",
@@ -885,6 +939,15 @@
       "size": 154143
     },
     {
+      "file": "teams/saran.png",
+      "url_source": "https://www.centre-handball.com/wp-content/uploads/2019/11/SARAN_LOIRET_HB_RVB_400px-e1574332544599.png",
+      "label": "Saran",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 17820
+    },
+    {
       "file": "teams/savehof-w.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/fdhipf1626394922.png",
       "label": "IK Sävehof",
@@ -901,6 +964,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 189298
+    },
+    {
+      "file": "teams/selestat.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/cm66xa1625963496.png",
+      "label": "Sélestat Alsace Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 232845
     },
     {
       "file": "teams/skanderborg-agf.png",
@@ -975,6 +1047,15 @@
       "size": 107136
     },
     {
+      "file": "teams/st-raphael.png",
+      "url_source": "https://www.srvhb.com/base/uploads/external_dwnld/saint/saint-raphael__logo__2024-2025.png",
+      "label": "St. Raphael",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 29615
+    },
+    {
       "file": "teams/stavanger-w.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/018bo91626490506.png",
       "label": "Stavanger IF",
@@ -1009,6 +1090,24 @@
       "attribution_requise": false,
       "ok": true,
       "size": 67014
+    },
+    {
+      "file": "teams/toulouse.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/e1mzzc1560676930.png",
+      "label": "Fenix Toulouse Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 254055
+    },
+    {
+      "file": "teams/tremblay.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/fqb9w61756923491.png",
+      "label": "Tremblay-en-France Handball",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 135134
     },
     {
       "file": "teams/tumba.png",

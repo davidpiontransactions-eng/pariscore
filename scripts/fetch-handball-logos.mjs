@@ -142,6 +142,25 @@ async function fetchJson(url, retries = 3) {
   return null;
 }
 
+/** HEAD d'une image de club : taille (o) si 200 image/*, sinon null. */
+function probeImage(url) {
+  return new Promise((resolve) => {
+    const req = https.request(
+      url,
+      { method: "HEAD", headers: { "User-Agent": UA }, timeout: 15000 },
+      (res) => {
+        const type = String(res.headers["content-type"] || "");
+        const len = parseInt(res.headers["content-length"] || "0", 10);
+        res.resume();
+        resolve(res.statusCode === 200 && type.startsWith("image/") && len > 0 ? len : null);
+      },
+    );
+    req.on("timeout", () => { req.destroy(); resolve(null); });
+    req.on("error", () => resolve(null));
+    req.end();
+  });
+}
+
 // ─── Tables d'alias (noms vérifiés par sondes le 2026-09-24) ─────────────────
 // Nos ligues → noms exacts TheSportsDB (search_all_teams ne liste que 5 ligues
 // via search_all_leagues mais répond pour d'autres noms : ES/SE/HU OK,
@@ -191,6 +210,9 @@ const TEAM_ALIASES = {
   Kristianstad: { q: ["IFK Kristianstad Handball"], accept: ["ifkkristianstad", "kristianstadhand"] },
   // Nations (Asian Games etc.) : le nom seul collide avec le foot ("China" =
   // foot) → requête "X Handball" explicite.
+  // StarLigue 2026/27 : clubs promus/renommés introuvables sous le nom flashscore
+  // (sonde 2026-09-24 — "Aix" → 0 hit, "PAUC" → 1 hit).
+  "Provence Aix": { q: ["PAUC Handball"], accept: ["pauchand"] },
   China: { q: ["China Handball"], accept: ["chinahand"] },
   "China W": { q: ["China Women Handball"], accept: ["chinawomen", "chinahand"] },
   Japan: { q: ["Japan Handball"], accept: ["japanhand"] },
@@ -210,6 +232,27 @@ const TEAM_ALIASES = {
 
 // Ligues d'équipes nationales → pas de badges clubs (fallback monogramme).
 const NATIONAL_LEAGUES = new Set(["Asian Games", "Asian Games Women"]);
+
+// ─── Source 2b : site officiel du club (curée, sondes robots 2026-09-24) ────
+// Pour les clubs StarLigue absents de TheSportsDB (sonde : 0 hit Nîmes/Caen/
+// Saran/St-Raphael). Que des hôtes dont robots.txt autorise explicitement * :
+//   srvhb.com          → Disallow: /wp-admin/ seul
+//   usam-nimesgard.fr  → Disallow: (vide = tout autorisé, Yoast)
+//   centre-handball.com→ Disallow: (vide = tout autorisé, Yoast)
+// Caen (handballvikings.com) : challenge Cloudflare « Attention Required » →
+// pas de contournement → non couvert, fallback initiales côté UI.
+const CLUB_SOURCES = {
+  "St. Raphael": [
+    "https://www.srvhb.com/base/uploads/external_dwnld/saint/saint-raphael__logo__2024-2025.png",
+  ],
+  Nimes: [
+    "https://usam-nimesgard.fr/wp-content/uploads/2025/10/LOGO-USAM-BLANC-pour-fond-sombre.png",
+  ],
+  Saran: [
+    "https://www.centre-handball.com/wp-content/uploads/2019/11/SARAN_LOIRET_HB_RVB_400px-e1574332544599.png",
+  ],
+};
+const CLUB_LICENCE = "Logo club (site officiel), usage nominatif éditorial";
 
 // Gros clubs : si searchteams ne donne rien d'exploitable, on tente lookupteam.
 const BIG_CLUBS = new Set([
@@ -423,10 +466,35 @@ async function main() {
     }
   }
 
+  // ── 2b. Sites officiels clubs (curés) pour les restants StarLigue ─────────
+  for (const [ours, urls] of Object.entries(CLUB_SOURCES)) {
+    const target = teams.find((t) => t.name === ours);
+    if (!target || isCovered(ours, keys) || found.has(ours)) continue;
+    for (const url of urls) {
+      const ok = await probeImage(url);
+      if (ok) {
+        found.set(ours, { club: { url, label: ours }, via: "site-officiel" });
+        console.log(`[club] ${ours} ← ${url} (${ok} o)`);
+        // L'étape unitaire (TSD) a pu mémoriser l'échec : on le retire (succès 2b).
+        const ix = missing.indexOf(ours);
+        if (ix >= 0) missing.splice(ix, 1);
+        break;
+      }
+      await sleep(500);
+    }
+    if (!found.has(ours)) {
+      cache[ours] = { miss: true };
+      saveCache();
+      missing.push(ours);
+    }
+  }
+
   // ── 3. Téléchargements ────────────────────────────────────────────────────
   const newEntries = [];
-  for (const [ours, { tsdb, via }] of found) {
-    const img = tsdb.strBadge || tsdb.strLogo;
+  for (const [ours, entry] of found) {
+    const { via } = entry;
+    const img = entry.club ? entry.club.url : entry.tsdb.strBadge || entry.tsdb.strLogo;
+    const label = entry.club ? entry.club.label : entry.tsdb.strTeam;
     const ext = /\.svg(\?|$)/i.test(img) ? ".svg" : ".png";
     let slug = slugify(ours);
     let dest = join(TEAMS_DIR, slug + ext);
@@ -441,7 +509,7 @@ async function main() {
       byFile.set(rel, {
         file: rel,
         url_source: img,
-        label: tsdb.strTeam,
+        label,
         licence: LICENCE,
         attribution_requise: false,
         ok: true,
@@ -460,7 +528,7 @@ async function main() {
       byFile.set(rel, {
         file: rel,
         url_source: img,
-        label: tsdb.strTeam,
+        label,
         licence: LICENCE,
         attribution_requise: false,
         ok: true,
