@@ -4,12 +4,36 @@ import type { HandballMatch } from "@/lib/handball-data";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 
-export function HandballLiveCard({ match }: { match: HandballMatch }) {
+export function HandballLiveCard({
+  match,
+  onClick,
+}: {
+  match: HandballMatch;
+  /** Ouvre la popup d'analyse au clic — même wiring que les cartes prematch. */
+  onClick?: (match: HandballMatch) => void;
+}) {
   const isLive = match.status === "live" || match.status === "halftime";
   if (!isLive) return null;
 
   return (
-    <div className="rounded-lg border-2 border-red-500/50 bg-card p-3 relative">
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick ? () => onClick(match) : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick(match);
+              }
+            }
+          : undefined
+      }
+      className={`rounded-lg border-2 border-red-500/50 bg-card p-3 relative transition-colors${
+        onClick ? " cursor-pointer hover:bg-muted focus-visible:ring-2 ring-[#00e676] outline-none" : ""
+      }`}
+    >
       <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded animate-pulse">
         {match.status === "halftime" ? "MT" : `${match.minute || 0}'`}
       </span>
