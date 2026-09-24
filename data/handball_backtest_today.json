@@ -1,0 +1,291 @@
+{
+  "date": "2026-09-24",
+  "timezone": "Europe/Paris",
+  "nFinishedToday": 3,
+  "nPendingToday": 14,
+  "strategies": [
+    {
+      "strategy": "over55",
+      "label": "Over Total",
+      "emoji": "⬆️",
+      "market": "Over 55.5",
+      "odds": 1.9,
+      "nBets": 3,
+      "won": 3,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 2.7,
+      "roiPct": 90,
+      "hitRate": 100,
+      "picks": [
+        {
+          "match": {
+            "id": 1878239125,
+            "kickoff": "2026-09-24T14:30:00.000Z",
+            "home": "Sydney University",
+            "away": "Veszprem",
+            "league": "Club World Championship - Qualification",
+            "score": "45 - 45",
+            "ht": "19 - 19"
+          },
+          "pick": null,
+          "pickLabel": "Over 55.5",
+          "odds": 1.9,
+          "result": "won",
+          "profitU": 0.8999999999999999
+        },
+        {
+          "match": {
+            "id": 89668401,
+            "kickoff": "2026-09-24T15:30:00.000Z",
+            "home": "Luch W",
+            "away": "CSKA Moscow W",
+            "league": "Superleague Women",
+            "score": "30 - 30",
+            "ht": "24 - 24"
+          },
+          "pick": null,
+          "pickLabel": "Over 55.5",
+          "odds": 1.9,
+          "result": "won",
+          "profitU": 0.8999999999999999
+        },
+        {
+          "match": {
+            "id": 1215021503,
+            "kickoff": "2026-09-24T16:00:00.000Z",
+            "home": "Zvenigorod W",
+            "away": "Togliatti W",
+            "league": "Superleague Women",
+            "score": "29 - 29",
+            "ht": "28 - 28"
+          },
+          "pick": null,
+          "pickLabel": "Over 55.5",
+          "odds": 1.9,
+          "result": "won",
+          "profitU": 0.8999999999999999
+        }
+      ]
+    },
+    {
+      "strategy": "under62",
+      "label": "Under 62.5",
+      "emoji": "⬇️",
+      "market": "Under 62.5",
+      "odds": 1.85,
+      "nBets": 3,
+      "won": 2,
+      "lost": 1,
+      "voids": 0,
+      "profitU": 0.7,
+      "roiPct": 23.33,
+      "hitRate": 66.67,
+      "picks": [
+        {
+          "match": {
+            "id": 1878239125,
+            "kickoff": "2026-09-24T14:30:00.000Z",
+            "home": "Sydney University",
+            "away": "Veszprem",
+            "league": "Club World Championship - Qualification",
+            "score": "45 - 45",
+            "ht": "19 - 19"
+          },
+          "pick": null,
+          "pickLabel": "Under 62.5",
+          "odds": 1.85,
+          "result": "lost",
+          "profitU": -1
+        },
+        {
+          "match": {
+            "id": 89668401,
+            "kickoff": "2026-09-24T15:30:00.000Z",
+            "home": "Luch W",
+            "away": "CSKA Moscow W",
+            "league": "Superleague Women",
+            "score": "30 - 30",
+            "ht": "24 - 24"
+          },
+          "pick": null,
+          "pickLabel": "Under 62.5",
+          "odds": 1.85,
+          "result": "won",
+          "profitU": 0.8500000000000001
+        },
+        {
+          "match": {
+            "id": 1215021503,
+            "kickoff": "2026-09-24T16:00:00.000Z",
+            "home": "Zvenigorod W",
+            "away": "Togliatti W",
+            "league": "Superleague Women",
+            "score": "29 - 29",
+            "ht": "28 - 28"
+          },
+          "pick": null,
+          "pickLabel": "Under 62.5",
+          "odds": 1.85,
+          "result": "won",
+          "profitU": 0.8500000000000001
+        }
+      ]
+    },
+    {
+      "strategy": "handicap",
+      "label": "Handicap -4.5",
+      "emoji": "🎯",
+      "market": "Handicap favori -4.5",
+      "odds": 1.9,
+      "nBets": 3,
+      "won": 0,
+      "lost": 3,
+      "voids": 0,
+      "profitU": -3,
+      "roiPct": -100,
+      "hitRate": 0,
+      "picks": [
+        {
+          "match": {
+            "id": 1878239125,
+            "kickoff": "2026-09-24T14:30:00.000Z",
+            "home": "Sydney University",
+            "away": "Veszprem",
+            "league": "Club World Championship - Qualification",
+            "score": "45 - 45",
+            "ht": "19 - 19"
+          },
+          "pick": "home",
+          "pickLabel": "Favori -4.5 (domicile)",
+          "odds": 1.9,
+          "result": "lost",
+          "profitU": -1
+        },
+        {
+          "match": {
+            "id": 89668401,
+            "kickoff": "2026-09-24T15:30:00.000Z",
+            "home": "Luch W",
+            "away": "CSKA Moscow W",
+            "league": "Superleague Women",
+            "score": "30 - 30",
+            "ht": "24 - 24"
+          },
+          "pick": "home",
+          "pickLabel": "Favori -4.5 (domicile)",
+          "odds": 1.9,
+          "result": "lost",
+          "profitU": -1
+        },
+        {
+          "match": {
+            "id": 1215021503,
+            "kickoff": "2026-09-24T16:00:00.000Z",
+            "home": "Zvenigorod W",
+            "away": "Togliatti W",
+            "league": "Superleague Women",
+            "score": "29 - 29",
+            "ht": "28 - 28"
+          },
+          "pick": "home",
+          "pickLabel": "Favori -4.5 (domicile)",
+          "odds": 1.9,
+          "result": "lost",
+          "profitU": -1
+        }
+      ]
+    },
+    {
+      "strategy": "bestTeam",
+      "label": "Meilleure équipe",
+      "emoji": "🏆",
+      "market": "1X2 favori (forme L5/L10)",
+      "odds": 1.55,
+      "nBets": 0,
+      "won": 0,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 0,
+      "roiPct": null,
+      "hitRate": null,
+      "picks": [],
+      "note": "Aucun signal sur les matchs du jour (forme insuffisante)"
+    },
+    {
+      "strategy": "bestTeam1x2",
+      "label": "1X2 Favori",
+      "emoji": "📊",
+      "market": "1X2 favori (forces CMP)",
+      "odds": 1.55,
+      "nBets": 0,
+      "won": 0,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 0,
+      "roiPct": null,
+      "hitRate": null,
+      "picks": [],
+      "note": "Aucun signal sur les matchs du jour (forme insuffisante)"
+    },
+    {
+      "strategy": "btts30",
+      "label": "BTTS 30+",
+      "emoji": "⚡",
+      "market": "Les deux à 30+",
+      "odds": 1.8,
+      "nBets": 0,
+      "won": 0,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 0,
+      "roiPct": null,
+      "hitRate": null,
+      "picks": [],
+      "note": "Aucun signal sur les matchs du jour (forme insuffisante)"
+    },
+    {
+      "strategy": "htLeader",
+      "label": "Leader HT",
+      "emoji": "⏱️",
+      "market": "Leader MT (pick forme)",
+      "odds": 1.7,
+      "nBets": 0,
+      "won": 0,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 0,
+      "roiPct": null,
+      "hitRate": null,
+      "picks": [],
+      "note": "Aucun signal sur les matchs du jour (forme insuffisante)"
+    },
+    {
+      "strategy": "valueBet",
+      "label": "Value Bet",
+      "emoji": "💰",
+      "market": "EV+ vs cote moyenne",
+      "odds": 1.55,
+      "nBets": 0,
+      "won": 0,
+      "lost": 0,
+      "voids": 0,
+      "profitU": 0,
+      "roiPct": null,
+      "hitRate": null,
+      "picks": [],
+      "note": "Aucun signal sur les matchs du jour (forme insuffisante)"
+    }
+  ],
+  "global": {
+    "nBets": 9,
+    "won": 5,
+    "lost": 4,
+    "voids": 0,
+    "profitU": 0.4,
+    "roiPct": 4.44,
+    "hitRate": 55.56
+  },
+  "methodology": "Backtest du jour : pour chaque match du jour terminé (Europe/Paris), le pick de chaque stratégie est généré par le moteur Top 8 avec une forme construite uniquement sur les matchs terminés antérieurs au coup d'envoi (aucun lookahead, walk-forward comme runHandballBacktest). Règlement identique au moteur walk-forward : match nul = pari 1X2 perdant, Over/Under aux lignes fixes, nul de mi-temps = perdant, mi-temps absente = annulé (mise retournée, exclue des paris). Cotes moyennes 1xbet simulées (favori 1X2 @1.55, Over @1.90, Under @1.85, handicap -4.5 @1.90, BTTS 30+ @1.80, leader MT @1.70), mise flat 1u. Échantillon d'une journée : ROI à lire comme un instantané, pas comme une tendance.",
+  "computed_at": "2026-09-24T20:46:42.310Z"
+}

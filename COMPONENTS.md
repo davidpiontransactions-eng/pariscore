@@ -162,7 +162,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 | Component | File | Role |
 |-----------|------|------|
-| handball-tab-content | handball-tab-content.tsx | Conteneur onglet handball (toggle live/prematch, filtres ligues, grille) |
+| handball-tab-content | handball-tab-content.tsx | Conteneur onglet handball (3 modes : 🔴 Live / 📅 À venir / 📆 Résultats du jour — panneau local `HandballResultsToday` = backtest des stratégies du jour + scores, filtres ligues, grille) |
 | handball-match-card | handball-match-card.tsx | Carte match prematch (équipes, cotes 1X2, badge ligue) |
 | handball-live-card | handball-live-card.tsx | Carte match live (score temps réel, minute, MT, stats 7m/saves) |
 | handball-filters | handball-filters.tsx | Barre filtres ligues (pills horizontaux avec compteurs) |
