@@ -2,6 +2,8 @@
 
 import { useHandballTop8 } from "@/hooks/use-handball-top8";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
+import { leagueCountry, leagueFlag } from "@/lib/handball-logos";
+import { CLV_EDGE_THRESHOLD } from "@/lib/handball-clv";
 
 // Couleurs via tokens dark (bg-card/border-border/text-*) — pas de hex en dur
 
@@ -18,6 +20,57 @@ const STRATEGY_META: Record<
   htLeader: { label: "Leader HT", emoji: "⏱️", metric: "Score", unit: "" },
   valueBet: { label: "Value Bet", emoji: "💰", metric: "Edge", unit: "%" },
 };
+
+type Top8Entry = {
+  matchId: string;
+  league: string;
+  leagueCountry?: string;
+  home: { name: string; shortName?: string };
+  away: { name: string; shortName?: string };
+  value: number;
+  pick: "home" | "away" | null;
+  odds?: { home?: number; draw?: number; away?: number };
+  openingOdds?: {
+    over55?: number;
+    under62?: number;
+    fav1x2?: { home?: number; draw?: number; away?: number };
+    handicap?: number;
+    btts30?: number;
+  };
+  probPct?: number;
+  ev?: number | null;
+  formSummary?: { home: string; away: string };
+  bestLine?: number;
+};
+
+/**
+ * CLV par entry (plan §9) : (p_model − p_implied)/p_implied sur le marché
+ * de la stratégie. Null si marché/cote indisponible.
+ */
+function entryClv(strategy: HandballStrategyKey, e: Top8Entry): { clv: number; price: number } | null {
+  if (e.probPct == null) return null;
+  const p = e.probPct / 100;
+  const o = e.openingOdds;
+  const single = (price?: number) =>
+    price != null && price > 1 ? { clv: (p - 1 / price) / (1 / price), price } : null;
+  if (strategy === "over55") return single(o?.over55);
+  if (strategy === "under62") return single(o?.under62);
+  if (strategy === "handicap") return single(o?.handicap);
+  if (strategy === "btts30") return single(o?.btts30);
+  if ((strategy === "bestTeam1x2" || strategy === "valueBet") && e.pick) {
+    const t = o?.fav1x2 ?? e.odds;
+    if (t?.home != null && t?.away != null && t.home > 1 && t.away > 1) {
+      const invH = 1 / t.home;
+      const invD = t.draw && t.draw > 1 ? 1 / t.draw : 0;
+      const invA = 1 / t.away;
+      const s = invH + invD + invA;
+      const imp = (e.pick === "home" ? invH : invA) / s;
+      const price = e.pick === "home" ? t.home : t.away;
+      if (imp > 0) return { clv: (p - imp) / imp, price };
+    }
+  }
+  return null;
+}
 
 export function HandballTop8Widget({
   strategy,
@@ -52,7 +105,13 @@ export function HandballTop8Widget({
         </span>
       </h3>
       <div className="rounded border border-border bg-card overflow-hidden divide-y divide-border">
-        {entries.map((e, i) => (
+        {entries.map((e, i) => {
+          // Drapeau ligue + CLV marché (plan §9)
+          const entry = e as Top8Entry;
+          const flag = leagueFlag(leagueCountry(entry.league, entry.leagueCountry));
+          const ec = entryClv(strategy, entry);
+          const edge = ec != null && Math.abs(ec.clv) > CLV_EDGE_THRESHOLD;
+          return (
           <div
             key={e.matchId}
             className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-muted"
@@ -87,9 +146,9 @@ export function HandballTop8Widget({
               </span>
             </div>
 
-            {/* Ligue */}
+            {/* Ligue + drapeau */}
             <span className="text-right truncate w-28 text-muted-foreground">
-              {e.league}
+              {flag ? `${flag} ` : ""}{e.league}
             </span>
 
             {/* Form */}
@@ -112,10 +171,26 @@ export function HandballTop8Widget({
               </span>
             )}
 
-            {/* Prob % */}
+            {/* Prob % (CMP Over/Under, plan §9) */}
             {e.probPct != null && (
               <span className="tabular-nums text-muted-foreground">
                 {e.probPct.toFixed(0)}%
+              </span>
+            )}
+
+            {/* Cote ouverture + badge edge |CLV| > 1,5 % */}
+            {ec != null && (
+              <span className="font-mono tabular-nums text-muted-foreground">
+                @{ec.price.toFixed(2)}
+              </span>
+            )}
+            {edge && ec != null && (
+              <span
+                className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums ${
+                  ec.clv > 0 ? "bg-[#00e676]/15 text-[#00e676]" : "bg-red-500/15 text-red-500"
+                }`}
+              >
+                {ec.clv > 0 ? "+" : ""}{(ec.clv * 100).toFixed(1)}%
               </span>
             )}
 
@@ -126,7 +201,8 @@ export function HandballTop8Widget({
               </span>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

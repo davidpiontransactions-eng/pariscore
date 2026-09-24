@@ -2,8 +2,19 @@
 // Basé sur : Felice 2025, Karlis 2026, Broermann 2026, Krawczyk 2025, Daza 2017
 // Architecture : pure scoring lib (no I/O), miroir football-strategy-top5.ts
 
-import type { HandballMatch, HandballLeague, HandballTeam } from "./handball-data";
+import type { HandballMatch, HandballLeague, HandballTeam, HandballOpeningOdds } from "./handball-data";
 import { realExpectedTotal } from "./handball-real-data";
+import {
+  teamStrength,
+  matchLambdas,
+  overUnderProb,
+  totalOverProb,
+  cmpPmf,
+  cmpKMax,
+  CMP_MIN_HISTORY,
+  type CmpTeam,
+} from "./handball-cmp";
+import { handicapProb, skellamMatchProbs } from "./handball-skellam";
 
 // ─── Types ───
 
@@ -32,6 +43,8 @@ export type HandballStrategyEntry = {
   pick: HandballSide | null;
   /** Cotes 1X2 */
   odds?: { home?: number; draw?: number; away?: number };
+  /** Cotes d'ouverture (proxy CLV, badge edge widget) */
+  openingOdds?: HandballOpeningOdds;
   /** Score HT si disponible */
   htScore?: { home: number; away: number };
   /** Résumé forme (W/D/L L5) */
@@ -157,6 +170,19 @@ const TEAM_TOTAL_STRONG = 30.5;
 const TEAM_TOTAL_WEAK = 26.5;
 const HANDICAP_LINE = 4.5;
 const BTTS_LINE = 30;
+
+/**
+ * Cote 1X2 favori de repli quand le marché est absent (plan §8 valueBet).
+ * Miroir AVG_ODDS_FAV_1X2 (handball-backtest.ts) — dupliqué ici pour
+ * éviter un import circulaire (backtest importe déjà ce module).
+ */
+const VALUEBET_FALLBACK_ODDS = 1.55;
+
+/** Fits CMP d'une équipe depuis le form store. Null si historique < 3. */
+function cmpTeamOf(f: TeamForm | undefined): CmpTeam | null {
+  if (!f || f.gf.length < CMP_MIN_HISTORY) return null;
+  return teamStrength(f.gf, f.ga);
+}
 
 // ─── Scoring functions ───
 
@@ -291,6 +317,17 @@ function scoreMatch(
     }
 
     case "bestTeam1x2": {
+      // Plan §8 : pick par forces CMP s_a/s_d (1X2 équitable Skellam).
+      // Repli devig marché sans forme (comportement legacy conservé).
+      const tH = cmpTeamOf(hForm);
+      const tA = cmpTeamOf(aForm);
+      if (tH && tA) {
+        const L = matchLambdas(tH, tA);
+        const p = skellamMatchProbs(L.lambdaH, L.lambdaE);
+        const pick: HandballSide = p.home >= p.away ? "home" : "away";
+        const prob = Math.max(p.home, p.away);
+        return { value: prob * 100, pick, probPct: prob * 100 };
+      }
       // De-vig odds (toujours depuis cotes marché)
       if (!match.odds?.home || !match.odds?.away) return null;
       const total = 1 / match.odds.home + (match.odds.draw ? 1 / match.odds.draw : 0) + 1 / match.odds.away;
@@ -301,7 +338,39 @@ function scoreMatch(
     }
 
     case "over55": {
-      // Données réelles — ligne la plus proche de ≥55% proba
+      // Plan §8 : prob CMP (fits attaque/défense), scan de lignes conservé.
+      const tH = cmpTeamOf(hForm);
+      const tA = cmpTeamOf(aForm);
+      if (tH && tA) {
+        const L = matchLambdas(tH, tA);
+        const kMax = Math.max(cmpKMax(L.lambdaH), cmpKMax(L.lambdaE));
+        const pmfH = cmpPmf(L.lambdaH, L.nuH, kMax);
+        const pmfA = cmpPmf(L.lambdaE, L.nuE, kMax);
+        // Ligne la plus haute ≥ 55 % (miroir logique legacy, moteur CMP)
+        let bestLine = 57.5;
+        let bestProb = 0;
+        for (let line = 45.5; line <= 65.5; line += 1) {
+          const prob = totalOverProb(pmfH, pmfA, line);
+          if (prob >= 0.55) {
+            if (line > bestLine || bestLine === 57.5) {
+              bestLine = line;
+              bestProb = prob;
+            }
+          }
+        }
+        if (bestProb === 0) {
+          for (let line = 45.5; line <= 65.5; line += 1) {
+            const prob = totalOverProb(pmfH, pmfA, line);
+            if (Math.abs(prob - 0.55) < Math.abs(bestProb - 0.55)) {
+              bestLine = line;
+              bestProb = prob;
+            }
+          }
+        }
+        // Fix debug : ev = null tant que vraies cotes Over/Under indisponibles
+        return { value: bestProb * 100, pick: null, probPct: bestProb * 100, ev: null, bestLine };
+      }
+      // Repli legacy (Poisson sur totaux réels) sans forme CMP.
       const lambda = realExpectedTotal(match.home.name, match.away.name);
       // Trouver la ligne Over qui donne le plus proche de 55% (≥55%)
       let bestLine = 57.5;
@@ -334,7 +403,16 @@ function scoreMatch(
     }
 
     case "under62": {
-      // CMP inverse
+      // Plan §8 : prob CMP Under 62.5 (fits attaque/défense).
+      const tH = cmpTeamOf(hForm);
+      const tA = cmpTeamOf(aForm);
+      if (tH && tA) {
+        const L = matchLambdas(tH, tA);
+        const { under } = overUnderProb(L.lambdaH, L.nuH, L.lambdaE, L.nuE, 62.5);
+        // Fix debug : EV null (cotes 1X2 ≠ prix total Over/Under)
+        return { value: under * 100, pick: null, probPct: under * 100, ev: null };
+      }
+      // Repli legacy sans forme CMP.
       const lambda = hasForm ? expectedTotal(formStore, match) : TOTAL_LINE;
       const adjustedLambda = lambda / Math.pow(CMP_NU, 0.5);
       const prob = poissonLe(62, adjustedLambda);
@@ -344,6 +422,17 @@ function scoreMatch(
     }
 
     case "handicap": {
+      // Plan §8 : handicap Skellam (λh/λe issus du CMP), symétrique home/away.
+      const tH = cmpTeamOf(hForm);
+      const tA = cmpTeamOf(aForm);
+      if (tH && tA) {
+        const L = matchLambdas(tH, tA);
+        const hc = handicapProb(L.lambdaH, L.lambdaE, HANDICAP_LINE);
+        const pick: HandballSide = L.lambdaH >= L.lambdaE ? "home" : "away";
+        const prob = pick === "home" ? hc.home : hc.away;
+        return { value: prob * 100, pick, probPct: prob * 100 };
+      }
+      // Repli legacy sans forme CMP.
       // Skellam goal difference (Karlis 2026)
       // Fix debug 2026-09-23 : away favori avait prob ≡ 0 (condition diff >= 0)
       // + HOME_ADV compté 2× (déjà dans expectedGoalDiff). Symétrique ici.
@@ -382,21 +471,38 @@ function scoreMatch(
       // EV+ = P(model) > P(market de-viggé)
       // Fix debug 2026-09-23 : pas de forme → null (l'ancien prior 0.45/0.50
       // fabriquait des edges ; marché 1/odds non de-viggé → edge biaisé).
-      if (!match.odds?.home || !match.odds?.away) return null;
+      // Plan §8 : rejouable même sans cotes marché (repli AVG 1.55).
       if (!hasForm) return null;
+      const oH = match.odds?.home ?? match.openingOdds?.fav1x2?.home;
+      const oA = match.odds?.away ?? match.openingOdds?.fav1x2?.away;
+      const oD = match.odds?.draw ?? match.openingOdds?.fav1x2?.draw;
       const pModelHome = winProb(formStore, match, "home");
       const pModelAway = winProb(formStore, match, "away");
-      const invH = 1 / match.odds.home;
-      const invD = match.odds.draw ? 1 / match.odds.draw : 0;
-      const invA = 1 / match.odds.away;
-      const overround = invH + invD + invA;
-      const pMarketHome = invH / overround;
-      const pMarketAway = invA / overround;
+      let pMarketHome: number;
+      let pMarketAway: number;
+      let coteH: number;
+      let coteA: number;
+      if (oH != null && oA != null) {
+        const invH = 1 / oH;
+        const invD = oD ? 1 / oD : 0;
+        const invA = 1 / oA;
+        const overround = invH + invD + invA;
+        pMarketHome = invH / overround;
+        pMarketAway = invA / overround;
+        coteH = oH;
+        coteA = oA;
+      } else {
+        // Sans cotes marché : implicite brut du repli (marge incluse, strict).
+        pMarketHome = 1 / VALUEBET_FALLBACK_ODDS;
+        pMarketAway = 1 / VALUEBET_FALLBACK_ODDS;
+        coteH = VALUEBET_FALLBACK_ODDS;
+        coteA = VALUEBET_FALLBACK_ODDS;
+      }
       const edgeHome = pModelHome - pMarketHome;
       const edgeAway = pModelAway - pMarketAway;
       const bestEdge = Math.max(edgeHome, edgeAway);
       const pick: HandballSide = edgeHome >= edgeAway ? "home" : "away";
-      const odds = pick === "home" ? match.odds.home : match.odds.away;
+      const odds = pick === "home" ? coteH : coteA;
       const ev = bestEdge > 0 ? bestEdge * odds : null;
       return { value: bestEdge * 100, pick, probPct: (pick === "home" ? pModelHome : pModelAway) * 100, ev, trend: bestEdge * 100 };
     }
@@ -451,6 +557,7 @@ export function computeHandballStrategyTop8(
         value: scored.value,
         pick: scored.pick,
         odds: match.odds ? { home: match.odds.home, draw: match.odds.draw, away: match.odds.away } : undefined,
+        openingOdds: match.openingOdds,
         htScore: match.score?.homeHalf != null ? { home: match.score.homeHalf, away: match.score.awayHalf! } : undefined,
         formSummary: {
           home: formSummaryStr(hForm, 5),

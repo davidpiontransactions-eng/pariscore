@@ -14,6 +14,8 @@ import {
   HANDBALL_STRATEGY_DEFS,
   type HandballStrategyKey,
 } from "./handball-strategy-top8";
+import { teamStrength, matchLambdas, CMP_MIN_HISTORY } from "./handball-cmp";
+import { skellamMatchProbs } from "./handball-skellam";
 
 // ─── Cotes moyennes 1xbet simulées ───
 // Justifications (marché handball 1xbet, septembre 2026) :
@@ -106,7 +108,8 @@ const METHODOLOGY =
   "(favori 1X2 @1.55, Over 55.5 @1.90, Under 62.5 @1.85, handicap -4.5 @1.90, " +
   "BTTS 30+ @1.80, leader MT @1.70). Mise flat 1u + variante demi-Kelly " +
   "(probabilité = hit-rate expansif lissé Laplace, plafond 5u). " +
-  "Value Bet requiert des cotes marché → 0 pari rejouable. " +
+  "Value Bet rejoué à la cote moyenne (@1.55) quand EV+ " +
+  "(p_model CMP/Skellam × cote − 1 > 0). " +
   "Snapshot multi-ligues : les équipes s'y répètent rarement → stratégies " +
   "de forme sous-échantillonnées (n<10 = bruit, à réévaluer quand le " +
   "snapshot grossira).";
@@ -123,7 +126,14 @@ type StrategySpec = {
 };
 
 /** Forme walk-forward d'une équipe : PPG récent (L5/L10 comme le moteur) + PPG carrière. */
-type WalkForm = { ppgRecent: number; ppgCareer: number; known: boolean };
+type WalkForm = {
+  ppgRecent: number;
+  ppgCareer: number;
+  known: boolean;
+  /** Buts marqués / encaissés (fits CMP) */
+  gf: number[];
+  ga: number[];
+};
 
 /** PPG neutre (1 pt/match = moyenne entre victoire à 2 et défaite à 0). */
 const NEUTRAL_PPG = 1;
@@ -132,12 +142,15 @@ function formOfFactory(prior: HandballMatch[]) {
   const store = buildFormStore(prior);
   return (teamId: number): WalkForm => {
     const f = store.get(String(teamId));
-    if (!f || f.gf.length === 0) return { ppgRecent: NEUTRAL_PPG, ppgCareer: NEUTRAL_PPG, known: false };
+    if (!f || f.gf.length === 0)
+      return { ppgRecent: NEUTRAL_PPG, ppgCareer: NEUTRAL_PPG, known: false, gf: [], ga: [] };
     return {
       // Même pondération L5 60% / L10 40% que la stratégie bestTeam
       ppgRecent: ppg(f, 5) * 0.6 + ppg(f, 10) * 0.4,
       ppgCareer: ppg(f, 1000),
       known: true,
+      gf: f.gf,
+      ga: f.ga,
     };
   };
 }
@@ -158,8 +171,8 @@ function favRecent(m: HandballMatch, formOf: (teamId: number) => WalkForm): Side
   return h.ppgRecent >= a.ppgRecent ? "home" : "away";
 }
 
-// Spécifications de règlement par stratégie (7 rejouables, valueBet exclue).
-const SPECS: Record<Exclude<HandballStrategyKey, "valueBet">, StrategySpec> = {
+// Spécifications de règlement par stratégie (8 rejouables, valueBet à cote moyenne).
+const SPECS: Record<HandballStrategyKey, StrategySpec> = {
   bestTeam: {
     odds: AVG_ODDS_FAV_1X2,
     market: "1X2 favori (forme L5/L10)",
@@ -171,14 +184,19 @@ const SPECS: Record<Exclude<HandballStrategyKey, "valueBet">, StrategySpec> = {
   },
   bestTeam1x2: {
     odds: AVG_ODDS_FAV_1X2,
-    market: "1X2 favori (bilan carrière)",
+    market: "1X2 favori (forces CMP)",
     settle: (m, formOf) => {
-      // Proxy du favori marché : meilleur bilan carrière walk-forward
-      // (bestTeam utilise la forme récente → signaux distincts).
+      // Plan §8 : pick par forces CMP s_a/s_d ; repli ppgCareer si historique court.
       const h = formOf(m.home.id);
       const a = formOf(m.away.id);
       if ((!h.known && !a.known) || !m.score) return { win: false, skip: true };
-      const pick: Side = h.ppgCareer >= a.ppgCareer ? "home" : "away";
+      let pick: Side;
+      if (h.gf.length >= CMP_MIN_HISTORY && a.gf.length >= CMP_MIN_HISTORY) {
+        const L = matchLambdas(teamStrength(h.gf, h.ga), teamStrength(a.gf, a.ga));
+        pick = L.lambdaH >= L.lambdaE ? "home" : "away";
+      } else {
+        pick = h.ppgCareer >= a.ppgCareer ? "home" : "away";
+      }
       return { win: winnerOf(m) === pick, skip: false };
     },
   },
@@ -230,6 +248,26 @@ const SPECS: Record<Exclude<HandballStrategyKey, "valueBet">, StrategySpec> = {
       return { win: (pick === "home") === homeLeads, skip: false };
     },
   },
+  valueBet: {
+    odds: AVG_ODDS_FAV_1X2,
+    market: "EV+ vs cote moyenne",
+    settle: (m, formOf) => {
+      // Plan §8 : rejouable — pari si p_model × cote − 1 > 0 (cote AVG fallback).
+      const h = formOf(m.home.id);
+      const a = formOf(m.away.id);
+      if ((!h.known && !a.known) || !m.score) return { win: false, skip: true };
+      if (h.gf.length < CMP_MIN_HISTORY || a.gf.length < CMP_MIN_HISTORY) {
+        return { win: false, skip: true };
+      }
+      const L = matchLambdas(teamStrength(h.gf, h.ga), teamStrength(a.gf, a.ga));
+      const p = skellamMatchProbs(L.lambdaH, L.lambdaE);
+      const evH = p.home * AVG_ODDS_FAV_1X2 - 1;
+      const evA = p.away * AVG_ODDS_FAV_1X2 - 1;
+      if (evH <= 0 && evA <= 0) return { win: false, skip: true };
+      const pick: Side = evH >= evA ? "home" : "away";
+      return { win: winnerOf(m) === pick, skip: false };
+    },
+  },
 };
 
 function emptyRow(
@@ -275,14 +313,6 @@ export function runHandballBacktest(
 
   const keys = Object.keys(HANDBALL_STRATEGY_DEFS) as HandballStrategyKey[];
   const strategies: BacktestStrategyRow[] = keys.map((key) => {
-    if (key === "valueBet") {
-      return emptyRow(
-        key,
-        null,
-        "EV+ vs cotes marché",
-        "Non rejouable : cotes marché historiques absentes du snapshot.",
-      );
-    }
     const spec = SPECS[key];
     const row = emptyRow(key, spec.odds, spec.market);
     let cumul = 0;

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import type { HandballOpeningOdds } from "@/lib/handball-data";
 
 const fetcher = async (url: string) => {
   const r = await fetch(url);
@@ -11,12 +12,14 @@ const fetcher = async (url: string) => {
 type StrategyEntry = {
   matchId: string;
   league: string;
+  leagueCountry?: string;
   kickoff: string;
   home: { name: string; shortName?: string };
   away: { name: string; shortName?: string };
   value: number;
   pick: "home" | "away" | null;
   odds?: { home?: number; draw?: number; away?: number };
+  openingOdds?: HandballOpeningOdds;
   probPct?: number;
   ev?: number | null;
   trend?: number | null;

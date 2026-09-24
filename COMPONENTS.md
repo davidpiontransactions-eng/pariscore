@@ -173,9 +173,12 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
 | handball-hero-header | handball-hero-header.tsx | Hero onglet Handball (miroir hockey : accroche 60 min, 3 stratégies pick, visuel silhouette/photo + halo #00e676) |
 | handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
-| handball-backtest-widget | handball-backtest-widget.tsx | Backtest ROI visuel (table triée, bar-chart CSS, sparkline SVG, filtre ligue, disclaimer simulé) |
+| handball-backtest-widget | handball-backtest-widget.tsx | Backtest double mode Simulé/CLV (table triée meanCLV, badges edge |CLV|>1,5 % et n<30, sparkline SVG, filtre ligue, disclaimers) |
 | handball-league-badge | handball-league-badge.tsx | Badge ligue : logo local + drapeau + nom (remplace "🤾 NomLigue") |
 | handball-team-logo | handball-team-logo.tsx | Badge équipe local + fallback initiales (miroir hockey-team-logo) |
+| handball-cmp | handball-cmp.ts (lib) | Moteur CMP totaux : fitCMP (MLE Newton-Raphson), cmpPmf, teamStrength (s_a/s_d Felice SEL), overUnderProb (grille adaptative) |
+| handball-skellam | handball-skellam.ts (lib) | Moteur Skellam handicap : skellamPmf (Bessel I_k), handicapProb, skellamMatchProbs 1X2 |
+| handball-clv | handball-clv.ts (lib) | Devig proportionnel + Shin optionnel, CLV (p_model−p_implied)/p_implied, seuils edge 1,5 % / n≥30 |
 
 ## Leagues (`src/components/leagues/`) — 12 components
 

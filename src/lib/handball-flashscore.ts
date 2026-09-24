@@ -7,7 +7,7 @@
 
 import { existsSync } from "fs";
 import { join } from "path";
-import type { HandballMatch } from "./handball-data";
+import type { HandballMatch, HandballOpeningOdds } from "./handball-data";
 
 /**
  * Résout data/<name> quel que soit le cwd.
@@ -45,6 +45,15 @@ export type FlashscoreMatch = {
   homeHalf?: number;
   awayHalf?: number;
   minute?: number;
+  /**
+   * Cotes d'ouverture étendues (totaux/handicap/BTTS) quand le scrape
+   * les capture. Snapshot actuel = 1X2 seul via `odds` ; ces champs
+   * restent absents jusqu'à extension du scraper.
+   */
+  openingOver55?: number;
+  openingUnder62?: number;
+  openingHandicap?: number;
+  openingBtts30?: number;
 };
 
 /** Hash djb2 → entier positif stable (jamais 0 : clé de map vide interdite). */
@@ -113,6 +122,24 @@ export function toHandballMatch(m: FlashscoreMatch, _idx: number): HandballMatch
     if (m.odds.length >= 3) odds.draw = m.odds[1];
   }
 
+  // Cotes d'ouverture 1xbet = proxy CLV (snapshot capturé pré-match).
+  // fav1x2 depuis odds[] ; autres marchés en passthrough si présents.
+  let openingOdds: HandballOpeningOdds | undefined;
+  const hasFav = odds?.home != null || odds?.away != null;
+  const hasMarkets =
+    m.openingOver55 != null ||
+    m.openingUnder62 != null ||
+    m.openingHandicap != null ||
+    m.openingBtts30 != null;
+  if (hasFav || hasMarkets) {
+    openingOdds = {};
+    if (hasFav) openingOdds.fav1x2 = { ...odds };
+    if (m.openingOver55 != null) openingOdds.over55 = m.openingOver55;
+    if (m.openingUnder62 != null) openingOdds.under62 = m.openingUnder62;
+    if (m.openingHandicap != null) openingOdds.handicap = m.openingHandicap;
+    if (m.openingBtts30 != null) openingOdds.btts30 = m.openingBtts30;
+  }
+
   // matchId = hash équipes + ligue + heure → stable entre re-scrapes (pas l'index)
   const matchId = hashId(`${m.league ?? ""}|${m.home}|${m.away}|${m.time ?? ""}`);
 
@@ -126,5 +153,24 @@ export function toHandballMatch(m: FlashscoreMatch, _idx: number): HandballMatch
     score,
     minute: m.minute,
     odds,
+    openingOdds,
   };
+}
+
+/**
+ * Match testable CLV = terminé + au moins un marché d'ouverture présent.
+ * Le backtest CLV croît avec les données (scrape PM2 quotidien).
+ */
+export function isCLVTestable(m: HandballMatch): boolean {
+  if (m.status !== "finished" || !m.score) return false;
+  const o = m.openingOdds;
+  if (!o) return false;
+  return (
+    o.over55 != null ||
+    o.under62 != null ||
+    o.handicap != null ||
+    o.btts30 != null ||
+    o.fav1x2?.home != null ||
+    o.fav1x2?.away != null
+  );
 }

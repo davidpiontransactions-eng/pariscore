@@ -3,11 +3,15 @@
 import { useState } from "react";
 import useSWR from "swr";
 import type { HandballBacktestResult } from "@/lib/handball-backtest";
+import type { HandballCLVResult } from "@/lib/handball-cmp-backtest";
+import { CLV_EDGE_THRESHOLD, CLV_MIN_SAMPLE } from "@/lib/handball-clv";
+
+type Payload = HandballBacktestResult | HandballCLVResult;
 
 const fetcher = async (url: string) => {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return (await r.json()) as HandballBacktestResult;
+  return (await r.json()) as Payload;
 };
 
 /** Mise en forme signée (+x.x) */
@@ -43,11 +47,16 @@ function Sparkline({ data, width = 260, height = 64 }: { data: number[]; width?:
   );
 }
 
+function isClvPayload(data: Payload): data is HandballCLVResult {
+  return "clvProxy" in data && data.clvProxy === true;
+}
+
 export function HandballBacktestWidget() {
   const [league, setLeague] = useState("all");
+  const [mode, setMode] = useState<"simulated" | "clv">("simulated");
   const [selected, setSelected] = useState<string | null>(null);
-  const { data, error, isLoading } = useSWR<HandballBacktestResult>(
-    `/api/handball/backtest?league=${encodeURIComponent(league)}`,
+  const { data, error, isLoading } = useSWR<Payload>(
+    `/api/handball/backtest?league=${encodeURIComponent(league)}&mode=${mode}`,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 15 * 60_000 },
   );
@@ -65,10 +74,10 @@ export function HandballBacktestWidget() {
       </div>
     );
 
+  const clv = isClvPayload(data);
+  const fellBack = mode === "clv" && !clv;
   const rows = data.strategies;
   const active = rows.find((s) => s.key === selected) ?? rows[0] ?? null;
-  // Barres ROI : échelle relative au |ROI| max (lignes non rejouées exclues)
-  const maxAbsRoi = Math.max(1, ...rows.map((s) => Math.abs(s.roiPct ?? 0)));
 
   return (
     <div className="space-y-3 rounded border border-border bg-card p-3">
@@ -77,25 +86,106 @@ export function HandballBacktestWidget() {
         <span className="text-xs text-muted-foreground">
           {data.nMatches} matchs terminés · mises flat 1u
         </span>
-        <select
-          value={league}
-          onChange={(e) => {
-            setLeague(e.target.value);
-            setSelected(null);
-          }}
-          className="ml-auto text-xs rounded border border-border bg-background px-2 py-1"
-          aria-label="Filtrer par ligue"
-        >
-          <option value="all">Toutes ligues</option>
-          {data.leagues.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
+        {/* Sélecteur Simulé / CLV (plan §7) */}
+        <div className="ml-auto flex items-center gap-2">
+          <div className="flex rounded border border-border text-xs" role="tablist" aria-label="Mode backtest">
+            {(["simulated", "clv"] as const).map((m) => (
+              <button
+                key={m}
+                role="tab"
+                aria-selected={mode === m}
+                onClick={() => {
+                  setMode(m);
+                  setSelected(null);
+                }}
+                className={`px-2 py-1 ${mode === m ? "bg-foreground text-background font-semibold" : "text-muted-foreground"}`}
+              >
+                {m === "simulated" ? "Simulé" : "CLV"}
+              </button>
+            ))}
+          </div>
+          <select
+            value={league}
+            onChange={(e) => {
+              setLeague(e.target.value);
+              setSelected(null);
+            }}
+            className="text-xs rounded border border-border bg-background px-2 py-1"
+            aria-label="Filtrer par ligue"
+          >
+            <option value="all">Toutes ligues</option>
+            {data.leagues.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Tableau ROI trié (meilleurs en tête — tri serveur) */}
+      {fellBack && (
+        <p className="text-[11px] font-medium text-amber-500">
+          ⚠️ CLV indisponible (cotes d'ouverture sur moins de 50 % des matchs) → repli simulé.
+        </p>
+      )}
+
+      {clv ? (
+        <ClvTable rows={data.strategies} activeKey={active?.key ?? null} onSelect={setSelected} />
+      ) : (
+        <SimTable rows={(data as HandballBacktestResult).strategies} activeKey={active?.key ?? null} onSelect={setSelected} />
+      )}
+
+      {/* Courbe profit cumulé (stratégie cliquée, sinon tête du tableau) */}
+      {active && active.curve.length > 0 && (
+        <div className="space-y-1 rounded border border-border p-2">
+          <div className="flex items-baseline gap-2 text-xs">
+            <span className="font-semibold text-foreground">
+              {active.emoji} {active.label} — profit cumulé
+            </span>
+            <span className="tabular-nums font-mono text-muted-foreground">
+              {fmtSigned("profitU" in active ? active.profitU : active.profitSimU)}u
+              {!clv && "profitKellyU" in active && ` · Kelly ${fmtSigned(active.profitKellyU)}u`}
+            </span>
+          </div>
+          <Sparkline data={active.curve} />
+        </div>
+      )}
+
+      {/* Note méthodologique + disclaimer */}
+      <details className="text-[11px] text-muted-foreground">
+        <summary className="cursor-pointer font-medium">Méthodologie</summary>
+        <p className="mt-1">{data.methodology}</p>
+        {clv && (
+          <p className="mt-1">
+            CMP v1 (MLE Newton-Raphson, 10 derniers pondérés) · devig proportionnel (1X2) ·
+            Skellam handicap · seuils |CLV| &gt; {(CLV_EDGE_THRESHOLD * 100).toFixed(1)} % edge,
+            n ≥ {CLV_MIN_SAMPLE} significatif.
+          </p>
+        )}
+      </details>
+      <p className="text-[11px] font-medium text-amber-500">
+        {clv
+          ? "⚠️ Cotes d'ouverture 1xbet (proxy snapshot) — CLV indicatif, pas un conseil de pari."
+          : "⚠️ Cotes simulées — ROI indicatif, pas un conseil de pari."}
+      </p>
+    </div>
+  );
+}
+
+/* ─── Table simulée (existante) ─── */
+
+function SimTable({
+  rows,
+  activeKey,
+  onSelect,
+}: {
+  rows: HandballBacktestResult["strategies"];
+  activeKey: string | null;
+  onSelect: (key: string) => void;
+}) {
+  const maxAbsRoi = Math.max(1, ...rows.map((s) => Math.abs(s.roiPct ?? 0)));
+  return (
+    <>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -116,8 +206,8 @@ export function HandballBacktestWidget() {
               return (
                 <tr
                   key={s.key}
-                  onClick={() => setSelected(s.key)}
-                  className={`cursor-pointer transition-colors hover:bg-muted ${active?.key === s.key ? "bg-muted/60" : ""}`}
+                  onClick={() => onSelect(s.key)}
+                  className={`cursor-pointer transition-colors hover:bg-muted ${activeKey === s.key ? "bg-muted/60" : ""}`}
                 >
                   <td className="py-1.5 pr-2 font-medium text-foreground whitespace-nowrap">
                     {s.emoji} {s.label}
@@ -177,30 +267,112 @@ export function HandballBacktestWidget() {
             );
           })}
       </div>
+    </>
+  );
+}
 
-      {/* Courbe profit cumulé (stratégie cliquée, sinon tête du tableau) */}
-      {active && active.curve.length > 0 && (
-        <div className="space-y-1 rounded border border-border p-2">
-          <div className="flex items-baseline gap-2 text-xs">
-            <span className="font-semibold text-foreground">
-              {active.emoji} {active.label} — profit cumulé
-            </span>
-            <span className="tabular-nums font-mono text-muted-foreground">
-              {fmtSigned(active.profitU)}u · Kelly {fmtSigned(active.profitKellyU)}u
-            </span>
-          </div>
-          <Sparkline data={active.curve} />
-        </div>
-      )}
+/* ─── Table CLV (triée meanCLV serveur, plan §7) ─── */
 
-      {/* Note méthodologique + disclaimer */}
-      <details className="text-[11px] text-muted-foreground">
-        <summary className="cursor-pointer font-medium">Méthodologie</summary>
-        <p className="mt-1">{data.methodology}</p>
-      </details>
-      <p className="text-[11px] font-medium text-amber-500">
-        ⚠️ Cotes simulées — ROI indicatif, pas un conseil de pari.
-      </p>
-    </div>
+function ClvTable({
+  rows,
+  activeKey,
+  onSelect,
+}: {
+  rows: HandballCLVResult["strategies"];
+  activeKey: string | null;
+  onSelect: (key: string) => void;
+}) {
+  const maxAbsClv = Math.max(0.01, ...rows.map((s) => Math.abs(s.meanCLV ?? 0)));
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-left text-muted-foreground border-b border-border">
+              <th className="py-1.5 pr-2 font-medium">Stratégie</th>
+              <th className="py-1.5 pr-2 font-medium">Marché</th>
+              <th className="py-1.5 pr-2 font-medium text-right">Paris</th>
+              <th className="py-1.5 pr-2 font-medium text-right">CLV moy</th>
+              <th className="py-1.5 pr-2 font-medium text-right">Écart-t</th>
+              <th className="py-1.5 pr-2 font-medium text-right">Hit%</th>
+              <th className="py-1.5 pr-2 font-medium text-right">Profit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((s) => {
+              const clv = s.meanCLV;
+              const edge = clv != null && Math.abs(clv) > CLV_EDGE_THRESHOLD;
+              const positive = clv != null && clv > 0;
+              return (
+                <tr
+                  key={s.key}
+                  onClick={() => onSelect(s.key)}
+                  className={`cursor-pointer transition-colors hover:bg-muted ${activeKey === s.key ? "bg-muted/60" : ""}`}
+                >
+                  <td className="py-1.5 pr-2 font-medium text-foreground whitespace-nowrap">
+                    {s.emoji} {s.label}
+                    {!s.sampleOk && (
+                      <span className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
+                        n&lt;{CLV_MIN_SAMPLE}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-2 text-muted-foreground whitespace-nowrap">{s.market}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{s.nBets}</td>
+                  <td className="py-1.5 pr-2 text-right">
+                    {clv != null ? (
+                      <span
+                        className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${
+                          edge
+                            ? positive
+                              ? "bg-[#00e676]/15 text-[#00e676]"
+                              : "bg-red-500/15 text-red-500"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {fmtSigned(clv * 100)}%
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                    {s.stdCLV != null ? `${(s.stdCLV * 100).toFixed(1)}%` : "—"}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                    {s.hitRate != null ? `${(s.hitRate * 100).toFixed(1)}%` : "—"}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums font-mono">
+                    {s.nBets > 0 ? `${fmtSigned(s.profitSimU)}u` : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mini bar-chart CLV moyen */}
+      <div className="space-y-1">
+        {rows
+          .filter((s) => s.meanCLV != null)
+          .map((s) => {
+            const v = s.meanCLV ?? 0;
+            const w = Math.abs(v) / maxAbsClv;
+            return (
+              <div key={s.key} className="flex items-center gap-2 text-[11px]">
+                <span className="w-24 truncate text-muted-foreground">{s.label}</span>
+                <div className="flex-1 h-2 rounded bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded ${v > 0 ? "bg-[#00e676]" : "bg-red-500"}`}
+                    style={{ width: `${Math.max(2, w * 100)}%` }}
+                  />
+                </div>
+                <span className="w-16 text-right tabular-nums font-mono">{fmtSigned(v * 100)}%</span>
+              </div>
+            );
+          })}
+      </div>
+    </>
   );
 }
