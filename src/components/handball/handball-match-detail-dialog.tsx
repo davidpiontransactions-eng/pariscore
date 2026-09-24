@@ -76,6 +76,12 @@ type TeamFormView = {
   scoredAvg: number | null;
   /** Buts encaissés / match sur les 5 derniers. */
   concededAvg: number | null;
+  /** Total de buts / match (marqués + encaissés) = rythme de la rencontre. */
+  totalAvg: number | null;
+  /** Différence de buts / match (marqués - encaissés). */
+  diffAvg: number | null;
+  /** Nombre de matchs pris dans la fenêtre L5 (affiché en légende). */
+  played: number;
 };
 
 /** Moyenne à 1 décimale, null si tableau vide (jamais de NaN affiché). */
@@ -89,10 +95,21 @@ function formView(f: TeamFormEntry | undefined): TeamFormView | null {
   if (!f || f.gf.length === 0) return null;
   const seq = formSummaryStr(f, 5);
   if (seq === "---") return null;
+  const gf = f.gf.slice(-5);
+  const ga = f.ga.slice(-5);
+  const scoredAvg = avg1(gf);
+  const concededAvg = avg1(ga);
+  const round1 = (v: number) => Math.round(v * 10) / 10;
   return {
     seq,
-    scoredAvg: avg1(f.gf.slice(-5)),
-    concededAvg: avg1(f.ga.slice(-5)),
+    scoredAvg,
+    concededAvg,
+    // Dérivées recalculées sur les mêmes moyennes (1 seul arrondi source)
+    totalAvg:
+      scoredAvg != null && concededAvg != null ? round1(scoredAvg + concededAvg) : null,
+    diffAvg:
+      scoredAvg != null && concededAvg != null ? round1(scoredAvg - concededAvg) : null,
+    played: gf.length,
   };
 }
 
@@ -103,6 +120,12 @@ function frSeq(seq: string): string {
 
 function fmtNum(v: number | null | undefined): string {
   return v == null ? "—" : String(v);
+}
+
+/** Écart signé à 1 décimale (« +2.6 » / « -1.2 »), « — » si absent. */
+function fmtDiff(v: number | null | undefined): string {
+  if (v == null) return "—";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 }
 
 // ─── Tokens confiance (alignés widgets handball : emerald / amber / red) ───
@@ -145,7 +168,7 @@ function FormSequence({ seq }: { seq: string }) {
         <span
           key={i}
           title={title[r] ?? r}
-          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${colors[r] ?? "bg-muted text-muted-foreground ring-border"}`}
+          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${colors[r] ?? "bg-muted dark:bg-white/[0.08] text-muted-foreground ring-border"}`}
         >
           {fr[r] ?? r}
         </span>
@@ -175,6 +198,38 @@ function CompareRow({
   );
 }
 
+/**
+ * Ligne comparative à barre pooled 2 couleurs (chiffres aux extrémités,
+ * barre proportionnelle dessous) — format Fotmob, tient à 390 px :
+ * pas de colonne fixe, la barre prend toute la largeur restante.
+ */
+function CompareBar({
+  label,
+  home,
+  away,
+}: {
+  label: string;
+  home: number;
+  away: number;
+}) {
+  const total = home + away;
+  // Total nul (0-0) → barre à mi-chausse, jamais de division par zéro.
+  const homePct = total > 0 ? Math.round((home / total) * 100) : 50;
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-semibold tabular-nums text-emerald-500">{home}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-[11px] font-semibold tabular-nums text-sky-500">{away}</span>
+      </div>
+      <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted dark:bg-white/[0.07]">
+        <div className="bg-emerald-500" style={{ width: `${homePct}%` }} />
+        <div className="bg-sky-500" style={{ width: `${100 - homePct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 /** Case d'un des 3 paris prédictifs (prob %, cote, edge, EV, Kelly, confiance). */
 function PredictiveBetTile({ bet }: { bet: HandballPredictiveBet }) {
   return (
@@ -194,7 +249,7 @@ function PredictiveBetTile({ bet }: { bet: HandballPredictiveBet }) {
         {bet.prob.toFixed(1)}
         <span className="text-sm font-bold">%</span>
       </p>
-      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted dark:bg-white/[0.07]">
         <div
           className="h-full rounded-full bg-emerald-400"
           style={{ width: `${Math.min(100, Math.max(0, Math.round(bet.prob)))}%` }}
@@ -335,7 +390,7 @@ function PlayerColumn({
     <div className={`rounded-lg border ${borderCls} p-2.5`}>
       {header}
       {gk && (
-        <div className="mt-2 rounded bg-muted/40 px-2 py-1.5">
+        <div className="mt-2 rounded bg-muted/40 px-2 py-1.5 dark:bg-white/[0.06]">
           <p className="truncate text-[11px] font-semibold">
             {gk.name} <span className="font-normal text-muted-foreground">· gardien</span>
           </p>
@@ -447,6 +502,8 @@ export function HandballMatchDetailDialog({
     });
 
   const isLive = match.status === "live" || match.status === "halftime";
+  /** Match lancé ou terminé → la section « Stats du match » a du sens. */
+  const isPlayed = isLive || match.status === "finished";
   const hasFormRow = !!(forms && (forms.home || forms.away));
   const hasGoals =
     forms?.home?.scoredAvg != null ||
@@ -457,11 +514,32 @@ export function HandballMatchDetailDialog({
     match.odds &&
     (match.odds.home != null || match.odds.draw != null || match.odds.away != null)
   );
-  const hasLiveStats = !!match.stats;
+
+  // Stats du match réellement renseignées (source API-Sports, repli de la
+  // route /api/handball/matches). Le snapshot Flashscore ne transporte AUCUNE
+  // clé de stats (id/time/home/away/score/halves/odds/status seulement) :
+  // on n'affiche donc que les champs présents ET non nuls — jamais de 0
+  // inventé, jamais de trou.
+  const liveStatRows: { label: string; home: number; away: number }[] = [];
+  if (match.stats) {
+    const s = match.stats;
+    const add = (label: string, home: number | undefined, away: number | undefined) => {
+      if ((home ?? 0) === 0 && (away ?? 0) === 0) return;
+      liveStatRows.push({ label, home: home ?? 0, away: away ?? 0 });
+    };
+    add("Tirs 7 m", s.home7m, s.away7m);
+    add("Arrêts", s.homeSaves, s.awaySaves);
+    add("Exclusions 2 min", s.homeRedCards, s.awayRedCards);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+      {/* Fond du popup = teinte dark FotMob : `--GlobalColorScheme-Background-dialog:
+          rgb(29,29,29)` du bloc `.theme-dark` servi par fotmob.com (fond de page
+          dark = #000000, cartes = #1D1D1D). Scope au SEUL dialog handball :
+          la charte PariScore (navy + vert néon) reste intacte ailleurs. Light
+          : `--background` du site pour ne pas casser le thème clair. */}
+      <DialogContent className="bg-background dark:bg-[#1D1D1D] max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2">
@@ -516,7 +594,7 @@ export function HandballMatchDetailDialog({
         )}
 
         <Tabs defaultValue="analyse" className="mt-1">
-          <TabsList className="h-auto w-full p-1">
+          <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07]">
             <TabsTrigger value="analyse" className="flex-1">
               Analyse
             </TabsTrigger>
@@ -621,7 +699,7 @@ export function HandballMatchDetailDialog({
             )}
           </TabsContent>
 
-          {/* ── Onglet 2 : Stats équipes (comparaison côte à côte) ── */}
+          {/* ── Onglet 2 : Stats équipes (match en cours + moyennes prématch) ── */}
           <TabsContent value="stats" className="space-y-3">
             {/* En-tête colonnes */}
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -642,30 +720,106 @@ export function HandballMatchDetailDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
-              {hasFormRow && (
-                <CompareRow
-                  label="Forme L5"
-                  home={forms?.home ? frSeq(forms.home.seq) : "—"}
-                  away={forms?.away ? frSeq(forms.away.seq) : "—"}
-                />
-              )}
-              {hasGoals && (
-                <>
-                  <CompareRow
-                    label="Buts marqués / match"
-                    home={fmtNum(forms?.home?.scoredAvg)}
-                    away={fmtNum(forms?.away?.scoredAvg)}
-                  />
-                  <CompareRow
-                    label="Buts encaissés / match"
-                    home={fmtNum(forms?.home?.concededAvg)}
-                    away={fmtNum(forms?.away?.concededAvg)}
-                  />
-                </>
-              )}
-              {hasOdds && match.odds && (
-                <>
+            {/* Section 1 — Stats du match : uniquement les champs réellement
+                fournis par la source (0 inventé, 0 trou béant). */}
+            {isPlayed && (
+              <section className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Stats du match
+                </h4>
+                {liveStatRows.length > 0 ? (
+                  liveStatRows.map((r) => (
+                    <CompareBar key={r.label} label={r.label} home={r.home} away={r.away} />
+                  ))
+                ) : (
+                  <p className="text-[11px] leading-snug text-muted-foreground">
+                    Stats détaillées (7 m, arrêts, 2 min) non fournies par la source
+                    Flashscore.
+                  </p>
+                )}
+              </section>
+            )}
+
+            {/* Section 2 — Moyennes prématch (L5) : affichées aussi pour un
+                match à venir, calculées par buildFormStore (même store que
+                les 3 paris : pas de 2e heuristique). */}
+            {(hasFormRow || hasGoals) && (
+              <section className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Moyennes prématch (L5)
+                </h4>
+
+                {/* Résumé par équipe : buts marqués / encaissés sur les 5 derniers */}
+                {hasGoals && (
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="rounded-lg border border-emerald-500/20 p-1.5">
+                      <p className="truncate text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                        {match.home.shortName ?? match.home.name}
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-muted-foreground">
+                        <span className="text-foreground">{fmtNum(forms?.home?.scoredAvg)}</span>{" "}
+                        marqués —{" "}
+                        <span className="text-foreground">
+                          {fmtNum(forms?.home?.concededAvg)}
+                        </span>{" "}
+                        encaissés
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {forms?.home ? `${forms.home.played} matchs` : "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-sky-500/20 p-1.5">
+                      <p className="truncate text-[10px] font-bold uppercase tracking-wider text-sky-500">
+                        {match.away.shortName ?? match.away.name}
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-muted-foreground">
+                        <span className="text-foreground">{fmtNum(forms?.away?.scoredAvg)}</span>{" "}
+                        marqués —{" "}
+                        <span className="text-foreground">
+                          {fmtNum(forms?.away?.concededAvg)}
+                        </span>{" "}
+                        encaissés
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {forms?.away ? `${forms.away.played} matchs` : "—"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  {hasFormRow && (
+                    <CompareRow
+                      label="Forme L5"
+                      home={forms?.home ? frSeq(forms.home.seq) : "—"}
+                      away={forms?.away ? frSeq(forms.away.seq) : "—"}
+                    />
+                  )}
+                  {(forms?.home?.totalAvg != null || forms?.away?.totalAvg != null) && (
+                    <CompareRow
+                      label="Total buts / match"
+                      home={fmtNum(forms?.home?.totalAvg)}
+                      away={fmtNum(forms?.away?.totalAvg)}
+                    />
+                  )}
+                  {(forms?.home?.diffAvg != null || forms?.away?.diffAvg != null) && (
+                    <CompareRow
+                      label="Écart moyen"
+                      home={fmtDiff(forms?.home?.diffAvg)}
+                      away={fmtDiff(forms?.away?.diffAvg)}
+                    />
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Section 3 — Marché : cotes victoire + probabilités dé-vigées */}
+            {hasOdds && match.odds && (
+              <section className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Marché
+                </h4>
+                <div className="space-y-2">
                   {/* Cotes victoire côte à côte (le nul reste affiché en onglet Analyse) */}
                   <CompareRow
                     label="Cote victoire"
@@ -684,30 +838,13 @@ export function HandballMatchDetailDialog({
                       />
                     );
                   })()}
-                </>
-              )}
-              {hasLiveStats && match.stats && (
-                <>
-                  <CompareRow
-                    label="Tirs 7 m"
-                    home={String(match.stats.home7m ?? 0)}
-                    away={String(match.stats.away7m ?? 0)}
-                  />
-                  <CompareRow
-                    label="Arrêts"
-                    home={String(match.stats.homeSaves ?? 0)}
-                    away={String(match.stats.awaySaves ?? 0)}
-                  />
-                  <CompareRow
-                    label="Exclusions 2 min"
-                    home={String(match.stats.homeRedCards ?? 0)}
-                    away={String(match.stats.awayRedCards ?? 0)}
-                  />
-                </>
-              )}
-            </div>
+                </div>
+              </section>
+            )}
 
-            {!hasFormRow && !hasGoals && !hasOdds && !hasLiveStats && (
+            {/* État vide honnête : seulement si aucune section n'a affiché de donnée
+                (un match joué sans stats détaillées a déjà sa note explicative). */}
+            {!isPlayed && !hasFormRow && !hasGoals && !hasOdds && (
               <p className="py-4 text-center text-[11px] text-muted-foreground">
                 Aucune statistique disponible pour ce match
               </p>
@@ -740,7 +877,7 @@ export function HandballMatchDetailDialog({
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="group flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left hover:bg-muted/50"
+                    className="group flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left hover:bg-muted/50 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]"
                   >
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Marchés bonus
