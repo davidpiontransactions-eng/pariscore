@@ -8,6 +8,7 @@ import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
 import { HandballStrategyBar } from "./handball-strategy-bar";
 import { HandballTop8Widget } from "./handball-top8-widget";
+import { HandballBacktestWidget } from "./handball-backtest-widget";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
 import { HandballErrorBoundary } from "./handball-error-boundary";
@@ -78,6 +79,9 @@ export function HandballTabContent() {
         <HandballTop8Widget strategy={strategy} />
       </div>
 
+      {/* Backtest ROI visuel (cotes simulées) */}
+      <HandballBacktestWidget />
+
       {/* Filtres ligues */}
       <HandballFilters
         matches={displayed}
@@ -92,11 +96,12 @@ export function HandballTabContent() {
 
       {/* Grille de matchs */}
       {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">
-          Chargement...
+        // État async annoncé aux lecteurs d'écran
+        <div className="text-center py-8 text-muted-foreground" aria-live="polite">
+          Chargement…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground" aria-live="polite">
           Aucun match handball
         </div>
       ) : (
