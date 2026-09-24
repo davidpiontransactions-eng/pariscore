@@ -1,9 +1,12 @@
-// Tests matching équipes + tri popup joueurs HBL (boucle G2 → UI G4).
+// Tests matching équipes + tri popup joueurs HBL (boucle G2 → UI G4) et
+// fusion des snapshots HBL + StarLigue LNH (boucle LNH-SCRAP).
 // Convention obligatoire : import depuis "bun:test" (les globals cassent le
 // typecheck strict du build VPS).
 
 import { describe, expect, test } from "bun:test";
 import {
+  mergeHandballSnapshots,
+  playersForLeague,
   topPlayersForTeam,
   type HblPlayer,
   type HblPlayersSnapshot,
@@ -114,5 +117,106 @@ describe("topPlayersForTeam — limites & dégradation", () => {
     };
     const res = topPlayersForTeam(tie, "Stuttgart");
     expect(res.field.map((x) => x.name)).toEqual(["Adam Assec", "Zoe Zorro"]);
+  });
+});
+
+// ─── Fusion HBL + StarLigue (boucle LNH-SCRAP) ───────────────────────────────
+
+const lnhSnapshot: HblPlayersSnapshot = {
+  scraped_at: "2026-09-24T00:00:00.000Z",
+  competition: "starligue",
+  season: "2026 / 2027",
+  source: "test-lnh",
+  players: [
+    p({ name: "Kana Aksentijevic", team: "PSG", competition: "starligue", position: "GK", savePct: 33.3, saves: 31, games: 3 }),
+    p({ name: "Yahia Kedous", team: "PSG", competition: "starligue", position: "Field", goals: 21, assists: 9, games: 3 }),
+    p({ name: "Antoine Terguies", team: "PSG", competition: "starligue", position: "Field", goals: 15, games: 3 }),
+    p({ name: "Kentin Mahe", team: "Montpellier", competition: "starligue", position: "Field", goals: 19, games: 3 }),
+    p({ name: "Wesley Pardin", team: "Nantes", competition: "starligue", position: "GK", savePct: 38.1, saves: 40, games: 3 }),
+  ],
+};
+
+const merged = mergeHandballSnapshots(snapshot, lnhSnapshot)!;
+
+describe("mergeHandballSnapshots — HBL ∪ StarLigue", () => {
+  test("somme des joueurs + entête 'all' + équipes dédupliquées", () => {
+    expect(merged.players).toHaveLength(snapshot.players.length + lnhSnapshot.players.length);
+    expect(merged.competition).toBe("all");
+    expect(merged.season).toBe("2026/27 + 2026 / 2027");
+    // TVB Stuttgart ×3 + HC Erlangen ×3 + Füchse Berlin + PSG ×3 + Montpellier + Nantes
+    expect(merged.teams).toBe(6);
+  });
+
+  test("les deux compétitions restent accessibles dans le même snapshot", () => {
+    expect(merged.players.some((x) => x.competition === "starligue")).toBe(true);
+    expect(merged.players.some((x) => x.competition !== "starligue")).toBe(true);
+  });
+
+  test("repli : snapshot LNH seul ou HBL seul, null + null → null", () => {
+    expect(mergeHandballSnapshots(null, lnhSnapshot)).toBe(lnhSnapshot);
+    expect(mergeHandballSnapshots(snapshot, null)).toBe(snapshot);
+    expect(mergeHandballSnapshots(null, null)).toBeNull();
+  });
+
+  test("topPlayersForTeam('PSG') → joueurs LNH (nom canonique flashscore)", () => {
+    const res = topPlayersForTeam(merged, "PSG");
+    expect(res.team).toBe("PSG");
+    expect(res.field.map((x) => x.name)).toEqual(["Yahia Kedous", "Antoine Terguies"]);
+    expect(res.gk.map((x) => x.name)).toEqual(["Kana Aksentijevic"]);
+  });
+
+  test("le club allemand reste intact après fusion (pas de contamination)", () => {
+    const res = topPlayersForTeam(merged, "Stuttgart");
+    expect(res.field.map((x) => x.name)).toEqual(["Kai Häfner", "Juri Knorr"]);
+    expect(res.gk.every((x) => x.competition !== "starligue")).toBe(true);
+  });
+
+  test("requête flashscore 'Chambery Savoie' sans club → listes vides", () => {
+    const res = topPlayersForTeam(merged, "Chambery Savoie");
+    expect(res.field).toEqual([]);
+    expect(res.gk).toEqual([]);
+  });
+});
+
+describe("playersForLeague — filtre de compétition du DTO", () => {
+  test("StarLigue → uniquement les joueurs LNH", () => {
+    const res = playersForLeague(merged, "Starligue");
+    expect(res?.players).toHaveLength(lnhSnapshot.players.length);
+    expect(res?.players.every((x) => x.competition === "starligue")).toBe(true);
+    expect(topPlayersForTeam(res, "Montpellier").field.map((x) => x.name)).toEqual([
+      "Kentin Mahe",
+    ]);
+  });
+
+  test("variante 'Liqui Moly StarLigue' et 'LNH' reconnues", () => {
+    expect(playersForLeague(merged, "Liqui Moly StarLigue")?.players).toHaveLength(
+      lnhSnapshot.players.length
+    );
+    expect(playersForLeague(merged, "LNH Division 1")?.players).toHaveLength(
+      lnhSnapshot.players.length
+    );
+  });
+
+  test("DHB Pokal → snapshot entier (comportement historique conservé)", () => {
+    expect(playersForLeague(merged, "DHB Pokal")?.players).toHaveLength(
+      merged.players.length
+    );
+  });
+
+  test("ligue allemande → HBL seul (les joueurs LNH sont écartés)", () => {
+    const res = playersForLeague(merged, "Bundesliga");
+    expect(res?.players).toHaveLength(snapshot.players.length);
+    expect(res?.players.every((x) => !x.competition || x.competition === "hbl")).toBe(true);
+  });
+
+  test("StarLigue sans snapshot LNH → listes vides (dégradation propre)", () => {
+    const hblOnly = mergeHandballSnapshots(snapshot, null)!;
+    const res = playersForLeague(hblOnly, "Starligue");
+    expect(res?.players).toEqual([]);
+    expect(topPlayersForTeam(res, "PSG").field).toEqual([]);
+  });
+
+  test("snapshot null → null sans throw", () => {
+    expect(playersForLeague(null, "Starligue")).toBeNull();
   });
 });

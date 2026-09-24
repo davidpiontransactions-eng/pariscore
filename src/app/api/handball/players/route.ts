@@ -1,10 +1,11 @@
 // GET /api/handball/players?home=…&away=…&league=…
 // DTO compact « meilleurs joueurs » pour la popup prématch handball (G4).
-// Le snapshot data/hbl_players.json est lu via fs (server-only) : le dialog
-// client ne consomme QUE ce résultat de topPlayersForTeam (jamais le module).
+// Snapshot fusionné HBL + StarLigue (loadHandballPlayers) lu via fs
+// (server-only) : le dialog client ne consomme QUE topPlayersForTeam.
 import { NextResponse } from "next/server";
 import {
-  loadHblPlayers,
+  loadHandballPlayers,
+  playersForLeague,
   topPlayersForTeam,
   type HblPlayersSnapshot,
   type HblTeamTopPlayers,
@@ -40,19 +41,9 @@ export async function GET(request: Request) {
   const away = searchParams.get("away") ?? "";
   const league = searchParams.get("league") ?? "";
 
-  let snap = loadHblPlayers();
-  // Hors pokal : priorité au championnat (277 HBL vs 706 joueurs pokal) —
-  // le snapshot "all" mélange professionnels et amateurs.
-  if (
-    snap &&
-    !/pokal/i.test(league) &&
-    snap.players.some((p) => p.competition === "hbl")
-  ) {
-    snap = {
-      ...snap,
-      players: snap.players.filter((p) => !p.competition || p.competition === "hbl"),
-    };
-  }
+  // Filtre par compétition : StarLigue → snapshot LNH, DHB Pokal → tout,
+  // sinon HBL seul (706 joueurs pokal écraseraient les 277 professionnels).
+  const snap = playersForLeague(loadHandballPlayers(), league);
 
   const payload: PlayersTops = {
     home: topsWithFallback(snap, home),

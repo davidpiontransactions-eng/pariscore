@@ -1,0 +1,532 @@
+{
+  "scraped_at": "2026-09-24T21:38:19.837Z",
+  "competition": "starligue",
+  "season": "2026 / 2027",
+  "source": "lnh.fr (POST /ajaxpost1, sportsTeamsStats/index_ajax)",
+  "total": 16,
+  "metrics": [
+    {
+      "order": "attacks",
+      "key": "goals_for",
+      "label": "buts marqués"
+    },
+    {
+      "order": "defenses",
+      "key": "goals_against",
+      "label": "buts encaissés"
+    },
+    {
+      "order": "total_stops",
+      "key": "saves",
+      "label": "arrêts"
+    },
+    {
+      "order": "total_assists",
+      "key": "assists",
+      "label": "dernières passes"
+    },
+    {
+      "order": "total_turnovers",
+      "key": "turnovers",
+      "label": "pertes de balles"
+    }
+  ],
+  "teams": [
+    {
+      "team": "Caen",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 81,
+          "avg": 27,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 93,
+          "avg": 31,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 35,
+          "avg": 11.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 58,
+          "avg": 19.33,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 20,
+          "avg": 6.67,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Cesson Rennes-Metropole",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 85,
+          "avg": 28.33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 92,
+          "avg": 30.67,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 29,
+          "avg": 9.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 64,
+          "avg": 21.33,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 21,
+          "avg": 7,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Chambery Savoie",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 99,
+          "avg": 33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 94,
+          "avg": 31.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 29,
+          "avg": 9.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 64,
+          "avg": 21.33,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 14,
+          "avg": 4.67,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Chartres",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 83,
+          "avg": 27.67,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 106,
+          "avg": 35.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 31,
+          "avg": 10.33,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 48,
+          "avg": 16,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 23,
+          "avg": 7.67,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Dunkerque",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 78,
+          "avg": 26,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 90,
+          "avg": 30,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 32,
+          "avg": 10.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 60,
+          "avg": 20,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 12,
+          "avg": 4,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Limoges",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 102,
+          "avg": 34,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 84,
+          "avg": 28,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 43,
+          "avg": 14.33,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 74,
+          "avg": 24.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 17,
+          "avg": 5.67,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Montpellier",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 110,
+          "avg": 36.67,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 91,
+          "avg": 30.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 37,
+          "avg": 12.33,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 89,
+          "avg": 29.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 19,
+          "avg": 6.33,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Nantes",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 112,
+          "avg": 37.33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 87,
+          "avg": 29,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 41,
+          "avg": 13.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 75,
+          "avg": 25,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 9,
+          "avg": 3,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Nimes",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 99,
+          "avg": 33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 101,
+          "avg": 33.67,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 34,
+          "avg": 11.33,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 67,
+          "avg": 22.33,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 15,
+          "avg": 5,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Provence Aix",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 90,
+          "avg": 30,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 99,
+          "avg": 33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 42,
+          "avg": 14,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 53,
+          "avg": 17.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 22,
+          "avg": 7.33,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "PSG",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 97,
+          "avg": 32.33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 79,
+          "avg": 26.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 50,
+          "avg": 16.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 71,
+          "avg": 23.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 16,
+          "avg": 5.33,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Saran",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 88,
+          "avg": 29.33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 85,
+          "avg": 28.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 50,
+          "avg": 16.67,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 64,
+          "avg": 21.33,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 18,
+          "avg": 6,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Selestat",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 90,
+          "avg": 30,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 90,
+          "avg": 30,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 34,
+          "avg": 11.33,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 71,
+          "avg": 23.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 22,
+          "avg": 7.33,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "St. Raphael",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 87,
+          "avg": 29,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 97,
+          "avg": 32.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 30,
+          "avg": 10,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 71,
+          "avg": 23.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 22,
+          "avg": 7.33,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Toulouse",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 80,
+          "avg": 26.67,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 84,
+          "avg": 28,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 36,
+          "avg": 12,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 59,
+          "avg": 19.67,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 18,
+          "avg": 6,
+          "label": "pertes de balles"
+        }
+      }
+    },
+    {
+      "team": "Tremblay",
+      "played": 3,
+      "metrics": {
+        "goals_for": {
+          "total": 94,
+          "avg": 31.33,
+          "label": "buts marqués"
+        },
+        "goals_against": {
+          "total": 103,
+          "avg": 34.33,
+          "label": "buts encaissés"
+        },
+        "saves": {
+          "total": 33,
+          "avg": 11,
+          "label": "arrêts"
+        },
+        "assists": {
+          "total": 63,
+          "avg": 21,
+          "label": "dernières passes"
+        },
+        "turnovers": {
+          "total": 23,
+          "avg": 7.67,
+          "label": "pertes de balles"
+        }
+      }
+    }
+  ]
+}

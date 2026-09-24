@@ -1,7 +1,12 @@
-// Stats joueurs HBL (1.HBL + DHB-Pokal) — popup prématch handball.
+// Stats joueurs handball — popup prématch (HBL Allemagne + StarLigue LNH).
 //
-// Source : data/hbl_players.json, produit par scripts/scrape-hbl-players.js
+// Source 1 : data/hbl_players.json, produit par scripts/scrape-hbl-players.js
 // (API Synergy/Sportradar de daikin-hbl.de → opel-hbl.de, probe 2026-09-24).
+// Source 2 : data/lnh_players.json, produit par scripts/scrape-lnh.js
+// (POST /ajaxpost1 de lnh.fr — scraping validé par l'opérateur le 2026-09-24).
+// Les deux snapshots sont FUSIONNÉS par loadHandballPlayers() ; le DTO
+// /api/handball/players sélectionne la compétition via playersForLeague()
+// (StarLigue → lnh, DHB Pokal → tout, sinon HBL).
 // Lecture readonly + cache mémoire module — pattern football-understat-players
 // avec DATA_DIR env comme hockey/prematch-data (VPS : /opt/pariscorebis/data).
 
@@ -12,14 +17,17 @@ import { normHandballName } from "./handball-logos";
 /** Poste pour la popup : gardien ou joueur de champ. */
 export type HblPosition = "GK" | "Field";
 
+/** Compétition d'origine d'un joueur (snapshot fusionné = les 3 à la fois). */
+export type HandballCompetition = "hbl" | "dhb-pokal" | "starligue";
+
 export type HblPlayer = {
   name: string;
-  /** Nom complet du club (ex. "TVB Stuttgart", "Füchse Berlin"). */
+  /** Nom complet du club (ex. "TVB Stuttgart", "PSG"). */
   team: string;
-  /** Code 3 lettres source (ex. "TVB", "BER"). */
+  /** Code 3 lettres source (ex. "TVB", "BER") — HBL seul. */
   teamCode?: string;
   /** Compétition d'origine quand le snapshot est en mode "all". */
-  competition?: "hbl" | "dhb-pokal";
+  competition?: HandballCompetition;
   position: HblPosition;
   goals: number;
   assists?: number;
@@ -32,15 +40,19 @@ export type HblPlayer = {
   saves?: number;
   /** Buts encaissés (GK uniquement). */
   goalsAgainst?: number;
-  /** Buts à 7 m (Field uniquement). */
+  /** Buts à 7 m / penalty (Field uniquement). */
   sevenMGoals?: number;
   /** Buts / match (Field uniquement). */
   avgGoals?: number;
+  /** Tirages cadrés (Field, LNH seul). */
+  shots?: number;
+  /** Score LNH (note officielle 0-100, LNH seul). */
+  rating?: number;
 };
 
 export type HblPlayersSnapshot = {
   scraped_at: string;
-  /** "all" | "hbl" | "dhb-pokal" */
+  /** "all" | "hbl" | "dhb-pokal" | "starligue" */
   competition: string;
   /** Libellé saison (ex. "2026/27"). */
   season: string;
@@ -58,30 +70,91 @@ export type HblTeamTopPlayers = {
   field: HblPlayer[];
 };
 
-// Cache mémoire module : undefined = pas encore lu, null = fichier absent.
+// Caches mémoire module : undefined = pas encore lu, null = fichier absent.
 let _cache: HblPlayersSnapshot | null | undefined;
+let _lnhCache: HblPlayersSnapshot | null | undefined;
+let _merged: HblPlayersSnapshot | null | undefined;
 
-/** Lit data/hbl_players.json (DATA_DIR env prioritaire, comme sur le VPS). */
-export function loadHblPlayers(): HblPlayersSnapshot | null {
-  if (_cache !== undefined) return _cache;
+/** Lit un snapshot JSON depuis DATA_DIR (env prioritaire, comme sur le VPS). */
+function readSnapshot(file: string): HblPlayersSnapshot | null {
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-    const file = join(dataDir, "hbl_players.json");
-    if (!existsSync(file)) {
-      _cache = null;
-      return null;
-    }
-    const data = JSON.parse(readFileSync(file, "utf8")) as HblPlayersSnapshot;
-    _cache = data && Array.isArray(data.players) ? data : null;
+    const target = join(dataDir, file);
+    if (!existsSync(target)) return null;
+    const data = JSON.parse(readFileSync(target, "utf8")) as HblPlayersSnapshot;
+    return data && Array.isArray(data.players) ? data : null;
   } catch {
-    _cache = null;
+    return null;
   }
+}
+
+/** Lit data/hbl_players.json (HBL Allemagne, scripts/scrape-hbl-players.js). */
+export function loadHblPlayers(): HblPlayersSnapshot | null {
+  if (_cache === undefined) _cache = readSnapshot("hbl_players.json");
   return _cache;
 }
 
-/** Purge du cache (tests / hot-reload du fichier après un scrape). */
+/** Lit data/lnh_players.json (StarLigue, scripts/scrape-lnh.js). */
+export function loadLnhPlayers(): HblPlayersSnapshot | null {
+  if (_lnhCache === undefined) _lnhCache = readSnapshot("lnh_players.json");
+  return _lnhCache;
+}
+
+/**
+ * Fusion des deux snapshots (HBL ∪ LNH) : un seul appel pour la popup, le
+ * tri et le découpage GK/Field restent gérés par topPlayersForTeam. L'entête
+ * reprend le snapshot HBL s'il existe, sinon le snapshot LNH.
+ */
+export function mergeHandballSnapshots(
+  hbl: HblPlayersSnapshot | null,
+  lnh: HblPlayersSnapshot | null
+): HblPlayersSnapshot | null {
+  if (!hbl) return lnh;
+  if (!lnh) return hbl;
+  const players = [...hbl.players, ...lnh.players];
+  const teams = new Set(players.map((p) => p.team));
+  return {
+    ...hbl,
+    competition: "all",
+    season: [hbl.season, lnh.season].filter(Boolean).join(" + "),
+    total: players.length,
+    teams: teams.size,
+    players,
+  };
+}
+
+/** Snapshot fusionné mis en cache (invalide par clearHblPlayersCache). */
+export function loadHandballPlayers(): HblPlayersSnapshot | null {
+  if (_merged === undefined) _merged = mergeHandballSnapshots(loadHblPlayers(), loadLnhPlayers());
+  return _merged;
+}
+
+/**
+ * Filtre le snapshot fusionné selon la ligue du match (paramètre `league` du
+ * DTO) — reprend la règle historique du filtre pokal/HBL :
+ *   - StarLigue / LNH  → joueurs LNH seuls (snapshot LNH absent → liste vide,
+ *     la popup dégrade proprement au lieu d'afficher des joueurs allemands) ;
+ *   - DHB Pokal / coupe → tout (pros + amateurs, comportement conservé) ;
+ *   - sinon             → HBL seul si le snapshot en porte, sinon tel quel.
+ */
+export function playersForLeague(
+  snapshot: HblPlayersSnapshot | null | undefined,
+  league: string
+): HblPlayersSnapshot | null {
+  if (!snapshot) return null;
+  if (/pokal|coupe|cup/i.test(league)) return snapshot;
+  if (/starligue|star\s*ligue|lnh/i.test(league)) {
+    return { ...snapshot, players: snapshot.players.filter((p) => p.competition === "starligue") };
+  }
+  const hbl = snapshot.players.filter((p) => !p.competition || p.competition === "hbl");
+  return hbl.length ? { ...snapshot, players: hbl } : snapshot;
+}
+
+/** Purge des caches (tests / hot-reload des fichiers après un scrape). */
 export function clearHblPlayersCache(): void {
   _cache = undefined;
+  _lnhCache = undefined;
+  _merged = undefined;
 }
 
 /**

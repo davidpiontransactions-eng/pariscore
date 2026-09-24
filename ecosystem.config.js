@@ -16,6 +16,7 @@
  *   11. `pariscore-cron-elo-weekly`   : snapshots Elo surface TennisAbstract + matchs L10 (lundi 14h Paris)
  *   12. `pariscore-cron-top5-backtest`: settle + snapshot quotidien du backtest Top 5 foot (05:15 UTC)
  *   13. `pariscore-cron-hbl-players` : snapshot joueurs HBL handball (05:10 UTC)
+ *   14. `pariscore-cron-lnh`         : snapshot LNH StarLigue (calendrier + stats, 21:30 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -430,6 +431,32 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job snapshot LNH (StarLigue — calendrier + stats) ===
+      // Scrape lnh.fr via POST /ajaxpost1 (4 surfaces : stats joueurs +
+      // gardiens, calendrier, classement, stats clubs) → data/lnh_players.json,
+      // lnh_calendar.json, lnh_standing.json, lnh_teamstats.json. Consommé par
+      // src/lib/handball-players.ts (fusion HBL + LNH) → GET /api/handball/players
+      // = popup « Bets & Joueurs » de la StarLigue.
+      // Garde-fous : rate-limit 1,5 s/requête + budget 40 pages/run (~1 min) ;
+      // écriture all-or-nothing (un run en échec n'écrase jamais un JSON bon).
+      // Pas de skip-cache → `pm2 restart pariscore-cron-lnh` force un run.
+      name: 'pariscore-cron-lnh',
+      script: 'scripts/scrape-lnh.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 21 * * *', // quotidien 21:30 UTC (23:30 Paris) — décalé des ticks 21:00/22:00
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-lnh.err.log',
+      out_file: 'logs/cron-lnh.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job TennisAbstract MCP (routine matinale serve/retour) ===
       // Scrape les 4 leaderboards MCP (serve/return × hommes/dames, last52)
       // et dérive SPW/RPW → data/ta-mcp.json, fallback leaderboard du moteur
@@ -596,6 +623,37 @@ module.exports = {
       max_memory_restart: '128M',
       error_file: 'logs/cron-odds.err.log',
       out_file: 'logs/cron-odds.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Backtest stratégies handball du jour (23:00 Europe/Paris) ===
+      // 1. --refresh : rafraîchit data/flashscore_handball.json via le scraper
+      //    Flashscore (sinon la dernière écriture date de 23h → zéro résultat du
+      //    jour) ; 2. calcule le backtest des 8 stratégies sur la journée
+      //    Europe/Paris et écrit data/handball_backtest_today.json, consommé par
+      //    GET /api/handball/backtest-today (section « Backtest des stratégies »
+      //    du mode 📆 Résultats du jour).
+      // Garde intégrée au script : journée sans aucun match terminé (tick hors
+      // créneau) → fichier existant conservé, écriture sautée.
+      name: 'pariscore-cron-handball-nightly',
+      script: 'scripts/backtest-handball-today.js',
+      args: '--refresh',
+      cwd: '/home/ubuntu/pariscore',
+      // 23:00 Europe/Paris = 21:00 UTC l'été (CEST) / 22:00 UTC l'hiver (CET).
+      // Double tick (pattern pariscore-cron-elo-weekly) : le créneau 22:00 UTC
+      // tombe à 23:00 hiver et 00:00 été — ce dernier est neutralisé par la
+      // garde « 0 match terminé » du script.
+      cron_restart: '0 21,22 * * *',
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-handball-nightly.err.log',
+      out_file: 'logs/cron-handball-nightly.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
