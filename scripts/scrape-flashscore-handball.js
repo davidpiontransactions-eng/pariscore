@@ -8,10 +8,17 @@
  * Source : https://2.flashscore.ninja/2/x/feed/f_7_{day}_1_en_1
  * Sortie : data/flashscore_handball.json { updatedAt, source, matches[] }
  *
- * Feed codes handball :
+ * Feed codes handball (mapping VÉRIFIÉ empiriquement sur le feed brut
+ * le 2026-09-24 — 248 matchs terminés J-7..J0 + cross-check betexplorer) :
  *   CX/AE = domicile, AF = extérieur, AD = timestamp kickoff,
- *   AG/AT = score FT, AH/AU = score 2ème mi-temps,
- *   BA/BC = score1ère mi-temps, AS/AZ = statut (1=live,2=finished)
+ *   AG = score final LOCAUX, AH = score final VISITEURS,
+ *   BA = buts LOCAUX à la MT, BB = buts VISITEURS à la MT,
+ *   AT/AU = score à 60' (régulation) — identique à AG/AH sauf prolongation
+ *           (5/248 OT : AT = AU = nul à 60', ex. Grindsted 29-29 → 30-38),
+ *   BC/BD = 2e mi-temps, BE/BF/RPA/RPB = buts prolongation (non exposés),
+ *   AS/AZ = statut (1=live, 2=finished)
+ * Bug #10 (avant fix) : AG/AT écrits en mi-temps et AH/AU en final →
+ *   score = "visiteur-visiteur" (A-A) et MT = "local-local".
  *
  * Usage :
  *   node scripts/scrape-flashscore-handball.js              # J+0..J+7
@@ -145,23 +152,23 @@ function parseDay(body) {
       case 'AF': // Away team (full)
         cur.away = v;
         break;
-      case 'AG': // Home score1ère MT
-        cur.homeHT = parseInt(v, 10);
-        break;
-      case 'AT': // Away score1ère MT
-        cur.awayHT = parseInt(v, 10);
-        break;
-      case 'AH': // Home score FT
+      // Clés de score — mapping vérifié empiriquement sur le feed brut
+      // (2026-09-24, 248 matchs terminés, invariants BA+BC(+BE) = AG et
+      // BB+BD(+BF) = AH, cross-check betexplorer) :
+      //   AG/AH = final local/visiteur · BA/BB = MT local/visiteur
+      //   AT/AU = score à 60' (régulation, ignoré : ≠ final si prolongation)
+      //   BC/BD = 2e MT · BE/BF/RPA/RPB = prolongation (ignorés)
+      case 'AG': // Score final LOCAUX
         cur.homeFT = parseInt(v, 10);
         break;
-      case 'AU': // Away score FT
+      case 'AH': // Score final VISITEURS
         cur.awayFT = parseInt(v, 10);
         break;
-      case 'BA': // Home score2ème MT (détail)
-        if (cur.homeFT == null) cur.homeHT2 = parseInt(v, 10);
+      case 'BA': // Buts LOCAUX à la mi-temps
+        cur.homeHT = parseInt(v, 10);
         break;
-      case 'BC': // Away score2ème MT (détail)
-        if (cur.awayFT == null) cur.awayHT2 = parseInt(v, 10);
+      case 'BB': // Buts VISITEURS à la mi-temps
+        cur.awayHT = parseInt(v, 10);
         break;
       case 'AS': // Statut principal
       case 'AZ': // Statut alternatif
