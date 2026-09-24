@@ -47,6 +47,19 @@ describe("toHandballMatch — identité d'équipe stable", () => {
     const b = toHandballMatch({ home: "PSG", away: "Nantes", league: "Starligue", time: "2026-09-24T18:00:00Z" }, 99);
     expect(a.id).toBe(b.id);
   });
+
+  test("league.id = hash du nom (fix G6-4 : 2 ligues ≠ 2 ids sports-tree)", () => {
+    const a = toHandballMatch({ home: "THW Kiel", away: "Füchse Berlin", league: "Bundesliga", country: "Allemagne" }, 0);
+    const b = toHandballMatch({ home: "PSG", away: "Nantes", league: "Starligue", country: "France" }, 1);
+    // Régression : league.id ≡ 0 effondrait toutes les ligues d'un pays en
+    // un unique nœud `handball:0`.
+    expect(a.league.id).not.toBe(0);
+    expect(b.league.id).not.toBe(0);
+    expect(a.league.id).not.toBe(b.league.id);
+    // Même ligue → même id (join/dédup sports-tree)
+    const a2 = toHandballMatch({ home: "HSG Wetzlar", away: "THW Kiel", league: "Bundesliga" }, 2);
+    expect(a.league.id).toBe(a2.league.id);
+  });
 });
 
 describe("fraîcheur snapshot Flashscore (gate 20h)", () => {

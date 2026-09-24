@@ -145,7 +145,14 @@ export function toHandballMatch(m: FlashscoreMatch, _idx: number): HandballMatch
 
   return {
     id: matchId,
-    league: { id: 0, name: m.league || "Handball", country: m.country || "", countryCode: "" },
+    // Fix review G6-4 : id=0 effondrait TOUTES les ligues d'un pays en un
+    // nœud `handball:0` du sports-tree → hash du nom (2 ligues ≠ 2 ids).
+    league: {
+      id: teamHashId(m.league || "Handball"),
+      name: m.league || "Handball",
+      country: m.country || "",
+      countryCode: "",
+    },
     home: { id: teamHashId(m.home), name: m.home || "" },
     away: { id: teamHashId(m.away), name: m.away || "" },
     kickoff: m.time || new Date().toISOString(),

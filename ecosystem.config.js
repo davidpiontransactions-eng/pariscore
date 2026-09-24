@@ -15,6 +15,7 @@
  *   10. `pariscore-cron-press-review`: pré-chauffe cache revue de presse (quotidien 07:00 UTC, Zero-LLM)
  *   11. `pariscore-cron-elo-weekly`   : snapshots Elo surface TennisAbstract + matchs L10 (lundi 14h Paris)
  *   12. `pariscore-cron-top5-backtest`: settle + snapshot quotidien du backtest Top 5 foot (05:15 UTC)
+ *   13. `pariscore-cron-hbl-players` : snapshot joueurs HBL handball (05:10 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -406,6 +407,29 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job snapshot joueurs HBL (effectifs handball) ===
+      // Scrape les effectifs/gardiens HBL → data/hbl_players.json (~267 Ko),
+      // consommé par GET /api/handball/players (colonnes joueurs du popup
+      // analyse). Fix review G6-1 : le JSON est untracked, le VPS n'a aucun
+      // snapshot sans ce cron → stats joueurs vides en prod.
+      name: 'pariscore-cron-hbl-players',
+      script: 'scripts/scrape-hbl-players.js',
+      args: '--competition=all',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '10 5 * * *', // quotidien à 05:10 UTC (décalé des crons 05:00 / 05:15)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-hbl-players.err.log',
+      out_file: 'logs/cron-hbl-players.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job TennisAbstract MCP (routine matinale serve/retour) ===
       // Scrape les 4 leaderboards MCP (serve/return × hommes/dames, last52)
       // et dérive SPW/RPW → data/ta-mcp.json, fallback leaderboard du moteur
@@ -533,6 +557,29 @@ module.exports = {
       max_memory_restart: '128M',
       error_file: 'logs/cron-hockey-restart.err.log',
       out_file: 'logs/cron-hockey-restart.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job OddsPapi handball (cotes prématch — fix finding G6-2) ===
+      // 2 req/run sur free tier 250 req/mois (fixtures sportId=22 + batch
+      // odds-by-tournaments toutes ligues) = ~60 req/mois. Clé lue par le
+      // script lui-même dans .env (ODDSPAPI_V4_KEY) — pas de clé en pm2 env.
+      // Sortie : data/odds_handball_papi.json, consommée par
+      // /api/handball/matches (applyPapiOdds) pour remplir les odds vides.
+      name: 'pariscore-cron-odds-papi',
+      script: 'scripts/fetch-odds-papi.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '40 4 * * *', // quotidien 04:40 UTC (décalé hbl-players 05:10)
+      autorestart: false,          // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-odds-papi.err.log',
+      out_file: 'logs/cron-odds-papi.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

@@ -47,6 +47,22 @@ export type HandballOpeningOdds = {
   handicap?: number;
   /** Les deux équipes à 30+ (cote ouverture) */
   btts30?: number;
+  // ── Marchés bonus G10 (remplis par le snapshot si les lignes existent ;
+  //    absents aujourd'hui → prob seule, jamais de cote inventée) ──
+  /** Résultat mi-temps (HT 1X2) */
+  htResult?: { home?: number; draw?: number; away?: number };
+  /** Écart de vainqueur (bandes 1-5 / 6-10 / 11+ par côté, + nul) */
+  winningMargin?: {
+    home1_5?: number;
+    home6_10?: number;
+    home11?: number;
+    draw?: number;
+    away1_5?: number;
+    away6_10?: number;
+    away11?: number;
+  };
+  /** Course à X buts : clé cible ("10" | "15" | "20") → cotes home/away */
+  raceTo?: Record<string, { home?: number; away?: number } | undefined>;
 };
 
 export type HandballMatch = {

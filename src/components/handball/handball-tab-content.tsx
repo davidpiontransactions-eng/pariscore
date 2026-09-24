@@ -34,9 +34,20 @@ export function HandballTabContent() {
     [allMatches],
   );
   const displayed = mode === "live" ? live : prematch;
-  const filtered = selectedLeague
-    ? displayed.filter((m) => m.league.name === selectedLeague)
-    : displayed;
+  // Mémoïsé : la référence doit être stable pour que React.memo du calendrier
+  // (G6-9) soit effectif — un filtre recréé à chaque render neutraliserait le memo.
+  const filtered = useMemo(
+    () =>
+      selectedLeague
+        ? displayed.filter((m) => m.league.name === selectedLeague)
+        : displayed,
+    [displayed, selectedLeague],
+  );
+  // Matchs terminés du snapshot → forme récente + lambdas ajustés du dialog détail.
+  const finished = useMemo(
+    () => allMatches.filter((m) => m.status === "finished"),
+    [allMatches],
+  );
 
   // Auto-switch prematch si aucun live
   useEffect(() => {
@@ -89,9 +100,9 @@ export function HandballTabContent() {
         onSelect={setSelectedLeague}
       />
 
-      {/* Calendrier (prematch seulement) */}
+      {/* Calendrier (prematch seulement) — lignes cliquables → popup analyse */}
       {mode === "prematch" && filtered.length > 0 && (
-        <HandballCalendar matches={filtered} />
+        <HandballCalendar matches={filtered} onSelect={setDetailMatch} />
       )}
 
       {/* Grille de matchs */}
@@ -120,6 +131,7 @@ export function HandballTabContent() {
       {detailMatch && (
         <HandballMatchDetailDialog
           match={detailMatch}
+          finished={finished}
           open
           onOpenChange={(open) => {
             if (!open) setDetailMatch(null);

@@ -1,13 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { HandballMatch } from "@/lib/handball-data";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 
 // Couleurs via tokens dark (bg-card/border-border/text-*) — pas de hex en dur
 
-export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
+// Fix review G6-9 : memo — props stables (matches mémoïsé côté parent +
+// onSelect = setter de state stable) → un clic calendrier ne re-rend plus
+// les centaines de lignes, seulement le dialog.
+export const HandballCalendar = memo(function HandballCalendar({
+  matches,
+  onSelect,
+}: {
+  matches: HandballMatch[];
+  /** Ouvre la popup d'analyse au clic — même state detailMatch que les cartes. */
+  onSelect?: (match: HandballMatch) => void;
+}) {
   const byDate = useMemo(() => {
     const map = new Map<string, HandballMatch[]>();
     for (const m of matches) {
@@ -41,9 +51,13 @@ export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
           </h3>
           <div className="rounded-b border border-border bg-card overflow-hidden divide-y divide-border">
             {dayMatches.map((m) => (
-              <div
+              // Ligne cliquable accessible : bouton natif (Enter/Espace inclus)
+              <button
                 key={m.id}
-                className="flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-muted"
+                type="button"
+                onClick={() => onSelect?.(m)}
+                aria-label={`Analyse du match ${m.home.name} contre ${m.away.name}`}
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-muted cursor-pointer focus-visible:ring-2 ring-[#00e676] outline-none"
               >
                 <span className="text-xs w-16 tabular-nums text-muted-foreground">
                   {new Date(m.kickoff).toLocaleTimeString("fr-FR", {
@@ -70,11 +84,11 @@ export function HandballCalendar({ matches }: { matches: HandballMatch[] }) {
                     className="max-w-full"
                   />
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       ))}
     </div>
   );
-}
+});

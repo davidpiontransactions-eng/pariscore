@@ -166,10 +166,10 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-match-card | handball-match-card.tsx | Carte match prematch (équipes, cotes 1X2, badge ligue) |
 | handball-live-card | handball-live-card.tsx | Carte match live (score temps réel, minute, MT, stats 7m/saves) |
 | handball-filters | handball-filters.tsx | Barre filtres ligues (pills horizontaux avec compteurs) |
-| handball-calendar | handball-calendar.tsx | Calendrier matchs groupés par date |
+| handball-calendar | handball-calendar.tsx | Calendrier matchs groupés par date (lignes cliquables → popup analyse) |
 | handball-top8-widget | handball-top8-widget.tsx | Top 8 matchs par stratégie (tableau avec prob/EV/trend) |
 | handball-strategy-bar | handball-strategy-bar.tsx | Sélecteur pills 8 stratégies (Équipe, 1X2, O55.5, U62.5, HC, BTTS, HT, EV+) |
-| handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail match (score, MT, stats live, cotes) |
+| handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail 3 onglets : Analyse (forme, cotes, verdict modèle), Stats équipes (comparaison côte à côte), Bets & Joueurs (3 paris prédictifs + top GK/buteurs via /api/handball/players) |
 | handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
 | handball-hero-header | handball-hero-header.tsx | Hero onglet Handball (miroir hockey : accroche 60 min, 3 stratégies pick, visuel silhouette/photo + halo #00e676) |
 | handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
