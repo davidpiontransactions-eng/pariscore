@@ -7,7 +7,8 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { leagueCountry, leagueFlag, leagueLogo } from "@/lib/handball-logos";
+import { leagueCountry, leagueLogo } from "@/lib/handball-logos";
+import { CountryFlag } from "@/components/ui/country-flag";
 
 export function HandballLeagueBadge({
   leagueName,
@@ -21,7 +22,6 @@ export function HandballLeagueBadge({
   const [failed, setFailed] = useState(false);
   const resolvedCountry = leagueCountry(leagueName, country);
   const logo = leagueLogo(leagueName, resolvedCountry);
-  const flag = leagueFlag(resolvedCountry);
 
   return (
     <span
@@ -40,11 +40,7 @@ export function HandballLeagueBadge({
           className="h-4 w-4 shrink-0 object-contain"
         />
       )}
-      {flag && (
-        <span aria-hidden className="shrink-0 text-xs leading-none">
-          {flag}
-        </span>
-      )}
+      {resolvedCountry && <CountryFlag country={resolvedCountry} size={14} />}
       <span className="truncate">{leagueName}</span>
     </span>
   );

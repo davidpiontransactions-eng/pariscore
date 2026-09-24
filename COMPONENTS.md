@@ -313,7 +313,7 @@ Standard shadcn/ui set, owned in-repo. Full list: `accordion`, `alert`,
 `context-menu`, `dialog`, `drawer`, `dropdown-menu`, `form`, `hover-card`,
 `input-otp`, `input`, `label`, `menubar`, `navigation-menu`, `pagination`,
 `player-avatar`, `popover`, `progress`, `radio-group`, `resizable`, `scroll-area`, `select`,
-`separator`, `sheet`, `skeleton`, `slider`, `sonner`, `spinner`, `sport-image`, `switch`,
+`separator`, `sheet`, `skeleton`, `slider`, `sonner`, `spinner`, `sport-image`, `country-flag`, `switch`,
 `table`, `tabs`, `textarea`, `toast`, `toggle`, `toggle-group`, `tooltip`,
 `typography`.
 
