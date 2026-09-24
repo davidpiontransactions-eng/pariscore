@@ -777,7 +777,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
                       byLeague.get(key)!.push(m);
                     }
                     return Array.from(byLeague.entries()).map(([league, leagueMatches]) => (
-                      <div key={league} className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
+                      <div key={league} className="rounded-xl overflow-hidden border border-slate-700/50 bg-slate-900/80 backdrop-blur-sm shadow-2xl">
                         <div
                           className="flex items-center px-3 py-2 text-white font-bold text-[11px] gap-1.5"
                           style={{ background: leagueMatches[0].leagueColor }}
