@@ -4,7 +4,7 @@
     "leagueId": "super_lig",
     "leagueName": "Turkey",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-24T09:26:53.282773Z",
+    "lastUpdated": "2026-09-25T09:44:35.794303Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 21,
     "window": 8,
@@ -12,69 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Trabzonspor",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 14,
-      "ga": 4
-    },
-    {
-      "teamName": "Corum",
-      "gp": 3,
-      "w": 1,
-      "d": 0,
-      "l": 2,
-      "gf": 4,
-      "ga": 3
-    },
-    {
-      "teamName": "Amed Sk",
-      "gp": 4,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 13,
-      "ga": 3
-    },
-    {
-      "teamName": "Gaziantep",
-      "gp": 5,
-      "w": 0,
-      "d": 3,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
-    },
-    {
-      "teamName": "Kocaelispor",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 7,
-      "ga": 2
-    },
-    {
-      "teamName": "Rizespor",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "Genclerbirligi",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 7
-    },
     {
       "teamName": "Samsunspor",
       "gp": 5,
@@ -85,57 +22,12 @@
       "ga": 12
     },
     {
-      "teamName": "Antalyaspor",
+      "teamName": "Alanyaspor",
       "gp": 5,
       "w": 2,
       "d": 2,
       "l": 1,
-      "gf": 7,
-      "ga": 6
-    },
-    {
-      "teamName": "Besiktas",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 14,
-      "ga": 4
-    },
-    {
-      "teamName": "Erzurum Bb",
-      "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 2,
-      "ga": 4
-    },
-    {
-      "teamName": "Fenerbahce",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 18,
-      "ga": 7
-    },
-    {
-      "teamName": "Kayserispor",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "Galatasaray",
-      "gp": 5,
-      "w": 4,
-      "d": 2,
-      "l": 0,
-      "gf": 12,
+      "gf": 9,
       "ga": 6
     },
     {
@@ -148,13 +40,13 @@
       "ga": 5
     },
     {
-      "teamName": "Alanyaspor",
+      "teamName": "Trabzonspor",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 14,
+      "ga": 4
     },
     {
       "teamName": "Eyupspor",
@@ -166,12 +58,120 @@
       "ga": 6
     },
     {
+      "teamName": "Besiktas",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 14,
+      "ga": 4
+    },
+    {
+      "teamName": "Galatasaray",
+      "gp": 5,
+      "w": 4,
+      "d": 2,
+      "l": 0,
+      "gf": 12,
+      "ga": 6
+    },
+    {
+      "teamName": "Gaziantep",
+      "gp": 5,
+      "w": 0,
+      "d": 3,
+      "l": 2,
+      "gf": 4,
+      "ga": 5
+    },
+    {
+      "teamName": "Goztepe",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 9
+    },
+    {
+      "teamName": "Kayserispor",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
+    },
+    {
+      "teamName": "Kocaelispor",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 7,
+      "ga": 2
+    },
+    {
+      "teamName": "Genclerbirligi",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
+    },
+    {
+      "teamName": "Fenerbahce",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 18,
+      "ga": 7
+    },
+    {
       "teamName": "F. Karagumruk",
       "gp": 5,
       "w": 3,
       "d": 1,
       "l": 1,
       "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Amed Sk",
+      "gp": 4,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 13,
+      "ga": 3
+    },
+    {
+      "teamName": "Kasimpasa",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 0,
+      "gf": 5,
+      "ga": 5
+    },
+    {
+      "teamName": "Corum",
+      "gp": 3,
+      "w": 1,
+      "d": 0,
+      "l": 2,
+      "gf": 4,
+      "ga": 3
+    },
+    {
+      "teamName": "Erzurum Bb",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 2,
       "ga": 4
     },
     {
@@ -184,25 +184,52 @@
       "ga": 5
     },
     {
-      "teamName": "Kasimpasa",
+      "teamName": "Rizespor",
       "gp": 5,
-      "w": 1,
-      "d": 3,
-      "l": 0,
-      "gf": 5,
-      "ga": 5
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
     },
     {
-      "teamName": "Goztepe",
+      "teamName": "Antalyaspor",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 2,
-      "l": 2,
+      "l": 1,
       "gf": 7,
-      "ga": 9
+      "ga": 6
     }
   ],
   "away": [
+    {
+      "teamName": "Samsunspor",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 4,
+      "ga": 6
+    },
+    {
+      "teamName": "Alanyaspor",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 6
+    },
+    {
+      "teamName": "Basaksehir",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 11
+    },
     {
       "teamName": "Trabzonspor",
       "gp": 5,
@@ -213,22 +240,31 @@
       "ga": 6
     },
     {
-      "teamName": "Corum",
-      "gp": 3,
-      "w": 1,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "Amed Sk",
-      "gp": 2,
+      "teamName": "Eyupspor",
+      "gp": 5,
       "w": 0,
       "d": 1,
-      "l": 1,
+      "l": 4,
       "gf": 2,
-      "ga": 4
+      "ga": 16
+    },
+    {
+      "teamName": "Besiktas",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Galatasaray",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 10,
+      "ga": 9
     },
     {
       "teamName": "Gaziantep",
@@ -240,13 +276,22 @@
       "ga": 8
     },
     {
-      "teamName": "Rizespor",
+      "teamName": "Goztepe",
       "gp": 5,
-      "w": 3,
+      "w": 0,
+      "d": 3,
+      "l": 2,
+      "gf": 9,
+      "ga": 11
+    },
+    {
+      "teamName": "Kayserispor",
+      "gp": 5,
+      "w": 0,
       "d": 1,
-      "l": 0,
-      "gf": 8,
-      "ga": 5
+      "l": 4,
+      "gf": 1,
+      "ga": 9
     },
     {
       "teamName": "Kocaelispor",
@@ -267,42 +312,6 @@
       "ga": 12
     },
     {
-      "teamName": "Samsunspor",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 4,
-      "ga": 6
-    },
-    {
-      "teamName": "Antalyaspor",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 8
-    },
-    {
-      "teamName": "Besiktas",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Erzurum Bb",
-      "gp": 3,
-      "w": 0,
-      "d": 1,
-      "l": 2,
-      "gf": 1,
-      "ga": 7
-    },
-    {
       "teamName": "Fenerbahce",
       "gp": 5,
       "w": 2,
@@ -310,51 +319,6 @@
       "l": 2,
       "gf": 7,
       "ga": 5
-    },
-    {
-      "teamName": "Kayserispor",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 1,
-      "ga": 9
-    },
-    {
-      "teamName": "Galatasaray",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 10,
-      "ga": 9
-    },
-    {
-      "teamName": "Basaksehir",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 3,
-      "gf": 5,
-      "ga": 11
-    },
-    {
-      "teamName": "Alanyaspor",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 6
-    },
-    {
-      "teamName": "Eyupspor",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 16
     },
     {
       "teamName": "F. Karagumruk",
@@ -366,13 +330,13 @@
       "ga": 8
     },
     {
-      "teamName": "Konyaspor",
-      "gp": 5,
+      "teamName": "Amed Sk",
+      "gp": 2,
       "w": 0,
       "d": 1,
-      "l": 3,
-      "gf": 5,
-      "ga": 9
+      "l": 1,
+      "gf": 2,
+      "ga": 4
     },
     {
       "teamName": "Kasimpasa",
@@ -384,13 +348,49 @@
       "ga": 6
     },
     {
-      "teamName": "Goztepe",
+      "teamName": "Corum",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Erzurum Bb",
+      "gp": 3,
+      "w": 0,
+      "d": 1,
+      "l": 2,
+      "gf": 1,
+      "ga": 7
+    },
+    {
+      "teamName": "Konyaspor",
       "gp": 5,
       "w": 0,
-      "d": 3,
-      "l": 2,
-      "gf": 9,
-      "ga": 11
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 9
+    },
+    {
+      "teamName": "Rizespor",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 0,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Antalyaspor",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 2,
+      "ga": 8
     }
   ]
 }
