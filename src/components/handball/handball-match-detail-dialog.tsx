@@ -533,6 +533,106 @@ function PlayerColumn({
   );
 }
 
+/**
+ * Onglet « Score » (réservé aux matchs terminés) — scoreboard final puis
+ * tableau COMPTE (Match / 1re MT / 2e MT) dans l'esprit de la fiche stats de
+ * référence. Le 2e MT est recalculé (total − 1re MT) : le snapshot Flashscore
+ * ne stocke que le score final et la mi-temps.
+ */
+function FinalScoreTab({ match }: { match: HandballMatch }) {
+  const s = match.score;
+  if (!s) {
+    return (
+      <p className="py-6 text-center text-[11px] text-muted-foreground">
+        Score final indisponible pour ce match
+      </p>
+    );
+  }
+  const total = s.home + s.away;
+  const half2Home = s.homeHalf != null ? s.home - s.homeHalf : null;
+  const half2Away = s.awayHalf != null ? s.away - s.awayHalf : null;
+  const ecart = s.home - s.away;
+  const vainqueur = ecart === 0 ? "Match nul" : ecart > 0 ? match.home.name : match.away.name;
+  const halvesKnown = s.homeHalf != null && s.awayHalf != null;
+  const cell = (v: number | null | undefined) => (v == null ? "—" : String(v));
+
+  return (
+    <div className="space-y-3">
+      {/* Scoreboard final */}
+      <section className="rounded-xl border border-border bg-card p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <HandballTeamLogo name={match.home.name} size={28} />
+            <span className="truncate text-[12px] font-semibold">{match.home.name}</span>
+          </div>
+          <div className="shrink-0 text-center">
+            <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+              Terminé
+            </span>
+            <p className="text-3xl font-black leading-tight tabular-nums">
+              {s.home} <span className="text-muted-foreground">:</span> {s.away}
+            </p>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-2">
+            <HandballTeamLogo name={match.away.name} size={28} />
+            <span className="truncate text-[12px] font-semibold">{match.away.name}</span>
+          </div>
+        </div>
+        <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
+          {vainqueur}
+          {ecart !== 0 ? ` (+${Math.abs(ecart)})` : ""} · {total} buts au total
+        </p>
+      </section>
+
+      {/* COMPTE : Match / 1re MT / 2e MT */}
+      <section className="rounded-lg border border-border p-2">
+        <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Compte
+        </h4>
+        <table className="w-full text-xs tabular-nums">
+          <thead>
+            <tr className="text-muted-foreground">
+              <th className="pb-1 text-left font-medium">Équipe</th>
+              <th className="px-1 pb-1 text-right font-medium">Match</th>
+              <th className="px-1 pb-1 text-right font-medium">1re MT</th>
+              <th className="pb-1 pl-1 text-right font-medium">2e MT</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            <tr>
+              <td className="max-w-0 truncate py-1 pr-1 font-semibold text-emerald-500">
+                {match.home.name}
+              </td>
+              <td className="px-1 py-1 text-right font-bold">{s.home}</td>
+              <td className="px-1 py-1 text-right">{cell(s.homeHalf)}</td>
+              <td className="py-1 pl-1 text-right">{cell(half2Home)}</td>
+            </tr>
+            <tr>
+              <td className="max-w-0 truncate py-1 pr-1 font-semibold text-sky-500">
+                {match.away.name}
+              </td>
+              <td className="px-1 py-1 text-right font-bold">{s.away}</td>
+              <td className="px-1 py-1 text-right">{cell(s.awayHalf)}</td>
+              <td className="py-1 pl-1 text-right">{cell(half2Away)}</td>
+            </tr>
+          </tbody>
+        </table>
+        {!halvesKnown && (
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Détail mi-temps absent du snapshot — seul le score final est connu.
+          </p>
+        )}
+      </section>
+
+      <p className="text-[10px] text-muted-foreground">
+        {match.league.name}
+        {match.league.country ? ` · ${match.league.country}` : ""} · source : snapshot Flashscore
+        (score final + mi-temps).
+      </p>
+    </div>
+  );
+}
+
 // ─── Onglet « Over & Buteurs » (historique handball_match_history) ──────────
 
 /** Nombre à 1 décimale, « — » si absent (jamais de NaN affiché). */
@@ -1037,8 +1137,11 @@ export function HandballMatchDetailDialog({
   const [analysisState, setAnalysisState] = useState<PlayersState>("idle");
 
   // Onglet actif : l'analyse IA n'est générée QU'à la visite de l'onglet « IA »
-  // (et une seule fois — cache VPS 24h derrière).
-  const [tab, setTab] = useState("analyse");
+  // (et une seule fois — cache VPS 24h derrière). Sur match terminé, on ouvre
+  // directement sur le Score final (attendu depuis la liste 📆 Résultats).
+  const [tab, setTab] = useState(
+    match?.status === "finished" && match.score ? "score" : "analyse"
+  );
   const [ai, setAi] = useState<AiAnalysis | null>(null);
   const [aiState, setAiState] = useState<"idle" | "loading" | "ready" | "error">("idle");
 
@@ -1116,6 +1219,8 @@ export function HandballMatchDetailDialog({
   const isLive = match.status === "live" || match.status === "halftime";
   /** Match lancé ou terminé → la section « Stats du match » a du sens. */
   const isPlayed = isLive || match.status === "finished";
+  /** Score final disponible → onglet « Score » affiché (matchs terminés). */
+  const isFinished = match.status === "finished" && !!match.score;
   const hasFormRow = !!(forms && (forms.home || forms.away));
   const hasGoals =
     forms?.home?.scoredAvg != null ||
@@ -1220,6 +1325,12 @@ export function HandballMatchDetailDialog({
           {/* 4 onglets : sur mobile la barre défile horizontalement plutôt
               que d'écraser les libellés (conformité 360 px). */}
           <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07] max-sm:overflow-x-auto max-sm:flex-nowrap">
+            {/* Onglet Score : réservé aux matchs terminés (score final) */}
+            {isFinished && (
+              <TabsTrigger value="score" className="flex-1 whitespace-nowrap">
+                Score
+              </TabsTrigger>
+            )}
             <TabsTrigger value="analyse" className="flex-1 whitespace-nowrap">
               Analyse
             </TabsTrigger>
@@ -1236,6 +1347,13 @@ export function HandballMatchDetailDialog({
               ✨ IA
             </TabsTrigger>
           </TabsList>
+
+          {/* ── Onglet 0 : Score final (matchs terminés uniquement) ── */}
+          {isFinished && (
+            <TabsContent value="score" className="space-y-3">
+              <FinalScoreTab match={match} />
+            </TabsContent>
+          )}
 
           {/* ── Onglet 1 : Analyse (forme, cotes, verdict modèle) ── */}
           <TabsContent value="analyse" className="space-y-3">
