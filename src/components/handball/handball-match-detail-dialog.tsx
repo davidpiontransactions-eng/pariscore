@@ -27,6 +27,8 @@ import { HandballLeagueBadge } from "@/components/handball/handball-league-badge
 // Type-only : le module handball-players lit fs.readFileSync (server-only) —
 // le snapshot joueurs est servi par la route /api/handball/players.
 import type { HblPlayer, HblTeamTopPlayers } from "@/lib/handball-players";
+// Stats historique (table handball_match_history) : types purs + seuil 55 %.
+import { BET_FLOOR, PROB_FLOOR, lineFlag, type OverLine, type ScorerThreshold, type TeamHistoryStats } from "@/lib/handball-history-stats";
 
 type Props = {
   match: HandballMatch | null;
@@ -41,6 +43,62 @@ type Props = {
 type PlayersTops = { home: HblTeamTopPlayers; away: HblTeamTopPlayers };
 
 type PlayersState = "idle" | "ready" | "error";
+
+// ─── DTO analyse Over (miroir de /api/handball/analysis) ───
+
+type AnalysisScorer = {
+  name: string;
+  team: string;
+  goals: number;
+  games: number;
+  avgGoals: number;
+  lambda: number;
+  probs: ScorerThreshold[];
+};
+
+/** Vue StarLigue d'une équipe (miroir /api/handball/analysis). */
+type StarLigueSide = {
+  team: string;
+  played: number | null;
+  standing: {
+    rank: number;
+    points: number;
+    played: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    goalDiff: number;
+  } | null;
+  metrics: { key: string; label: string; total: number | null; avg: number | null }[];
+};
+
+type AnalysisPayload = {
+  ok: boolean;
+  model: {
+    base: number;
+    observedMean: number | null;
+    scale: number;
+    lambdaH: number;
+    lambdaA: number;
+    nu: number;
+    expectedTotal: number;
+  };
+  over: { floor: number; lines: OverLine[]; pick: OverLine | null };
+  match1x2: { home: number; draw: number; away: number };
+  teams: { home: TeamHistoryStats | null; away: TeamHistoryStats | null };
+  starligue: {
+    season: string | null;
+    scrapedAt: string | null;
+    metrics: { order: string; key: string; label: string }[];
+    home: StarLigueSide | null;
+    away: StarLigueSide | null;
+  } | null;
+  scorers: { home: AnalysisScorer[]; away: AnalysisScorer[] };
+  method: string[];
+  meta: { n: number; minDate: string | null; maxDate: string | null; lastRun: string | null } | null;
+};
 
 // Cache module : slot unique « dernier URL gagnant » (match B écrase le slot
 // du match A) — le snapshot joueurs ne bouge pas pendant la session, donc une
@@ -62,6 +120,24 @@ function fetchPlayersTops(url: string): Promise<PlayersTops | null> {
       return tops;
     });
   playersReq = { url, promise };
+  return promise;
+}
+
+// Cache module identique pour l'analyse Over (un seul fetch par match ouvert,
+// réouverture instantanée ; les échecs ne sont jamais mis en cache).
+let analysisReq: { url: string; promise: Promise<AnalysisPayload | null> } | null = null;
+
+function fetchAnalysis(url: string): Promise<AnalysisPayload | null> {
+  if (analysisReq?.url === url) return analysisReq.promise;
+  const promise = fetch(url)
+    .then((r) => (r.ok ? (r.json() as Promise<AnalysisPayload>) : null))
+    .catch(() => null)
+    .then((d) => {
+      const payload = d && d.ok ? d : null;
+      if (payload == null && analysisReq?.url === url) analysisReq = null;
+      return payload;
+    });
+  analysisReq = { url, promise };
   return promise;
 }
 
@@ -418,6 +494,376 @@ function PlayerColumn({
   );
 }
 
+// ─── Onglet « Over & Buteurs » (historique handball_match_history) ──────────
+
+/** Nombre à 1 décimale, « — » si absent (jamais de NaN affiché). */
+function n1(v: number | null | undefined): string {
+  return v == null ? "—" : v.toFixed(1);
+}
+
+/** Signe explicite pour les écarts (« +3.2 » / « −1.4 »). */
+function signed1(v: number | null | undefined): string {
+  if (v == null) return "—";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+}
+
+/**
+ * Tableau documenté d'une équipe : buts marqués / encaissés / différence /
+ * PPG, sur L5 et L10, en situation Home (l'équipe reçoit) ET Away (l'équipe
+ * est reçue) — colonnes L5 dom · L5 ext · L10 dom · L10 ext.
+ */
+function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; variant: "home" | "away" }) {
+  if (!stats) {
+    return (
+      <p className="text-[11px] leading-snug text-muted-foreground">
+        Aucun historique en base pour cette équipe — la couverture s&apos;étoffe à chaque run
+        hebdomadaire du cron.
+      </p>
+    );
+  }
+  const accent = variant === "home" ? "text-emerald-500" : "text-sky-500";
+  const rows: { label: string; get: (s: TeamHistoryStats, window: "l5" | "l10", side: "home" | "away") => string }[] = [
+    { label: "Marqués", get: (s, w, side) => n1(s[side][w].scored) },
+    { label: "Encaissés", get: (s, w, side) => n1(s[side][w].conceded) },
+    { label: "Diff.", get: (s, w, side) => signed1(s[side][w].diff) },
+    { label: "PPG", get: (s, w, side) => n1(s[side][w].ppg) },
+  ];
+  return (
+    <div className="rounded-lg border border-border p-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className={`truncate text-[11px] font-bold uppercase tracking-wider ${accent}`}>
+          {stats.name}
+        </span>
+        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+          {stats.n} matchs · {stats.wins}V {stats.draws}N {stats.losses}D
+        </span>
+      </div>
+      <div className="mt-1.5 overflow-x-auto">
+        <table className="w-full text-[10px] tabular-nums">
+          <thead>
+            <tr className="text-muted-foreground">
+              <th className="pb-1 pr-1 text-left font-medium">Situation</th>
+              <th className="pb-1 px-1 text-right font-medium">L5 dom</th>
+              <th className="pb-1 px-1 text-right font-medium">L5 ext</th>
+              <th className="pb-1 px-1 text-right font-medium">L10 dom</th>
+              <th className="pb-1 pl-1 text-right font-medium">L10 ext</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {rows.map((r) => (
+              <tr key={r.label}>
+                <td className="py-0.5 pr-1 text-left text-muted-foreground">{r.label}</td>
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                  {r.get(stats, "l5", "home")}
+                </td>
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                  {r.get(stats, "l5", "away")}
+                </td>
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                  {r.get(stats, "l10", "home")}
+                </td>
+                <td className="py-0.5 pl-1 text-right font-semibold text-foreground">
+                  {r.get(stats, "l10", "away")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+        <span>
+          Winrate{" "}
+          <span className="font-semibold text-foreground">
+            {stats.winrate == null ? "—" : `${Math.round(stats.winrate * 100)}%`}
+          </span>
+        </span>
+        <span>
+          dom{" "}
+          <span className="font-semibold text-foreground">
+            {stats.winrateHome == null ? "—" : `${Math.round(stats.winrateHome * 100)}%`}
+          </span>
+        </span>
+        <span>
+          ext{" "}
+          <span className="font-semibold text-foreground">
+            {stats.winrateAway == null ? "—" : `${Math.round(stats.winrateAway * 100)}%`}
+          </span>
+        </span>
+        <span className="ml-auto">Forme {stats.lastSeq || "—"}</span>
+      </div>
+      <p className="mt-0.5 text-[9px] leading-tight text-muted-foreground/70">
+        dom = l&apos;équipe reçoit ({stats.home.l5.n}L5/{stats.home.l10.n}L10) · ext = elle est
+        reçue ({stats.away.l5.n}L5/{stats.away.l10.n}L10)
+      </p>
+    </div>
+  );
+}
+
+/** Échelle Over : une chip par ligne — verte si ≥ 55 %, pill « pari » si ≥ 60 %. */
+function OverLadder({ lines, floor }: { lines: OverLine[]; floor: number }) {
+  return (
+    <div className="grid grid-cols-4 gap-1.5">
+      {lines.map((l) => {
+        const flag = lineFlag(l.over);
+        const playable = l.over >= floor;
+        return (
+          <div
+            key={l.line}
+            className={`rounded-lg border px-1.5 py-1.5 text-center ${
+              flag === "bet"
+                ? "border-emerald-500/60 bg-emerald-500/15 ring-1 ring-emerald-500/30"
+                : playable
+                  ? "border-emerald-500/40 bg-emerald-500/10"
+                  : "border-border bg-muted/30 dark:bg-white/[0.04]"
+            }`}
+          >
+            <p
+              className={`text-[9px] uppercase tracking-wider ${playable ? "text-emerald-500" : "text-muted-foreground"}`}
+            >
+              over {l.line}
+            </p>
+            <p
+              className={`text-sm font-black tabular-nums ${playable ? "text-emerald-500" : "text-foreground/80"}`}
+            >
+              {(l.over * 100).toFixed(0)}
+              <span className="text-[10px] font-bold">%</span>
+            </p>
+            {flag === "bet" && (
+              <span className="mt-0.5 inline-block rounded-full bg-emerald-500 px-1.5 py-px text-[8px] font-black uppercase tracking-wider text-background">
+                pari
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Un buteur : ligne + chips P(≥2/3/4/5), vertes si ≥ 55 %. */
+function ScorerRow({ p, variant }: { p: AnalysisScorer; variant: "home" | "away" }) {
+  const border = variant === "home" ? "border-emerald-500/20" : "border-sky-500/20";
+  const accent = variant === "home" ? "text-emerald-500" : "text-sky-500";
+  return (
+    <div className={`rounded-lg border ${border} px-2 py-1.5`}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="truncate text-[11px] font-semibold">{p.name}</span>
+        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+          {n1(p.avgGoals)}/m · {p.goals} buts ({p.games} m)
+        </span>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {p.probs.map((t) => (
+          <span
+            key={t.n}
+            title={`${t.n} buts ou plus — ${(t.p * 100).toFixed(1)} %`}
+            className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ring-1 ${
+              t.playable
+                ? "bg-emerald-500/15 text-emerald-500 ring-emerald-500/30"
+                : "bg-muted text-muted-foreground ring-border dark:bg-white/[0.06]"
+            }`}
+          >
+            {t.n}+ {(t.p * 100).toFixed(0)}%
+          </span>
+        ))}
+      </div>
+      <p className="mt-0.5 text-[9px] text-muted-foreground/70">
+        λ ajusté {p.lambda.toFixed(1)} buts attendus
+      </p>
+      {p.probs.some((t) => t.playable) ? null : (
+        <p className={`text-[9px] font-semibold ${accent}`}>aucun seuil ≥ 55 %</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Bloc StarLigue de l'onglet Stats : classement (rang, points, V-N-D, diff)
+ * + 5 métriques/équipe (buts marqués/encaissés, arrêts, passes, pertes),
+ * snapshots lnh.fr — sert à informer le parieur même sans forme ni cotes.
+ */
+function StarLigueBlock({
+  data,
+  homeName,
+  awayName,
+}: {
+  data: NonNullable<AnalysisPayload["starligue"]>;
+  homeName: string;
+  awayName: string;
+}) {
+  const h = data.home;
+  const a = data.away;
+  if (!h && !a) return null;
+
+  const metricAvg = (side: typeof h, key: string): string => {
+    const m = side?.metrics.find((x) => x.key === key);
+    return m?.avg == null ? "—" : m.avg.toFixed(1);
+  };
+  const rows: { label: string; home: string; away: string }[] = [];
+
+  if (h?.standing || a?.standing) {
+    const hs = h?.standing;
+    const as_ = a?.standing;
+    rows.push({ label: "Rang", home: hs ? `#${hs.rank}` : "—", away: as_ ? `#${as_.rank}` : "—" });
+    rows.push({
+      label: "Points",
+      home: hs ? String(hs.points) : "—",
+      away: as_ ? String(as_.points) : "—",
+    });
+    rows.push({
+      label: "V - N - D",
+      home: hs ? `${hs.wins}-${hs.draws}-${hs.losses}` : "—",
+      away: as_ ? `${as_.wins}-${as_.draws}-${as_.losses}` : "—",
+    });
+    rows.push({
+      label: "Diff. buts",
+      home: hs ? signed1(hs.goalDiff) : "—",
+      away: as_ ? signed1(as_.goalDiff) : "—",
+    });
+  }
+
+  for (const def of data.metrics) {
+    const homeAvg = metricAvg(h, def.key);
+    const awayAvg = metricAvg(a, def.key);
+    if (homeAvg === "—" && awayAvg === "—") continue;
+    rows.push({ label: def.label, home: homeAvg, away: awayAvg });
+  }
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="space-y-2">
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          StarLigue — classement &amp; stats équipes
+        </h4>
+        <span className="text-[10px] text-muted-foreground">saison {data.season ?? "—"}</span>
+      </header>
+      <div className="rounded-lg border border-border p-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-1.5">
+          <span className="truncate text-right text-[11px] font-bold text-emerald-500">
+            {h?.team ?? homeName}
+          </span>
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground">vs</span>
+          <span className="truncate text-left text-[11px] font-bold text-sky-500">
+            {a?.team ?? awayName}
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          {rows.map((r) => (
+            <CompareRow key={r.label} label={r.label} home={r.home} away={r.away} />
+          ))}
+        </div>
+        <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/70">
+          Source lnh.fr · moyennes / match · snapshot {data.scrapedAt ?? "—"}
+          {(h?.played ?? a?.played) != null ? ` · ${h?.played ?? a?.played} j joués` : ""}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/** Contenu complet de l'onglet Over & Buteurs. */
+function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
+  const { model, over, match1x2, scorers, method, meta } = analysis;
+  const pickLine = over.pick;
+  return (
+    <div className="space-y-3">
+      {/* En-tête : total attendu + ligne jouable + 1X2 */}
+      <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Over points
+          </h4>
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            total attendu {model.expectedTotal.toFixed(1)} · base {model.base}
+          </span>
+        </div>
+        <p className="mt-1 text-sm">
+          {pickLine ? (
+            <>
+              <span className="font-bold">Ligne jouable : Over {pickLine.line}</span>{" "}
+              <span className="font-black tabular-nums text-emerald-500">
+                {(pickLine.over * 100).toFixed(1)}%
+              </span>
+              {lineFlag(pickLine.over) === "bet" && (
+                <span className="ml-2 inline-block rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-background">
+                  pari ≥60%
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="font-bold text-amber-500">
+              Aucune ligne ≥ {Math.round(over.floor * 100)} % — pas de pari Over sur ce match
+            </span>
+          )}
+        </p>
+        <div className="mt-2 flex justify-between text-[11px] tabular-nums">
+          <span className="text-emerald-500">1 : {match1x2.home.toFixed(1)}%</span>
+          <span className="text-muted-foreground">X : {match1x2.draw.toFixed(1)}%</span>
+          <span className="text-sky-500">2 : {match1x2.away.toFixed(1)}%</span>
+        </div>
+        <p className="mt-1 text-[10px] text-muted-foreground/80">
+          {meta
+            ? `Historique : ${meta.n} matchs (${meta.minDate ?? "?"} → ${meta.maxDate ?? "?"})`
+            : "Historique indisponible"}{" "}
+            · ν {model.nu.toFixed(2)} · calibr. ×{model.scale.toFixed(3)}
+        </p>
+      </section>
+
+      {/* Échelle complète 59.5 → 52.5 */}
+      <section className="space-y-1.5">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Échelle Over (59.5 → 52.5)
+        </h4>
+        <OverLadder lines={over.lines} floor={over.floor} />
+        <p className="text-[10px] leading-snug text-muted-foreground">
+          P(total &gt; ligne) — vert = réussite ≥ {Math.round(over.floor * 100)} %, pill « pari » =
+          bet predictif ≥ {Math.round(BET_FLOOR * 100)} %. Écart de 1 à 3 buts selon la ligne
+          retenue.
+        </p>
+      </section>
+
+      {/* Stats équipes : voir l'onglet « Stats » (splits L5/L10 dom/ext) */}
+
+      {/* Buteurs */}
+      <section className="space-y-2">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          2 meilleurs buteurs — « au moins N buts »
+        </h4>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            {scorers.home.length ? (
+              scorers.home.map((p) => <ScorerRow key={`${p.name}-${p.team}`} p={p} variant="home" />)
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Buteurs indisponibles (snapshot HBL/LNH)</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {scorers.away.length ? (
+              scorers.away.map((p) => <ScorerRow key={`${p.name}-${p.team}`} p={p} variant="away" />)
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Buteurs indisponibles (snapshot HBL/LNH)</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Méthode documentée */}
+      <details className="rounded-lg border border-border bg-muted/30 px-3 py-2 dark:bg-white/[0.04]">
+        <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Méthode &amp; sources
+        </summary>
+        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[10px] leading-snug text-muted-foreground">
+          {method.map((m, i) => (
+            <li key={i}>{m}</li>
+          ))}
+        </ul>
+      </details>
+    </div>
+  );
+}
+
 // ─── Dialog ───
 
 export function HandballMatchDetailDialog({
@@ -475,6 +921,36 @@ export function HandballMatchDetailDialog({
   const [players, setPlayers] = useState<PlayersTops | null>(null);
   const [playersState, setPlayersState] = useState<PlayersState>("idle");
 
+  // URL de l'analyse Over & Buteurs (historique SQLite) — même paramètres
+  // que le DTO joueurs pour rester aligné sur le match ouvert.
+  const analysisUrl = useMemo(() => {
+    if (!match) return null;
+    const params = new URLSearchParams({
+      home: match.home.name,
+      away: match.away.name,
+      league: match.league.name,
+      date: match.kickoff,
+    });
+    return `/api/handball/analysis?${params.toString()}`;
+  }, [match]);
+
+  const [analysis, setAnalysis] = useState<AnalysisPayload | null>(null);
+  const [analysisState, setAnalysisState] = useState<PlayersState>("idle");
+
+  // Fetch lazy à l'ouverture (cache module : pas de re-fetch à la réouverture).
+  useEffect(() => {
+    if (!open || !analysisUrl) return;
+    let cancelled = false;
+    fetchAnalysis(analysisUrl).then((payload) => {
+      if (cancelled) return;
+      setAnalysis(payload);
+      setAnalysisState(payload ? "ready" : "error");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, analysisUrl]);
+
   // Fetch lazy à l'ouverture (cache module : pas de re-fetch à la réouverture).
   useEffect(() => {
     if (!open || !playersUrl) return;
@@ -514,6 +990,10 @@ export function HandballMatchDetailDialog({
     match.odds &&
     (match.odds.home != null || match.odds.draw != null || match.odds.away != null)
   );
+  // Stats issues de l'historique DB + snapshots LNH (onglet Stats) : dès
+  // qu'elles sont prêtes, l'état vide « Aucune statistique » disparaît.
+  const hasDbStats = !!(analysis && (analysis.teams.home || analysis.teams.away));
+  const hasStarLigue = !!(analysis?.starligue && (analysis.starligue.home || analysis.starligue.away));
 
   // Stats du match réellement renseignées (source API-Sports, repli de la
   // route /api/handball/matches). Le snapshot Flashscore ne transporte AUCUNE
@@ -538,8 +1018,15 @@ export function HandballMatchDetailDialog({
           rgb(29,29,29)` du bloc `.theme-dark` servi par fotmob.com (fond de page
           dark = #000000, cartes = #1D1D1D). Scope au SEUL dialog handball :
           la charte PariScore (navy + vert néon) reste intacte ailleurs. Light
-          : `--background` du site pour ne pas casser le thème clair. */}
-      <DialogContent className="bg-background dark:bg-[#1D1D1D] max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+          : `--background` du site pour ne pas casser le thème clair.
+
+          MOBILE (<640px) : bottom-sheet recentré — largeur écran réelle
+          (max-w-none), ancrage gauche centré (left-0 + translate-x-0, même
+          variante max-sm : aucun conflit d'ordre avec les classes base),
+          hauteur bornée en dvh (viewport dynamique = barre navigateur
+          déduite) avec scroll interne, padding réduit et safe-area iOS.
+          Desktop : centré par défaut (max-w-lg), inchangé. */}
+      <DialogContent className="bg-background dark:bg-[#1D1D1D] max-w-lg max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[88dvh] max-sm:gap-3 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2">
@@ -594,15 +1081,20 @@ export function HandballMatchDetailDialog({
         )}
 
         <Tabs defaultValue="analyse" className="mt-1">
-          <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07]">
-            <TabsTrigger value="analyse" className="flex-1">
+          {/* 4 onglets : sur mobile la barre défile horizontalement plutôt
+              que d'écraser les libellés (conformité 360 px). */}
+          <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07] max-sm:overflow-x-auto max-sm:flex-nowrap">
+            <TabsTrigger value="analyse" className="flex-1 whitespace-nowrap">
               Analyse
             </TabsTrigger>
-            <TabsTrigger value="stats" className="flex-1">
-              Stats équipes
+            <TabsTrigger value="stats" className="flex-1 whitespace-nowrap">
+              Stats
             </TabsTrigger>
-            <TabsTrigger value="bets" className="flex-1">
-              {"Bets & Joueurs"}
+            <TabsTrigger value="over" className="flex-1 whitespace-nowrap">
+              Over &amp; Buteurs
+            </TabsTrigger>
+            <TabsTrigger value="bets" className="flex-1 whitespace-nowrap">
+              Bets
             </TabsTrigger>
           </TabsList>
 
@@ -842,16 +1334,67 @@ export function HandballMatchDetailDialog({
               </section>
             )}
 
+            {/* Section 4 — Stats COMPLÈTES des 2 équipes (historique DB) :
+                buts marqués/encaissés + diff + PPG sur L5/L10 en situation
+                dom/ext, winrate global/dom/ext — objectif « informer le
+                parieur » même sans cotes ni stats de match. */}
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Stats des 2 équipes — historique (L5/L10, dom/ext)
+              </h4>
+              {analysisState === "idle" && (
+                <p className="text-[11px] text-muted-foreground" aria-live="polite">
+                  Chargement des stats équipes…
+                </p>
+              )}
+              {analysisState === "error" && (
+                <p className="text-[11px] text-muted-foreground">
+                  Historique indisponible (base handball non chargée — cron hebdo).
+                </p>
+              )}
+              {analysis && (
+                <>
+                  <SplitTable stats={analysis.teams.home} variant="home" />
+                  <SplitTable stats={analysis.teams.away} variant="away" />
+                </>
+              )}
+            </section>
+
+            {/* Section 5 — StarLigue : classement + 5 métriques/équipe */}
+            {analysis?.starligue && (
+              <StarLigueBlock
+                data={analysis.starligue}
+                homeName={match.home.name}
+                awayName={match.away.name}
+              />
+            )}
+
             {/* État vide honnête : seulement si aucune section n'a affiché de donnée
-                (un match joué sans stats détaillées a déjà sa note explicative). */}
-            {!isPlayed && !hasFormRow && !hasGoals && !hasOdds && (
+                (un match joué sans stats détaillées a déjà sa note explicative,
+                et les stats DB/StarLigue sont affichées dès leur arrivée). */}
+            {!isPlayed && !hasFormRow && !hasGoals && !hasOdds && !hasDbStats && !hasStarLigue && (
               <p className="py-4 text-center text-[11px] text-muted-foreground">
                 Aucune statistique disponible pour ce match
               </p>
             )}
           </TabsContent>
 
-          {/* ── Onglet 3 : 3 bets prédictifs + meilleurs joueurs ── */}
+          {/* ── Onglet 3 : Over & Buteurs (historique SQLite) ── */}
+          <TabsContent value="over" className="space-y-3">
+            {analysisState === "idle" && (
+              <p className="py-4 text-center text-[11px] text-muted-foreground" aria-live="polite">
+                Chargement de l&apos;analyse Over…
+              </p>
+            )}
+            {analysisState === "error" && (
+              <p className="py-4 text-center text-[11px] text-muted-foreground">
+                Analyse indisponible — historique handball non chargé (cron hebdo à venir).
+              </p>
+            )}
+            {analysis && <OverBetsTab analysis={analysis} />}
+          </TabsContent>
+
+          {/* ── Onglet 4 : 3 bets prédictifs + meilleurs joueurs ── */}
           <TabsContent value="bets" className="space-y-4">
             {bets && (
               <section>
