@@ -158,7 +158,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 | projected-standings-card | projected-standings-card.tsx | Carte « Classement projeté fin de saison » (ExtraTrees offline, JSON rank-projector, papier JISTA 2026) |
 
-## Handball (`src/components/handball/`) — 14 components
+## Handball (`src/components/handball/`) — 16 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -176,6 +176,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-backtest-widget | handball-backtest-widget.tsx | Backtest double mode Simulé/CLV (table triée meanCLV, badges edge |CLV|>1,5 % et n<30, sparkline SVG, filtre ligue, disclaimers) |
 | handball-league-badge | handball-league-badge.tsx | Badge ligue : logo local + drapeau + nom (remplace "🤾 NomLigue") |
 | handball-team-logo | handball-team-logo.tsx | Badge équipe local + fallback initiales (miroir hockey-team-logo) |
+| handball-vitibet-top10 | handball-vitibet-top10.tsx | Section « Top 10 par INDEX » Vitibet (pronostics J→J+3 triés \|INDEX\| décroissant, tip + score prédit, mini-banner, masquée si table absente) |
+| handball-vitibet-backtest | handball-vitibet-backtest.tsx | Section « Backtest Vitibet » : taux de réussite des tips (résultat FT vs prédit), répartition 1/X/2, période couverte, compte des finished sans tip, état vide explicite 0/0 |
 | handball-cmp | handball-cmp.ts (lib) | Moteur CMP totaux : fitCMP (MLE Newton-Raphson), cmpPmf, teamStrength (s_a/s_d Felice SEL), overUnderProb (grille adaptative) |
 | handball-skellam | handball-skellam.ts (lib) | Moteur Skellam handicap : skellamPmf (Bessel I_k), handicapProb, skellamMatchProbs 1X2 |
 | handball-clv | handball-clv.ts (lib) | Devig proportionnel + Shin optionnel, CLV (p_model−p_implied)/p_implied, seuils edge 1,5 % / n≥30 |

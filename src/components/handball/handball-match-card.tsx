@@ -1,16 +1,27 @@
 "use client";
 
 import type { HandballMatch } from "@/lib/handball-data";
+import type { VitibetTip } from "@/lib/vitibet/types";
+import { fmtIndex, indexTone } from "@/lib/vitibet/format";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
+
+const INDEX_CHIP_CLASS: Record<ReturnType<typeof indexTone>, string> = {
+  home: "bg-emerald-500/10 text-emerald-600",
+  away: "bg-red-500/10 text-red-600",
+  neutral: "bg-muted text-muted-foreground",
+};
 
 export function HandballMatchCard({
   match,
   onClick,
+  tip,
 }: {
   match: HandballMatch;
   /** Fix wiring UX : ouvre le dialog détail au clic */
   onClick?: (match: HandballMatch) => void;
+  /** Pronostic Vitibet rapproché (badge INDEX + probas) — absent si non matché. */
+  tip?: VitibetTip | null;
 }) {
   return (
     // Carte cliquable accessible : bouton natif (clavier Enter/Espace inclus)
@@ -79,6 +90,20 @@ export function HandballMatchCard({
               2 {match.odds.away}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Vitibet : badge INDEX (vert favori domicile / rouge extérieur) + probas 1/X/2 */}
+      {tip && (
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mt-2 text-[11px]">
+          <span
+            className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${INDEX_CHIP_CLASS[indexTone(tip.indexValue)]}`}
+          >
+            INDEX {fmtIndex(tip.indexValue)}
+          </span>
+          <span className="tabular-nums text-muted-foreground">
+            1 {tip.probHome ?? "–"}% · X {tip.probDraw ?? "–"}% · 2 {tip.probAway ?? "–"}%
+          </span>
         </div>
       )}
     </button>

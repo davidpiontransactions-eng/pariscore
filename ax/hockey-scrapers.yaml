@@ -39,6 +39,10 @@ spec:
       proto: https
     - host: sports.bzzoiro.com
       proto: https
+    - host: vitibet.com
+      proto: https
+    - host: www.vitibet.com
+      proto: https
     - host: localhost
       port: 8191
       note: FlareSolverr local (conteneur) pour WAF
@@ -109,3 +113,16 @@ spec:
       goal: "Fixtures JSON + trios EV NHL (lambdas Poisson)"
   command: node scripts/scrape-frozenpool-nhl.mjs
   schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: vitibet-handball
+spec:
+  workspaces:
+    - name: pariscore
+      goal: "Quicktips handball J→J+3 (INDEX, probas 1/X/2, score prédit) → table vitibet_tips"
+  command: node scripts/scrape-vitibet.js
+  schedule:
+    - "30 5 * * *"   # 05:30 UTC
+    - "0 12 * * *"   # 12:00 UTC

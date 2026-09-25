@@ -657,5 +657,52 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    {
+      // === Cron job Vitibet Handball (quicktips — run matin) ===
+      // Scrape les pronostics handball Vitibet (J→J+3 : INDEX, probas 1/X/2,
+      // tip, score prédit) → table `vitibet_tips` dans pariscore.db
+      // (DATABASE_PATH). Pattern identique à pariscore-cron-oddalerts.
+      // Skip-cache < 20h intégré (statuts 'scheduled' re-scrapés pour capter
+      // les transitions live/finished) ; --force pour re-scrape complet.
+      // 2 runs/jour : 05:30 UTC (cette entrée) + 12:00 UTC (entrée -pm) —
+      // minutes différentes → 2 entrées (pattern double-tick impossible ici).
+      name: 'pariscore-cron-vitibet',
+      script: 'scripts/scrape-vitibet.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 5 * * *', // 05:30 UTC (run matin)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        DATABASE_PATH: '/home/ubuntu/pariscore/pariscore.db',
+      },
+      error_file: 'logs/cron-vitibet.err.log',
+      out_file: 'logs/cron-vitibet.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Vitibet Handball (quicktips — run midi) ===
+      // 2e pass de la journée : re-scrape les matchs 'scheduled' du matin
+      // (résultats FT + tip conservé → backtest). Voir entrée -matin ci-dessus.
+      name: 'pariscore-cron-vitibet-pm',
+      script: 'scripts/scrape-vitibet.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 12 * * *', // 12:00 UTC (run midi)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        DATABASE_PATH: '/home/ubuntu/pariscore/pariscore.db',
+      },
+      error_file: 'logs/cron-vitibet-pm.err.log',
+      out_file: 'logs/cron-vitibet-pm.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };

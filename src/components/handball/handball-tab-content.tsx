@@ -3,12 +3,15 @@
 import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { useHandballMatches } from "@/hooks/use-handball-matches";
+import { useVitibetTips } from "@/hooks/use-vitibet-tips";
 import { HandballMatchCard } from "./handball-match-card";
 import { HandballLiveCard } from "./handball-live-card";
 import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
 import { HandballStrategyBar } from "./handball-strategy-bar";
 import { HandballTop8Widget } from "./handball-top8-widget";
+import { HandballVitibetTop10 } from "./handball-vitibet-top10";
+import { HandballVitibetBacktest } from "./handball-vitibet-backtest";
 import { HandballBacktestWidget } from "./handball-backtest-widget";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
@@ -260,6 +263,8 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
 
 export function HandballTabContent() {
   const { matches: allMatches, isLoading } = useHandballMatches();
+  // Pronostics Vitibet (J→J+3) : rapprochement par (jour, équipes) pour les cartes.
+  const { tipFor } = useVitibetTips();
   // Fix debug : useHandballLive retiré (fetch 15s jamais consommé)
   const [mode, setMode] = useState<"live" | "prematch" | "results">("prematch");
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
@@ -352,6 +357,13 @@ export function HandballTabContent() {
         <HandballTop8Widget strategy={strategy} />
       </div>
 
+      {/* Pronostics Vitibet : Top 10 par INDEX (fenêtre J → J+3) */}
+      <HandballVitibetTop10 />
+
+      {/* Backtest Vitibet (zone Vitibet) : taux de réussite des tips FT —
+          distinct de HandballBacktestWidget (ROI des stratégies maison). */}
+      <HandballVitibetBacktest />
+
       {/* Backtest ROI visuel (cotes simulées) */}
       <HandballBacktestWidget />
 
@@ -389,7 +401,7 @@ export function HandballTabContent() {
                 mode === "live" ? (
                   <HandballLiveCard key={m.id} match={m} onClick={setDetailMatch} />
                 ) : (
-                  <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} />
+                  <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tipFor(m)} />
                 ),
               )}
             </div>
