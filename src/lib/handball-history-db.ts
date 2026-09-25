@@ -42,12 +42,12 @@ function getDb(): BSD | null {
       return _db;
     } catch (err) {
       _dbUnavailable = true;
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `[handball-history] ${SQLITE_FILE} non lisible — analyse handball désactivée. ` +
-            `Détail: ${(err as Error).message}`
-        );
-      }
+      // Toujours loggé (prod compris) : un échec silencieux se traduit par
+      // « meta: null / teams: null » sans aucune trace côté serveur.
+      console.warn(
+        `[handball-history] ${SQLITE_FILE} non lisible — analyse handball désactivée. ` +
+          `Détail: ${(err as Error).message}`
+      );
       return null;
     }
   }

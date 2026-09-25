@@ -44,6 +44,12 @@ const BASE_TOTAL = 60;
 /** Fenêtre de calibration de la moyenne observée (jours). */
 const CALIBRATION_DAYS = 30;
 
+// Lecture VIVANTE obligatoire : sans ça, Next peut prérendre le GET au build
+// (table absente à cet instant → meta/teams figés à null dans le bundle,
+// symptomatique observé en prod le 2026-09-25). Le cron hebdo modifie la DB
+// après coup : la réponse doit être calculée à chaque requête.
+export const dynamic = "force-dynamic";
+
 type ScorerView = {
   name: string;
   team: string;
