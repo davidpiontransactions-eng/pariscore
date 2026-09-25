@@ -269,6 +269,15 @@ async function callGemini(
     throw new LlmError("Gemini a retourné une réponse vide", 502, "GEMINI_EMPTY");
   }
 
+  // Observabilité : un MAX_TOKENS est une TRONCATURE silencieuse (les tokens
+  // de raisonnement sont déduits du budget sur gemini-3.x) → on logue.
+  if (json.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+    console.warn(
+      `[llm] gemini MAX_TOKENS : réponse tronquée à ${rawText.length} caractères — ` +
+        `augmenter maxOutputTokens de l'appelant.`
+    );
+  }
+
   return { text: rawText, provider: "gemini", model: cfg.geminiModel, latencyMs: 0 };
 }
 
@@ -278,7 +287,7 @@ async function callGemini(
 
 export type GeminiPart = { text?: string; thought?: boolean };
 export type GeminiResponse = {
-  candidates?: { content?: { parts?: GeminiPart[] } }[];
+  candidates?: { content?: { parts?: GeminiPart[] }; finishReason?: string }[];
 };
 
 /**

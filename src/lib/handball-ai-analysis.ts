@@ -229,8 +229,12 @@ export async function getOrGenerateAiAnalysis(
       prompt,
       provider: "gemini",
       temperature: 0.4,
-      maxOutputTokens: 2048,
-      timeoutMs: 60_000,
+      // gemini-3.x facture le RAISSONNEMENT dans maxOutputTokens
+      // (thoughtsTokenCount ≈ 1 900 tokens pour ce prompt) : avec 2048, le
+      // finishReason tombait en MAX_TOKENS et l'analyse était tronquée à
+      // ~300 caractères. 8 192 laisse ≈ 2 000 tokens de réponse + réflexion.
+      maxOutputTokens: 8192,
+      timeoutMs: 90_000,
     });
     const entry: AiCacheEntry = {
       generatedAt: new Date().toISOString(),
