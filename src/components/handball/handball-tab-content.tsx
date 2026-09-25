@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { useHandballMatches } from "@/hooks/use-handball-matches";
 import { useVitibetTips } from "@/hooks/use-vitibet-tips";
+import { useHandballTop8, type StrategyChip } from "@/hooks/use-handball-top8";
 import { HandballMatchCard } from "./handball-match-card";
 import { HandballLiveCard } from "./handball-live-card";
 import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
@@ -305,6 +306,17 @@ export function HandballTabContent() {
     [allMatches],
   );
 
+  // Chips « Top stratégies ≥60 % » par ligne de calendrier — même payload SWR
+  // que le Top8 widget / Banker (clé partagée → 0 requête supplémentaire).
+  const { data: strategyPayload } = useHandballTop8();
+  const chipsByMatch = useMemo(() => {
+    const map = new Map<string, StrategyChip[]>();
+    for (const [id, list] of Object.entries(strategyPayload?.chips ?? {})) {
+      map.set(id, list);
+    }
+    return map;
+  }, [strategyPayload]);
+
   // Auto-switch prematch si aucun live
   useEffect(() => {
     if (mode === "live" && live.length === 0) setMode("prematch");
@@ -380,9 +392,14 @@ export function HandballTabContent() {
             onSelect={setSelectedLeague}
           />
 
-          {/* Calendrier (prematch seulement) — lignes cliquables → popup analyse */}
+          {/* Calendrier (prematch seulement) — lignes cliquables → popup analyse,
+              pastilles « Top stratégies ≥60 % » sous chaque ligne */}
           {mode === "prematch" && filtered.length > 0 && (
-            <HandballCalendar matches={filtered} onSelect={setDetailMatch} />
+            <HandballCalendar
+              matches={filtered}
+              chipsByMatch={chipsByMatch}
+              onSelect={setDetailMatch}
+            />
           )}
 
           {/* Grille de matchs */}

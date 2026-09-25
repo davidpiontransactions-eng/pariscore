@@ -15,6 +15,7 @@ import {
   type CmpTeam,
 } from "./handball-cmp";
 import { handicapProb, skellamMatchProbs } from "./handball-skellam";
+import { BET_FLOOR } from "./handball-history-stats";
 
 // ─── Types ───
 
@@ -585,5 +586,123 @@ export function computeHandballStrategyTop8(
     window: "all",
     strategies,
     computedAt: new Date().toISOString(),
+  };
+}
+
+// ─── Chips « Top stratégies » par ligne de calendrier ───
+
+/**
+ * Chip compact affiché au niveau d'une ligne du calendrier : stratégie dont la
+ * proba modèle atteint le seuil BET_FLOOR (60 % — `handball-history-stats`).
+ * Le calcul réutilise `scoreMatch` (mêmes formules que le Top8 widget, aucune
+ * duplication) et couvre TOUS les matchs du calendrier (pas la troncature 8).
+ */
+export type HandballStrategyChip = {
+  key: HandballStrategyKey;
+  label: string;
+  emoji: string;
+  /** Probabilité en % (0-100). */
+  probPct: number;
+  pick: HandballSide | null;
+  /** EV en FRACTION (ex. 0.085 = +8,5 %) — ×100 pourcentage côté UI. */
+  ev?: number | null;
+};
+
+/** Stratégies exposant une VRAIE probabilité — bestTeam/htLeader en sont exclus
+ *  (ils retournent {value, pick} sans probPct). */
+const CHIP_STRATEGIES: HandballStrategyKey[] = [
+  "bestTeam1x2",
+  "over55",
+  "under62",
+  "handicap",
+  "btts30",
+  "valueBet",
+];
+
+/** Cotes réelles présentes (1X2 direct ou cotes d'ouverture 1X2). Sans elles,
+ *  `valueBet` calcule son EV contre VALUEBET_FALLBACK_ODDS = 1.55 → EV
+ *  synthétique (mesure 2026-09-25 : 0/536 fixtures du snapshot avaient des
+ *  cotes → chips EV+ illégitimes). */
+function hasRealOdds(match: HandballMatch): boolean {
+  const direct = match.odds?.home != null && match.odds?.away != null;
+  const opening =
+    match.openingOdds?.fav1x2?.home != null && match.openingOdds?.fav1x2?.away != null;
+  return direct || opening;
+}
+
+/**
+ * Chips ≥ seuil pour chaque match du calendrier.
+ *
+ * @param finished matchs terminés (construit le form store)
+ * @param fixtures matchs à venir (lignes du calendrier)
+ * opts.threshold seuil en % (défaut 60 = BET_FLOOR × 100)
+ * opts.minForm   matchs minimum par équipe (défaut CMP_MIN_HISTORY = 3)
+ * opts.maxPerMatch chips maximum par ligne (défaut 4, tri proba décroissante)
+ *
+ * Garde-fous anti faux positifs :
+ *  - `under62` exige la forme complète (sans elle le repli λ statique donne
+ *    ~96 % systématique) ;
+ *  - `valueBet` exige ev > 0 (sinon ce n'est pas un EV+) ;
+ *  - `handicap` sans forme tombe à 0 % → filtré naturellement par le seuil.
+ */
+export function computeHandballMatchChips(
+  finished: HandballMatch[],
+  fixtures: HandballMatch[],
+  opts?: { threshold?: number; minForm?: number; maxPerMatch?: number },
+): Record<string, HandballStrategyChip[]> {
+  const threshold = opts?.threshold ?? BET_FLOOR * 100;
+  const minForm = opts?.minForm ?? CMP_MIN_HISTORY;
+  const maxPerMatch = opts?.maxPerMatch ?? 4;
+  const formStore = buildFormStore(finished);
+  const out: Record<string, HandballStrategyChip[]> = {};
+
+  for (const match of fixtures) {
+    const hForm = formStore.get(String(match.home.id));
+    const aForm = formStore.get(String(match.away.id));
+    const hasForm =
+      hForm != null && aForm != null && hForm.gf.length >= minForm && aForm.gf.length >= minForm;
+
+    const chips: HandballStrategyChip[] = [];
+    for (const key of CHIP_STRATEGIES) {
+      if (key === "under62" && !hasForm) continue;
+      if (key === "valueBet" && !hasRealOdds(match)) continue;
+      const scored = scoreMatch(key, formStore, match);
+      if (scored?.probPct == null) continue;
+      if (key === "valueBet" && !(scored.ev != null && scored.ev > 0)) continue;
+      if (scored.probPct < threshold) continue;
+      const def = HANDBALL_STRATEGY_DEFS[key];
+      chips.push({
+        key,
+        label: def.label,
+        emoji: def.emoji,
+        probPct: Math.round(scored.probPct * 10) / 10,
+        pick: scored.pick,
+        ev: scored.ev ?? null,
+      });
+    }
+
+    if (!chips.length) continue;
+    chips.sort((a, b) => b.probPct - a.probPct);
+    out[String(match.id)] = chips.slice(0, maxPerMatch);
+  }
+
+  return out;
+}
+
+/**
+ * Payload complet de la route `/api/handball/strategy-top8` : Top 8 par
+ * stratégie + chips « Top stratégies ≥60 % » pour TOUTES les lignes du
+ * calendrier. Point d'assemblage unique → le cache stocke exactement ce que
+ * la réponse renvoie (fix review 2026-09-25 : le cold-path servait un payload
+ * sans `chips`).
+ */
+export function computeHandballStrategyPayload(
+  finished: HandballMatch[],
+  fixtures: HandballMatch[],
+  opts?: { limit?: number },
+): HandballStrategyResult & { chips: Record<string, HandballStrategyChip[]> } {
+  return {
+    ...computeHandballStrategyTop8(finished, fixtures, opts),
+    chips: computeHandballMatchChips(finished, fixtures),
   };
 }

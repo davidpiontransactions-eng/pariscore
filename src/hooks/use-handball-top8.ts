@@ -2,6 +2,11 @@
 
 import useSWR from "swr";
 import type { HandballOpeningOdds } from "@/lib/handball-data";
+// Type unique partagé avec le moteur (type-only → effacé, pas de bundle lib).
+import type { HandballStrategyChip } from "@/lib/handball-strategy-top8";
+
+/** Chip « Top stratégie » d'une ligne de calendrier (probabilité ≥ 60 %). */
+export type StrategyChip = HandballStrategyChip;
 
 const fetcher = async (url: string) => {
   const r = await fetch(url);
@@ -29,6 +34,8 @@ type StrategyEntry = {
 
 type StrategyResponse = {
   strategies: Record<string, StrategyEntry[]>;
+  /** Chips par matchId — tous les matchs du calendrier (pas la troncature 8). */
+  chips?: Record<string, StrategyChip[]>;
   computedAt: string;
   window: string;
 };

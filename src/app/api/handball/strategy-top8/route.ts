@@ -3,11 +3,12 @@ import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { readFileSync } from "fs";
 import { toHandballMatch, resolveHandballDataFile, type FlashscoreMatch } from "@/lib/handball-flashscore";
+import { applyPapiOdds, loadOddsPapiSnapshot } from "@/lib/odds-handball-papi";
+import type { HandballStrategyChip, HandballStrategyResult } from "@/lib/handball-strategy-top8";
 
-type CachePayload = {
-  strategies: Record<string, unknown[]>;
-  computedAt: string;
-  window: string;
+type CachePayload = HandballStrategyResult & {
+  /** Chips « Top stratégies ≥60 % » par matchId (2ᵉ ligne du calendrier). */
+  chips: Record<string, HandballStrategyChip[]>;
 };
 
 const cache = createTtlCache<CachePayload>("__handballStrategyCache");
@@ -24,6 +25,16 @@ function loadFlashscoreHandball() {
   }
 }
 
+/** Répond TOUJOURS le payload complet (cache ou calcul) — jamais `result` brut :
+ *  le cold-path oubliait `chips` (review 2026-09-25). */
+function respond(payload: CachePayload, strat: string) {
+  if (strat === "all") return NextResponse.json(payload);
+  return NextResponse.json({
+    ...payload,
+    strategies: { [strat]: (payload.strategies as Record<string, unknown[]>)[strat] ?? [] },
+  });
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -31,16 +42,19 @@ export async function GET(request: Request) {
 
     const entry = cache.getEntry();
     if (isFresh(entry, 5 * 60_000)) {
-      const data = entry!.data;
-      if (strat === "all") return NextResponse.json(data);
-      return NextResponse.json({ ...data, strategies: { [strat]: data.strategies[strat] ?? [] } });
+      return respond(entry!.data, strat);
     }
 
-    const { computeHandballStrategyTop8 } = await import("@/lib/handball-strategy-top8");
+    const { computeHandballStrategyPayload } = await import("@/lib/handball-strategy-top8");
 
-    // Charger les données Flashscore (source principale)
+    // Charger les données Flashscore (source principale) + cotes 1xbet réelles
+    // (applyPapiOdds aligne la route sur /api/handball/matches — sans elles,
+    // valueBet calcule son EV contre la cote de repli 1.55 → EV synthétique).
     const rawMatches = loadFlashscoreHandball();
-    const allMatches = rawMatches.map((m, i) => toHandballMatch(m, i));
+    const allMatches = applyPapiOdds(
+      rawMatches.map((m, i) => toHandballMatch(m, i)),
+      loadOddsPapiSnapshot()
+    );
 
     const finished = allMatches.filter((m) => m.status === "finished");
     const upcoming = allMatches.filter((m) => m.status === "not_started" || m.status === "live");
@@ -55,20 +69,17 @@ export async function GET(request: Request) {
         ]);
         const fFinished = fixtures.filter((m) => m.status === "finished");
         const fUpcoming = [...fixtures.filter((m) => m.status === "not_started"), ...live];
-        const result = computeHandballStrategyTop8(fFinished, fUpcoming);
-        cache.set(result);
-        if (strat === "all") return NextResponse.json(result);
-        return NextResponse.json({ ...result, strategies: { [strat]: result.strategies[strat as keyof typeof result.strategies] ?? [] } });
+        const payload = computeHandballStrategyPayload(fFinished, fUpcoming);
+        cache.set(payload);
+        return respond(payload, strat);
       } catch {
         // API-Sports indisponible
       }
     }
 
-    const result = computeHandballStrategyTop8(finished, upcoming);
-    cache.set(result);
-
-    if (strat === "all") return NextResponse.json(result);
-    return NextResponse.json({ ...result, strategies: { [strat]: result.strategies[strat as keyof typeof result.strategies] ?? [] } });
+    const payload = computeHandballStrategyPayload(finished, upcoming);
+    cache.set(payload);
+    return respond(payload, strat);
   } catch (err) {
     return apiErrorHandler(err, "handball/strategy-top8");
   }
