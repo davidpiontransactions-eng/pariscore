@@ -65,7 +65,7 @@ export function HandballVitibetTop10() {
 
       {/* Mini-banner J → J+3 (pas de navigation de dates dans le calendrier) */}
       <div className="rounded bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-        📅 Pronostics J → J+3 — favoris les plus lourds selon l&apos;INDEX Vitibet
+        📅 Pronostics J → J+3 — favoris les plus lourds selon l&apos;INDEX
       </div>
 
       <div className="overflow-x-auto">
