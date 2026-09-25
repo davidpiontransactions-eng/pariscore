@@ -169,7 +169,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-calendar | handball-calendar.tsx | Calendrier matchs groupés par date (lignes cliquables → popup analyse) |
 | handball-top8-widget | handball-top8-widget.tsx | Top 8 matchs par stratégie (tableau avec prob/EV/trend) |
 | handball-strategy-bar | handball-strategy-bar.tsx | Sélecteur pills 8 stratégies (Équipe, 1X2, O55.5, U62.5, HC, BTTS, HT, EV+) |
-| handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail 4 onglets : Analyse (forme, cotes, verdict modèle), Stats, **Over & Buteurs** (échelle Over 59.5→52.5 seuil 55 %, 1X2, winrate, splits buts L5/L10 dom/ext, PPG, 2 buteurs avec P(≥2/3/4/5) — via /api/handball/analysis), Bets (3 paris prédictifs + top GK/buteurs via /api/handball/players) |
+| handball-match-detail-dialog | handball-match-detail-dialog.tsx | Dialog détail 5 onglets : Analyse (forme, cotes, verdict modèle), Stats, **Over & Buteurs** (échelle Over 59.5→52.5 seuil 55 %, pill pari ≥60 %, 1X2, winrate, splits buts L5/L10 dom/ext, PPG, 2 buteurs avec P(≥2/3/4/5) — via /api/handball/analysis), Bets (3 paris prédictifs + top GK/buteurs via /api/handball/players), **✨ IA** (analyse Gemini structurée 7 sections, générée 1× puis cache VPS 24 h — /api/handball/ai-analysis, markdown + disclaimer) |
 | handball-banker | handball-banker.tsx | Banker bet du jour (meilleur valueBet/bestTeam ≥65%) |
 | handball-hero-header | handball-hero-header.tsx | Hero onglet Handball (miroir hockey : accroche 60 min, 3 stratégies pick, visuel silhouette/photo + halo #00e676) |
 | handball-error-boundary | handball-error-boundary.tsx | Error boundary avec fallback UI |
@@ -183,6 +183,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-clv | handball-clv.ts (lib) | Devig proportionnel + Shin optionnel, CLV (p_model−p_implied)/p_implied, seuils edge 1,5 % / n≥30 |
 | handball-history-stats | handball-history-stats.ts (lib) | Stats historique pures : splits buts L5/L10 dom/ext, diff, PPG, winrate global/dom/ext, échelle Over (PROB_FLOOR 55 %), probas buteurs Poisson, fitNu par apparillage variance |
 | handball-history-db | handball-history-db.ts (lib) | Lecture readonly de `handball_match_history` (pariscore.db) — loadTeamRows, listTeamKeys, historyMeta, pattern leagues-stats (bun:sqlite → better-sqlite3) |
+| handball-ai-analysis | handball-ai-analysis.ts (lib) | Analyse IA handball : prompt expert 7 sections (données réelles injectées), cache fichier 24 h (`data/handball-ai-cache.json`, purge auto), dédup concurrence, TTL testable |
 
 ## Leagues (`src/components/leagues/`) — 12 components
 

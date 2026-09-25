@@ -28,7 +28,9 @@ import { HandballLeagueBadge } from "@/components/handball/handball-league-badge
 // le snapshot joueurs est servi par la route /api/handball/players.
 import type { HblPlayer, HblTeamTopPlayers } from "@/lib/handball-players";
 // Stats historique (table handball_match_history) : types purs + seuil 55 %.
-import { BET_FLOOR, PROB_FLOOR, lineFlag, type OverLine, type ScorerThreshold, type TeamHistoryStats } from "@/lib/handball-history-stats";
+import { PROB_FLOOR, BET_FLOOR, lineFlag, type OverLine, type ScorerThreshold, type TeamHistoryStats } from "@/lib/handball-history-stats";
+// Rendu markdown de l'analyse IA (réponse Gemini, générée côté serveur).
+import Markdown from "react-markdown";
 
 type Props = {
   match: HandballMatch | null;
@@ -100,6 +102,17 @@ type AnalysisPayload = {
   meta: { n: number; minDate: string | null; maxDate: string | null; lastRun: string | null } | null;
 };
 
+/** DTO de l'analyse IA (miroir /api/handball/ai-analysis — cache VPS 24h). */
+type AiAnalysis = {
+  ok: true;
+  cached: boolean;
+  generatedAt: string;
+  expiresInHours: number;
+  model: string;
+  latencyMs: number;
+  text: string;
+};
+
 // Cache module : slot unique « dernier URL gagnant » (match B écrase le slot
 // du match A) — le snapshot joueurs ne bouge pas pendant la session, donc une
 // seule requête par URL réutilisée aux réouvertures. Les échecs ne sont JAMAIS
@@ -138,6 +151,23 @@ function fetchAnalysis(url: string): Promise<AnalysisPayload | null> {
       return payload;
     });
   analysisReq = { url, promise };
+  return promise;
+}
+
+// Cache module pour l'analyse IA : la 1ʳᵉ ouverture génère (20-60 s), les
+// suivantes sont servies du cache VPS 24h — jamais de cache d'erreur.
+let aiReq: { url: string; promise: Promise<AiAnalysis | null> } | null = null;
+
+function fetchAiAnalysis(url: string): Promise<AiAnalysis | null> {
+  if (aiReq?.url === url) return aiReq.promise;
+  const promise = fetch(url)
+    .then((r) => (r.ok ? (r.json() as Promise<AiAnalysis>) : null))
+    .catch(() => null)
+    .then((payload) => {
+      if (payload == null && aiReq?.url === url) aiReq = null;
+      return payload;
+    });
+  aiReq = { url, promise };
   return promise;
 }
 
@@ -763,6 +793,62 @@ function StarLigueBlock({
   );
 }
 
+/** Contenu de l'onglet « IA » : analyse prédictive Gemini (cache VPS 24h). */
+function AiTab({
+  state,
+  ai,
+}: {
+  state: "idle" | "loading" | "ready" | "error";
+  ai: AiAnalysis | null;
+}) {
+  if (state === "idle" || state === "loading") {
+    return (
+      <div className="py-6 text-center text-[11px] text-muted-foreground" aria-live="polite">
+        <p className="font-semibold text-foreground">Génération de l&apos;analyse IA…</p>
+        <p className="mt-1">
+          1ʳᵉ demande : 20 à 60 s. Ensuite, l&apos;analyse est mise en mémoire 24 h sur le serveur
+          (aucun coût Gemini).
+        </p>
+      </div>
+    );
+  }
+  if (state === "error" || !ai) {
+    return (
+      <p className="py-6 text-center text-[11px] text-muted-foreground">
+        Analyse IA indisponible (quota / clé Gemini ou service en erreur) — réessaie dans un
+        instant, les données chiffrées restent dans les onglets Over &amp; Stats.
+      </p>
+    );
+  }
+  const when = new Date(ai.generatedAt);
+  const stamp = `${String(when.getDate()).padStart(2, "0")}/${String(when.getMonth() + 1).padStart(2, "0")} ${String(when.getHours()).padStart(2, "0")}:${String(when.getMinutes()).padStart(2, "0")}`;
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+            ai.cached ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30"
+          }`}
+        >
+          {ai.cached ? "déjà en mémoire" : "analysé maintenant"}
+        </span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          analyse du {stamp} · expire dans ~{ai.expiresInHours} h · {ai.model}
+        </span>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-3 text-xs leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:mb-1.5 [&_h2]:mt-3 [&_h2]:text-xs [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h3]:font-semibold [&_li]:mb-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1.5 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-4">
+        <Markdown>{ai.text}</Markdown>
+      </div>
+
+      <p className="text-[10px] font-medium text-amber-500">
+        ⚠️ Aide à la décision, pas un conseil de pari — l&apos;IA peut se tromper (absences,
+        cotes : à vérifier).
+      </p>
+    </div>
+  );
+}
+
 /** Contenu complet de l'onglet Over & Buteurs. */
 function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
   const { model, over, match1x2, scorers, method, meta } = analysis;
@@ -937,6 +1023,43 @@ export function HandballMatchDetailDialog({
   const [analysis, setAnalysis] = useState<AnalysisPayload | null>(null);
   const [analysisState, setAnalysisState] = useState<PlayersState>("idle");
 
+  // Onglet actif : l'analyse IA n'est générée QU'à la visite de l'onglet « IA »
+  // (et une seule fois — cache VPS 24h derrière).
+  const [tab, setTab] = useState("analyse");
+  const [ai, setAi] = useState<AiAnalysis | null>(null);
+  const [aiState, setAiState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+
+  const aiUrl = useMemo(() => {
+    if (!match) return null;
+    const params = new URLSearchParams({
+      home: match.home.name,
+      away: match.away.name,
+      league: match.league.name,
+      date: match.kickoff,
+    });
+    return `/api/handball/ai-analysis?${params.toString()}`;
+  }, [match]);
+
+  // Génération à la demande (uniquement si l'onglet IA est ouvert).
+  useEffect(() => {
+    if (!open || tab !== "ia" || !aiUrl) return;
+    if (aiState === "loading" || aiState === "ready") return;
+    let cancelled = false;
+    setAiState("loading");
+    fetchAiAnalysis(aiUrl).then((payload) => {
+      if (cancelled) return;
+      if (payload) {
+        setAi(payload);
+        setAiState("ready");
+      } else {
+        setAiState("error");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, tab, aiUrl, aiState]);
+
   // Fetch lazy à l'ouverture (cache module : pas de re-fetch à la réouverture).
   useEffect(() => {
     if (!open || !analysisUrl) return;
@@ -1080,7 +1203,7 @@ export function HandballMatchDetailDialog({
           </div>
         )}
 
-        <Tabs defaultValue="analyse" className="mt-1">
+        <Tabs value={tab} onValueChange={setTab} className="mt-1">
           {/* 4 onglets : sur mobile la barre défile horizontalement plutôt
               que d'écraser les libellés (conformité 360 px). */}
           <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07] max-sm:overflow-x-auto max-sm:flex-nowrap">
@@ -1095,6 +1218,9 @@ export function HandballMatchDetailDialog({
             </TabsTrigger>
             <TabsTrigger value="bets" className="flex-1 whitespace-nowrap">
               Bets
+            </TabsTrigger>
+            <TabsTrigger value="ia" className="flex-1 whitespace-nowrap">
+              ✨ IA
             </TabsTrigger>
           </TabsList>
 
@@ -1467,6 +1593,12 @@ export function HandballMatchDetailDialog({
                 />
               </div>
             </section>
+          </TabsContent>
+
+          {/* ── Onglet 5 : Analyse IA (Gemini) — générée à la 1ʳᵉ visite,
+              puis servie du cache VPS 24 h. ── */}
+          <TabsContent value="ia" className="space-y-3">
+            <AiTab state={aiState} ai={ai} />
           </TabsContent>
         </Tabs>
       </DialogContent>
