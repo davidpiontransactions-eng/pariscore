@@ -17,6 +17,7 @@
  *   12. `pariscore-cron-top5-backtest`: settle + snapshot quotidien du backtest Top 5 foot (05:15 UTC)
  *   13. `pariscore-cron-hbl-players` : snapshot joueurs HBL handball (05:10 UTC)
  *   14. `pariscore-cron-lnh`         : snapshot LNH StarLigue (calendrier + stats, 21:30 UTC)
+ *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (lundi 04:20 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -453,6 +454,34 @@ module.exports = {
       },
       error_file: 'logs/cron-lnh.err.log',
       out_file: 'logs/cron-lnh.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job historique handball (table handball_match_history) ===
+      // Alimente pariscore.db → table `handball_match_history` consommée par
+      // GET /api/handball/analysis (onglet « Over & Buteurs » du popup
+      // calendrier : échelle Over 59.5→52.5, 1X2, winrate, splits buts L5/L10
+      // dom/ext, PPG, 2 meilleurs buteurs avec P(≥2/3/4/5)).
+      // Sources : BetExplorer results (archives illimitées, toutes ligues) +
+      // feeds Flashscore (fenêtre 8 j) + snapshots locaux.
+      // CADENCE HEBDO MINIMALE : les archives results sont illimitées (aucun
+      // run perdu), mais les feeds Flashscore ne gardent que 8 jours — une
+      // cadence plus espacée que 7 j perdrait la couverture flashscore.
+      name: 'pariscore-cron-handball-history',
+      script: '/home/ubuntu/.bun/bin/bun',
+      args: 'scripts/scrape-handball-history.mjs --days=10',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '20 4 * * 1', // lundi 04:20 UTC — hebdomadaire
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-handball-history.err.log',
+      out_file: 'logs/cron-handball-history.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
