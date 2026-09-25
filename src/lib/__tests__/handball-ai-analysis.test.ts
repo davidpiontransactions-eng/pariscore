@@ -49,6 +49,7 @@ function payload(overrides: Partial<HandballAnalysisPayload> = {}): HandballAnal
           games: 5,
           avgGoals: 5.4,
           lambda: 5.56,
+          photoUrl: null,
           probs: [
             { n: 2, p: 0.97, playable: true },
             { n: 3, p: 0.91, playable: true },
