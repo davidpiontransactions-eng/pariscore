@@ -38,6 +38,7 @@ import {
   loadLnhTeamStats,
   type LnhMetricDef,
 } from "@/lib/lnh-stats";
+import { handballPlayerPhoto } from "@/lib/handball-photos";
 
 /** Base points documentée (demande utilisateur). */
 const BASE_TOTAL = 60;
@@ -59,6 +60,8 @@ type ScorerView = {
   /** λ ajusté au rythme du match (buts attendus du joueur). */
   lambda: number;
   probs: ScorerThreshold[];
+  /** Photo joueur (snapshot Wikipedia) — null → initiales côté UI. */
+  photoUrl: string | null;
 };
 
 /** Vue StarLigue d'une équipe : classement + 5 métriques (snapshot LNH). */
@@ -186,7 +189,7 @@ export async function GET(request: Request) {
     const lambda = side === "home" ? model.lambdaH : model.lambdaA;
     return topScorers(name, league, 2).map((p) => {
       const { lambda: playerLambda, probs } = scorerProbs(p.avgGoals, lambda);
-      return { ...p, lambda: playerLambda, probs };
+      return { ...p, lambda: playerLambda, probs, photoUrl: handballPlayerPhoto(p.name) };
     });
   };
 

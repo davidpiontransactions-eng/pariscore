@@ -10,11 +10,21 @@ import {
   type HblPlayersSnapshot,
   type HblTeamTopPlayers,
 } from "@/lib/handball-players";
+import { handballPlayerPhoto } from "@/lib/handball-photos";
 
 type PlayersTops = {
   home: HblTeamTopPlayers;
   away: HblTeamTopPlayers;
 };
+
+/** Enrichit chaque joueur de sa photo (snapshot Wikipedia) si elle existe. */
+function withPhotos(tops: HblTeamTopPlayers): HblTeamTopPlayers {
+  const add = (p: HblTeamTopPlayers["field"][number]) => ({
+    ...p,
+    photoUrl: handballPlayerPhoto(p.name),
+  });
+  return { ...tops, gk: tops.gk.map(add), field: tops.field.map(add) };
+}
 
 /**
  * Top joueurs avec repli « dernier mot du nom » : le snapshot peut avoir
@@ -46,8 +56,8 @@ export async function GET(request: Request) {
   const snap = playersForLeague(loadHandballPlayers(), league);
 
   const payload: PlayersTops = {
-    home: topsWithFallback(snap, home),
-    away: topsWithFallback(snap, away),
+    home: withPhotos(topsWithFallback(snap, home)),
+    away: withPhotos(topsWithFallback(snap, away)),
   };
 
   return NextResponse.json(payload, {

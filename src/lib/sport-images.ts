@@ -30,7 +30,8 @@ export type SportId =
   | "f1"
   | "baseball"
   | "rugby"
-  | "snooker";
+  | "snooker"
+  | "handball";
 
 // ─── URLs hero haute résolution par sport ─────────────────────────────────
 // Toutes ces URLs Unsplash sont libres de droit (photo credit dans README)
@@ -46,6 +47,7 @@ const SPORT_HERO: Record<SportId, string> = {
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   snooker: `${UNSPLASH_BASE}/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=1200&q=80`,
+  handball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
 };
 
 // ─── URLs basse résolution + flou pour arrière-plans. ────────────────────
@@ -61,6 +63,7 @@ const SPORT_BG: Record<SportId, string> = {
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   snooker: `${UNSPLASH_BASE}/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=800&q=60&blur=20`,
+  handball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
 };
 
 // ─── Couleurs accent par sport (fallbacks, badges, anneaux). ───────────────
@@ -76,6 +79,7 @@ const SPORT_ACCENT: Record<SportId, string> = {
   baseball: "#f59e0b",
   rugby: "#14b8a6",
   snooker: "#00e676",
+  handball: "#00e676",
 };
 
 // ─── URLs images athlètes par sport ──────────────────────────────────────
@@ -83,6 +87,7 @@ const SPORT_ACCENT: Record<SportId, string> = {
 const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
   home: [],
   cs2: [],
+  handball: [],
   tennis: [
     {
       name: "Rafael Nadal",

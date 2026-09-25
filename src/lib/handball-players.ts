@@ -48,6 +48,8 @@ export type HblPlayer = {
   shots?: number;
   /** Score LNH (note officielle 0-100, LNH seul). */
   rating?: number;
+  /** URL photo joueur (snapshot handball-player-photos.json) — null → initiales. */
+  photoUrl?: string | null;
 };
 
 export type HblPlayersSnapshot = {

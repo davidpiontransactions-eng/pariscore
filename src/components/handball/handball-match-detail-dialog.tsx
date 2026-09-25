@@ -24,6 +24,7 @@ import {
 } from "@/lib/handball-bonus-markets";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
 // Type-only : le module handball-players lit fs.readFileSync (server-only) —
 // le snapshot joueurs est servi par la route /api/handball/players.
 import type { HblPlayer, HblTeamTopPlayers } from "@/lib/handball-players";
@@ -56,6 +57,8 @@ type AnalysisScorer = {
   avgGoals: number;
   lambda: number;
   probs: ScorerThreshold[];
+  /** Photo (snapshot Wikipedia) — null → initiales (PlayerAvatar). */
+  photoUrl?: string | null;
 };
 
 /** Vue StarLigue d'une équipe (miroir /api/handball/analysis). */
@@ -496,13 +499,16 @@ function PlayerColumn({
     <div className={`rounded-lg border ${borderCls} p-2.5`}>
       {header}
       {gk && (
-        <div className="mt-2 rounded bg-muted/40 px-2 py-1.5 dark:bg-white/[0.06]">
-          <p className="truncate text-[11px] font-semibold">
-            {gk.name} <span className="font-normal text-muted-foreground">· gardien</span>
-          </p>
-          {gkLine && (
-            <p className="text-[10px] tabular-nums text-muted-foreground">{gkLine}</p>
-          )}
+        <div className="mt-2 flex items-center gap-2 rounded bg-muted/40 px-2 py-1.5 dark:bg-white/[0.06]">
+          <PlayerAvatar name={gk.name} photoUrl={gk.photoUrl} size="xs" sport="handball" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11px] font-semibold">
+              {gk.name} <span className="font-normal text-muted-foreground">· gardien</span>
+            </p>
+            {gkLine && (
+              <p className="text-[10px] tabular-nums text-muted-foreground">{gkLine}</p>
+            )}
+          </div>
         </div>
       )}
       {tops.field.length > 0 && (
@@ -512,7 +518,10 @@ function PlayerColumn({
               key={`${p.name}-${p.team}`}
               className="flex items-center justify-between gap-2 py-1 text-[11px]"
             >
-              <span className="truncate font-medium">{p.name}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <PlayerAvatar name={p.name} photoUrl={p.photoUrl} size="xs" sport="handball" />
+                <span className="truncate font-medium">{p.name}</span>
+              </span>
               <span className="shrink-0 tabular-nums text-muted-foreground">
                 {playerLine(p)}
               </span>
@@ -676,11 +685,15 @@ function ScorerRow({ p, variant }: { p: AnalysisScorer; variant: "home" | "away"
   const accent = variant === "home" ? "text-emerald-500" : "text-sky-500";
   return (
     <div className={`rounded-lg border ${border} px-2 py-1.5`}>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-[11px] font-semibold">{p.name}</span>
-        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-          {n1(p.avgGoals)}/m · {p.goals} buts ({p.games} m)
-        </span>
+      <div className="flex items-center gap-2">
+        {/* Photo du buteur (Wikipedia) — initiales si absente */}
+        <PlayerAvatar name={p.name} photoUrl={p.photoUrl} size="xs" sport="handball" />
+        <div className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
+          <span className="truncate text-[11px] font-semibold">{p.name}</span>
+          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+            {n1(p.avgGoals)}/m · {p.goals} buts ({p.games} m)
+          </span>
+        </div>
       </div>
       <div className="mt-1 flex flex-wrap gap-1">
         {p.probs.map((t) => (

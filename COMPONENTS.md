@@ -184,6 +184,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-history-stats | handball-history-stats.ts (lib) | Stats historique pures : splits buts L5/L10 dom/ext, diff, PPG, winrate global/dom/ext, échelle Over (PROB_FLOOR 55 %), probas buteurs Poisson, fitNu par apparillage variance |
 | handball-history-db | handball-history-db.ts (lib) | Lecture readonly de `handball_match_history` (pariscore.db) — loadTeamRows, listTeamKeys, historyMeta, pattern leagues-stats (bun:sqlite → better-sqlite3) |
 | handball-ai-analysis | handball-ai-analysis.ts (lib) | Analyse IA handball : prompt expert 7 sections (données réelles injectées), cache fichier 24 h (`data/handball-ai-cache.json`, purge auto), dédup concurrence, TTL testable |
+| handball-photos | handball-photos.ts (lib) | Photos joueurs HBL/StarLigue (`data/handball-player-photos.json`, Wikipedia pageimages, cron lundi 04:45) — `handballPlayerPhoto(name)` → URL ou null (initiales via PlayerAvatar) |
 
 ## Leagues (`src/components/leagues/`) — 12 components
 

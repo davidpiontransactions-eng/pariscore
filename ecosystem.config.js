@@ -18,6 +18,7 @@
  *   13. `pariscore-cron-hbl-players` : snapshot joueurs HBL handball (05:10 UTC)
  *   14. `pariscore-cron-lnh`         : snapshot LNH StarLigue (calendrier + stats, 21:30 UTC)
  *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (lundi 04:20 UTC)
+ *   16. `pariscore-cron-handball-photos`: photos joueurs handball (Wikipedia) (lundi 04:45 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -482,6 +483,30 @@ module.exports = {
       },
       error_file: 'logs/cron-handball-history.err.log',
       out_file: 'logs/cron-handball-history.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job photos des joueurs handball (avatars popups) ===
+      // API Wikipedia pageimages (gratuite, CC-BY-SA) →
+      // data/handball-player-photos.json, consommé par /api/handball/analysis
+      // (ScorerRow) et /api/handball/players (PlayerColumn) via PlayerAvatar
+      // (fallback initiales si absente). Incrémental : seuls les noms non
+      // résolus sont interrogés (~1-2 min, top 6 buteurs + gardien par équipe).
+      name: 'pariscore-cron-handball-photos',
+      script: '/home/ubuntu/.bun/bin/bun',
+      args: 'scripts/scrape-handball-player-photos.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '45 4 * * 1', // lundi 04:45 UTC (après history 04:20)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-handball-photos.err.log',
+      out_file: 'logs/cron-handball-photos.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
