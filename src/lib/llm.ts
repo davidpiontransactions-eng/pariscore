@@ -263,15 +263,39 @@ async function callGemini(
     throw new LlmError(`Erreur gemini (${res.status})`, res.status, code);
   }
 
-  const json = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-  };
-  const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const json = (await res.json()) as GeminiResponse;
+  const rawText = extractGeminiText(json);
   if (!rawText) {
     throw new LlmError("Gemini a retourné une réponse vide", 502, "GEMINI_EMPTY");
   }
 
   return { text: rawText, provider: "gemini", model: cfg.geminiModel, latencyMs: 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Extraction de texte — racine unique, utilisée par callGemini + tests
+// ---------------------------------------------------------------------------
+
+export type GeminiPart = { text?: string; thought?: boolean };
+export type GeminiResponse = {
+  candidates?: { content?: { parts?: GeminiPart[] } }[];
+};
+
+/**
+ * Assemble le texte d'une réponse Gemini.
+ *
+ * Piège corrigé le 2026-09-25 : on ne lisait que `parts[0]` → Gemini découpe
+ * volontairement les réponses longues en PLUSIEURS parts (l'analyse IA
+ * handball revenait tronquée à 273 caractères sur 7 sections demandées).
+ * On joint donc toutes les parts textuelles, en excluant les parts de
+ * raisonnement (`thought: true`) qui ne font pas partie de la réponse.
+ */
+export function extractGeminiText(json: GeminiResponse | null | undefined): string {
+  const parts = json?.candidates?.[0]?.content?.parts ?? [];
+  return parts
+    .filter((p) => !p.thought)
+    .map((p) => p.text ?? "")
+    .join("");
 }
 
 // ---------------------------------------------------------------------------
