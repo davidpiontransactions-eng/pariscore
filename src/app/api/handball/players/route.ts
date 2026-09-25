@@ -17,11 +17,15 @@ type PlayersTops = {
   away: HblTeamTopPlayers;
 };
 
-/** Enrichit chaque joueur de sa photo (snapshot Wikipedia) si elle existe. */
+/**
+ * Enrichit chaque joueur de sa photo : headshot officiel du snapshot HBL
+ * (`photoUrl` Sportradar, prioritaire) → sinon Wikipedia → sinon null
+ * (PlayerAvatar affiche les initiales).
+ */
 function withPhotos(tops: HblTeamTopPlayers): HblTeamTopPlayers {
   const add = (p: HblTeamTopPlayers["field"][number]) => ({
     ...p,
-    photoUrl: handballPlayerPhoto(p.name),
+    photoUrl: p.photoUrl ?? handballPlayerPhoto(p.name),
   });
   return { ...tops, gk: tops.gk.map(add), field: tops.field.map(add) };
 }

@@ -128,6 +128,7 @@ function topScorers(name: string, league: string, n: number): {
   goals: number;
   games: number;
   avgGoals: number;
+  photoUrl: string | null;
 }[] {
   const snap = playersForLeague(loadHandballPlayers(), league);
   let field = topPlayersForTeam(snap, name, 5).field;
@@ -143,6 +144,8 @@ function topScorers(name: string, league: string, n: number): {
     goals: p.goals,
     games: p.games,
     avgGoals: p.avgGoals ?? (p.games > 0 ? p.goals / p.games : 0),
+    /** Headshot officiel HBL (Sportradar) si le snapshot le porte. */
+    photoUrl: p.photoUrl ?? null,
   }));
 }
 
@@ -189,7 +192,13 @@ export async function GET(request: Request) {
     const lambda = side === "home" ? model.lambdaH : model.lambdaA;
     return topScorers(name, league, 2).map((p) => {
       const { lambda: playerLambda, probs } = scorerProbs(p.avgGoals, lambda);
-      return { ...p, lambda: playerLambda, probs, photoUrl: handballPlayerPhoto(p.name) };
+      // Priorité : headshot officiel HBL (snapshot) → Wikipedia → initiales
+      return {
+        ...p,
+        lambda: playerLambda,
+        probs,
+        photoUrl: p.photoUrl ?? handballPlayerPhoto(p.name),
+      };
     });
   };
 

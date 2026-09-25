@@ -197,6 +197,24 @@ function buildGkEvidenceSet(gkJson) {
 }
 
 /**
+ * Meilleur headshot officiel d'un joueur (Sportradar) : champ `images` de la
+ * personne — PERSON_WAIST (buste) de préférence, sinon la première image
+ * pourvue d'une URL. Source prioritaire sur la photo Wikipedia (couverture
+ * ~100 % HBL, maj saison, hébergée images.dc.connect.sportradar.com).
+ * @param {Array<object>|undefined} images  person.images
+ * @returns {string|undefined}
+ */
+function pickHeadshot(images) {
+  if (!Array.isArray(images) || images.length === 0) return undefined;
+  const rank = (img) =>
+    String((img && img.imageType) || '').toUpperCase().includes('WAIST') ? 0 : 1;
+  const best = images
+    .filter((img) => img && typeof img.url === 'string' && img.url.startsWith('http'))
+    .sort((a, b) => rank(a) - rank(b))[0];
+  return best ? best.url : undefined;
+}
+
+/**
  * Transforme le JSON player-overview en joueurs normalisés.
  * @param {object} json        Réponse player-overview
  * @param {string} compKey     "hbl" | "dhb-pokal"
@@ -242,6 +260,10 @@ function mapPlayers(json, compKey, position, gkSet) {
       games,
       minutes: parseIsoMinutes(st.timeOnPlayingField),
     };
+
+    // Headshot officiel ligue (prioritaire sur Wikipedia dans les popups)
+    const headshot = pickHeadshot(person && person.images);
+    if (headshot) player.photoUrl = headshot;
 
     if (position === 'Field') {
       player.sevenMGoals = Number(st.sevenMetreGoalsScored) || 0;
@@ -399,6 +421,7 @@ module.exports = {
   parseIsoMinutes,
   buildGkEvidenceSet,
   mapPlayers,
+  pickHeadshot,
   sortPlayers,
   seasonLabel,
 };
