@@ -19,6 +19,7 @@
  *   14. `pariscore-cron-lnh`         : snapshot LNH StarLigue (calendrier + stats, 21:30 UTC)
  *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (lundi 04:20 UTC)
  *   16. `pariscore-cron-handball-photos`: photos joueurs handball (Wikipedia) (lundi 04:45 UTC)
+ *   17. `pariscore-cron-handball-matrix`: matrice backtest 8 marchés × ligues (lundi 04:40 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -507,6 +508,30 @@ module.exports = {
       },
       error_file: 'logs/cron-handball-photos.err.log',
       out_file: 'logs/cron-handball-photos.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron matrice backtest handball (8 marchés × championnats) ===
+      // scripts/backtest-handball-matrix.ts → data/handball_backtest_matrix.json
+      // Walk-forward sur handball_match_history (cotes simulées) — ~5-8 min,
+      // planifié APRÈS history (04:20) pour consommer la table à jour.
+      // Consommateurs : GET /api/handball/backtest-matrix (widget matrice +
+      // onglet « 📊 Backtest » du popup).
+      name: 'pariscore-cron-handball-matrix',
+      script: '/home/ubuntu/.bun/bin/bun',
+      args: 'scripts/backtest-handball-matrix.ts',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '40 4 * * 1', // lundi 04:40 UTC (après history 04:20, photos 04:45)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M', // pic réel : stores de forme transitoires (~quelques dizaines de Mo)
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-handball-matrix.err.log',
+      out_file: 'logs/cron-handball-matrix.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

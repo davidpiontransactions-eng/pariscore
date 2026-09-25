@@ -14,6 +14,7 @@ import { HandballTop8Widget } from "./handball-top8-widget";
 import { HandballVitibetTop10 } from "./handball-vitibet-top10";
 import { HandballVitibetBacktest } from "./handball-vitibet-backtest";
 import { HandballBacktestWidget } from "./handball-backtest-widget";
+import { HandballBacktestMatrix } from "./handball-backtest-matrix";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
 import { HandballErrorBoundary } from "./handball-error-boundary";
@@ -378,6 +379,9 @@ export function HandballTabContent() {
 
       {/* Backtest ROI visuel (cotes simulées) */}
       <HandballBacktestWidget />
+
+      {/* Matrice backtest 8 marchés × championnats (source DB historique) */}
+      <HandballBacktestMatrix />
 
       {mode === "results" ? (
         /* Panneau résultats : backtest du jour + scores (les filtres ligues et le

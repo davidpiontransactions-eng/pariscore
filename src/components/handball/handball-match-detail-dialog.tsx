@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,8 @@ import type { HblPlayer, HblTeamTopPlayers } from "@/lib/handball-players";
 import { PROB_FLOOR, BET_FLOOR, lineFlag, type OverLine, type ScorerThreshold, type TeamHistoryStats } from "@/lib/handball-history-stats";
 // Rendu markdown de l'analyse IA (réponse Gemini, générée côté serveur).
 import Markdown from "react-markdown";
+// Types de la matrice backtest (type-only → effacé, pas de bundle lib).
+import type { MatrixCell, MatrixLeagueRow } from "@/lib/handball-backtest-matrix";
 
 type Props = {
   match: HandballMatch | null;
@@ -154,6 +156,41 @@ function fetchAnalysis(url: string): Promise<AnalysisPayload | null> {
       return payload;
     });
   analysisReq = { url, promise };
+  return promise;
+}
+
+/** DTO backtest matrice (miroir /api/handball/backtest-matrix). */
+type BtPayload = {
+  window: string;
+  generatedAt: string;
+  matrix: {
+    from: string | null;
+    to: string | null;
+    nMatches: number;
+    nLeagues: number;
+    leagues: { league: string; nMatches: number }[];
+    minSampleBets: number;
+    methodology: string;
+    markets: { key: string; label: string; emoji: string; market: string; odds: number | null }[];
+    global: Record<string, MatrixCell>;
+  } | null;
+  league: MatrixLeagueRow | null;
+};
+
+// Cache module : le backtest d'une ligue est statique (fichier cron) → un seul
+// fetch par ligue consultée, jamais de cache d'erreur.
+let btReq: { url: string; promise: Promise<BtPayload | null> } | null = null;
+
+function fetchBt(url: string): Promise<BtPayload | null> {
+  if (btReq?.url === url) return btReq.promise;
+  const promise = fetch(url)
+    .then((r) => (r.ok ? (r.json() as Promise<BtPayload>) : null))
+    .catch(() => null)
+    .then((payload) => {
+      if (payload == null && btReq?.url === url) btReq = null;
+      return payload;
+    });
+  btReq = { url, promise };
   return promise;
 }
 
@@ -906,6 +943,130 @@ function StarLigueBlock({
   );
 }
 
+/** Contenu de l'onglet « Backtest » : perf walk-forward de la LIGUE du match. */
+function LeagueBacktestTab({
+  state,
+  payload,
+  leagueName,
+}: {
+  state: "idle" | "loading" | "ready" | "error";
+  payload: BtPayload | null;
+  leagueName: string;
+}) {
+  if (state === "idle" || state === "loading") {
+    return (
+      <p className="py-4 text-center text-[11px] text-muted-foreground" aria-live="polite">
+        Chargement du backtest de la ligue…
+      </p>
+    );
+  }
+  if (state === "error" || !payload) {
+    return (
+      <p className="py-4 text-center text-[11px] text-muted-foreground">
+        Backtest indisponible (matrice absente — cron hebdo lundi 04:40).
+      </p>
+    );
+  }
+
+  const row = payload.league;
+  const matrix = payload.matrix;
+  if (!matrix) {
+    return (
+      <p className="py-4 text-center text-[11px] text-muted-foreground">
+        Matrice de backtest vide — relance scripts/backtest-handball-matrix.ts.
+      </p>
+    );
+  }
+  if (!row) {
+    return (
+      <div className="space-y-2 py-2 text-center">
+        <p className="text-[11px] text-muted-foreground">
+          Pas encore de recul statistique sur <span className="font-semibold">{leagueName}</span>.
+        </p>
+        <p className="text-[10px] text-muted-foreground/80">
+          La matrice couvre les {matrix.leagues.length} championnats les plus fournis (≥ 20 matchs) —
+          période {matrix.from ?? "?"} → {matrix.to ?? "?"}.
+        </p>
+      </div>
+    );
+  }
+
+  const pct = (v: number | null | undefined, d = 1) =>
+    v == null ? "—" : `${(v * 100).toFixed(d)}%`;
+  const roi = (v: number | null | undefined) =>
+    v == null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+  const roiCls = (v: number | null | undefined) =>
+    v == null ? "text-muted-foreground" : v > 0 ? "text-[#00e676]" : v < 0 ? "text-red-500" : "text-muted-foreground";
+
+  return (
+    <div className="space-y-3">
+      <section className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Backtest — {row.league}
+          </h4>
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            {row.nMatches} matchs · {matrix.from ?? "?"} → {matrix.to ?? "?"} · généré{" "}
+            {payload.generatedAt.slice(0, 10)}
+          </span>
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Walk-forward anti-lookahead sur la matrice 8 marchés × {matrix.nLeagues} championnats
+          (source : historique DB, cotes 1xbet simulées → ROI indicatif).
+        </p>
+      </section>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-border text-left text-muted-foreground">
+              <th className="py-1.5 pr-2 font-medium">Marché</th>
+              <th className="px-2 py-1.5 text-right font-medium">Paris</th>
+              <th className="px-2 py-1.5 text-right font-medium">Hit ligue</th>
+              <th className="px-2 py-1.5 text-right font-medium">ROI</th>
+              <th className="px-2 py-1.5 text-right font-medium">Hit global</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {matrix.markets.map((mk) => {
+              const c = row.cells[mk.key];
+              const g = matrix.global[mk.key];
+              return (
+                <tr key={mk.key}>
+                  <td className="py-1.5 pr-2" title={mk.market}>
+                    <span className="truncate">
+                      {mk.emoji} {mk.label}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                    {c?.nBets ?? 0}
+                  </td>
+                  <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
+                    {pct(c?.hitRate, 0)}
+                  </td>
+                  <td className={`px-2 py-1.5 text-right tabular-nums ${roiCls(c?.roiPct)}`}>
+                    {roi(c?.roiPct)}
+                    {c && c.nBets > 0 && !c.sampleOk ? " ⚠️" : ""}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                    {pct(g?.hitRate, 0)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-[10px] leading-snug text-muted-foreground">
+        ⚠️ = échantillon &lt; {matrix.minSampleBets} paris (ROI = bruit) · nul = perdant pour les
+        marchés 1X2 · cotes simulées (favori 1.55, Over 1.90, Under 1.85, HC 1.90, BTTS 1.80, MT
+        1.70).
+      </p>
+    </div>
+  );
+}
+
 /** Contenu de l'onglet « IA » : analyse prédictive Gemini (cache VPS 24h). */
 function AiTab({
   state,
@@ -1157,24 +1318,57 @@ export function HandballMatchDetailDialog({
   }, [match]);
 
   // Génération à la demande (uniquement si l'onglet IA est ouvert).
+  // Dédup par useRef et NON par state dans les deps : un setState dans l'effect
+  // relance l'effect, le cleanup `cancelled` jetait la réponse réseau →
+  // spinner éternel sur réponse lente (propre en dev, bloqué en prod —
+  // review 2026-09-25). 1 fetch par URL ; échec → reset du ref = retry à la
+  // ré-entrée dans l'onglet.
+  const aiStartedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!open || tab !== "ia" || !aiUrl) return;
-    if (aiState === "loading" || aiState === "ready") return;
-    let cancelled = false;
+    if (aiStartedRef.current === aiUrl) return;
+    aiStartedRef.current = aiUrl;
     setAiState("loading");
     fetchAiAnalysis(aiUrl).then((payload) => {
-      if (cancelled) return;
       if (payload) {
         setAi(payload);
         setAiState("ready");
       } else {
+        aiStartedRef.current = null;
         setAiState("error");
       }
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, tab, aiUrl, aiState]);
+  }, [open, tab, aiUrl]);
+
+  // Onglet « Backtest » : backtest walk-forward de la LIGUE du match (fichier
+  // cron hebdo) — fetch lazy à la visite de l'onglet, même motif que l'IA.
+  const [bt, setBt] = useState<BtPayload | null>(null);
+  const [btState, setBtState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const btUrl = useMemo(
+    () =>
+      match
+        ? `/api/handball/backtest-matrix?window=full&league=${encodeURIComponent(match.league.name)}&country=${encodeURIComponent(match.league.country)}`
+        : null,
+    [match]
+  );
+
+  const btStartedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || tab !== "stats-bt" || !btUrl) return;
+    if (btStartedRef.current === btUrl) return;
+    btStartedRef.current = btUrl;
+    setBt(null); // jamais la ligue précédente à l'écran
+    setBtState("loading");
+    fetchBt(btUrl).then((payload) => {
+      if (payload) {
+        setBt(payload);
+        setBtState("ready");
+      } else {
+        btStartedRef.current = null;
+        setBtState("error");
+      }
+    });
+  }, [open, tab, btUrl]);
 
   // Fetch lazy à l'ouverture (cache module : pas de re-fetch à la réouverture).
   useEffect(() => {
@@ -1322,8 +1516,8 @@ export function HandballMatchDetailDialog({
         )}
 
         <Tabs value={tab} onValueChange={setTab} className="mt-1">
-          {/* 4 onglets : sur mobile la barre défile horizontalement plutôt
-              que d'écraser les libellés (conformité 360 px). */}
+          {/* Jusqu'à 7 onglets (Score si terminé) : sur mobile la barre défile
+              horizontalement plutôt que d'écraser les libellés (360 px). */}
           <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07] max-sm:overflow-x-auto max-sm:flex-nowrap">
             {/* Onglet Score : réservé aux matchs terminés (score final) */}
             {isFinished && (
@@ -1345,6 +1539,9 @@ export function HandballMatchDetailDialog({
             </TabsTrigger>
             <TabsTrigger value="ia" className="flex-1 whitespace-nowrap">
               ✨ IA
+            </TabsTrigger>
+            <TabsTrigger value="stats-bt" className="flex-1 whitespace-nowrap">
+              📊 Backtest
             </TabsTrigger>
           </TabsList>
 
@@ -1730,6 +1927,15 @@ export function HandballMatchDetailDialog({
               puis servie du cache VPS 24 h. ── */}
           <TabsContent value="ia" className="space-y-3">
             <AiTab state={aiState} ai={ai} />
+          </TabsContent>
+
+          {/* ── Onglet 6 : Backtest de la ligue du match (matrice cron) ── */}
+          <TabsContent value="stats-bt" className="space-y-3">
+            <LeagueBacktestTab
+              state={btState}
+              payload={bt}
+              leagueName={match.league.name}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

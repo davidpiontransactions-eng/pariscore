@@ -161,6 +161,27 @@ export function loadRecentTotals(days = 30, limit = 4000): HistoryMatch[] {
   }
 }
 
+/**
+ * Tout l'historique pour le backtest matrice (scripts/backtest-handball-
+ * matrix.ts) — SELECT statique trié par date, `limit` = garde-fou mémoire.
+ */
+export function loadAllHistory(limit = 20000): HistoryMatch[] {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const rows = db
+      .prepare(
+        `SELECT * FROM handball_match_history
+         ORDER BY date
+         LIMIT ?`
+      )
+      .all(limit) as Record<string, unknown>[];
+    return rows.map(toMatch);
+  } catch {
+    return [];
+  }
+}
+
 /** Purge des caches (tests / hot-reload). */
 export function clearHistoryDbCache(): void {
   _db = null;
