@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-24T09:52:15.626Z",
+  "updatedAt": "2026-09-25T10:13:22.885Z",
   "source": "betexplorer.com (hockey next)",
   "leagues": {
     "nhl": {
@@ -11,8 +11,7 @@
       "error": "Aucun tableau trouvé"
     },
     "magnus": {
-      "matches": [],
-      "error": "Aucun tableau trouvé"
+      "matches": []
     }
   }
 }
