@@ -276,6 +276,11 @@ export function HandballTabContent() {
   const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
   // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
   const [detailMatch, setDetailMatch] = useState<HandballMatch | null>(null);
+  // Filtre temporel du calendrier (demande user) : fenêtres relatives
+  // (dans 1h/2h/4h/8h) + jours civils (aujourd'hui/demain), « all » = reset.
+  const [timeFilter, setTimeFilter] = useState<
+    "all" | "h1" | "h2" | "h4" | "h8" | "today" | "tomorrow"
+  >("all");
 
   const isLive = (m: { status: string }) =>
     m.status === "live" || m.status === "halftime";
@@ -297,13 +302,26 @@ export function HandballTabContent() {
   const displayed = mode === "live" ? live : prematch;
   // Mémoïsé : la référence doit être stable pour que React.memo du calendrier
   // (G6-9) soit effectif — un filtre recréé à chaque render neutraliserait le memo.
-  const filtered = useMemo(
-    () =>
-      selectedLeague
-        ? displayed.filter((m) => m.league.name === selectedLeague)
-        : displayed,
-    [displayed, selectedLeague],
-  );
+  // Filtres combinés : ligue + fenêtre temporelle (relative ou jour civil).
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    const today = PARIS_DAY_FMT.format(new Date(now));
+    const tomorrow = PARIS_DAY_FMT.format(new Date(now + 86_400_000));
+    return displayed.filter((m) => {
+      if (selectedLeague && m.league.name !== selectedLeague) return false;
+      const day = parisDay(m.kickoff);
+      if (timeFilter === "today") return day === today;
+      if (timeFilter === "tomorrow") return day === tomorrow;
+      const H = 3_600_000;
+      const limits = { h1: H, h2: 2 * H, h4: 4 * H, h8: 8 * H } as const;
+      if (timeFilter in limits) {
+        const t = Date.parse(m.kickoff);
+        // « dans Xh » = coup d'envoi entre maintenant et maintenant + X
+        return Number.isFinite(t) && t >= now && t <= now + limits[timeFilter as keyof typeof limits];
+      }
+      return true;
+    });
+  }, [displayed, selectedLeague, timeFilter]);
   // Matchs terminés du snapshot → forme récente + lambdas ajustés du dialog détail.
   const finished = useMemo(
     () => allMatches.filter((m) => m.status === "finished"),
@@ -329,42 +347,142 @@ export function HandballTabContent() {
   return (
     <HandballErrorBoundary>
     <div className="space-y-6">
-      {/* Header live/prematch/results */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setMode("live")}
-          className={
-            mode === "live"
-              ? "bg-red-500 text-white px-3 py-1.5 rounded"
-              : "px-3 py-1.5 rounded border"
-          }
-        >
-          🔴 Live ({live.length})
-        </button>
-        <button
-          onClick={() => setMode("prematch")}
-          className={
-            mode === "prematch"
-              ? "bg-foreground text-background px-3 py-1.5 rounded"
-              : "px-3 py-1.5 rounded border"
-          }
-        >
-          📅 À venir
-        </button>
-        <button
-          onClick={() => setMode("results")}
-          className={
-            mode === "results"
-              ? "bg-foreground text-background px-3 py-1.5 rounded"
-              : "px-3 py-1.5 rounded border"
-          }
-        >
-          📆 Résultats du jour ({resultsToday.length})
-        </button>
-      </div>
+      {/* ══ Calendrier en 1er en haut (demande user) — carte FotMob avec onglets
+          internes : Live / Calendrier / Résultats du jour + filtres ligue,
+          horaires et date dans le même tableau. ══ */}
+      <section className="space-y-3 rounded border border-[#f0f0f0] bg-white p-3 text-[#222222]">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold text-[#222222]">📅 Calendrier handball</h3>
+          <span className="text-xs text-[#717171]">
+            {mode === "results"
+              ? `${resultsToday.length} résultat(s) du jour`
+              : mode === "live"
+                ? `${live.length} match(s) en direct`
+                : `${filtered.length} match(s) à venir`}
+          </span>
+        </div>
 
-      {/* Widgets du haut : identiques dans les 3 modes (live/prematch/results) —
-          Banker, stratégie + Top 8 et backtest historique restent visibles. */}
+        {/* Onglets internes du tableau */}
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Vues du calendrier">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "live"}
+            onClick={() => setMode("live")}
+            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+              mode === "live"
+                ? "border-transparent bg-red-500 font-semibold text-white"
+                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
+            }`}
+          >
+            🔴 Live ({live.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "prematch"}
+            onClick={() => setMode("prematch")}
+            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+              mode === "prematch"
+                ? "border-transparent bg-foreground font-semibold text-background"
+                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
+            }`}
+          >
+            📅 Calendrier
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "results"}
+            onClick={() => setMode("results")}
+            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+              mode === "results"
+                ? "border-transparent bg-foreground font-semibold text-background"
+                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
+            }`}
+          >
+            📆 Résultats du jour ({resultsToday.length})
+          </button>
+        </div>
+
+        {/* Filtres temporels (demande user) : dans 1h/2h/4h/8h + aujourd'hui/demain
+            — combinés au filtre ligue. « Tous » = reset. */}
+        {mode !== "results" && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <HandballFilters
+              matches={displayed}
+              selected={selectedLeague}
+              onSelect={setSelectedLeague}
+            />
+
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par moment de coup d'envoi">
+              {(
+                [
+                  ["all", "Tous"],
+                  ["h1", "⏳ Dans 1h"],
+                  ["h2", "⏳ Dans 2h"],
+                  ["h4", "⏳ Dans 4h"],
+                  ["h8", "⏳ Dans 8h"],
+                  ["today", "📅 Aujourd'hui"],
+                  ["tomorrow", "📆 Demain"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={timeFilter === key}
+                  onClick={() => setTimeFilter(key)}
+                  className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                    timeFilter === key
+                      ? "border-transparent bg-[#00e676] font-semibold text-black"
+                      : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contenu de l'onglet actif */}
+        {mode === "results" ? (
+          <HandballResultsToday onOpenMatch={setDetailMatch} />
+        ) : isLoading ? (
+          <div className="text-center py-8 text-[#717171]" aria-live="polite">
+            Chargement…
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-8 text-[#717171]" aria-live="polite">
+            Aucun match handball
+          </div>
+        ) : (
+          <>
+            {/* Calendrier groupé par jour (prematch) — lignes cliquables → popup,
+                pastilles « Top stratégies ≥60 % » sous chaque ligne */}
+            {mode === "prematch" && (
+              <HandballCalendar
+                matches={filtered}
+                chipsByMatch={chipsByMatch}
+                onSelect={setDetailMatch}
+              />
+            )}
+
+            {/* Grille de cartes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filtered.map((m) =>
+                mode === "live" ? (
+                  <HandballLiveCard key={m.id} match={m} onClick={setDetailMatch} />
+                ) : (
+                  <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tipFor(m)} />
+                ),
+              )}
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Widgets en dessous (identiques dans les 3 vues) */}
       <HandballBanker />
 
       {/* Stratégie selector + Top 8 */}
@@ -386,55 +504,8 @@ export function HandballTabContent() {
       {/* Matrice backtest 8 marchés × championnats (source DB historique) */}
       <HandballBacktestMatrix />
 
-      {/* Actus handball (4 sources RSS : HandNews, Handball Planet, L'Équipe, Eurosport) */}
+      {/* Actus handball (5 sources RSS) */}
       <HandballNews />
-
-      {mode === "results" ? (
-        /* Panneau résultats : backtest du jour + scores (les filtres ligues et le
-           calendrier n'ont pas de sens sur des matchs terminés). */
-        <HandballResultsToday onOpenMatch={setDetailMatch} />
-      ) : (
-        <>
-          {/* Filtres ligues */}
-          <HandballFilters
-            matches={displayed}
-            selected={selectedLeague}
-            onSelect={setSelectedLeague}
-          />
-
-          {/* Calendrier (prematch seulement) — lignes cliquables → popup analyse,
-              pastilles « Top stratégies ≥60 % » sous chaque ligne */}
-          {mode === "prematch" && filtered.length > 0 && (
-            <HandballCalendar
-              matches={filtered}
-              chipsByMatch={chipsByMatch}
-              onSelect={setDetailMatch}
-            />
-          )}
-
-          {/* Grille de matchs */}
-          {isLoading ? (
-            // État async annoncé aux lecteurs d'écran
-            <div className="text-center py-8 text-[#717171]" aria-live="polite">
-              Chargement…
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-[#717171]" aria-live="polite">
-              Aucun match handball
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filtered.map((m) =>
-                mode === "live" ? (
-                  <HandballLiveCard key={m.id} match={m} onClick={setDetailMatch} />
-                ) : (
-                  <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tipFor(m)} />
-                ),
-              )}
-            </div>
-          )}
-        </>
-      )}
 
       {/* Dialog détail (wiring manquant depuis la Phase 6) */}
       {detailMatch && (
