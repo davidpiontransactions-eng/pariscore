@@ -1,11 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useHandballTop8 } from "@/hooks/use-handball-top8";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 import { leagueCountry, leagueFlag } from "@/lib/handball-logos";
+import { sortHandballLeagueEntries } from "@/lib/handball-leagues";
 import { CLV_EDGE_THRESHOLD } from "@/lib/handball-clv";
+import { HandballLeaguePopover } from "./handball-league-popover";
 
-// Couleurs via tokens dark (bg-card/border-border/text-*) — pas de hex en dur
+// Couleurs via tokens dark (bg-white/border-[#f0f0f0]/text-*) — pas de hex en dur
 
 const STRATEGY_META: Record<
   HandballStrategyKey,
@@ -82,30 +85,61 @@ export function HandballTop8Widget({
   const entries = matchesFor(strategy);
   const meta = STRATEGY_META[strategy];
 
+  // Filtre championnats (bead 3l6w) : réinitialisé à chaque changement de
+  // stratégie — chaque stratégie liste ses propres matchs, conserver une
+  // ligue absente de la nouvelle liste masquerait tout silencieusement.
+  // Pattern « adjusting state when props change » (React docs) : reset
+  // pendant le rendu, sans useEffect (évite set-state-in-effect).
+  const [league, setLeague] = useState<string | null>(null);
+  const [prevStrategy, setPrevStrategy] = useState(strategy);
+  if (prevStrategy !== strategy) {
+    setPrevStrategy(strategy);
+    setLeague(null);
+  }
+
+  const leagueOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of entries) map.set(e.league, (map.get(e.league) || 0) + 1);
+    // Tri 1xbet (ligues majeures en tête) — réutilise la logique du calendrier
+    return sortHandballLeagueEntries(
+      [...map.entries()].map(([name, count]) => ({ name, count })),
+    );
+  }, [entries]);
+
+  const visible = league ? entries.filter((e) => e.league === league) : entries;
+
   if (isLoading)
     return (
       // État async annoncé aux lecteurs d'écran
-      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
+      <div className="text-center py-4 text-[#717171]" aria-live="polite">
         Chargement stratégies…
       </div>
     );
   if (!isReady || entries.length === 0)
     return (
-      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
+      <div className="text-center py-4 text-[#717171]" aria-live="polite">
         Aucune donnée stratégie
       </div>
     );
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-foreground">
-        {meta.emoji} {meta.label}
-        <span className="ml-2 text-xs font-normal text-muted-foreground">
-          {meta.metric}
-        </span>
-      </h3>
-      <div className="rounded border border-border bg-card overflow-hidden divide-y divide-border">
-        {entries.map((e, i) => {
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-[#222222]">
+          {meta.emoji} {meta.label}
+          <span className="ml-2 text-xs font-normal text-[#717171]">
+            {meta.metric}
+          </span>
+        </h3>
+        <HandballLeaguePopover
+          leagues={leagueOptions}
+          total={entries.length}
+          selected={league}
+          onSelect={setLeague}
+        />
+      </div>
+      <div className="rounded border border-[#f0f0f0] bg-white overflow-hidden divide-y divide-[#f0f0f0]">
+        {visible.map((e, i) => {
           // Drapeau ligue + CLV marché (plan §9)
           const entry = e as Top8Entry;
           const flag = leagueFlag(leagueCountry(entry.league, entry.leagueCountry));
@@ -114,10 +148,10 @@ export function HandballTop8Widget({
           return (
           <div
             key={e.matchId}
-            className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-muted"
+            className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-[#fafafa]"
           >
             {/* Rang */}
-            <span className="w-5 text-center font-bold tabular-nums text-muted-foreground">
+            <span className="w-5 text-center font-bold tabular-nums text-[#717171]">
               {i + 1}
             </span>
 
@@ -127,19 +161,19 @@ export function HandballTop8Widget({
                 className={
                   e.pick === "home"
                     ? "font-bold text-primary"
-                    : "font-medium text-foreground"
+                    : "font-medium text-[#222222]"
                 }
               >
                 {e.home.shortName ?? e.home.name}
               </span>
-              <span className="mx-1 text-muted-foreground">
+              <span className="mx-1 text-[#717171]">
                 vs
               </span>
               <span
                 className={
                   e.pick === "away"
                     ? "font-bold text-primary"
-                    : "font-medium text-foreground"
+                    : "font-medium text-[#222222]"
                 }
               >
                 {e.away.shortName ?? e.away.name}
@@ -147,13 +181,13 @@ export function HandballTop8Widget({
             </div>
 
             {/* Ligue + drapeau */}
-            <span className="text-right truncate w-28 text-muted-foreground">
+            <span className="text-right truncate w-28 text-[#717171]">
               {flag ? `${flag} ` : ""}{e.league}
             </span>
 
             {/* Form */}
             {e.formSummary && (
-              <span className="w-12 text-center tabular-nums text-muted-foreground">
+              <span className="w-12 text-center tabular-nums text-[#717171]">
                 {e.formSummary.home}
               </span>
             )}
@@ -173,14 +207,14 @@ export function HandballTop8Widget({
 
             {/* Prob % (CMP Over/Under, plan §9) */}
             {e.probPct != null && (
-              <span className="tabular-nums text-muted-foreground">
+              <span className="tabular-nums text-[#717171]">
                 {e.probPct.toFixed(0)}%
               </span>
             )}
 
             {/* Cote ouverture + badge edge |CLV| > 1,5 % */}
             {ec != null && (
-              <span className="font-mono tabular-nums text-muted-foreground">
+              <span className="font-mono tabular-nums text-[#717171]">
                 @{ec.price.toFixed(2)}
               </span>
             )}
