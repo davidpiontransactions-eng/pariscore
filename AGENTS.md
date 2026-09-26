@@ -553,7 +553,9 @@ Always use CMD syntax. When in doubt, use `echo %CD%` to confirm CMD is active.
 > `C:\Users\David\.bun\bin` pointant vers les vrais binaires en chemin absolu
 > (node, npm, npx, git, bd, python, findstr, where, reg, curl, tar, powershell, sqz +
 > delegants graphify/graft/codegraph). Les commandes simples marchent donc desormais
-> dans le tool bash. **Rejouer apres deplacement de Node/Git** :
+> dans le tool bash. **v2** : chaque shim embarque un bootstrap PATH (vrais dirs en
+> premier) herite par tous les enfants — requis pour les spawns non-CMD (Go/Rust :
+> `bd dolt push` etc.). **Rejouer apres deplacement de Node/Git** :
 > `call scripts\install-bun-shims.cmd` (adapter `NODE_EXE`/`GIT_EXE` en tete de script).
 > Rapport complet : `.context/rapport-fix-path-bash-tool.md`.
 **Bash→CMD command translation table** (use the RIGHT column, ALWAYS):

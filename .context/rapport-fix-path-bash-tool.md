@@ -103,15 +103,58 @@ findstr          → OK            ✓
 
 - **Après un déplacement/réinstall de Node, Git ou Python** : éditer les variables
   en tête de `scripts/install-bun-shims.cmd` puis `call scripts\install-bun-shims.cmd`.
-- **Ajouter un outil** : une ligne `> "%BUNBIN%\xxx.cmd" echo @"chemin\absolu\xxx.exe" %%*`.
+- **Ajouter un outil** : bloc 2 lignes dans l'installateur (bootstrap PATH + binaire absolu), cf. section 8.
 - Ne jamais éditer les shims à la main sans mettre à jour l'installateur
   (source unique de vérité).
 
 ## 7. Reste à faire (recommandations)
 
 1. `ParisScorebis-43ai` — le hook post-commit agentmemory (tâche d'origine de la
-   session, maintenant exécutable).
+   session, maintenant exécutable). **[FAIT — clos, commit bdcf913b lié
+   bidirectionnellement à la session]**
 2. Signaler le bug upstream (anomalyco/opencode) : bash tool Windows sanitise le
    PATH en `~/.bun\bin` au spawn, écrasant le PATH process.
 3. ps_shell : le bug d'échappement des guillemets (`\"`) mérite son propre bead
    (contournement actuel : chemins 8.3 / pas de guillemets).
+
+## 8. Addendum v2 — bootstrap PATH embarqué (2026-09-26, bead `ParisScorebis-gtft`)
+
+### Le problème découvert en production
+
+`bd dolt push` échouait depuis le tool bash (`exit 3` sur `git remote add`)
+alors que le même code marchait depuis un terminal normal. Le workaround
+(`set PATH=E:\PROGRA~1\Git\cmd;…` manuel) prouvait que seule la résolution de
+`git` était en cause.
+
+### Cause racine
+
+`bd` (node) → `dolt` (binaire **Go**, `os/exec.Command("git", …)`) → LookPath
+trouve `git.cmd` (shim) dans `PATH=.bun\bin` → l'exécution native Go d'un
+`.cmd` (re-parsing cmd.exe des arguments) casse l'appel. Les shims v1 règlent
+le premier hop (CMD → outil) mais **pas les spawns imbriqués par des runtimes
+non-CMD** (Go, Rust…).
+
+### Fix v2 — fiable à 100 % par construction
+
+Chaque shim devient **2 lignes** :
+```cmd
+@set "PATH=<vrais dirs: Git\cmd;nodejs;System32;PowerShell;Python;npm;.local\bin;.bun\bin>;%PATH%"
+@"<binaire réel en absolu>" %*
+```
+Tout processus enfant (dolt, npm scripts, hooks git, outils Go/Rust…)
+hérite d'un PATH contenant les **vrais `.exe` en premier** — les shims ne
+servent plus qu'au premier hop. Aucune récursion possible (les vrais dirs
+précèdent `.bun\bin`). Aucun effet de bord en terminal normal (les vrais
+binaires sont déjà résolus en premier par le registre).
+
+### Vérification (depuis le tool bash, sans workaround)
+
+```
+bd dolt push      → "Push complete."  ✓ (le cas d'échec exact, now fixed)
+node --version    → v26.5.0           ✓ (régression OK)
+git --version     → 2.55.0            ✓
+bd ready          → OK                ✓
+```
+
+Maintenance inchangée : rejouer `scripts/install-bun-shims.cmd` (v2) après tout
+déplacement de Node/Git/Python.
