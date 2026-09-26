@@ -41,8 +41,8 @@ export function HandballVitibetBacktest() {
 
   if (isLoading) {
     return (
-      <section className="rounded border border-border bg-card p-3">
-        <div className="py-3 text-center text-sm text-muted-foreground" aria-live="polite">
+      <section className="rounded border border-[#f0f0f0] bg-white p-3">
+        <div className="py-3 text-center text-sm text-[#717171]" aria-live="polite">
           Calcul du backtest Vitibet…
         </div>
       </section>
@@ -51,8 +51,8 @@ export function HandballVitibetBacktest() {
 
   if (error || !backtest) {
     return (
-      <section className="rounded border border-border bg-card p-3">
-        <div className="py-3 text-center text-sm text-muted-foreground" aria-live="polite">
+      <section className="rounded border border-[#f0f0f0] bg-white p-3">
+        <div className="py-3 text-center text-sm text-[#717171]" aria-live="polite">
           Backtest Vitibet indisponible
         </div>
       </section>
@@ -60,17 +60,17 @@ export function HandballVitibetBacktest() {
   }
 
   return (
-    <section className="space-y-2 rounded border border-border bg-card p-3">
+    <section className="space-y-2 rounded border border-[#f0f0f0] bg-white p-3">
       <div className="flex flex-wrap items-baseline gap-2">
-        <h3 className="text-sm font-semibold text-foreground">📈 Backtest Vitibet</h3>
-        <span className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-semibold text-[#222222]">📈 Backtest Vitibet</h3>
+        <span className="text-xs text-[#717171]">
           {backtest.total} tip(s) évalué(s) · source vitibet.com
         </span>
       </div>
 
       {backtest.total === 0 ? (
         // État vide explicite : 0/0 + raison — jamais de taux fictif.
-        <div className="rounded bg-muted px-2 py-2 text-xs text-muted-foreground" aria-live="polite">
+        <div className="rounded bg-[#fafafa] px-2 py-2 text-xs text-[#717171]" aria-live="polite">
           Taux de réussite : <span className="font-mono font-semibold">0/0</span> — aucun match
           terminé avec pronostic pour l&apos;instant ; le taux s&apos;affiche dès les premiers
           résultats FT.
@@ -84,16 +84,16 @@ export function HandballVitibetBacktest() {
         <>
           {/* Taux global + période couverte */}
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-2xl font-bold tabular-nums text-foreground">
+            <span className="text-2xl font-bold tabular-nums text-[#222222]">
               {fmtRate(backtest.rate)}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-[#717171]">
               <span className="font-mono tabular-nums">
                 {backtest.hits}/{backtest.total}
               </span>{" "}
               tips justes
             </span>
-            <span className="ml-auto text-[11px] text-muted-foreground">
+            <span className="ml-auto text-[11px] text-[#717171]">
               Période : {fmtPeriode(backtest.sampleDates)}
             </span>
           </div>
@@ -105,14 +105,14 @@ export function HandballVitibetBacktest() {
               return (
                 <div
                   key={t}
-                  className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-xs"
+                  className="flex items-center gap-1.5 rounded border border-[#f0f0f0] px-2 py-1 text-xs"
                 >
                   <span
                     className={`rounded px-1.5 py-0.5 font-mono font-semibold ${TIP_CHIP_CLASS[t]}`}
                   >
                     {t}
                   </span>
-                  <span className="tabular-nums text-muted-foreground">
+                  <span className="tabular-nums text-[#717171]">
                     <span className="font-mono">
                       {s.hits}/{s.total}
                     </span>{" "}
@@ -124,7 +124,7 @@ export function HandballVitibetBacktest() {
           </div>
 
           {backtest.excludedNoTip > 0 && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-[#717171]">
               {backtest.excludedNoTip} match(s) terminé(s) sans pronostic (exclus du taux).
             </p>
           )}

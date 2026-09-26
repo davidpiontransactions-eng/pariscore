@@ -43,7 +43,7 @@ export function HandballBanker() {
       <div className="flex items-center justify-between">
         <div>
           <div className="font-bold text-lg">{pickName}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs text-[#717171]">
             {banker.home.name} vs {banker.away.name} • {banker.league}
           </div>
         </div>
@@ -59,7 +59,7 @@ export function HandballBanker() {
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-muted-foreground">
+      <div className="mt-3 text-xs text-[#717171]">
         💡{" "}
         {banker.source === "valueBet"
           ? "Value bet détecté — probabilité modèle supérieure au marché"

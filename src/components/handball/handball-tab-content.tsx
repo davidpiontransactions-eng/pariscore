@@ -17,6 +17,8 @@ import { HandballBacktestWidget } from "./handball-backtest-widget";
 import { HandballBacktestMatrix } from "./handball-backtest-matrix";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
+import { HandballNews } from "./handball-news";
+import { HandballTableCaption } from "./handball-table-caption";
 import { HandballErrorBoundary } from "./handball-error-boundary";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 // Type-only : effacé à la compilation, le moteur de backtest reste côté serveur.
@@ -94,13 +96,13 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
   return (
     <div className="space-y-4">
       {/* Backtest des stratégies sur la journée */}
-      <section className="space-y-2 rounded border border-border bg-card p-3">
+      <section className="space-y-2 rounded border border-[#f0f0f0] bg-white p-3">
         <div className="flex flex-wrap items-baseline gap-2">
-          <h3 className="text-sm font-semibold text-foreground">
+          <h3 className="text-sm font-semibold text-[#222222]">
             📉 Backtest des stratégies du jour
           </h3>
           {backtest && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-[#717171]">
               {fmtDayLabel(backtest.date)} · {backtest.nFinishedToday} match(s) terminé(s) ·
               source {backtest.source === "file" ? "cron" : "calcul direct"}
             </span>
@@ -108,23 +110,24 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
         </div>
 
         {btLoading ? (
-          <div className="py-3 text-center text-sm text-muted-foreground" aria-live="polite">
+          <div className="py-3 text-center text-sm text-[#717171]" aria-live="polite">
             Calcul du backtest…
           </div>
         ) : btError || !backtest ? (
-          <div className="py-3 text-center text-sm text-muted-foreground">
+          <div className="py-3 text-center text-sm text-[#717171]">
             Backtest indisponible
           </div>
         ) : backtest.nFinishedToday === 0 ? (
-          <p className="py-2 text-sm text-muted-foreground">
+          <p className="py-2 text-sm text-[#717171]">
             Aucun match terminé aujourd&apos;hui — le backtest sera régénéré à 23:00.
           </p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
+                <HandballTableCaption>Résultats par stratégie — cotes simulées</HandballTableCaption>
                 <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
+                  <tr className="border-b border-[#f0f0f0] text-left text-[#717171]">
                     <th className="py-1.5 pr-2 font-medium">Stratégie</th>
                     <th className="py-1.5 pr-2 font-medium">Marché</th>
                     <th className="py-1.5 pr-2 text-right font-medium">Paris</th>
@@ -133,19 +136,19 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
                     <th className="py-1.5 pr-2 text-right font-medium">Profit</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-[#f0f0f0]">
                   {backtest.strategies.map((row) => (
                     <tr key={row.strategy}>
-                      <td className="whitespace-nowrap py-1.5 pr-2 font-medium text-foreground">
+                      <td className="whitespace-nowrap py-1.5 pr-2 font-medium text-[#222222]">
                         {row.emoji} {row.label}
                       </td>
-                      <td className="whitespace-nowrap py-1.5 pr-2 text-muted-foreground">
+                      <td className="whitespace-nowrap py-1.5 pr-2 text-[#717171]">
                         {row.market}
                       </td>
                       <td className="py-1.5 pr-2 text-right tabular-nums">
                         {row.nBets}
                         {row.voids > 0 && (
-                          <span className="text-muted-foreground"> (+{row.voids}n)</span>
+                          <span className="text-[#717171]"> (+{row.voids}n)</span>
                         )}
                       </td>
                       <td className="py-1.5 pr-2 text-right tabular-nums">
@@ -163,7 +166,7 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
                             {fmtSigned(row.roiPct)}%
                           </span>
                         ) : (
-                          <span className="text-muted-foreground" title={row.note}>
+                          <span className="text-[#717171]" title={row.note}>
                             —
                           </span>
                         )}
@@ -176,7 +179,7 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
                 </tbody>
               </table>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-[#717171]">
               Total : {backtest.global.nBets} paris · {backtest.global.won} gagnés ·{" "}
               {backtest.global.lost} perdus · {backtest.global.voids} annulés · ROI{" "}
               {backtest.global.roiPct != null ? `${fmtSigned(backtest.global.roiPct)}%` : "—"} ·
@@ -193,24 +196,24 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
       {/* Liste des résultats du jour */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2">
-          <h3 className="text-sm font-semibold text-foreground">📆 Résultats du jour</h3>
+          <h3 className="text-sm font-semibold text-[#222222]">📆 Résultats du jour</h3>
           {results && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-[#717171]">
               {results.count} match(s) terminé(s)
             </span>
           )}
         </div>
 
         {resultsLoading ? (
-          <div className="py-6 text-center text-sm text-muted-foreground" aria-live="polite">
+          <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
             Chargement des résultats…
           </div>
         ) : resultsError || !results ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
+          <div className="py-6 text-center text-sm text-[#717171]">
             Résultats indisponibles
           </div>
         ) : results.matches.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground" aria-live="polite">
+          <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
             Aucun résultat aujourd&apos;hui
           </div>
         ) : (
@@ -226,28 +229,28 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
                   <button
                     type="button"
                     onClick={() => onOpenMatch(m)}
-                    className="flex w-full items-center gap-3 rounded border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted"
+                    className="flex w-full items-center gap-3 rounded border border-[#f0f0f0] bg-white px-3 py-2 text-left transition-colors hover:bg-[#fafafa]"
                     aria-label={`Ouvrir l'analyse ${m.home.name} ${m.away.name}`}
                   >
-                    <span className="w-10 shrink-0 text-xs tabular-nums text-muted-foreground">
+                    <span className="w-10 shrink-0 text-xs tabular-nums text-[#717171]">
                       {PARIS_TIME_FMT.format(new Date(m.kickoff))}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-foreground">
-                        {m.home.name} <span className="text-muted-foreground">–</span>{" "}
+                      <span className="block truncate text-sm text-[#222222]">
+                        {m.home.name} <span className="text-[#717171]">–</span>{" "}
                         {m.away.name}
                       </span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
+                      <span className="block truncate text-[11px] text-[#717171]">
                         {m.league.name}
                         {m.league.country ? ` · ${m.league.country}` : ""}
                       </span>
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block font-mono text-sm font-semibold tabular-nums text-foreground">
+                      <span className="block font-mono text-sm font-semibold tabular-nums text-[#222222]">
                         {m.score?.home ?? 0} - {m.score?.away ?? 0}
                       </span>
                       {m.score?.homeHalf != null && m.score.awayHalf != null && (
-                        <span className="block text-[11px] tabular-nums text-muted-foreground">
+                        <span className="block text-[11px] tabular-nums text-[#717171]">
                           MT {m.score.homeHalf} - {m.score.awayHalf}
                         </span>
                       )}
@@ -383,6 +386,9 @@ export function HandballTabContent() {
       {/* Matrice backtest 8 marchés × championnats (source DB historique) */}
       <HandballBacktestMatrix />
 
+      {/* Actus handball (4 sources RSS : HandNews, Handball Planet, L'Équipe, Eurosport) */}
+      <HandballNews />
+
       {mode === "results" ? (
         /* Panneau résultats : backtest du jour + scores (les filtres ligues et le
            calendrier n'ont pas de sens sur des matchs terminés). */
@@ -409,11 +415,11 @@ export function HandballTabContent() {
           {/* Grille de matchs */}
           {isLoading ? (
             // État async annoncé aux lecteurs d'écran
-            <div className="text-center py-8 text-muted-foreground" aria-live="polite">
+            <div className="text-center py-8 text-[#717171]" aria-live="polite">
               Chargement…
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground" aria-live="polite">
+            <div className="text-center py-8 text-[#717171]" aria-live="polite">
               Aucun match handball
             </div>
           ) : (

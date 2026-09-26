@@ -6,6 +6,7 @@ import type {
   BacktestMatrixResult,
   MatrixCell,
 } from "@/lib/handball-backtest-matrix";
+import { HandballTableCaption } from "./handball-table-caption";
 
 // Backtest matrice (8 marchés × championnats) — lecture du fichier produit
 // par le cron hebdo (walk-forward sur handball_match_history). Cotes simulées
@@ -28,14 +29,14 @@ const pct = (v: number | null, d = 1) => (v == null ? "—" : `${(v * 100).toFix
 const signedPct = (v: number | null, d = 1) =>
   v == null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(d)}%`;
 const roiCls = (v: number | null) =>
-  v == null ? "text-muted-foreground" : v > 0 ? "text-[#00e676]" : v < 0 ? "text-red-500" : "text-muted-foreground";
+  v == null ? "text-[#717171]" : v > 0 ? "text-[#00e676]" : v < 0 ? "text-red-500" : "text-[#717171]";
 
 function CellView({ cell }: { cell: MatrixCell | undefined }) {
   if (!cell || cell.nBets === 0) {
     return (
       <>
-        <td className="px-2 py-1.5 text-right text-muted-foreground">—</td>
-        <td className="px-2 py-1.5 text-right text-muted-foreground">—</td>
+        <td className="px-2 py-1.5 text-right text-[#717171]">—</td>
+        <td className="px-2 py-1.5 text-right text-[#717171]">—</td>
       </>
     );
   }
@@ -62,8 +63,8 @@ export function HandballBacktestMatrix() {
 
   if (isLoading) {
     return (
-      <section className="rounded border border-border bg-card p-3">
-        <div className="py-3 text-center text-sm text-muted-foreground" aria-live="polite">
+      <section className="rounded border border-[#f0f0f0] bg-white p-3">
+        <div className="py-3 text-center text-sm text-[#717171]" aria-live="polite">
           Chargement de la matrice de backtest…
         </div>
       </section>
@@ -71,8 +72,8 @@ export function HandballBacktestMatrix() {
   }
   if (error || !data?.matrix) {
     return (
-      <section className="rounded border border-border bg-card p-3">
-        <p className="py-2 text-center text-xs text-muted-foreground">
+      <section className="rounded border border-[#f0f0f0] bg-white p-3">
+        <p className="py-2 text-center text-xs text-[#717171]">
           Matrice de backtest indisponible (cron hebdo à venir).
         </p>
       </section>
@@ -85,13 +86,26 @@ export function HandballBacktestMatrix() {
   const market = markets.find((m) => m.key === active);
   const globalCell = active ? matrix.global[active] : undefined;
 
+  // Classement des championnats : meilleur ROI d'abord (marché actif),
+  // ROI manquant en dernier, tie-break sur le nombre de paris (n desc).
+  const sortedLeagues = [...matrix.leagues].sort((a, b) => {
+    const ra = active ? a.cells[active]?.roiPct : undefined;
+    const rb = active ? b.cells[active]?.roiPct : undefined;
+    if (ra == null && rb != null) return 1;
+    if (rb == null && ra != null) return -1;
+    if (ra != null && rb != null && ra !== rb) return rb - ra;
+    const na = active ? a.cells[active]?.nBets ?? 0 : 0;
+    const nb = active ? b.cells[active]?.nBets ?? 0 : 0;
+    return nb - na;
+  });
+
   return (
-    <section className="space-y-2 rounded border border-border bg-card p-3">
+    <section className="space-y-2 rounded border border-[#f0f0f0] bg-white p-3 text-[#222222]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-sm font-semibold text-foreground">
+        <h3 className="text-sm font-semibold text-[#222222]">
           📊 Backtest matrice — marchés × championnats
         </h3>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-[#717171]">
           {matrix.nMatches} matchs · {matrix.leagues.length}/{matrix.nLeagues} ligues ·{" "}
           {data.generatedAt.slice(0, 10)}
         </span>
@@ -136,8 +150,9 @@ export function HandballBacktestMatrix() {
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
+          <HandballTableCaption>Performance par championnat — triés par ROI ↓</HandballTableCaption>
           <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
+            <tr className="border-b border-[#f0f0f0] text-left text-[#717171]">
               <th className="py-1.5 pr-2 font-medium">Championnat</th>
               <th className="px-2 py-1.5 text-right font-medium">Matchs</th>
               <th className="px-2 py-1.5 text-right font-medium">Paris</th>
@@ -145,9 +160,9 @@ export function HandballBacktestMatrix() {
               <th className="px-2 py-1.5 text-right font-medium">ROI</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[#f0f0f0]">
             {/* Ligne global (toutes ligues) */}
-            <tr className="bg-muted/40 dark:bg-white/[0.04]">
+            <tr className="bg-[#f5f5f5]">
               <td className="py-1.5 pr-2 font-semibold">🌍 Toutes ligues</td>
               <td className="px-2 py-1.5 text-right tabular-nums">{matrix.nMatches}</td>
               <td className="px-2 py-1.5 text-right tabular-nums">
@@ -155,7 +170,7 @@ export function HandballBacktestMatrix() {
               </td>
               <CellView cell={globalCell} />
             </tr>
-            {matrix.leagues.map((l) => {
+            {sortedLeagues.map((l) => {
               const cell = active ? l.cells[active] : undefined;
               return (
                 <tr key={l.league}>
@@ -164,10 +179,10 @@ export function HandballBacktestMatrix() {
                       {l.league}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                  <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
                     {l.nMatches}
                   </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                  <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
                     {cell?.nBets ?? 0}
                   </td>
                   <CellView cell={cell} />
@@ -178,7 +193,7 @@ export function HandballBacktestMatrix() {
         </table>
       </div>
 
-      <p className="text-[10px] leading-snug text-muted-foreground">
+      <p className="text-[10px] leading-snug text-[#717171]">
         {market ? `${market.market} · cote simulée ${market.odds ?? "—"}` : ""} — walk-forward
         anti-lookahead, cotes 1xbet simulées (ROI indicatif), ⚠️ = échantillon &lt;{" "}
         {matrix.minSampleBets} paris.{" "}

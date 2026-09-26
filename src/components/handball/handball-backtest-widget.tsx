@@ -5,6 +5,7 @@ import useSWR from "swr";
 import type { HandballBacktestResult } from "@/lib/handball-backtest";
 import type { HandballCLVResult } from "@/lib/handball-cmp-backtest";
 import { CLV_EDGE_THRESHOLD, CLV_MIN_SAMPLE } from "@/lib/handball-clv";
+import { HandballTableCaption } from "./handball-table-caption";
 
 type Payload = HandballBacktestResult | HandballCLVResult;
 
@@ -22,7 +23,7 @@ function fmtSigned(v: number, digits = 1): string {
 
 /** Sparkline SVG pure (aucune dépendance graphique) */
 function Sparkline({ data, width = 260, height = 64 }: { data: number[]; width?: number; height?: number }) {
-  if (data.length === 0) return <span className="text-muted-foreground">—</span>;
+  if (data.length === 0) return <span className="text-[#717171]">—</span>;
   const min = Math.min(...data, 0);
   const max = Math.max(...data, 0);
   const span = max - min || 1;
@@ -63,13 +64,13 @@ export function HandballBacktestWidget() {
 
   if (isLoading)
     return (
-      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
+      <div className="text-center py-4 text-[#717171]" aria-live="polite">
         Calcul du backtest…
       </div>
     );
   if (error || !data)
     return (
-      <div className="text-center py-4 text-muted-foreground" aria-live="polite">
+      <div className="text-center py-4 text-[#717171]" aria-live="polite">
         Backtest indisponible
       </div>
     );
@@ -80,15 +81,15 @@ export function HandballBacktestWidget() {
   const active = rows.find((s) => s.key === selected) ?? rows[0] ?? null;
 
   return (
-    <div className="space-y-3 rounded border border-border bg-card p-3">
+    <div className="space-y-3 rounded border border-[#f0f0f0] bg-white p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-semibold text-foreground">📉 Backtest ROI visuel</h3>
-        <span className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-semibold text-[#222222]">📉 Backtest ROI visuel</h3>
+        <span className="text-xs text-[#717171]">
           {data.nMatches} matchs terminés · mises flat 1u
         </span>
         {/* Sélecteur Simulé / CLV (plan §7) */}
         <div className="ml-auto flex items-center gap-2">
-          <div className="flex rounded border border-border text-xs" role="tablist" aria-label="Mode backtest">
+          <div className="flex rounded border border-[#f0f0f0] text-xs" role="tablist" aria-label="Mode backtest">
             {(["simulated", "clv"] as const).map((m) => (
               <button
                 key={m}
@@ -98,7 +99,7 @@ export function HandballBacktestWidget() {
                   setMode(m);
                   setSelected(null);
                 }}
-                className={`px-2 py-1 ${mode === m ? "bg-foreground text-background font-semibold" : "text-muted-foreground"}`}
+                className={`px-2 py-1 ${mode === m ? "bg-foreground text-background font-semibold" : "text-[#717171]"}`}
               >
                 {m === "simulated" ? "Simulé" : "CLV"}
               </button>
@@ -110,7 +111,7 @@ export function HandballBacktestWidget() {
               setLeague(e.target.value);
               setSelected(null);
             }}
-            className="text-xs rounded border border-border bg-background px-2 py-1"
+            className="text-xs rounded border border-[#f0f0f0] bg-background px-2 py-1"
             aria-label="Filtrer par ligue"
           >
             <option value="all">Toutes ligues</option>
@@ -137,12 +138,12 @@ export function HandballBacktestWidget() {
 
       {/* Courbe profit cumulé (stratégie cliquée, sinon tête du tableau) */}
       {active && active.curve.length > 0 && (
-        <div className="space-y-1 rounded border border-border p-2">
+        <div className="space-y-1 rounded border border-[#f0f0f0] p-2">
           <div className="flex items-baseline gap-2 text-xs">
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-[#222222]">
               {active.emoji} {active.label} — profit cumulé
             </span>
-            <span className="tabular-nums font-mono text-muted-foreground">
+            <span className="tabular-nums font-mono text-[#717171]">
               {fmtSigned("profitU" in active ? active.profitU : active.profitSimU)}u
               {!clv && "profitKellyU" in active && ` · Kelly ${fmtSigned(active.profitKellyU)}u`}
             </span>
@@ -152,7 +153,7 @@ export function HandballBacktestWidget() {
       )}
 
       {/* Note méthodologique + disclaimer */}
-      <details className="text-[11px] text-muted-foreground">
+      <details className="text-[11px] text-[#717171]">
         <summary className="cursor-pointer font-medium">Méthodologie</summary>
         <p className="mt-1">{data.methodology}</p>
         {clv && (
@@ -188,8 +189,9 @@ function SimTable({
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
+          <HandballTableCaption>Backtest Simulé — ROI par stratégie</HandballTableCaption>
           <thead>
-            <tr className="text-left text-muted-foreground border-b border-border">
+            <tr className="text-left text-[#717171] border-b border-[#f0f0f0]">
               <th className="py-1.5 pr-2 font-medium">Stratégie</th>
               <th className="py-1.5 pr-2 font-medium">Marché</th>
               <th className="py-1.5 pr-2 font-medium text-right">Cote</th>
@@ -199,7 +201,7 @@ function SimTable({
               <th className="py-1.5 pr-2 font-medium text-right">ROI</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[#f0f0f0]">
             {rows.map((s) => {
               const roi = s.roiPct;
               const positive = roi != null && roi > 0;
@@ -207,9 +209,9 @@ function SimTable({
                 <tr
                   key={s.key}
                   onClick={() => onSelect(s.key)}
-                  className={`cursor-pointer transition-colors hover:bg-muted ${activeKey === s.key ? "bg-muted/60" : ""}`}
+                  className={`cursor-pointer transition-colors hover:bg-[#fafafa] ${activeKey === s.key ? "bg-[#fafafa]/60" : ""}`}
                 >
-                  <td className="py-1.5 pr-2 font-medium text-foreground whitespace-nowrap">
+                  <td className="py-1.5 pr-2 font-medium text-[#222222] whitespace-nowrap">
                     {s.emoji} {s.label}
                     {!s.sampleOk && (
                       <span className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
@@ -217,7 +219,7 @@ function SimTable({
                       </span>
                     )}
                   </td>
-                  <td className="py-1.5 pr-2 text-muted-foreground whitespace-nowrap">{s.market}</td>
+                  <td className="py-1.5 pr-2 text-[#717171] whitespace-nowrap">{s.market}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">{s.odds != null ? `@${s.odds.toFixed(2)}` : "—"}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">{s.nBets}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">
@@ -236,7 +238,7 @@ function SimTable({
                         {fmtSigned(roi)}%
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-[#717171]">—</span>
                     )}
                   </td>
                 </tr>
@@ -255,8 +257,8 @@ function SimTable({
             const w = Math.abs(roi) / maxAbsRoi;
             return (
               <div key={s.key} className="flex items-center gap-2 text-[11px]">
-                <span className="w-24 truncate text-muted-foreground">{s.label}</span>
-                <div className="flex-1 h-2 rounded bg-muted overflow-hidden">
+                <span className="w-24 truncate text-[#717171]">{s.label}</span>
+                <div className="flex-1 h-2 rounded bg-[#fafafa] overflow-hidden">
                   <div
                     className={`h-full rounded ${roi > 0 ? "bg-[#00e676]" : "bg-red-500"}`}
                     style={{ width: `${Math.max(2, w * 100)}%` }}
@@ -287,8 +289,9 @@ function ClvTable({
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
+          <HandballTableCaption>Backtest CLV — écart aux cotes de clôture</HandballTableCaption>
           <thead>
-            <tr className="text-left text-muted-foreground border-b border-border">
+            <tr className="text-left text-[#717171] border-b border-[#f0f0f0]">
               <th className="py-1.5 pr-2 font-medium">Stratégie</th>
               <th className="py-1.5 pr-2 font-medium">Marché</th>
               <th className="py-1.5 pr-2 font-medium text-right">Paris</th>
@@ -298,7 +301,7 @@ function ClvTable({
               <th className="py-1.5 pr-2 font-medium text-right">Profit</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[#f0f0f0]">
             {rows.map((s) => {
               const clv = s.meanCLV;
               const edge = clv != null && Math.abs(clv) > CLV_EDGE_THRESHOLD;
@@ -307,9 +310,9 @@ function ClvTable({
                 <tr
                   key={s.key}
                   onClick={() => onSelect(s.key)}
-                  className={`cursor-pointer transition-colors hover:bg-muted ${activeKey === s.key ? "bg-muted/60" : ""}`}
+                  className={`cursor-pointer transition-colors hover:bg-[#fafafa] ${activeKey === s.key ? "bg-[#fafafa]/60" : ""}`}
                 >
-                  <td className="py-1.5 pr-2 font-medium text-foreground whitespace-nowrap">
+                  <td className="py-1.5 pr-2 font-medium text-[#222222] whitespace-nowrap">
                     {s.emoji} {s.label}
                     {!s.sampleOk && (
                       <span className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
@@ -317,7 +320,7 @@ function ClvTable({
                       </span>
                     )}
                   </td>
-                  <td className="py-1.5 pr-2 text-muted-foreground whitespace-nowrap">{s.market}</td>
+                  <td className="py-1.5 pr-2 text-[#717171] whitespace-nowrap">{s.market}</td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">{s.nBets}</td>
                   <td className="py-1.5 pr-2 text-right">
                     {clv != null ? (
@@ -327,13 +330,13 @@ function ClvTable({
                             ? positive
                               ? "bg-[#00e676]/15 text-[#00e676]"
                               : "bg-red-500/15 text-red-500"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-[#fafafa] text-[#717171]"
                         }`}
                       >
                         {fmtSigned(clv * 100)}%
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-[#717171]">—</span>
                     )}
                   </td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">
@@ -361,8 +364,8 @@ function ClvTable({
             const w = Math.abs(v) / maxAbsClv;
             return (
               <div key={s.key} className="flex items-center gap-2 text-[11px]">
-                <span className="w-24 truncate text-muted-foreground">{s.label}</span>
-                <div className="flex-1 h-2 rounded bg-muted overflow-hidden">
+                <span className="w-24 truncate text-[#717171]">{s.label}</span>
+                <div className="flex-1 h-2 rounded bg-[#fafafa] overflow-hidden">
                   <div
                     className={`h-full rounded ${v > 0 ? "bg-[#00e676]" : "bg-red-500"}`}
                     style={{ width: `${Math.max(2, w * 100)}%` }}
