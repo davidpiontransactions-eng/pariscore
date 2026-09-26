@@ -66,6 +66,20 @@ Never guess or make up an answer. Before answering or editing:
 - You do NOT need user permission to research the codebase
 - Proactively search when task requires understanding existing code
 
+## Documentation lookup hierarchy
+
+Ordre strict pour chercher une documentation (4 canaux concurrents, un seul bon) :
+
+1. **Lib présente dans le projet** → skill `grant` (local, 1 200+ packages, étendu à 43K hooks/resources/commands/LSP) — **défaut**
+2. **Doc non couverte / version précise** → MCP `context7` : `resolve-library-id` puis `query-docs` (ex. `/vercel/next.js` + `v16.x`) — clé `CONTEXT7_API_KEY` dans `.env` (locale + VPS) et en env User
+3. **Donnée de notre domaine** → MCP `football-docs` (24 providers, 2 325 chunks, validés CI)
+4. **Page web quelconque** → outil natif `webfetch`
+
+Règles :
+- Context7 = index **cloud communautaire** : le README refuse de garantir exactitude/complétude → **toujours croiser avec le code local** avant d'appliquer.
+- La clé ne s'écrit **jamais en dur** dans `.mcp.json` : `${CONTEXT7_API_KEY}` uniquement (Hard Rule #1).
+- Entrée MCP : `type: "http"` → `https://mcp.context7.com/mcp` (pas de process `npx` à maintenir).
+
 ## Security Boundaries
 
 - **ALLOWED**: Security analysis, detection rules, vulnerability explanations, defensive tools, security documentation
@@ -179,6 +193,7 @@ Clear separation between what CI/automation handles vs what humans handle.
 | Deployment | `deploy.bat` → VPS | Manual trigger |
 | Database | `bunx prisma migrate` | On schema change |
 | Cron Jobs | pm2 + FlareSolverr | Daily 04:30 UTC |
+| Commit → agentmemory | `.githooks/post-commit` (REST `127.0.0.1:3111`, silencieux) | On `git commit` — activer par machine : `git config core.hooksPath .githooks` |
 | APK Build | `bun run mobile:apk` | Manual trigger |
 | QA APK | `scripts/mobile-qa.ps1` | After APK build |
 | Beads sync | `bd dolt push` | On session close |
@@ -210,6 +225,13 @@ bd ready → bd show <id> → bd update <id> --claim
 
 **Traceability**: Every task tracked via bd beads. State persists across sessions.
 **Verify**: Each step must pass its check before proceeding.
+**Mode architecte** : pendant une phase de conception, écrire specs/plans **uniquement** — pas de code avant l'étape [Implement].
+
+**Automatisé (plugin `.opencode/plugins/ps-loop.ts`, chargé au démarrage)** :
+- **lint ciblé auto** après chaque `edit`/`write` → un bloc `[auto-lint]` apparaît dans la sortie : corriger avant de continuer
+- **rappels de session** injectés automatiquement : gates (`bun run lint` + `typecheck`) + hiérarchie docs (**context7 automatique** en tête de chaque session)
+- **graphe** : `graphify update .` lancé en différé après une salve d'éditions
+- **commit** : `node scripts/commit-msg.mjs` propose un message Conventional Commits ( `--apply` pour committer — jamais sans demande explicite)
 
 ## Workflow Presets
 
@@ -522,6 +544,18 @@ Always use CMD syntax. When in doubt, use `echo %CD%` to confirm CMD is active.
 > Cause reelle = couche PTY/spawn du tool (spawn node direct OK 6/6). Le tool `bash` est donc
 > **desactive** dans `.opencode/opencode.json` (`"tools": { "bash": false }`). Regle : **toujours
 > `oc_bash`, JAMAIS le tool `bash` natif**. Diagnostic complet : `docs/bash-tool-windows.md`.
+
+> **Fix PATH (2026-09-26, bead `ParisScorebis-cand` clos)** : le tool `bash` natif d'OpenCode
+> (sessions ou il est actif) ecrase le PATH du process spawn avec **uniquement**
+> `%USERPROFILE%\.bun\bin` → `node`/`git`/`npm`/`bd` introuvables
+> (`"'node' n'est pas reconnu…"`). Les spawns MCP et le plugin `ps_shell` heritent du PATH
+> complet, seul le tool bash est touche. **Fix en place** : 16 shims `.cmd` dans
+> `C:\Users\David\.bun\bin` pointant vers les vrais binaires en chemin absolu
+> (node, npm, npx, git, bd, python, findstr, where, reg, curl, tar, powershell, sqz +
+> delegants graphify/graft/codegraph). Les commandes simples marchent donc desormais
+> dans le tool bash. **Rejouer apres deplacement de Node/Git** :
+> `call scripts\install-bun-shims.cmd` (adapter `NODE_EXE`/`GIT_EXE` en tete de script).
+> Rapport complet : `.context/rapport-fix-path-bash-tool.md`.
 **Bash→CMD command translation table** (use the RIGHT column, ALWAYS):
 
 | Operation | ❌ Bash (FREEZES) | ✅ CMD (WORKS) |

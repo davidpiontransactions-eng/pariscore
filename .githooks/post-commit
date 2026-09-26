@@ -1,0 +1,16 @@
+#!/bin/sh
+# Wrapper du hook post-commit : resout l'interprete JS disponible puis
+# delegue a post-commit.cjs (node de preference, shim node.cmd des shims
+# PATH .bun/bin sous git-bash, bun en dernier recours).
+# Toute defaillance est silencieuse : exit 0, un commit n'est jamais bloque.
+# Bead : ParisScorebis-43ai — Installation par machine : git config core.hooksPath .githooks
+
+DIR=$(dirname "$0")
+if command -v node >/dev/null 2>&1; then
+  exec node "$DIR/post-commit.cjs"
+elif command -v node.cmd >/dev/null 2>&1; then
+  exec node.cmd "$DIR/post-commit.cjs"
+elif command -v bun >/dev/null 2>&1; then
+  exec bun "$DIR/post-commit.cjs"
+fi
+exit 0
