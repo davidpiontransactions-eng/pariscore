@@ -91,14 +91,23 @@ export async function GET(req: NextRequest) {
   const hours = searchParams.get("hours");
   const hidePast = searchParams.get("hidePast") !== "false";
 
+  // Contrat de réponse : TOUJOURS un objet { fights, source?, ... }.
+  // (Régression f3e29968 : retournait un tableau nu → mma-tab-content et
+  //  use-sports-tree lisaient data.fights = undefined → onglet vide.)
+  const payload = (events: MmaEventRaw[], extra?: Record<string, unknown>) =>
+    NextResponse.json({ fights: events, source: "odds-api+ml", ...extra });
+
   // ── Cache hit (fresh) ────────────────────────────────────────────────────
   if (cache && now - cache.at < CACHE_TTL) {
-    return NextResponse.json(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }));
+    return payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), { cache: "fresh" });
   }
 
   // ── Cache stale → servir + revalidate en background ──────────────────────
   if (cache && now - cache.at < STALE_TTL && cache.data) {
-    const response = NextResponse.json(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }));
+    const response = payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), {
+      cache: "stale",
+      cacheAge: Math.round((now - cache.at) / 1000),
+    });
     response.headers.set("X-Cache", "stale");
     response.headers.set("X-Cache-Age", String(Math.round((now - cache.at) / 1000)));
     revalidateCache(now).catch(() => {});
@@ -109,15 +118,16 @@ export async function GET(req: NextRequest) {
   try {
     const data = await fetchAndEnrich(now);
     cache = data;
-    return NextResponse.json(applyFilters(data.data as MmaEventRaw[], { weightClass, hours, hidePast, now }));
+    return payload(applyFilters(data.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), { cache: "miss" });
   } catch (err) {
     if (cache?.data) {
-      return NextResponse.json(
-        { ...applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), _stale: true },
+      return payload(
+        applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }),
+        { _stale: true },
       );
     }
     return NextResponse.json(
-      { error: "Données MMA indisponibles", details: (err as Error).message },
+      { error: "Données MMA indisponibles", details: (err as Error).message, fights: [] },
       { status: 503 },
     );
   }

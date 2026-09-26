@@ -12,7 +12,9 @@ export const mmaAdapter: SportAdapter = {
     });
     if (!res.ok) return [];
     const data: any = await res.json();
-    const events: any[] = Array.isArray(data) ? data : [];
+    // Double forme acceptée : { fights: [...] } (contrat actuel) ou tableau nu
+    // (forme de régression f3e29968 — tolérée pour les caches/proxies anciens).
+    const events: any[] = Array.isArray(data) ? data : (data?.fights ?? []);
     const matches: TopMatch[] = [];
     const flat: any[] = [];
     for (const ev of events) {
