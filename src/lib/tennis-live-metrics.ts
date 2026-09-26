@@ -113,18 +113,42 @@ function safeNum(v: number | null | undefined, fb = 0): number {
 // ─── M1 : Dominance Ratio Classique ─────────────────────────────────────────
 
 /**
+ * % de points gagnés au SERVICE observés sur les stats live d'un joueur,
+ * pondération 1re/2e balle (estimation ATP classique) — [0..1].
+ *
+ * Retourne null si les 3 champs (1re%, 1re gagnés, 2e gagnés) sont absents :
+ * l'appelant (blendServeRecent) garde alors la valeur prematch — jamais de
+ * donnée inventée. Champs PARTIELLEMENT présents → defaults 60/70/50,
+ * comportement historique du DR conservé à l'identique.
+ *
+ * @param stats - Snapshot stats live (champs p1_/p2_first_pct, first_won, second_won)
+ * @param side - "A" (p1) ou "B" (p2)
+ */
+export function estimateServePointsWon(
+  stats: LiveStatsSnapshot,
+  side: "A" | "B",
+): number | null {
+  const fp = side === "A" ? stats.p1_first_pct : stats.p2_first_pct;
+  const fw = side === "A" ? stats.p1_first_won : stats.p2_first_won;
+  const sw = side === "A" ? stats.p1_second_won : stats.p2_second_won;
+  if (fp == null && fw == null && sw == null) return null;
+  const fPct = safeNum(fp, 60) / 100;
+  const fWon = safeNum(fw, 70) / 100;
+  const sWon = safeNum(sw, 50) / 100;
+  return clamp(fPct * fWon + (1 - fPct) * sWon, 0.05, 0.95);
+}
+
+/** Valeur par défaut retenue par l'estimation serveur quand tout est null
+ *  (0.6×0.7 + 0.4×0.5 = 0.62) — historique DR, ne pas changer sans backtest. */
+const SRV_WON_DEFAULT = 0.62;
+
+/**
  * DR = % pts retour gagnés / % pts service perdus (O'Shaughnessy 2002).
  * Estimation : srvWon = moyenne pondérée 1st/2nd ; retWon = 1 - srvWon_opp.
  */
 export function computeDominanceRatio(stats: LiveStatsSnapshot): DrResult {
-  function estSrvWon(fp: number | null, fw: number | null, sw: number | null) {
-    const fPct = safeNum(fp, 60) / 100;
-    const fWon = safeNum(fw, 70) / 100;
-    const sWon = safeNum(sw, 50) / 100;
-    return clamp(fPct * fWon + (1 - fPct) * sWon, 0.05, 0.95);
-  }
-  const srvA = estSrvWon(stats.p1_first_pct, stats.p1_first_won, stats.p1_second_won);
-  const srvB = estSrvWon(stats.p2_first_pct, stats.p2_first_won, stats.p2_second_won);
+  const srvA = estimateServePointsWon(stats, "A") ?? SRV_WON_DEFAULT;
+  const srvB = estimateServePointsWon(stats, "B") ?? SRV_WON_DEFAULT;
 
   const retA = 1 - srvB;
   const retB = 1 - srvA;

@@ -18,6 +18,8 @@
 import { memo, useMemo } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
+import { useTennisLiveStats } from "@/hooks/use-tennis-live-stats";
+import { estimateServePointsWon } from "@/lib/tennis-live-metrics";
 import {
   predictTotalGames,
   type PredictionSurface,
@@ -57,6 +59,8 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
     liveProbA: state.liveProbA,
     liveProbB: state.liveProbB,
     server: state.server,
+    // Points du jeu en cours → déroulé intra-jeu (pression balle de break).
+    currentPoints: [state.scoreA.points, state.scoreB.points],
   };
 }
 
@@ -106,6 +110,8 @@ function shortName(fullName: string): string {
 function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) {
   const nameA = shortName(match.playerA.name);
   const nameB = shortName(match.playerB.name);
+  // Serve observé ce match (stats BSD via SSE partagé) → blend récence.
+  const { stats: liveStats } = useTennisLiveStats(liveState?.matchId ?? "");
 
   // === BET #1 : Vainqueur du match (liveProbA/liveProbB de BSD) ===
   // BSD dérive ces probas des cotes en temps réel (bsd-fetcher.ts:300-311).
@@ -120,7 +126,11 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
   const setAndGames = useMemo(() => {
     if (!liveState) return null;
     const surface = toModelSurface(match.stats?.surface ?? "Hard");
-    const liveCtx = buildLiveContext(liveState);
+    const liveCtx: LiveGamesContext = {
+      ...buildLiveContext(liveState),
+      observedServeA: liveStats ? estimateServePointsWon(liveStats, "A") : null,
+      observedServeB: liveStats ? estimateServePointsWon(liveStats, "B") : null,
+    };
 
     // Bet #3 : Over games match.
     const totalGames = predictTotalGames(
@@ -151,6 +161,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
     match.playerB.elo,
     serveStatsA,
     serveStatsB,
+    liveStats,
   ]);
 
   // BET ② — Vainqueur du set : MÉLANGE BAYÉSIEN entre Markov et cotes marché.

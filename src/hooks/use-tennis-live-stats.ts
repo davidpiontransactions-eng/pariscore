@@ -174,6 +174,8 @@ export function useTennisLiveStats(
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Id vide = panneau rendu hors live (props absentes) → aucun abonnement.
+    if (!matchId) return;
 
     attemptRef.current = 0;
     hasDataRef.current = false;

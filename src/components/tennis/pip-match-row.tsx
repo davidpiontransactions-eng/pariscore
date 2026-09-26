@@ -29,7 +29,8 @@ import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
 import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
 import { computeSetOdds } from "@/lib/set-odds";
-import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
+import { estimateServePointsWon, type CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
+import { useTennisLiveStats } from "@/hooks/use-tennis-live-stats";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { cn } from "@/lib/utils";
 import { playTennisSound } from "@/lib/tennis-sound";
@@ -200,6 +201,10 @@ function PipMatchRowImpl({
   // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
   const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
 
+  // Serve observé ce match (stats BSD via SSE partagé) → blend récence des
+  // cotes set (computeSetOdds → predictTotalGames).
+  const { stats: liveStats } = useTennisLiveStats(liveState?.matchId ?? "");
+
   // Cotes vainqueur du set EN COURS (dérivées du Markov + mélange bayésien marché).
   // Affichées sous le score. Recalculées à chaque maj du score du set.
   const setOdds = useMemo(
@@ -211,6 +216,12 @@ function PipMatchRowImpl({
         match.stats?.surface ?? "Hard",
         match.playerA.elo,
         match.playerB.elo,
+        liveStats
+          ? {
+              a: estimateServePointsWon(liveStats, "A"),
+              b: estimateServePointsWon(liveStats, "B"),
+            }
+          : undefined,
       ),
     [
       liveState?.scoreA.games,
@@ -222,6 +233,7 @@ function PipMatchRowImpl({
       match.playerB.elo,
       serveStatsA,
       serveStatsB,
+      liveStats,
     ],
   );
 

@@ -50,6 +50,8 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
     liveProbA: state.liveProbA,
     liveProbB: state.liveProbB,
     server: state.server,
+    // Points du jeu en cours → déroulé intra-jeu (pression balle de break).
+    currentPoints: [state.scoreA.points, state.scoreB.points],
   };
 }
 
@@ -85,11 +87,17 @@ export function computeSetOdds(
   surface: string,
   eloA?: number,
   eloB?: number,
+  /** Serve OBSERVÉ ce match [0..1] (stats BSD) → blend récence dans le modèle. */
+  observedServe?: { a: number | null; b: number | null },
 ): SetOdds | null {
   if (!liveState) return null;
 
   const modelSurface = toModelSurface(surface);
-  const liveCtx = buildLiveContext(liveState);
+  const liveCtx: LiveGamesContext = {
+    ...buildLiveContext(liveState),
+    observedServeA: observedServe?.a ?? null,
+    observedServeB: observedServe?.b ?? null,
+  };
 
   // 1. pHoldA/pHoldB via Barnett (résolu par predictTotalGames).
   const totalGames = predictTotalGames(
