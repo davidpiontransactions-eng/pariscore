@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { HandballTableCaption } from "./handball-table-caption";
+import { HandballLiveCommentaryPanel } from "./handball-live-commentary-panel";
 import type { HandballMatch } from "@/lib/handball-data";
 import { buildFormStore, formSummaryStr } from "@/lib/handball-strategy-top8";
 import {
@@ -314,7 +316,7 @@ function FormSequence({ seq }: { seq: string }) {
         <span
           key={i}
           title={title[r] ?? r}
-          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${colors[r] ?? "bg-muted dark:bg-white/[0.08] text-muted-foreground ring-border"}`}
+          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ring-1 ${colors[r] ?? "bg-[#f5f5f5] dark:bg-white/[0.08] text-[#717171] ring-border"}`}
         >
           {fr[r] ?? r}
         </span>
@@ -336,7 +338,7 @@ function CompareRow({
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[11px]">
       <span className="text-right font-semibold tabular-nums text-emerald-500">{home}</span>
-      <span className="text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+      <span className="text-center text-[10px] uppercase tracking-wider text-[#717171]">
         {label}
       </span>
       <span className="text-left font-semibold tabular-nums text-sky-500">{away}</span>
@@ -365,10 +367,10 @@ function CompareBar({
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-semibold tabular-nums text-emerald-500">{home}</span>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-[10px] uppercase tracking-wider text-[#717171]">{label}</span>
         <span className="text-[11px] font-semibold tabular-nums text-sky-500">{away}</span>
       </div>
-      <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted dark:bg-white/[0.07]">
+      <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-[#f5f5f5] dark:bg-white/[0.07]">
         <div className="bg-emerald-500" style={{ width: `${homePct}%` }} />
         <div className="bg-sky-500" style={{ width: `${100 - homePct}%` }} />
       </div>
@@ -390,18 +392,18 @@ function PredictiveBetTile({ bet }: { bet: HandballPredictiveBet }) {
           {bet.confidence}
         </span>
       </div>
-      <p className="mt-1.5 truncate text-[11px] font-semibold text-foreground">{bet.label}</p>
+      <p className="mt-1.5 truncate text-[11px] font-semibold text-[#222222]">{bet.label}</p>
       <p className="text-2xl font-black tabular-nums text-emerald-500">
         {bet.prob.toFixed(1)}
         <span className="text-sm font-bold">%</span>
       </p>
-      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted dark:bg-white/[0.07]">
+      <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-[#f5f5f5] dark:bg-white/[0.07]">
         <div
           className="h-full rounded-full bg-emerald-400"
           style={{ width: `${Math.min(100, Math.max(0, Math.round(bet.prob)))}%` }}
         />
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums text-[#717171]">
         {bet.odds != null ? (
           <>
             <span>cote {bet.odds.toFixed(2)}</span>
@@ -423,7 +425,7 @@ function PredictiveBetTile({ bet }: { bet: HandballPredictiveBet }) {
           <span className="text-amber-500">prob seule · pas de cote</span>
         )}
       </div>
-      <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/80">
+      <p className="mt-1 text-[10px] uppercase tracking-wider text-[#717171]/80">
         {SOURCE_LABEL[bet.source]}
       </p>
     </div>
@@ -434,7 +436,7 @@ function PredictiveBetTile({ bet }: { bet: HandballPredictiveBet }) {
 function BonusGroup({ title, picks }: { title: string; picks: BonusPick[] }) {
   return (
     <div>
-      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#717171]">
         {title}
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -443,7 +445,7 @@ function BonusGroup({ title, picks }: { title: string; picks: BonusPick[] }) {
             key={`${p.label}-${i}`}
             className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-1"
           >
-            <span className="max-w-full truncate text-[10px] text-foreground/90">{p.label}</span>
+            <span className="max-w-full truncate text-[10px] text-[#222222]/90">{p.label}</span>
             <span
               className={`text-[10px] font-bold tabular-nums ${CONFIDENCE_TEXT[p.confidence]}`}
             >
@@ -507,7 +509,7 @@ function PlayerColumn({
     return (
       <div className={`rounded-lg border ${borderCls} p-2.5`}>
         {header}
-        <p className="mt-2 text-[11px] text-muted-foreground" aria-live="polite">
+        <p className="mt-2 text-[11px] text-[#717171]" aria-live="polite">
           Chargement des stats joueurs…
         </p>
       </div>
@@ -519,7 +521,7 @@ function PlayerColumn({
     return (
       <div className={`rounded-lg border ${borderCls} p-2.5`}>
         {header}
-        <p className="mt-2 text-[11px] text-muted-foreground">Stats joueurs indisponibles</p>
+        <p className="mt-2 text-[11px] text-[#717171]">Stats joueurs indisponibles</p>
       </div>
     );
   }
@@ -536,20 +538,20 @@ function PlayerColumn({
     <div className={`rounded-lg border ${borderCls} p-2.5`}>
       {header}
       {gk && (
-        <div className="mt-2 flex items-center gap-2 rounded bg-muted/40 px-2 py-1.5 dark:bg-white/[0.06]">
+        <div className="mt-2 flex items-center gap-2 rounded bg-[#f5f5f5]/40 px-2 py-1.5 dark:bg-white/[0.06]">
           <PlayerAvatar name={gk.name} photoUrl={gk.photoUrl} size="xs" sport="handball" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] font-semibold">
-              {gk.name} <span className="font-normal text-muted-foreground">· gardien</span>
+              {gk.name} <span className="font-normal text-[#717171]">· gardien</span>
             </p>
             {gkLine && (
-              <p className="text-[10px] tabular-nums text-muted-foreground">{gkLine}</p>
+              <p className="text-[10px] tabular-nums text-[#717171]">{gkLine}</p>
             )}
           </div>
         </div>
       )}
       {tops.field.length > 0 && (
-        <ul className="mt-1.5 divide-y divide-border">
+        <ul className="mt-1.5 divide-y divide-[#f0f0f0]">
           {tops.field.map((p) => (
             <li
               key={`${p.name}-${p.team}`}
@@ -559,7 +561,7 @@ function PlayerColumn({
                 <PlayerAvatar name={p.name} photoUrl={p.photoUrl} size="xs" sport="handball" />
                 <span className="truncate font-medium">{p.name}</span>
               </span>
-              <span className="shrink-0 tabular-nums text-muted-foreground">
+              <span className="shrink-0 tabular-nums text-[#717171]">
                 {playerLine(p)}
               </span>
             </li>
@@ -580,7 +582,7 @@ function FinalScoreTab({ match }: { match: HandballMatch }) {
   const s = match.score;
   if (!s) {
     return (
-      <p className="py-6 text-center text-[11px] text-muted-foreground">
+      <p className="py-6 text-center text-[11px] text-[#717171]">
         Score final indisponible pour ce match
       </p>
     );
@@ -596,18 +598,18 @@ function FinalScoreTab({ match }: { match: HandballMatch }) {
   return (
     <div className="space-y-3">
       {/* Scoreboard final */}
-      <section className="rounded-xl border border-border bg-card p-3">
+      <section className="rounded-xl border border-[#f0f0f0] bg-white p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <HandballTeamLogo name={match.home.name} size={28} />
             <span className="truncate text-[12px] font-semibold">{match.home.name}</span>
           </div>
           <div className="shrink-0 text-center">
-            <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+            <span className="inline-block rounded bg-[#f5f5f5] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#717171]">
               Terminé
             </span>
             <p className="text-3xl font-black leading-tight tabular-nums">
-              {s.home} <span className="text-muted-foreground">:</span> {s.away}
+              {s.home} <span className="text-[#717171]">:</span> {s.away}
             </p>
           </div>
           <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-2">
@@ -615,27 +617,28 @@ function FinalScoreTab({ match }: { match: HandballMatch }) {
             <span className="truncate text-[12px] font-semibold">{match.away.name}</span>
           </div>
         </div>
-        <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
+        <p className="mt-1.5 text-center text-[11px] text-[#717171]">
           {vainqueur}
           {ecart !== 0 ? ` (+${Math.abs(ecart)})` : ""} · {total} buts au total
         </p>
       </section>
 
       {/* COMPTE : Match / 1re MT / 2e MT */}
-      <section className="rounded-lg border border-border p-2">
-        <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <section className="rounded-lg border border-[#f0f0f0] p-2">
+        <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[#717171]">
           Compte
         </h4>
         <table className="w-full text-xs tabular-nums">
+          <HandballTableCaption>Score par mi-temps</HandballTableCaption>
           <thead>
-            <tr className="text-muted-foreground">
+            <tr className="text-[#717171]">
               <th className="pb-1 text-left font-medium">Équipe</th>
               <th className="px-1 pb-1 text-right font-medium">Match</th>
               <th className="px-1 pb-1 text-right font-medium">1re MT</th>
               <th className="pb-1 pl-1 text-right font-medium">2e MT</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/60">
+          <tbody className="divide-y divide-[#f0f0f0]/60">
             <tr>
               <td className="max-w-0 truncate py-1 pr-1 font-semibold text-emerald-500">
                 {match.home.name}
@@ -655,13 +658,13 @@ function FinalScoreTab({ match }: { match: HandballMatch }) {
           </tbody>
         </table>
         {!halvesKnown && (
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1 text-[10px] text-[#717171]">
             Détail mi-temps absent du snapshot — seul le score final est connu.
           </p>
         )}
       </section>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-[10px] text-[#717171]">
         {match.league.name}
         {match.league.country ? ` · ${match.league.country}` : ""} · source : snapshot Flashscore
         (score final + mi-temps).
@@ -691,7 +694,7 @@ function signed1(v: number | null | undefined): string {
 function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; variant: "home" | "away" }) {
   if (!stats) {
     return (
-      <p className="text-[11px] leading-snug text-muted-foreground">
+      <p className="text-[11px] leading-snug text-[#717171]">
         Aucun historique en base pour cette équipe — la couverture s&apos;étoffe à chaque run
         hebdomadaire du cron.
       </p>
@@ -705,19 +708,20 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
     { label: "PPG", get: (s, w, side) => n1(s[side][w].ppg) },
   ];
   return (
-    <div className="rounded-lg border border-border p-2">
+    <div className="rounded-lg border border-[#f0f0f0] p-2">
       <div className="flex items-baseline justify-between gap-2">
         <span className={`truncate text-[11px] font-bold uppercase tracking-wider ${accent}`}>
           {stats.name}
         </span>
-        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+        <span className="shrink-0 text-[10px] tabular-nums text-[#717171]">
           {stats.n} matchs · {stats.wins}V {stats.draws}N {stats.losses}D
         </span>
       </div>
       <div className="mt-1.5 overflow-x-auto">
         <table className="w-full text-[10px] tabular-nums">
+          <HandballTableCaption>Forme L5/L10 — domicile et extérieur</HandballTableCaption>
           <thead>
-            <tr className="text-muted-foreground">
+            <tr className="text-[#717171]">
               <th className="pb-1 pr-1 text-left font-medium">Situation</th>
               <th className="pb-1 px-1 text-right font-medium">L5 dom</th>
               <th className="pb-1 px-1 text-right font-medium">L5 ext</th>
@@ -725,20 +729,20 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
               <th className="pb-1 pl-1 text-right font-medium">L10 ext</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/60">
+          <tbody className="divide-y divide-[#f0f0f0]/60">
             {rows.map((r) => (
               <tr key={r.label}>
-                <td className="py-0.5 pr-1 text-left text-muted-foreground">{r.label}</td>
-                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                <td className="py-0.5 pr-1 text-left text-[#717171]">{r.label}</td>
+                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
                   {r.get(stats, "l5", "home")}
                 </td>
-                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
                   {r.get(stats, "l5", "away")}
                 </td>
-                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
+                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
                   {r.get(stats, "l10", "home")}
                 </td>
-                <td className="py-0.5 pl-1 text-right font-semibold text-foreground">
+                <td className="py-0.5 pl-1 text-right font-semibold text-[#222222]">
                   {r.get(stats, "l10", "away")}
                 </td>
               </tr>
@@ -746,28 +750,28 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
           </tbody>
         </table>
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[#717171]">
         <span>
           Winrate{" "}
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-[#222222]">
             {stats.winrate == null ? "—" : `${Math.round(stats.winrate * 100)}%`}
           </span>
         </span>
         <span>
           dom{" "}
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-[#222222]">
             {stats.winrateHome == null ? "—" : `${Math.round(stats.winrateHome * 100)}%`}
           </span>
         </span>
         <span>
           ext{" "}
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-[#222222]">
             {stats.winrateAway == null ? "—" : `${Math.round(stats.winrateAway * 100)}%`}
           </span>
         </span>
         <span className="ml-auto">Forme {stats.lastSeq || "—"}</span>
       </div>
-      <p className="mt-0.5 text-[9px] leading-tight text-muted-foreground/70">
+      <p className="mt-0.5 text-[9px] leading-tight text-[#717171]/70">
         dom = l&apos;équipe reçoit ({stats.home.l5.n}L5/{stats.home.l10.n}L10) · ext = elle est
         reçue ({stats.away.l5.n}L5/{stats.away.l10.n}L10)
       </p>
@@ -778,34 +782,34 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
 /** Échelle Over : une chip par ligne — verte si ≥ 55 %, pill « pari » si ≥ 60 %. */
 function OverLadder({ lines, floor }: { lines: OverLine[]; floor: number }) {
   return (
-    <div className="grid grid-cols-4 gap-1.5">
+    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
       {lines.map((l) => {
         const flag = lineFlag(l.over);
         const playable = l.over >= floor;
         return (
           <div
             key={l.line}
-            className={`rounded-lg border px-1.5 py-1.5 text-center ${
+            className={`rounded-lg border px-1.5 py-2 text-center ${
               flag === "bet"
                 ? "border-emerald-500/60 bg-emerald-500/15 ring-1 ring-emerald-500/30"
                 : playable
                   ? "border-emerald-500/40 bg-emerald-500/10"
-                  : "border-border bg-muted/30 dark:bg-white/[0.04]"
+                  : "border-[#f0f0f0] bg-[#f5f5f5]/30 dark:bg-white/[0.04]"
             }`}
           >
             <p
-              className={`text-[9px] uppercase tracking-wider ${playable ? "text-emerald-500" : "text-muted-foreground"}`}
+              className={`text-[11px] uppercase tracking-normal sm:text-[9px] sm:tracking-wider ${playable ? "text-emerald-500" : "text-[#222222]/70"}`}
             >
               over {l.line}
             </p>
             <p
-              className={`text-sm font-black tabular-nums ${playable ? "text-emerald-500" : "text-foreground/80"}`}
+              className={`text-base font-black tabular-nums sm:text-sm ${playable ? "text-emerald-500" : "text-[#222222]/90"}`}
             >
               {(l.over * 100).toFixed(0)}
-              <span className="text-[10px] font-bold">%</span>
+              <span className="text-[11px] font-bold sm:text-[10px]">%</span>
             </p>
             {flag === "bet" && (
-              <span className="mt-0.5 inline-block rounded-full bg-emerald-500 px-1.5 py-px text-[8px] font-black uppercase tracking-wider text-background">
+              <span className="mt-0.5 inline-block rounded-full bg-emerald-500 px-1.5 py-px text-[9px] font-black uppercase tracking-wider text-background">
                 pari
               </span>
             )}
@@ -827,7 +831,7 @@ function ScorerRow({ p, variant }: { p: AnalysisScorer; variant: "home" | "away"
         <PlayerAvatar name={p.name} photoUrl={p.photoUrl} size="xs" sport="handball" />
         <div className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
           <span className="truncate text-[11px] font-semibold">{p.name}</span>
-          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+          <span className="shrink-0 text-[10px] tabular-nums text-[#717171]">
             {n1(p.avgGoals)}/m · {p.goals} buts ({p.games} m)
           </span>
         </div>
@@ -840,14 +844,14 @@ function ScorerRow({ p, variant }: { p: AnalysisScorer; variant: "home" | "away"
             className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ring-1 ${
               t.playable
                 ? "bg-emerald-500/15 text-emerald-500 ring-emerald-500/30"
-                : "bg-muted text-muted-foreground ring-border dark:bg-white/[0.06]"
+                : "bg-[#f5f5f5] text-[#717171] ring-border dark:bg-white/[0.06]"
             }`}
           >
             {t.n}+ {(t.p * 100).toFixed(0)}%
           </span>
         ))}
       </div>
-      <p className="mt-0.5 text-[9px] text-muted-foreground/70">
+      <p className="mt-0.5 text-[9px] text-[#717171]/70">
         λ ajusté {p.lambda.toFixed(1)} buts attendus
       </p>
       {p.probs.some((t) => t.playable) ? null : (
@@ -914,17 +918,17 @@ function StarLigueBlock({
   return (
     <section className="space-y-2">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
           StarLigue — classement &amp; stats équipes
         </h4>
-        <span className="text-[10px] text-muted-foreground">saison {data.season ?? "—"}</span>
+        <span className="text-[10px] text-[#717171]">saison {data.season ?? "—"}</span>
       </header>
-      <div className="rounded-lg border border-border p-2">
+      <div className="rounded-lg border border-[#f0f0f0] p-2">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-1.5">
           <span className="truncate text-right text-[11px] font-bold text-emerald-500">
             {h?.team ?? homeName}
           </span>
-          <span className="text-[9px] uppercase tracking-wider text-muted-foreground">vs</span>
+          <span className="text-[9px] uppercase tracking-wider text-[#717171]">vs</span>
           <span className="truncate text-left text-[11px] font-bold text-sky-500">
             {a?.team ?? awayName}
           </span>
@@ -934,7 +938,7 @@ function StarLigueBlock({
             <CompareRow key={r.label} label={r.label} home={r.home} away={r.away} />
           ))}
         </div>
-        <p className="mt-1.5 text-[9px] leading-tight text-muted-foreground/70">
+        <p className="mt-1.5 text-[9px] leading-tight text-[#717171]/70">
           Source lnh.fr · moyennes / match · snapshot {data.scrapedAt ?? "—"}
           {(h?.played ?? a?.played) != null ? ` · ${h?.played ?? a?.played} j joués` : ""}
         </p>
@@ -955,14 +959,14 @@ function LeagueBacktestTab({
 }) {
   if (state === "idle" || state === "loading") {
     return (
-      <p className="py-4 text-center text-[11px] text-muted-foreground" aria-live="polite">
+      <p className="py-4 text-center text-[11px] text-[#717171]" aria-live="polite">
         Chargement du backtest de la ligue…
       </p>
     );
   }
   if (state === "error" || !payload) {
     return (
-      <p className="py-4 text-center text-[11px] text-muted-foreground">
+      <p className="py-4 text-center text-[11px] text-[#717171]">
         Backtest indisponible (matrice absente — cron hebdo lundi 04:40).
       </p>
     );
@@ -972,7 +976,7 @@ function LeagueBacktestTab({
   const matrix = payload.matrix;
   if (!matrix) {
     return (
-      <p className="py-4 text-center text-[11px] text-muted-foreground">
+      <p className="py-4 text-center text-[11px] text-[#717171]">
         Matrice de backtest vide — relance scripts/backtest-handball-matrix.ts.
       </p>
     );
@@ -980,10 +984,10 @@ function LeagueBacktestTab({
   if (!row) {
     return (
       <div className="space-y-2 py-2 text-center">
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[11px] text-[#717171]">
           Pas encore de recul statistique sur <span className="font-semibold">{leagueName}</span>.
         </p>
-        <p className="text-[10px] text-muted-foreground/80">
+        <p className="text-[10px] text-[#717171]/80">
           La matrice couvre les {matrix.leagues.length} championnats les plus fournis (≥ 20 matchs) —
           période {matrix.from ?? "?"} → {matrix.to ?? "?"}.
         </p>
@@ -996,21 +1000,21 @@ function LeagueBacktestTab({
   const roi = (v: number | null | undefined) =>
     v == null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
   const roiCls = (v: number | null | undefined) =>
-    v == null ? "text-muted-foreground" : v > 0 ? "text-[#00e676]" : v < 0 ? "text-red-500" : "text-muted-foreground";
+    v == null ? "text-[#717171]" : v > 0 ? "text-[#00e676]" : v < 0 ? "text-red-500" : "text-[#717171]";
 
   return (
     <div className="space-y-3">
       <section className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
             Backtest — {row.league}
           </h4>
-          <span className="text-[10px] tabular-nums text-muted-foreground">
+          <span className="text-[10px] tabular-nums text-[#717171]">
             {row.nMatches} matchs · {matrix.from ?? "?"} → {matrix.to ?? "?"} · généré{" "}
             {payload.generatedAt.slice(0, 10)}
           </span>
         </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 text-[11px] text-[#717171]">
           Walk-forward anti-lookahead sur la matrice 8 marchés × {matrix.nLeagues} championnats
           (source : historique DB, cotes 1xbet simulées → ROI indicatif).
         </p>
@@ -1018,8 +1022,9 @@ function LeagueBacktestTab({
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
+          <HandballTableCaption>Backtest par marché</HandballTableCaption>
           <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
+            <tr className="border-b border-[#f0f0f0] text-left text-[#717171]">
               <th className="py-1.5 pr-2 font-medium">Marché</th>
               <th className="px-2 py-1.5 text-right font-medium">Paris</th>
               <th className="px-2 py-1.5 text-right font-medium">Hit ligue</th>
@@ -1027,7 +1032,7 @@ function LeagueBacktestTab({
               <th className="px-2 py-1.5 text-right font-medium">Hit global</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[#f0f0f0]">
             {matrix.markets.map((mk) => {
               const c = row.cells[mk.key];
               const g = matrix.global[mk.key];
@@ -1038,7 +1043,7 @@ function LeagueBacktestTab({
                       {mk.emoji} {mk.label}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                  <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
                     {c?.nBets ?? 0}
                   </td>
                   <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
@@ -1048,7 +1053,7 @@ function LeagueBacktestTab({
                     {roi(c?.roiPct)}
                     {c && c.nBets > 0 && !c.sampleOk ? " ⚠️" : ""}
                   </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                  <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
                     {pct(g?.hitRate, 0)}
                   </td>
                 </tr>
@@ -1058,7 +1063,7 @@ function LeagueBacktestTab({
         </table>
       </div>
 
-      <p className="text-[10px] leading-snug text-muted-foreground">
+      <p className="text-[10px] leading-snug text-[#717171]">
         ⚠️ = échantillon &lt; {matrix.minSampleBets} paris (ROI = bruit) · nul = perdant pour les
         marchés 1X2 · cotes simulées (favori 1.55, Over 1.90, Under 1.85, HC 1.90, BTTS 1.80, MT
         1.70).
@@ -1077,8 +1082,8 @@ function AiTab({
 }) {
   if (state === "idle" || state === "loading") {
     return (
-      <div className="py-6 text-center text-[11px] text-muted-foreground" aria-live="polite">
-        <p className="font-semibold text-foreground">Génération de l&apos;analyse IA…</p>
+      <div className="py-6 text-center text-[11px] text-[#717171]" aria-live="polite">
+        <p className="font-semibold text-[#222222]">Génération de l&apos;analyse IA…</p>
         <p className="mt-1">
           1ʳᵉ demande : 20 à 60 s. Ensuite, l&apos;analyse est mise en mémoire 24 h sur le serveur
           (aucun coût Gemini).
@@ -1088,7 +1093,7 @@ function AiTab({
   }
   if (state === "error" || !ai) {
     return (
-      <p className="py-6 text-center text-[11px] text-muted-foreground">
+      <p className="py-6 text-center text-[11px] text-[#717171]">
         Analyse IA indisponible (quota / clé Gemini ou service en erreur) — réessaie dans un
         instant, les données chiffrées restent dans les onglets Over &amp; Stats.
       </p>
@@ -1101,17 +1106,17 @@ function AiTab({
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-            ai.cached ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30"
+            ai.cached ? "bg-[#f5f5f5] text-[#717171]" : "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30"
           }`}
         >
           {ai.cached ? "déjà en mémoire" : "analysé maintenant"}
         </span>
-        <span className="text-[10px] tabular-nums text-muted-foreground">
+        <span className="text-[10px] tabular-nums text-[#717171]">
           analyse du {stamp} · expire dans ~{ai.expiresInHours} h · {ai.model}
         </span>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-3 text-xs leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:mb-1.5 [&_h2]:mt-3 [&_h2]:text-xs [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h3]:font-semibold [&_li]:mb-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1.5 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-4">
+      <div className="rounded-lg border border-[#f0f0f0] bg-white p-3 text-xs leading-relaxed text-[#222222] [&_h1]:mb-2 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:mb-1.5 [&_h2]:mt-3 [&_h2]:text-xs [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h3]:font-semibold [&_li]:mb-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-1.5 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-4">
         <Markdown>{ai.text}</Markdown>
       </div>
 
@@ -1132,10 +1137,10 @@ function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
       {/* En-tête : total attendu + ligne jouable + 1X2 */}
       <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
         <div className="flex items-baseline justify-between gap-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
             Over points
           </h4>
-          <span className="text-[10px] tabular-nums text-muted-foreground">
+          <span className="text-[10px] tabular-nums text-[#717171]">
             total attendu {model.expectedTotal.toFixed(1)} · base {model.base}
           </span>
         </div>
@@ -1160,10 +1165,10 @@ function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
         </p>
         <div className="mt-2 flex justify-between text-[11px] tabular-nums">
           <span className="text-emerald-500">1 : {match1x2.home.toFixed(1)}%</span>
-          <span className="text-muted-foreground">X : {match1x2.draw.toFixed(1)}%</span>
+          <span className="text-[#717171]">X : {match1x2.draw.toFixed(1)}%</span>
           <span className="text-sky-500">2 : {match1x2.away.toFixed(1)}%</span>
         </div>
-        <p className="mt-1 text-[10px] text-muted-foreground/80">
+        <p className="mt-1 text-[10px] text-[#717171]/80">
           {meta
             ? `Historique : ${meta.n} matchs (${meta.minDate ?? "?"} → ${meta.maxDate ?? "?"})`
             : "Historique indisponible"}{" "}
@@ -1173,11 +1178,11 @@ function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
 
       {/* Échelle complète 59.5 → 52.5 */}
       <section className="space-y-1.5">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
           Échelle Over (59.5 → 52.5)
         </h4>
         <OverLadder lines={over.lines} floor={over.floor} />
-        <p className="text-[10px] leading-snug text-muted-foreground">
+        <p className="text-[11px] leading-snug text-[#717171]">
           P(total &gt; ligne) — vert = réussite ≥ {Math.round(over.floor * 100)} %, pill « pari » =
           bet predictif ≥ {Math.round(BET_FLOOR * 100)} %. Écart de 1 à 3 buts selon la ligne
           retenue.
@@ -1188,7 +1193,7 @@ function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
 
       {/* Buteurs */}
       <section className="space-y-2">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
           2 meilleurs buteurs — « au moins N buts »
         </h4>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1196,25 +1201,25 @@ function OverBetsTab({ analysis }: { analysis: AnalysisPayload }) {
             {scorers.home.length ? (
               scorers.home.map((p) => <ScorerRow key={`${p.name}-${p.team}`} p={p} variant="home" />)
             ) : (
-              <p className="text-[11px] text-muted-foreground">Buteurs indisponibles (snapshot HBL/LNH)</p>
+              <p className="text-[11px] text-[#717171]">Buteurs indisponibles (snapshot HBL/LNH)</p>
             )}
           </div>
           <div className="space-y-1.5">
             {scorers.away.length ? (
               scorers.away.map((p) => <ScorerRow key={`${p.name}-${p.team}`} p={p} variant="away" />)
             ) : (
-              <p className="text-[11px] text-muted-foreground">Buteurs indisponibles (snapshot HBL/LNH)</p>
+              <p className="text-[11px] text-[#717171]">Buteurs indisponibles (snapshot HBL/LNH)</p>
             )}
           </div>
         </div>
       </section>
 
       {/* Méthode documentée */}
-      <details className="rounded-lg border border-border bg-muted/30 px-3 py-2 dark:bg-white/[0.04]">
-        <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <details className="rounded-lg border border-[#f0f0f0] bg-[#f5f5f5]/30 px-3 py-2 dark:bg-white/[0.04]">
+        <summary className="cursor-pointer text-[10px] font-semibold uppercase tracking-wider text-[#717171]">
           Méthode &amp; sources
         </summary>
-        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[10px] leading-snug text-muted-foreground">
+        <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[10px] leading-snug text-[#717171]">
           {method.map((m, i) => (
             <li key={i}>{m}</li>
           ))}
@@ -1461,7 +1466,7 @@ export function HandballMatchDetailDialog({
           hauteur bornée en dvh (viewport dynamique = barre navigateur
           déduite) avec scroll interne, padding réduit et safe-area iOS.
           Desktop : centré par défaut (max-w-lg), inchangé. */}
-      <DialogContent className="bg-background dark:bg-[#1D1D1D] max-w-lg max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[88dvh] max-sm:gap-3 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <DialogContent className="bg-[#fafafa] dark:bg-[#1D1D1D] max-w-lg max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[88dvh] max-sm:gap-3 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2">
@@ -1492,9 +1497,9 @@ export function HandballMatchDetailDialog({
                 {match.status === "halftime" ? "MT" : `${match.minute || 0}'`}
               </span>
             ) : match.score ? (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-[#717171]">—</span>
             ) : (
-              <span className="text-sm text-muted-foreground">vs</span>
+              <span className="text-sm text-[#717171]">vs</span>
             )}
           </div>
           <div className="text-center flex-1">
@@ -1510,9 +1515,20 @@ export function HandballMatchDetailDialog({
 
         {/* Mi-temps */}
         {match.score?.homeHalf != null && (
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-[#717171]">
             Mi-temps : {match.score.homeHalf} - {match.score.awayHalf}
           </div>
+        )}
+
+        {/* Suivi live commenté (bead xx78) — matchs en direct uniquement,
+            fixture = id API-Sports ; sans source → mention d'indisponibilité */}
+        {isLive && (
+          <HandballLiveCommentaryPanel
+            fixtureId={match.id}
+            homeName={match.home.name}
+            awayName={match.away.name}
+            minute={match.minute}
+          />
         )}
 
         <Tabs value={tab} onValueChange={setTab} className="mt-1">
@@ -1556,7 +1572,7 @@ export function HandballMatchDetailDialog({
           <TabsContent value="analyse" className="space-y-3">
             {hasFormRow && (
               <section className="space-y-1.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                   Forme récente (5 derniers)
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -1568,7 +1584,7 @@ export function HandballMatchDetailDialog({
                       {forms?.home ? (
                         <FormSequence seq={forms.home.seq} />
                       ) : (
-                        <span className="text-[11px] text-muted-foreground">—</span>
+                        <span className="text-[11px] text-[#717171]">—</span>
                       )}
                     </div>
                   </div>
@@ -1580,7 +1596,7 @@ export function HandballMatchDetailDialog({
                       {forms?.away ? (
                         <FormSequence seq={forms.away.seq} />
                       ) : (
-                        <span className="text-[11px] text-muted-foreground">—</span>
+                        <span className="text-[11px] text-[#717171]">—</span>
                       )}
                     </div>
                   </div>
@@ -1595,19 +1611,19 @@ export function HandballMatchDetailDialog({
                 <div className="flex gap-2">
                   {match.odds.home != null && (
                     <div className="flex-1 text-center rounded border p-2">
-                      <div className="text-xs text-muted-foreground">1</div>
+                      <div className="text-xs text-[#717171]">1</div>
                       <div className="font-bold">{match.odds.home}</div>
                     </div>
                   )}
                   {match.odds.draw != null && (
                     <div className="flex-1 text-center rounded border p-2">
-                      <div className="text-xs text-muted-foreground">X</div>
+                      <div className="text-xs text-[#717171]">X</div>
                       <div className="font-bold">{match.odds.draw}</div>
                     </div>
                   )}
                   {match.odds.away != null && (
                     <div className="flex-1 text-center rounded border p-2">
-                      <div className="text-xs text-muted-foreground">2</div>
+                      <div className="text-xs text-[#717171]">2</div>
                       <div className="font-bold">{match.odds.away}</div>
                     </div>
                   )}
@@ -1619,7 +1635,7 @@ export function HandballMatchDetailDialog({
             {bets && (
               <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
                 <header className="flex items-center justify-between gap-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                     Verdict du modèle
                   </h4>
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-500 ring-1 ring-emerald-500/20">
@@ -1638,7 +1654,7 @@ export function HandballMatchDetailDialog({
                     <span className="font-bold tabular-nums">{bets.bets[0].prob}%</span>
                   </p>
                 )}
-                <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                <p className="mt-1.5 text-[11px] leading-snug text-[#717171]">
                   {bets.modelNote}
                 </p>
               </section>
@@ -1655,7 +1671,7 @@ export function HandballMatchDetailDialog({
                 </span>
                 <HandballTeamLogo name={match.home.name} size={18} />
               </div>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="text-[10px] uppercase tracking-wider text-[#717171]">
                 vs
               </span>
               <div className="flex min-w-0 items-center gap-1.5">
@@ -1670,7 +1686,7 @@ export function HandballMatchDetailDialog({
                 fournis par la source (0 inventé, 0 trou béant). */}
             {isPlayed && (
               <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                   Stats du match
                 </h4>
                 {liveStatRows.length > 0 ? (
@@ -1678,7 +1694,7 @@ export function HandballMatchDetailDialog({
                     <CompareBar key={r.label} label={r.label} home={r.home} away={r.away} />
                   ))
                 ) : (
-                  <p className="text-[11px] leading-snug text-muted-foreground">
+                  <p className="text-[11px] leading-snug text-[#717171]">
                     Stats détaillées (7 m, arrêts, 2 min) non fournies par la source
                     Flashscore.
                   </p>
@@ -1691,7 +1707,7 @@ export function HandballMatchDetailDialog({
                 les 3 paris : pas de 2e heuristique). */}
             {(hasFormRow || hasGoals) && (
               <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                   Moyennes prématch (L5)
                 </h4>
 
@@ -1702,15 +1718,15 @@ export function HandballMatchDetailDialog({
                       <p className="truncate text-[10px] font-bold uppercase tracking-wider text-emerald-500">
                         {match.home.shortName ?? match.home.name}
                       </p>
-                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-muted-foreground">
-                        <span className="text-foreground">{fmtNum(forms?.home?.scoredAvg)}</span>{" "}
+                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-[#717171]">
+                        <span className="text-[#222222]">{fmtNum(forms?.home?.scoredAvg)}</span>{" "}
                         marqués —{" "}
-                        <span className="text-foreground">
+                        <span className="text-[#222222]">
                           {fmtNum(forms?.home?.concededAvg)}
                         </span>{" "}
                         encaissés
                       </p>
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-[10px] text-[#717171]/70">
                         {forms?.home ? `${forms.home.played} matchs` : "—"}
                       </p>
                     </div>
@@ -1718,15 +1734,15 @@ export function HandballMatchDetailDialog({
                       <p className="truncate text-[10px] font-bold uppercase tracking-wider text-sky-500">
                         {match.away.shortName ?? match.away.name}
                       </p>
-                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-muted-foreground">
-                        <span className="text-foreground">{fmtNum(forms?.away?.scoredAvg)}</span>{" "}
+                      <p className="mt-0.5 text-[10px] leading-snug tabular-nums text-[#717171]">
+                        <span className="text-[#222222]">{fmtNum(forms?.away?.scoredAvg)}</span>{" "}
                         marqués —{" "}
-                        <span className="text-foreground">
+                        <span className="text-[#222222]">
                           {fmtNum(forms?.away?.concededAvg)}
                         </span>{" "}
                         encaissés
                       </p>
-                      <p className="text-[10px] text-muted-foreground/70">
+                      <p className="text-[10px] text-[#717171]/70">
                         {forms?.away ? `${forms.away.played} matchs` : "—"}
                       </p>
                     </div>
@@ -1762,7 +1778,7 @@ export function HandballMatchDetailDialog({
             {/* Section 3 — Marché : cotes victoire + probabilités dé-vigées */}
             {hasOdds && match.odds && (
               <section className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                   Marché
                 </h4>
                 <div className="space-y-2">
@@ -1793,16 +1809,16 @@ export function HandballMatchDetailDialog({
                 dom/ext, winrate global/dom/ext — objectif « informer le
                 parieur » même sans cotes ni stats de match. */}
             <section className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                 Stats des 2 équipes — historique (L5/L10, dom/ext)
               </h4>
               {analysisState === "idle" && (
-                <p className="text-[11px] text-muted-foreground" aria-live="polite">
+                <p className="text-[11px] text-[#717171]" aria-live="polite">
                   Chargement des stats équipes…
                 </p>
               )}
               {analysisState === "error" && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-[#717171]">
                   Historique indisponible (base handball non chargée — cron hebdo).
                 </p>
               )}
@@ -1827,7 +1843,7 @@ export function HandballMatchDetailDialog({
                 (un match joué sans stats détaillées a déjà sa note explicative,
                 et les stats DB/StarLigue sont affichées dès leur arrivée). */}
             {!isPlayed && !hasFormRow && !hasGoals && !hasOdds && !hasDbStats && !hasStarLigue && (
-              <p className="py-4 text-center text-[11px] text-muted-foreground">
+              <p className="py-4 text-center text-[11px] text-[#717171]">
                 Aucune statistique disponible pour ce match
               </p>
             )}
@@ -1836,12 +1852,12 @@ export function HandballMatchDetailDialog({
           {/* ── Onglet 3 : Over & Buteurs (historique SQLite) ── */}
           <TabsContent value="over" className="space-y-3">
             {analysisState === "idle" && (
-              <p className="py-4 text-center text-[11px] text-muted-foreground" aria-live="polite">
+              <p className="py-4 text-center text-[11px] text-[#717171]" aria-live="polite">
                 Chargement de l&apos;analyse Over…
               </p>
             )}
             {analysisState === "error" && (
-              <p className="py-4 text-center text-[11px] text-muted-foreground">
+              <p className="py-4 text-center text-[11px] text-[#717171]">
                 Analyse indisponible — historique handball non chargé (cron hebdo à venir).
               </p>
             )}
@@ -1853,7 +1869,7 @@ export function HandballMatchDetailDialog({
             {bets && (
               <section>
                 <header className="mb-2 flex items-center justify-between gap-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                     3 paris prédictifs
                   </h4>
                   <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-500 ring-1 ring-emerald-500/20">
@@ -1874,12 +1890,12 @@ export function HandballMatchDetailDialog({
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="group flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left hover:bg-muted/50 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]"
+                    className="group flex w-full items-center justify-between gap-2 rounded-lg border border-[#f0f0f0] bg-[#f5f5f5]/30 px-3 py-2 text-left hover:bg-[#f5f5f5]/50 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]"
                   >
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
                       Marchés bonus
                     </span>
-                    <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-[10px] text-[#717171]">
                       3 groupes · {bonus.htResult.length + bonus.margin.length + bonus.raceTo.length}{" "}
                       sélections
                       <span
@@ -1895,7 +1911,7 @@ export function HandballMatchDetailDialog({
                   <BonusGroup title="Résultat mi-temps" picks={bonus.htResult} />
                   <BonusGroup title="Écart de vainqueur" picks={bonus.margin} />
                   <BonusGroup title="Race to X (10 / 15 / 20 buts)" picks={bonus.raceTo} />
-                  <p className="text-[10px] leading-snug text-muted-foreground/80">{bonus.note}</p>
+                  <p className="text-[10px] leading-snug text-[#717171]/80">{bonus.note}</p>
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -1903,7 +1919,7 @@ export function HandballMatchDetailDialog({
             <div className="h-px bg-border" />
 
             <section>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#717171]">
                 Meilleurs joueurs
               </h4>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
