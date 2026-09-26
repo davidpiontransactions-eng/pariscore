@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-09-25T09:45:12.761134Z",
+    "lastUpdated": "2026-09-26T09:29:11.405830Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,6 +13,15 @@
   },
   "home": [
     {
+      "teamName": "Nashville Sc",
+      "gp": 8,
+      "w": 8,
+      "d": 0,
+      "l": 0,
+      "gf": 21,
+      "ga": 6
+    },
+    {
       "teamName": "Houston Dynamo",
       "gp": 8,
       "w": 5,
@@ -20,15 +29,6 @@
       "l": 0,
       "gf": 11,
       "ga": 4
-    },
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 5,
-      "d": 3,
-      "l": 0,
-      "gf": 17,
-      "ga": 6
     },
     {
       "teamName": "Colorado Rapids",
@@ -40,12 +40,12 @@
       "ga": 5
     },
     {
-      "teamName": "Nashville Sc",
+      "teamName": "Philadelphia",
       "gp": 8,
-      "w": 8,
-      "d": 0,
+      "w": 5,
+      "d": 3,
       "l": 0,
-      "gf": 21,
+      "gf": 17,
       "ga": 6
     },
     {
@@ -67,15 +67,6 @@
       "l": 1,
       "gf": 19,
       "ga": 14
-    },
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 4,
-      "d": 1,
-      "l": 3,
-      "gf": 24,
-      "ga": 19
     },
     {
       "teamName": "Vancouver",
@@ -103,6 +94,15 @@
       "l": 1,
       "gf": 14,
       "ga": 9
+    },
+    {
+      "teamName": "Philadelphia",
+      "gp": 8,
+      "w": 4,
+      "d": 1,
+      "l": 3,
+      "gf": 24,
+      "ga": 19
     }
   ]
 }
