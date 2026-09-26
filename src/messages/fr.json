@@ -807,6 +807,21 @@
     "fallbackHint": "Estimation (stats serve indisponibles, fallback Elo)",
     "lambdaLive": "λ restant : {lambda}"
   },
+  "liveMatrix": {
+    "title": "Live Matrix — évolution des cotes",
+    "subtitle": "Cote juste si le score atteint cette cellule (1xBet se déplacera ici)",
+    "points": "Points",
+    "server": "Service",
+    "market": "Marché",
+    "fair": "Modèle",
+    "valueA": "Value A",
+    "valueB": "Value B",
+    "breakPoint": "Balle de break {player}",
+    "deuce": "Égalité 40-40",
+    "cellTip": "{score} → P(match {player}) : {prob}% · cote juste {odd}",
+    "noOdds": "Cotes live 1xBet indisponibles — le modèle reste consultable",
+    "matchOver": "Match terminé"
+  },
   "mostAces": {
     "title": "Most aces",
     "over": "Over",

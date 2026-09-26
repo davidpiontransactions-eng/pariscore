@@ -67,6 +67,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | last-matches-list | last-matches-list.tsx | Derniers matchs d'un joueur |
 | l10-surface-badge | l10-surface-badge.tsx | Badge L10 Surface (score 10 derniers matchs même surface, Elo figé/semaine, tooltip détail adversaire/tournoi/points) |
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
+| live-score-matrix | live-score-matrix.tsx | Matrix Betfair Tennis Trader — cotes justes par état de points du jeu live (prédit dérive 1xBet) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
 | match-card | match-card.tsx | Carte de match (principale) |
 | match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) |

@@ -6,7 +6,6 @@ import { useHandballMatches } from "@/hooks/use-handball-matches";
 import { useVitibetTips } from "@/hooks/use-vitibet-tips";
 import { useHandballTop8, type StrategyChip } from "@/hooks/use-handball-top8";
 import { HandballMatchCard } from "./handball-match-card";
-import { HandballLiveCard } from "./handball-live-card";
 import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
 import { HandballStrategyBar } from "./handball-strategy-bar";
@@ -17,6 +16,8 @@ import { HandballBacktestWidget } from "./handball-backtest-widget";
 import { HandballBacktestMatrix } from "./handball-backtest-matrix";
 import { HandballBanker } from "./handball-banker";
 import { HandballCalendar } from "./handball-calendar";
+import { HandballLeagueBadge } from "./handball-league-badge";
+import { HandballTeamLogo } from "./handball-team-logo";
 import { HandballNews } from "./handball-news";
 import { HandballTableCaption } from "./handball-table-caption";
 import { HandballErrorBoundary } from "./handball-error-boundary";
@@ -73,6 +74,34 @@ type ResultsTodayPayload = {
   count: number;
 };
 
+/**
+ * Verdict d'une chip stratégie sur un match terminé (enrichissement 📆 Résultats).
+ * Retourne true = gagné, false = perdu, null = non verdictable (ligne Over/Under
+ * non portée par le chip → on N'INVENTE jamais de verdict).
+ * Protocole projet : match nul = perdant pour les picks 1X2.
+ */
+function chipVerdict(c: StrategyChip, m: HandballMatch): boolean | null {
+  const s = m.score;
+  if (s?.home == null || s?.away == null) return null;
+  if (c.key === "btts30") return Math.min(s.home, s.away) >= 30;
+  if (c.key === "htLeader") {
+    if (!c.pick || s.homeHalf == null || s.awayHalf == null) return null;
+    const mtWinner = s.homeHalf > s.awayHalf ? "home" : s.awayHalf > s.homeHalf ? "away" : null;
+    return mtWinner != null && c.pick === mtWinner;
+  }
+  // Over/Under : la ligne n'est pas dans le chip → non verdictable (honnêteté)
+  if (c.key === "over55" || c.key === "under62") return null;
+  if (c.pick) {
+    if (c.key === "handicap") {
+      const diff = s.home - s.away;
+      return c.pick === "home" ? diff > 4.5 : diff < -4.5;
+    }
+    const winner = s.home > s.away ? "home" : s.away > s.home ? "away" : null;
+    return winner != null && c.pick === winner;
+  }
+  return null;
+}
+
 type BacktestTodayPayload = DailyStrategyBacktest & { source: "file" | "live" };
 
 /**
@@ -80,7 +109,14 @@ type BacktestTodayPayload = DailyStrategyBacktest & { source: "file" | "live" };
  * liste des matchs terminés (Europe/Paris). Chaque ligne ouvre la popup
  * d'analyse (stats) comme le calendrier prematch.
  */
-function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch) => void }) {
+function HandballResultsToday({
+  onOpenMatch,
+  chipsByMatch,
+}: {
+  onOpenMatch: (m: HandballMatch) => void;
+  /** Chips stratégies par match (String(match.id)) → verdicts ✅/❌ des picks. */
+  chipsByMatch?: ReadonlyMap<string, readonly StrategyChip[]>;
+}) {
   const { data: results, error: resultsError, isLoading: resultsLoading } =
     useSWR<ResultsTodayPayload>("/api/handball/results-today", fetchJson, {
       refreshInterval: 5 * 60_000,
@@ -92,6 +128,24 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
       dedupingInterval: 15 * 60_000,
       revalidateOnFocus: false,
     });
+
+  // Taux de réussite concrétisé des picks du jour (verdicts sur résultats finaux).
+  const verdictSummary = useMemo(() => {
+    if (!results) return null;
+    let won = 0;
+    let total = 0;
+    for (const m of results.matches) {
+      const chips = chipsByMatch?.get(String(m.id));
+      if (!chips) continue;
+      for (const c of chips) {
+        const v = chipVerdict(c, m);
+        if (v == null) continue;
+        total++;
+        if (v) won++;
+      }
+    }
+    return total > 0 ? { won, total } : null;
+  }, [results, chipsByMatch]);
 
   return (
     <div className="space-y-4">
@@ -202,6 +256,12 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
               {results.count} match(s) terminé(s)
             </span>
           )}
+          {verdictSummary && (
+            <span className="text-xs font-semibold" title="Picks des stratégies concrétisés sur les résultats (Over/Under sans ligne = non verdictés)">
+              Picks du jour : {verdictSummary.won}/{verdictSummary.total} ✅ (
+              {Math.round((verdictSummary.won / verdictSummary.total) * 100)}%)
+            </span>
+          )}
         </div>
 
         {resultsLoading ? (
@@ -224,7 +284,10 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
               </p>
             )}
             <ul className="space-y-2">
-              {results.matches.map((m) => (
+              {results.matches.map((m) => {
+                const chips = chipsByMatch?.get(String(m.id));
+                const diff = (m.score?.home ?? 0) - (m.score?.away ?? 0);
+                return (
                 <li key={m.id}>
                   <button
                     type="button"
@@ -244,20 +307,41 @@ function HandballResultsToday({ onOpenMatch }: { onOpenMatch: (m: HandballMatch)
                         {m.league.name}
                         {m.league.country ? ` · ${m.league.country}` : ""}
                       </span>
+                      {/* Verdicts des picks stratégies sur ce match */}
+                      {chips && chips.length > 0 && (
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          {chips.map((c) => {
+                            const v = chipVerdict(c, m);
+                            return (
+                              <span
+                                key={c.key}
+                                title={`${c.label} — ${c.probPct.toFixed(1)} %`}
+                                className="inline-flex items-center gap-0.5 rounded-full border border-[#f0f0f0] bg-[#fafafa] px-1.5 py-0.5 text-[10px] font-semibold text-[#222222]"
+                              >
+                                <span aria-hidden="true">{c.emoji}</span>
+                                {c.label}
+                                {v != null && <span aria-label={v ? "gagné" : "perdu"}>{v ? "✅" : "❌"}</span>}
+                              </span>
+                            );
+                          })}
+                        </span>
+                      )}
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block font-mono text-sm font-semibold tabular-nums text-[#222222]">
                         {m.score?.home ?? 0} - {m.score?.away ?? 0}
                       </span>
-                      {m.score?.homeHalf != null && m.score.awayHalf != null && (
-                        <span className="block text-[11px] tabular-nums text-[#717171]">
-                          MT {m.score.homeHalf} - {m.score.awayHalf}
-                        </span>
-                      )}
+                      <span className="block text-[11px] tabular-nums text-[#717171]">
+                        {m.score?.homeHalf != null && m.score.awayHalf != null && (
+                          <>MT {m.score.homeHalf} - {m.score.awayHalf} · </>
+                        )}
+                        écart {diff > 0 ? `+${diff}` : diff}
+                      </span>
                     </span>
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </>
         )}
@@ -271,7 +355,7 @@ export function HandballTabContent() {
   // Pronostics Vitibet (J→J+3) : rapprochement par (jour, équipes) pour les cartes.
   const { tipFor } = useVitibetTips();
   // Fix debug : useHandballLive retiré (fetch 15s jamais consommé)
-  const [mode, setMode] = useState<"live" | "prematch" | "results">("prematch");
+  const [mode, setMode] = useState<"live" | "prematch" | "results" | "top10">("prematch");
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
   // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
@@ -358,7 +442,9 @@ export function HandballTabContent() {
               ? `${resultsToday.length} résultat(s) du jour`
               : mode === "live"
                 ? `${live.length} match(s) en direct`
-                : `${filtered.length} match(s) à venir`}
+                : mode === "top10"
+                  ? "Stratégies & Top 10"
+                  : `${filtered.length} match(s) à venir`}
           </span>
         </div>
 
@@ -403,11 +489,25 @@ export function HandballTabContent() {
           >
             📆 Résultats du jour ({resultsToday.length})
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "top10"}
+            onClick={() => setMode("top10")}
+            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+              mode === "top10"
+                ? "border-transparent bg-foreground font-semibold text-background"
+                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
+            }`}
+          >
+            🏆 Top 10
+          </button>
         </div>
 
         {/* Filtres temporels (demande user) : dans 1h/2h/4h/8h + aujourd'hui/demain
-            — combinés au filtre ligue. « Tous » = reset. */}
-        {mode !== "results" && (
+            — combinés au filtre ligue. Visibles seulement sur les vues de matchs
+            (pas sur Résultats ni Top 10). « Tous » = reset. */}
+        {(mode === "prematch" || mode === "live") && (
           <div className="flex flex-wrap items-center gap-1.5">
             <HandballFilters
               matches={displayed}
@@ -447,7 +547,13 @@ export function HandballTabContent() {
 
         {/* Contenu de l'onglet actif */}
         {mode === "results" ? (
-          <HandballResultsToday onOpenMatch={setDetailMatch} />
+          <HandballResultsToday onOpenMatch={setDetailMatch} chipsByMatch={chipsByMatch} />
+        ) : mode === "top10" ? (
+          /* 🏆 Top 10 par stratégie — déplacé depuis les widgets du bas */
+          <div className="space-y-3">
+            <HandballStrategyBar active={strategy} onChange={setStrategy} />
+            <HandballTop8Widget strategy={strategy} />
+          </div>
         ) : isLoading ? (
           <div className="text-center py-8 text-[#717171]" aria-live="polite">
             Chargement…
@@ -468,28 +574,106 @@ export function HandballTabContent() {
               />
             )}
 
-            {/* Grille de cartes */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filtered.map((m) =>
-                mode === "live" ? (
-                  <HandballLiveCard key={m.id} match={m} onClick={setDetailMatch} />
-                ) : (
+            {mode === "live" ? (
+              /* 🔴 Live nettoyé : grille cartes → tableau ligne (demande user) */
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <HandballTableCaption>
+                    Matchs en direct — actualisation auto, clic = analyse
+                  </HandballTableCaption>
+                  <thead>
+                    <tr className="border-b border-[#f0f0f0] text-left text-[#717171]">
+                      <th className="py-1.5 pr-2 font-medium">⏱</th>
+                      <th className="py-1.5 pr-2 font-medium">Championnat</th>
+                      <th className="py-1.5 pr-2 font-medium">Match</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Score</th>
+                      <th className="px-2 py-1.5 text-right font-medium">MT</th>
+                      <th className="px-2 py-1.5 text-right font-medium">Arrêts</th>
+                      <th className="px-2 py-1.5 text-right font-medium">1X2</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0f0f0]">
+                    {filtered.map((m) => (
+                      <tr
+                        key={m.id}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Analyse du match ${m.home.name} contre ${m.away.name}`}
+                        onClick={() => setDetailMatch(m)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setDetailMatch(m);
+                          }
+                        }}
+                        className="cursor-pointer transition-colors hover:bg-[#fafafa] focus-visible:bg-[#fafafa] outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
+                      >
+                        <td className="py-1.5 pr-2">
+                          <span className="inline-block rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white animate-pulse tabular-nums">
+                            {m.status === "halftime" ? "MT" : `${m.minute || 0}'`}
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <HandballLeagueBadge
+                            leagueName={m.league.name}
+                            country={m.league.country}
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <span className="inline-flex min-w-0 items-center gap-1.5">
+                            <HandballTeamLogo name={m.home.name} size={16} />
+                            <span className="truncate font-medium text-[#222222]">
+                              {m.home.name}
+                            </span>
+                            <span className="text-[#717171]">–</span>
+                            <span className="truncate font-medium text-[#222222]">
+                              {m.away.name}
+                            </span>
+                            <HandballTeamLogo name={m.away.name} size={16} />
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono text-sm font-semibold tabular-nums text-[#222222]">
+                          {m.score?.home ?? 0} - {m.score?.away ?? 0}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
+                          {m.score?.homeHalf != null && m.score.awayHalf != null
+                            ? `${m.score.homeHalf} - ${m.score.awayHalf}`
+                            : "—"}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums text-[#717171]">
+                          {m.stats?.homeSaves != null && m.stats.awaySaves != null
+                            ? `${m.stats.homeSaves} - ${m.stats.awaySaves}`
+                            : "—"}
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono tabular-nums text-[#717171]">
+                          {m.odds?.home != null && m.odds.draw != null && m.odds.away != null ? (
+                            <span title="Cotes 1X2 (source live)">
+                              {m.odds.home.toFixed(2)} / {m.odds.draw.toFixed(2)} /{" "}
+                              {m.odds.away.toFixed(2)}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Grille de cartes (prematch) */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {filtered.map((m) => (
                   <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tipFor(m)} />
-                ),
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </>
         )}
       </section>
 
       {/* Widgets en dessous (identiques dans les 3 vues) */}
       <HandballBanker />
-
-      {/* Stratégie selector + Top 8 */}
-      <div className="space-y-3">
-        <HandballStrategyBar active={strategy} onChange={setStrategy} />
-        <HandballTop8Widget strategy={strategy} />
-      </div>
 
       {/* Pronostics Vitibet : Top 10 par INDEX (fenêtre J → J+3) */}
       <HandballVitibetTop10 />

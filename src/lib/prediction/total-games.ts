@@ -20,6 +20,8 @@ import {
   setScoreDistribution,
   setOverUnder,
   clearAllMemos,
+  gameWinProbFromScore,
+  blendServeRecent,
 } from "./live-markov";
 
 export type PredictionSurface = "Hard" | "Clay" | "Grass";
@@ -44,6 +46,13 @@ export type LiveGamesContext = {
   liveProbB?: number;
   /** Joueur au service (pour le set en cours). */
   server?: "A" | "B";
+  /** Points bruts du jeu en cours [A, B] (ex: [3, 2] = 40-30). Optionnel —
+   *  active le déroulé intra-jeu (pression balle de break) dans adjustLambdaLive. */
+  currentPoints?: [number, number];
+  /** % points gagnés au service OBSERVÉS ce match [0..1] (null si indisponible).
+   *  Mélange prematch/observé pondéré par récence via blendServeRecent. */
+  observedServeA?: number | null;
+  observedServeB?: number | null;
 };
 
 export type TotalGamesPrediction = {
@@ -282,8 +291,16 @@ export function predictTotalGames(
   // 1-2. pServe + pHold pour chaque joueur.
   const aResult = computePServe(playerA, playerB, eloA);
   const bResult = computePServe(playerB, playerA, eloB);
-  const pServeA = aResult.pServe;
-  const pServeB = bResult.pServe;
+  let pServeA = aResult.pServe;
+  let pServeB = bResult.pServe;
+  // Raffinement live : serve observé ce match pondéré par récence
+  // (fenêtre glissante — cf. blendServeRecent). Sans donnée → prematch.
+  if (liveCtx?.observedServeA != null) {
+    pServeA = blendServeRecent(pServeA, liveCtx.observedServeA, liveCtx.gamesPlayed);
+  }
+  if (liveCtx?.observedServeB != null) {
+    pServeB = blendServeRecent(pServeB, liveCtx.observedServeB, liveCtx.gamesPlayed);
+  }
   const pHoldA = computePHold(pServeA);
   const pHoldB = computePHold(pServeB);
 
@@ -309,7 +326,7 @@ export function predictTotalGames(
   let setUnder125 = 50;
   if (liveCtx) {
     gamesAlreadyPlayed = liveCtx.gamesPlayed;
-    const { lambdaRestant, setOver75: o75, setUnder125: u125 } = adjustLambdaLive(lambdaPrematch, liveCtx, bestOf, pHoldA, pHoldB);
+    const { lambdaRestant, setOver75: o75, setUnder125: u125 } = adjustLambdaLive(lambdaPrematch, liveCtx, bestOf, pHoldA, pHoldB, pServeA, pServeB);
     lambda = gamesAlreadyPlayed + lambdaRestant;
     setOver75 = o75;
     setUnder125 = u125;
@@ -387,6 +404,8 @@ function adjustLambdaLive(
   bestOf: 3 | 5,
   pHoldA: number,
   pHoldB: number,
+  pServeA: number,
+  pServeB: number,
 ): { lambdaRestant: number; setOver75: number; setUnder125: number } {
   if (ctx.gamesPlayed === 0) {
     return { lambdaRestant: lambdaPrematch, setOver75: 50, setUnder125: 50 };
@@ -400,12 +419,52 @@ function adjustLambdaLive(
   // Biais assumé si le serveur est inconnu : on crédite A du hold.
   const server = ctx.server ?? "A";
   const [gA, gB] = ctx.currentSetGames;
+  const nextServer: "A" | "B" = server === "A" ? "B" : "A";
 
-  // 1. E[jeux restants dans le set en cours] — Markov récursion
-  const erSetCurrent = expectedRemainingGames(pHoldA, pHoldB, server, gA, gB);
+  // 1. E[jeux restants dans le set en cours] + distribution des scores
+  //    terminaux. Deux chemins :
+  //    a) Déroulé intra-jeu : le jeu en cours a déjà des points joués
+  //       (≠ 0-0, set pas fini, pas de tiebreak) → on déroule UN niveau de
+  //       la récursion avec la vraie P(gagner le jeu) depuis l'état de
+  //       points (Markov point-level). Une balle de break pour le relanceur
+  //       raccourcit mécaniquement E[jeux] et resserre la distribution.
+  //    b) Récursion standard (jeu à venir depuis 0-0).
+  const setOver =
+    (gA >= 6 && gA - gB >= 2) || (gB >= 6 && gB - gA >= 2);
+  const isTiebreak = gA === 6 && gB === 6;
+  const ptsStarted =
+    ctx.currentPoints != null &&
+    !(ctx.currentPoints[0] === 0 && ctx.currentPoints[1] === 0);
+
+  let erSetCurrent: number;
+  let dist: Record<string, number>;
+
+  if (ptsStarted && !setOver && !isTiebreak) {
+    const [pA, pB] = ctx.currentPoints as [number, number];
+    const pGameA = gameWinProbFromScore(pA, pB, server, pServeA, pServeB);
+    const pGameB = 1 - pGameA;
+
+    // Distribution mélangée = somme pondérée des deux branches d'issue du jeu.
+    const winDist = setScoreDistribution(pHoldA, pHoldB, nextServer, gA + 1, gB);
+    const loseDist = setScoreDistribution(pHoldA, pHoldB, nextServer, gA, gB + 1);
+    dist = {};
+    for (const [score, p] of Object.entries(winDist)) {
+      dist[score] = (dist[score] ?? 0) + pGameA * p;
+    }
+    for (const [score, p] of Object.entries(loseDist)) {
+      dist[score] = (dist[score] ?? 0) + pGameB * p;
+    }
+
+    // E[restant] = 1 (jeu courant) + branches pondérées par P(gagner le jeu).
+    const winRest = 1 + expectedRemainingGames(pHoldA, pHoldB, nextServer, gA + 1, gB);
+    const loseRest = 1 + expectedRemainingGames(pHoldA, pHoldB, nextServer, gA, gB + 1);
+    erSetCurrent = pGameA * winRest + pGameB * loseRest;
+  } else {
+    erSetCurrent = expectedRemainingGames(pHoldA, pHoldB, server, gA, gB);
+    dist = setScoreDistribution(pHoldA, pHoldB, server, gA, gB);
+  }
 
   // 2. Distribution des scores terminaux → Over 7,5 / Under 12,5
-  const dist = setScoreDistribution(pHoldA, pHoldB, server, gA, gB);
   const { over75, under125 } = setOverUnder(dist);
 
   // 3. E[sets restants] pondérée par liveProb (implicite marché)

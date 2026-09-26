@@ -21,6 +21,8 @@ import { Target, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
+import { useTennisLiveStats } from "@/hooks/use-tennis-live-stats";
+import { estimateServePointsWon } from "@/lib/tennis-live-metrics";
 import {
   predictTotalGames,
   type PredictionSurface,
@@ -63,6 +65,8 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
     liveProbA: state.liveProbA,
     liveProbB: state.liveProbB,
     server: state.server,
+    // Points du jeu en cours → déroulé intra-jeu (pression balle de break).
+    currentPoints: [state.scoreA.points, state.scoreB.points],
   };
 }
 
@@ -81,6 +85,9 @@ type Prediction = {
 
 export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, className }: Props) {
   const t = useTranslations("predictiveBets");
+  // Serve observé ce match (stats BSD via SSE partagé — zéro HTTP) →
+  // pondéré par récence dans predictTotalGames (blendServeRecent).
+  const { stats: liveStats } = useTennisLiveStats(liveState?.matchId ?? "");
 
   // Masqué si match synthétique (live-only sans prematch) ou si prematch absent.
   const prematch = match.totalGamesPredictions;
@@ -97,7 +104,11 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
     }
     // (Reset mémoïsations Markov géré dans adjustLambdaLive — couche modèle.)
     const modelSurface = toModelSurface(match.stats?.surface ?? "Hard");
-    const liveCtx = buildLiveContext(liveState);
+    const liveCtx: LiveGamesContext = {
+      ...buildLiveContext(liveState),
+      observedServeA: liveStats ? estimateServePointsWon(liveStats, "A") : null,
+      observedServeB: liveStats ? estimateServePointsWon(liveStats, "B") : null,
+    };
     const result = predictTotalGames(
       serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
       serveStatsB ?? { servePtsWonPct: null, returnPtsWonPct: null },
@@ -131,6 +142,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
     match.playerB.elo,
     serveStatsA,
     serveStatsB,
+    liveStats,
   ]);
 
   if (match.synthetic || !prematch || !predictions) return null;

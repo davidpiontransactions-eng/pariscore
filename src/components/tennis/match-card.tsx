@@ -5,6 +5,7 @@ import { ChevronDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityBar } from "./probability-bar";
 import { PredictiveBets } from "./predictive-bets";
+import { LiveScoreMatrix } from "./live-score-matrix";
 import { MostAcesCompare } from "./most-aces-compare";
 import { FormDots } from "./form-dots";
 import { PlayerStatline } from "./player-statline";
@@ -536,6 +537,33 @@ export function MatchCard({
             Live : recalculé à chaque poll via liveState (λ restant). */}
         {!isSynthetic && (
           <PredictiveBets
+            match={match}
+            liveState={isLive ? liveState : undefined}
+            serveStatsA={
+              statsA?.servePtsWonPct != null
+                ? {
+                    servePtsWonPct: statsA.servePtsWonPct,
+                    returnPtsWonPct: statsA.returnPtsWonPct ?? null,
+                  }
+                : null
+            }
+            serveStatsB={
+              statsB?.servePtsWonPct != null
+                ? {
+                    servePtsWonPct: statsB.servePtsWonPct,
+                    returnPtsWonPct: statsB.returnPtsWonPct ?? null,
+                  }
+                : null
+            }
+            className="mt-4"
+          />
+        )}
+
+        {/* Live Matrix — cotes justes par état de points du jeu (Betfair
+            Tennis Trader) : prédit l'évolution des cotes 1xBet selon le
+            prochain point. Se masque lui-même hors live / match terminé. */}
+        {!isSynthetic && (
+          <LiveScoreMatrix
             match={match}
             liveState={isLive ? liveState : undefined}
             serveStatsA={

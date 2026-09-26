@@ -807,6 +807,21 @@
     "fallbackHint": "Estimate (serve stats unavailable, Elo fallback)",
     "lambdaLive": "λ remaining: {lambda}"
   },
+  "liveMatrix": {
+    "title": "Live Matrix — odds evolution",
+    "subtitle": "Fair odds if the score reaches this cell (1xBet will move here)",
+    "points": "Points",
+    "server": "Serving",
+    "market": "Market",
+    "fair": "Model",
+    "valueA": "Value A",
+    "valueB": "Value B",
+    "breakPoint": "Break point {player}",
+    "deuce": "Deuce 40-40",
+    "cellTip": "{score} → P(match {player}): {prob}% · fair odds {odd}",
+    "noOdds": "Live 1xBet odds unavailable — model still shown",
+    "matchOver": "Match finished"
+  },
   "mostAces": {
     "title": "Most aces",
     "over": "Over",

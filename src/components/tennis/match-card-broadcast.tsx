@@ -34,6 +34,7 @@ import { ServerIndicator } from "./server-indicator";
 import { QuickAddRing } from "./quick-add-ring";
 import { ProbabilityBar } from "./probability-bar";
 import { PredictiveBets } from "./predictive-bets";
+import { LiveScoreMatrix } from "./live-score-matrix";
 import { MostAcesCompare } from "./most-aces-compare";
 import { MomentumDR } from "./momentum-dr";
 import { MomentumScoreDuo } from "./momentum-score";
@@ -473,6 +474,30 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             Live : recalculé à chaque poll via liveState. Le composant se
             masque lui-même pour les matchs synthetic. */}
         <PredictiveBets
+          match={match}
+          liveState={isLive ? liveState : undefined}
+          serveStatsA={
+            statsA?.servePtsWonPct != null
+              ? {
+                  servePtsWonPct: statsA.servePtsWonPct,
+                  returnPtsWonPct: statsA.returnPtsWonPct ?? null,
+                }
+              : null
+          }
+          serveStatsB={
+            statsB?.servePtsWonPct != null
+              ? {
+                  servePtsWonPct: statsB.servePtsWonPct,
+                  returnPtsWonPct: statsB.returnPtsWonPct ?? null,
+                }
+              : null
+          }
+          className="mt-2"
+        />
+
+        {/* Live Matrix — cotes justes par état de points du jeu (Betfair
+            Tennis Trader). Se masque lui-même hors live / match terminé. */}
+        <LiveScoreMatrix
           match={match}
           liveState={isLive ? liveState : undefined}
           serveStatsA={

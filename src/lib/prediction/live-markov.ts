@@ -715,3 +715,82 @@ export function computeHolds(
 ): [number, number] {
   return [gameWinProb(pServeA), gameWinProb(pServeB)];
 }
+
+// ---------------------------------------------------------------------------
+// Markov point-level — P(gagner le jeu) depuis un score de points
+// ---------------------------------------------------------------------------
+
+/**
+ * P(A gagne le jeu EN COURS) depuis l'état de points (Markov point-level).
+ *
+ * Primitive "sensibilité au point" : balle de break, 30-30, avantage…
+ * Le serveur est constant au sein du jeu (alternance par JEU, pas par point).
+ * Deuce et avantages résolus en forme fermée (évite la récursion infinie
+ * 40-40 ↔ Av.-40) — même modèle que gameWinProb, d'où la cohérence
+ * gameWinProbFromScore(0,0,"A",p,·) === gameWinProb(p).
+ *
+ * NB: ne PAS utiliser pour un tie-break (cible 7 points, alternance
+ * par 2 points) — l'appelant doit exclure l'état 6-6.
+ *
+ * @param ptsA - Points bruts de A dans le jeu (0=0, 1=15, 2=30, 3=40, 4=Av.)
+ * @param ptsB - Points bruts de B
+ * @param server - Joueur au service pour CE jeu
+ * @param pServeA - P(A gagne un point au service)
+ * @param pServeB - P(B gagne un point au service)
+ * @returns P(A gagne le jeu) [0..1]
+ */
+export function gameWinProbFromScore(
+  ptsA: number,
+  ptsB: number,
+  server: Player,
+  pServeA: number,
+  pServeB: number
+): number {
+  // Terminaux défensifs (le feed ne devrait jamais les produire).
+  if (ptsA >= 4 && ptsA - ptsB >= 2) return 1;
+  if (ptsB >= 4 && ptsB - ptsA >= 2) return 0;
+
+  // P(A gagne le prochain point) : au service → pServe, au retour → break.
+  const pPointA = server === "A" ? pServeA : 1 - pServeB;
+
+  // Zone deuce/avantage (40-40 et au-delà) : forme fermée.
+  if (ptsA >= 3 && ptsB >= 3) {
+    const p2 = pPointA * pPointA;
+    const q2 = (1 - pPointA) * (1 - pPointA);
+    const pDeuce = p2 / (p2 + q2); // P(gagner) depuis 40-40
+    if (ptsA === ptsB) return pDeuce;
+    if (ptsA > ptsB) return pPointA + (1 - pPointA) * pDeuce; // Av. A
+    return pPointA * pDeuce; // Av. B : point gagné puis deuce
+  }
+
+  // Zone pré-deuce (≤ 16 états, récursion bornée).
+  const win = gameWinProbFromScore(ptsA + 1, ptsB, server, pServeA, pServeB);
+  const loss = gameWinProbFromScore(ptsA, ptsB + 1, server, pServeA, pServeB);
+  return pPointA * win + (1 - pPointA) * loss;
+}
+
+/**
+ * Mélange la force de service prematch avec la force observée ce match,
+ * pondérée par récence : w = gamesPlayed / (gamesPlayed + demiVie).
+ *
+ * w = 0 au début (prematch dominant) → w → 1 en fin de match
+ * (le service OBSERVÉ prend le pas sur l'estimation initiale).
+ * C'est la traduction minimaliste du leitmotiv Hawk-Eye : plus on
+ * avance dans le match, plus la donnée récente compte.
+ *
+ * @param pServePrematch - P(point service) estimé prematch
+ * @param pServeObserved - P(point service) observé ce match [0..1], null si indisponible
+ * @param gamesPlayed - Jeux déjà joués dans le match
+ * @param halfLifeGames - Jeux nécessaires pour atteindre un poids de 50% (défaut 8)
+ * @returns P(point service) pondérée par récence
+ */
+export function blendServeRecent(
+  pServePrematch: number,
+  pServeObserved: number | null | undefined,
+  gamesPlayed: number,
+  halfLifeGames: number = 8
+): number {
+  if (pServeObserved == null) return pServePrematch;
+  const w = gamesPlayed / (gamesPlayed + halfLifeGames);
+  return pServePrematch * (1 - w) + pServeObserved * w;
+}

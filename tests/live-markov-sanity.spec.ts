@@ -13,17 +13,24 @@ import {
   firstSetWinner,
   firstSetTotal,
   clearAllMemos,
+  gameWinProbFromScore,
+  blendServeRecent,
 } from "../src/lib/prediction/live-markov";
 import {
   playerTotalGames,
   totalSets,
   straightSets,
   atLeastOneSet,
+  predictTotalGames,
 } from "../src/lib/prediction/total-games";
 import {
   totalAcesO_U,
   acesPerSet,
 } from "../src/lib/prediction/most-aces";
+import {
+  buildLiveMatrix,
+  matrixBreakPointSide,
+} from "../src/lib/prediction/live-matrix";
 import {
   tiebreakProb,
   tiebreakSet,
@@ -561,5 +568,210 @@ describe("live-markov sanity", () => {
     const liveMarkets = TENNIS_MARKETS.filter(m => m.liveOnly);
     expect(liveMarkets.length).toBeGreaterThan(0);
     liveMarkets.forEach(m => expect(m.liveOnly).toBe(true));
+  });
+});
+
+/**
+ * Bead ParisScorebis-agls — sensibilité au point (Markov point-level)
+ * + pondération par récence du serve observé + pression balle de break
+ * dans adjustLambdaLive (via predictTotalGames).
+ */
+describe("live-markov point-level + récence (agls)", () => {
+  const pServeA = 0.67;
+  const pServeB = 0.62;
+
+  beforeEach(() => clearAllMemos());
+
+  // --- gameWinProbFromScore ---
+
+  it("gameWinProbFromScore(0-0, A au service) === gameWinProb(pServeA)", () => {
+    const direct = gameWinProb(pServeA);
+    const fromScore = gameWinProbFromScore(0, 0, "A", pServeA, pServeB);
+    expect(Math.abs(fromScore - direct)).toBeLessThan(1e-9);
+  });
+
+  it("gameWinProbFromScore(0-0, B au service) === 1 - gameWinProb(pServeB)", () => {
+    const breakP = 1 - gameWinProb(pServeB);
+    const fromScore = gameWinProbFromScore(0, 0, "B", pServeA, pServeB);
+    expect(Math.abs(fromScore - breakP)).toBeLessThan(1e-9);
+  });
+
+  it("balle de break 40-30 : P(relanceur gagne le jeu) > 50%", () => {
+    // A au retour, 40-30 : P(A gagne le point) = 1 - pServeB = 0.38,
+    // mais 2 chances de closing (gagne direct OU passe par deuce) → ~55%.
+    const p = gameWinProbFromScore(3, 2, "B", pServeA, pServeB);
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(0.7);
+  });
+
+  it("40-0 pour le serveur : P(gagner le jeu) quasi certaine", () => {
+    const p = gameWinProbFromScore(3, 0, "A", pServeA, pServeB);
+    expect(p).toBeGreaterThan(0.95);
+  });
+
+  it("avantage serveur > deuce > avantage relanceur (monotone)", () => {
+    const advA = gameWinProbFromScore(4, 3, "A", pServeA, pServeB);
+    const deuce = gameWinProbFromScore(3, 3, "A", pServeA, pServeB);
+    const advB = gameWinProbFromScore(3, 4, "A", pServeA, pServeB);
+    expect(advA).toBeGreaterThan(deuce);
+    expect(deuce).toBeGreaterThan(advB);
+  });
+
+  it("terminaux défensifs : jeu déjà gagné/perdu", () => {
+    expect(gameWinProbFromScore(5, 3, "A", pServeA, pServeB)).toBe(1);
+    expect(gameWinProbFromScore(3, 5, "A", pServeA, pServeB)).toBe(0);
+  });
+
+  // --- blendServeRecent ---
+
+  it("blendServeRecent sans observation → prematch inchangé", () => {
+    expect(blendServeRecent(0.65, null, 10)).toBe(0.65);
+    expect(blendServeRecent(0.65, undefined, 10)).toBe(0.65);
+  });
+
+  it("blendServeRecent à 0 jeu joué → prematch", () => {
+    expect(blendServeRecent(0.65, 0.55, 0)).toBeCloseTo(0.65, 10);
+  });
+
+  it("blendServeRecent demi-vie 8 : à 8 jeux, moitié-moitié", () => {
+    expect(blendServeRecent(0.65, 0.55, 8, 8)).toBeCloseTo(0.6, 10);
+  });
+
+  it("blendServeRecent converge vers l'observé en fin de match", () => {
+    const late = blendServeRecent(0.65, 0.55, 80, 8);
+    // w = 80/88 ≈ 0.909 → 0.65×0.091 + 0.55×0.909 ≈ 0.559
+    expect(late).toBeGreaterThan(0.555);
+    expect(late).toBeLessThan(0.565);
+  });
+
+  // --- Pression balle de break dans predictTotalGames ---
+
+  it("balle de break dans le contexte live → λ restant raccourci", () => {
+    const players = {
+      a: { servePtsWonPct: 0.67, returnPtsWonPct: 0.33 },
+      b: { servePtsWonPct: 0.62, returnPtsWonPct: 0.38 },
+    };
+    // Set 1, 4-3 A, B au service, A à 40-30 (balle de break).
+    const baseCtx = {
+      gamesPlayed: 7,
+      setsWon: [0, 0] as [number, number],
+      currentSetGames: [4, 3] as [number, number],
+      server: "B" as const,
+      liveProbA: 60,
+      liveProbB: 40,
+    };
+    const withoutBP = predictTotalGames(players.a, players.b, "Hard", 3, undefined, undefined, baseCtx);
+    const withBP = predictTotalGames(players.a, players.b, "Hard", 3, undefined, undefined, {
+      ...baseCtx,
+      currentPoints: [3, 2] as [number, number],
+    });
+    // A mène 4-3 avec balle de break → le set (et le match) finit
+    // statistiquement plus tôt que depuis 0-0 dans le jeu.
+    expect(withBP.lambda).toBeLessThan(withoutBP.lambda);
+  });
+
+  it("unroll intra-jeu inactif à 0-0 (strict égal au chemin standard)", () => {
+    const players = {
+      a: { servePtsWonPct: 0.67, returnPtsWonPct: 0.33 },
+      b: { servePtsWonPct: 0.62, returnPtsWonPct: 0.38 },
+    };
+    const baseCtx = {
+      gamesPlayed: 7,
+      setsWon: [0, 0] as [number, number],
+      currentSetGames: [4, 3] as [number, number],
+      server: "B" as const,
+    };
+    const without = predictTotalGames(players.a, players.b, "Hard", 3, undefined, undefined, baseCtx);
+    const with000 = predictTotalGames(players.a, players.b, "Hard", 3, undefined, undefined, {
+      ...baseCtx,
+      currentPoints: [0, 0] as [number, number],
+    });
+    expect(with000.lambda).toBeCloseTo(without.lambda, 10);
+  });
+});
+
+/**
+ * Bead ParisScorebis-6ljb — Live Matrix type Betfair Tennis Trader
+ * (src/lib/prediction/live-matrix.ts).
+ */
+describe("live-matrix (6ljb)", () => {
+  const pServeA = 0.67;
+  const pServeB = 0.62;
+
+  beforeEach(() => clearAllMemos());
+
+  const baseInput = {
+    pServeA,
+    pServeB,
+    games: [4, 3] as [number, number],
+    sets: [0, 0] as [number, number],
+    points: [0, 0] as [number, number],
+    server: "B" as const,
+    bo3: true,
+  };
+
+  it("grille 4×4, cellule (0,0) cohérente avec gameWinProb", () => {
+    const m = buildLiveMatrix(baseInput);
+    expect(m.cells.length).toBe(4);
+    expect(m.cells[0].length).toBe(4);
+    // B au service → P(A gagne le jeu) = prob de break de B.
+    expect(m.cells[0][0].pGameA).toBeCloseTo(1 - gameWinProb(pServeB), 9);
+  });
+
+  it("pMatchA croît avec les points de A (ligne 40 vs ligne 0)", () => {
+    const m = buildLiveMatrix(baseInput);
+    expect(m.cells[3][0].pMatchA).toBeGreaterThan(m.cells[0][0].pMatchA);
+    // ... et décroît avec les points de B.
+    expect(m.cells[0][3].pMatchA).toBeLessThan(m.cells[0][0].pMatchA);
+  });
+
+  it("balle de set à 5-4, 40-30 : pMatchA fort pour A", () => {
+    const m = buildLiveMatrix({
+      ...baseInput,
+      games: [5, 4],
+      points: [3, 2],
+    });
+    // A au retour à 40-30 avec 5-4 : double balle de set.
+    expect(m.cells[3][2].pMatchA).toBeGreaterThan(0.75);
+    // Le coin (3,3) représente aussi le deuce (clamp documenté).
+    expect(m.cells[3][3].pGameA).toBeGreaterThan(0);
+    expect(m.cells[3][3].pGameA).toBeLessThan(1);
+  });
+
+  it("sets partagés 1-1 en BO3 : pMatchA(50) symétrique pour sets égaux", () => {
+    const m = buildLiveMatrix({
+      ...baseInput,
+      sets: [1, 1],
+      games: [0, 0],
+      points: [0, 0],
+      server: "A",
+    });
+    // 0-0, A sert : set décisif → pMatchA ≈ P(A gagne le set) ≈ 0.75.
+    expect(m.cells[0][0].pMatchA).toBeGreaterThan(0.7);
+    expect(m.cells[0][0].pMatchA).toBeLessThan(0.8);
+  });
+
+  it("cotes justes cohérentes avec pMatchA", () => {
+    const m = buildLiveMatrix(baseInput);
+    for (const row of m.cells) {
+      for (const c of row) {
+        if (c.pMatchA > 0.001 && c.pMatchA < 0.999) {
+          expect(c.fairOddA * c.pMatchA).toBeCloseTo(1, 6);
+        }
+      }
+    }
+  });
+
+  it("matrixBreakPointSide détecte la balle de break", () => {
+    // B sert, A au retour à 40-30 → balle de break A.
+    expect(matrixBreakPointSide(3, 2, "B")).toBe("A");
+    // A sert, B au retour à 30-40 → balle de break B.
+    expect(matrixBreakPointSide(2, 3, "A")).toBe("B");
+    // Deuce : pas de balle de break.
+    expect(matrixBreakPointSide(3, 3, "A")).toBeNull();
+    // Avantage relanceur (clampé 3-3 côté feed, ici brut 4-3).
+    expect(matrixBreakPointSide(4, 3, "B")).toBe("A");
+    // 40-30 pour le serveur : rien.
+    expect(matrixBreakPointSide(3, 2, "A")).toBeNull();
   });
 });

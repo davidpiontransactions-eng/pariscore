@@ -45,6 +45,8 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
     liveProbA: state.liveProbA,
     liveProbB: state.liveProbB,
     server: state.server,
+    // Points du jeu en cours → déroulé intra-jeu (pression balle de break).
+    currentPoints: [state.scoreA.points, state.scoreB.points],
   };
 }
 
