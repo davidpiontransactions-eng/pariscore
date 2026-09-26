@@ -2,9 +2,17 @@
 # -*- coding: utf-8 -*-
 """scrape_1xbet_mma.py — Scraper de cotes MMA/UFC depuis 1xBet"""
 
-import cloudscraper, json, sqlite3, os, sys, time
+import json, sqlite3, os, sys, time, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+# cloudscraper optionnel : l'endpoint LineFeed répond en JSON direct (testé
+# 2026-09-27, HTTP 200 sans challenge). On le garde en filet si 1xBet active
+# un WAF -- module absent -> bascule stdlib silencieuse.
+try:
+    import cloudscraper  # type: ignore
+except ImportError:
+    cloudscraper = None
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = PROJECT_DIR / "pariscore.db"
@@ -36,6 +44,10 @@ def init_db():
             last_updated  TEXT DEFAULT (datetime('now'))
         )
     """)
+    # Colonne X (nul) ajoutée 2026-09-27 — garde-fou sur table existante
+    cols = [row[1] for row in conn.execute("PRAGMA table_info(odds_1xbet_mma)")]
+    if "odds_x" not in cols:
+        conn.execute("ALTER TABLE odds_1xbet_mma ADD COLUMN odds_x REAL")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS odds_1xbet_log (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,12 +76,12 @@ def store_fights(conn, fights):
             cursor.execute("""
                 INSERT OR REPLACE INTO odds_1xbet_mma
                     (game_id, event_name, league_id, fighter1, fighter2,
-                     odds_f1, odds_f2, start_time, last_updated)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                     odds_f1, odds_f2, odds_x, start_time, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             """, (
                 f["game_id"], f["event_name"], f["league_id"],
                 f["fighter1"], f["fighter2"],
-                f["odds_f1"], f["odds_f2"], f["start_time"],
+                f["odds_f1"], f["odds_f2"], f.get("odds_x"), f["start_time"],
             ))
             ok += 1
         except Exception as e:
@@ -80,14 +92,30 @@ def store_fights(conn, fights):
     return ok
 
 def fetch_ufc_games():
-    scraper = cloudscraper.create_scraper()
     url = f"{API_BASE}/BestGamesExtZip?sports={UFC_SPORT_ID}&count=500&lng=en&mode=4&country=75"
-    r = scraper.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
-    if r.status_code != 200:
-        print(f"API Error: HTTP {r.status_code}")
-        print(f"Response: {r.text[:300]}")
-        return []
-    data = r.json()
+    if cloudscraper is not None:
+        scraper = cloudscraper.create_scraper()
+        r = scraper.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        if r.status_code != 200:
+            print(f"API Error: HTTP {r.status_code}")
+            print(f"Response: {r.text[:300]}")
+            return []
+        try:
+            data = r.json()
+        except Exception as e:
+            print(f"API Error: JSON decode ({e})")
+            return []
+    else:
+        req = urllib.request.Request(url, headers=HEADERS)
+        try:
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+                if resp.status != 200:
+                    print(f"API Error: HTTP {resp.status}")
+                    return []
+                data = json.loads(resp.read().decode("utf-8", "replace"))
+        except Exception as e:
+            print(f"API Error: {type(e).__name__} {e}")
+            return []
     val = data.get("Value")
     if not val:
         print(f"API Error: no Value -- {data.get('Error', '?')}")
@@ -102,6 +130,7 @@ def parse_moneyline(raw_games):
             continue
         odds_f1 = None
         odds_f2 = None
+        odds_x = None
         for e in g.get("E", []):
             t = e.get("T")
             c = e.get("C")
@@ -109,6 +138,9 @@ def parse_moneyline(raw_games):
                 odds_f1 = float(c)
             elif t == 3 and c:
                 odds_f2 = float(c)
+            elif t == 2 and c:
+                # T=2 = X (nul) du 1X2 -- optionnel (main card seulement)
+                odds_x = float(c)
         if odds_f1 is None or odds_f2 is None:
             continue
         fights.append({
@@ -119,6 +151,7 @@ def parse_moneyline(raw_games):
             "fighter2":   g.get("O2", "?"),
             "odds_f1":    odds_f1,
             "odds_f2":    odds_f2,
+            "odds_x":     odds_x,
             "start_time": g.get("S", 0),
         })
     return fights
