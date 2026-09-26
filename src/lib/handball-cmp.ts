@@ -51,10 +51,17 @@ export function cmpPmf(lambda: number, nu: number, kMax?: number): number[] {
     ws[j] = w;
     if (w > wMax) wMax = w;
   }
+  // Perf 2026-09-25 : exp + z dans la même passe, normalisation IN-PLACE —
+  // l'ancien `ws.map((w) => Math.exp(w - logZ))` allouait un 2ᵉ tableau à
+  // chaque appel (~10 M appels/48 h → 33 % du temps profilé).
   let z = 0;
-  for (let j = 0; j <= k; j++) z += Math.exp(ws[j] - wMax);
-  const logZ = Math.log(z) + wMax;
-  return ws.map((w) => Math.exp(w - logZ));
+  for (let j = 0; j <= k; j++) {
+    const e = Math.exp(ws[j] - wMax);
+    ws[j] = e;
+    z += e;
+  }
+  for (let j = 0; j <= k; j++) ws[j] /= z;
+  return ws;
 }
 
 // ─── Fit MLE Newton-Raphson ───
@@ -75,7 +82,16 @@ function defaultWeights(n: number): number[] {
   return w;
 }
 
+// Mémo modelMoments : Newton revisite les mêmes (λ, ν) entre fits qui
+// partagent la même moyenne initiale (moyennes pondérées de petits entiers
+// → valeurs discrètes répétées). Mêmes entrées → mêmes sorties : résultats
+// strictement identiques. Cap mémoire anti-fuite (valeurs de halving uniques).
+const MODEL_CACHE = new Map<string, { mean: number; meanLogFact: number }>();
+
 function modelMoments(lambda: number, nu: number): { mean: number; meanLogFact: number } {
+  const key = `${lambda.toPrecision(15)}|${nu.toPrecision(15)}`;
+  const hit = MODEL_CACHE.get(key);
+  if (hit) return hit;
   const kMax = Math.min(400, Math.ceil(lambda + 10 * Math.sqrt(Math.max(lambda, 0.05))) + 5);
   const pmf = cmpPmf(lambda, nu, kMax);
   let mean = 0;
@@ -84,7 +100,9 @@ function modelMoments(lambda: number, nu: number): { mean: number; meanLogFact: 
     mean += j * pmf[j];
     mlf += logFact(j) * pmf[j];
   }
-  return { mean, meanLogFact: mlf };
+  const out = { mean, meanLogFact: mlf };
+  if (MODEL_CACHE.size < 200_000) MODEL_CACHE.set(key, out);
+  return out;
 }
 
 /** E[X] du modèle (contrôle d'ajustement du fit). */
@@ -97,8 +115,20 @@ export function cmpMean(lambda: number, nu: number): number {
  *   E_θ[X] = moyenne pondérée, E_θ[ln(X!)] = moyenne pondérée des ln(x!).
  * Espace (ln λ, ln ν) = positivité garantie. Repli moyenne/ν=1.3 si échec.
  */
+// Mémo fitCMP par signature de fenêtre : (a) dans un même match,
+// bestTeam1x2 et valueBet recalculaient les 2 mêmes fits d'équipe ; (b) entre
+// deux matchs d'une équipe, la fenêtre des 10 derniers est IDENTIQUE → hit.
+// Fonction pure : mêmes entrées → mêmes sorties. Cap mémoire anti-fuite.
+const FIT_CACHE = new Map<string, CmpFit>();
+
 export function fitCMP(goals: number[], weights?: number[]): CmpFit {
   const xs = goals.filter((x) => Number.isFinite(x) && x >= 0);
+  // weights présentes (rare) → pas de cache (signature incomplète)
+  const cacheKey = weights ? "" : xs.join(",");
+  if (cacheKey) {
+    const hit = FIT_CACHE.get(cacheKey);
+    if (hit) return hit;
+  }
   const n = xs.length;
   if (n === 0) return { lambda: CMP_NEUTRAL_LAMBDA, nu: CMP_DEFAULT_NU, n: 0, converged: false };
   const w = weights && weights.length === n ? weights : defaultWeights(n);
@@ -175,7 +205,9 @@ export function fitCMP(goals: number[], weights?: number[]): CmpFit {
   if (!Number.isFinite(lambda) || !Number.isFinite(nu)) {
     return { lambda: Math.max(mean, 0.05), nu: CMP_DEFAULT_NU, n, converged: false };
   }
-  return { lambda, nu, n, converged };
+  const fit: CmpFit = { lambda, nu, n, converged };
+  if (cacheKey && FIT_CACHE.size < 100_000) FIT_CACHE.set(cacheKey, fit);
+  return fit;
 }
 
 // ─── Forces équipe (Felice SEL) ───

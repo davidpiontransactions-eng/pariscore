@@ -80,9 +80,19 @@ type TeamForm = {
 
 type FormStore = Map<string, TeamForm>;
 
-/** Construit le store de forme depuis les matchs terminés */
-export function buildFormStore(finished: HandballMatch[]): FormStore {
-  const store = new Map<string, TeamForm>();
+/** Store de forme (exporté pour le walk-forward incrémental du backtest). */
+export type HandballFormStore = FormStore;
+/** Forme cumulée d'une équipe dans le store. */
+export type HandballTeamForm = TeamForm;
+
+/**
+ * Ajoute UN match terminé au store de forme.
+ * Extraction (perf 2026-09-25) : permet au backtest de construire le store de
+ * façon INCRÉMENTALE (O(1) par match) au lieu de reconstruire depuis zéro à
+ * chaque match × stratégie (O(n²) → 415 s sur 7 725 matchs).
+ */
+export function applyMatchToFormStore(store: FormStore, m: HandballMatch): void {
+  if (!m.score) return;
   const upsert = (id: string, gf: number, ga: number, htGf?: number, htGa?: number) => {
     if (!store.has(id)) store.set(id, { gf: [], ga: [], wins: 0, draws: 0, losses: 0, htLeads: 0, htTrails: 0 });
     const f = store.get(id)!;
@@ -96,11 +106,14 @@ export function buildFormStore(finished: HandballMatch[]): FormStore {
       else if (htGf < htGa) f.htTrails++;
     }
   };
-  for (const m of finished) {
-    if (!m.score) continue;
-    upsert(String(m.home.id), m.score.home, m.score.away, m.score.homeHalf, m.score.awayHalf);
-    upsert(String(m.away.id), m.score.away, m.score.home, m.score.awayHalf, m.score.homeHalf);
-  }
+  upsert(String(m.home.id), m.score.home, m.score.away, m.score.homeHalf, m.score.awayHalf);
+  upsert(String(m.away.id), m.score.away, m.score.home, m.score.awayHalf, m.score.homeHalf);
+}
+
+/** Construit le store de forme depuis les matchs terminés */
+export function buildFormStore(finished: HandballMatch[]): FormStore {
+  const store = new Map<string, TeamForm>();
+  for (const m of finished) applyMatchToFormStore(store, m);
   return store;
 }
 
@@ -114,19 +127,21 @@ function avgLast(arr: number[], n: number): number {
 /**
  * PPG sur N derniers matchs.
  * Fix debug 2026-09-23 : `slice` calculé mais jamais utilisé → ppg(5) === ppg(10),
- * le pondération L5 60% / L10 40% de bestTeam était un no-op.
+ * la pondération L5 60% / L10 40% de bestTeam était un no-op.
+ * Perf 2026-09-25 : boucle sur les `min(n, len)` derniers éléments SANS slice —
+ * `ppg(f, 1000)` copiait les tableaux entiers à chaque lecture (≈12× par match
+ * dans le backtest → O(n²) en allocation/GC, cause n°2 des 415 s mesurés).
  */
 export function ppg(f: TeamForm, n: number): number {
   const total = f.gf.length;
   if (total === 0) return 0;
-  const sliceGf = f.gf.slice(-n);
-  const sliceGa = f.ga.slice(-n);
+  const k = Math.min(n, total);
   let pts = 0;
-  for (let i = 0; i < sliceGf.length; i++) {
-    if (sliceGf[i] > sliceGa[i]) pts += 2;
-    else if (sliceGf[i] === sliceGa[i]) pts += 1;
+  for (let i = total - k; i < total; i++) {
+    if (f.gf[i] > f.ga[i]) pts += 2;
+    else if (f.gf[i] === f.ga[i]) pts += 1;
   }
-  return pts / sliceGf.length;
+  return pts / k;
 }
 
 // ─── Math helpers ───

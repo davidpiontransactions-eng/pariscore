@@ -10,8 +10,10 @@
 import type { HandballMatch } from "./handball-data";
 import {
   buildFormStore,
+  applyMatchToFormStore,
   ppg,
   HANDBALL_STRATEGY_DEFS,
+  type HandballFormStore,
   type HandballStrategyKey,
 } from "./handball-strategy-top8";
 import { teamStrength, matchLambdas, CMP_MIN_HISTORY } from "./handball-cmp";
@@ -138,8 +140,16 @@ type WalkForm = {
 /** PPG neutre (1 pt/match = moyenne entre victoire à 2 et défaite à 0). */
 const NEUTRAL_PPG = 1;
 
-function formOfFactory(prior: HandballMatch[]) {
-  const store = buildFormStore(prior);
+/**
+ * Lecture de forme sur un store MUTABLE partagé (walk-forward incrémental).
+ *
+ * Perf 2026-09-25 : l'ancien `formOfFactory(prior)` reconstruisait un store
+ * COMPLET par (match × stratégie) → 8 × Σ buildFormStore = O(n²) (415 s sur
+ * 7 725 matchs, scaling mesuré ×4-×7,7 par doublement). Maintenant : UN seul
+ * store, alimenté APRÈS le règlement de chaque match (anti-lookahead strict,
+ * identique à `prior = scoped.slice(0, i)`).
+ */
+function makeWalkFormOf(store: HandballFormStore) {
   return (teamId: number): WalkForm => {
     const f = store.get(String(teamId));
     if (!f || f.gf.length === 0)
@@ -312,43 +322,70 @@ export function runHandballBacktest(
   scoped.sort((a, b) => a.kickoff.localeCompare(b.kickoff));
 
   const keys = Object.keys(HANDBALL_STRATEGY_DEFS) as HandballStrategyKey[];
-  const strategies: BacktestStrategyRow[] = keys.map((key) => {
+
+  // État par stratégie (cumul flat + demi-Kelly). Le séquencement des paris de
+  // chaque stratégie reste identique à l'ancienne boucle (matchs dans l'ordre
+  // chrono) → sorties strictement équivalentes (golden de régression
+  // handball-backtest-regression.test.ts).
+  type StratState = {
+    spec: StrategySpec;
+    row: BacktestStrategyRow;
+    cumul: number;
+    kWins: number;
+    kBets: number;
+    bankroll: number;
+  };
+  const states: StratState[] = keys.map((key) => {
     const spec = SPECS[key];
-    const row = emptyRow(key, spec.odds, spec.market);
-    let cumul = 0;
-    // État Kelly : hit-rate expansif lissé (Laplace 1/2) + bankroll
-    let kWins = 0;
-    let kBets = 0;
-    let bankroll = KELLY_BANKROLL_START_U;
-    for (let i = 0; i < scoped.length; i++) {
-      const m = scoped[i];
-      const formOf = formOfFactory(scoped.slice(0, i));
-      const out = spec.settle(m, formOf);
+    return {
+      spec,
+      row: emptyRow(key, spec.odds, spec.market),
+      cumul: 0,
+      kWins: 0,
+      kBets: 0,
+      bankroll: KELLY_BANKROLL_START_U,
+    };
+  });
+
+  // Store de forme incrémental UNIQUE (perf 2026-09-25) : alimenté APRÈS le
+  // règlement de chaque match → anti-lookahead strictement équivalent à
+  // l'ancien `formOfFactory(scoped.slice(0, i))` reconstruit 8×n fois.
+  const formStore = buildFormStore([]);
+  const formOf = makeWalkFormOf(formStore);
+
+  for (const m of scoped) {
+    for (const st of states) {
+      const out = st.spec.settle(m, formOf);
       if (out.skip) continue;
       // Flat 1u
-      row.nBets++;
+      st.row.nBets++;
       if (out.win) {
-        row.wins++;
-        cumul += spec.odds - 1;
+        st.row.wins++;
+        st.cumul += st.spec.odds - 1;
       } else {
-        cumul -= 1;
+        st.cumul -= 1;
       }
-      row.curve.push(Math.round(cumul * 100) / 100);
+      st.row.curve.push(Math.round(st.cumul * 100) / 100);
       // Demi-Kelly : p = hit-rate expansif lissé, mise plafonnée
-      const p = (kWins + 1) / (kBets + 2);
-      const b = spec.odds - 1;
+      const p = (st.kWins + 1) / (st.kBets + 2);
+      const b = st.spec.odds - 1;
       const f = (p * b - (1 - p)) / b;
-      const stake = Math.min(Math.max(KELLY_FRACTION * f, 0) * bankroll, KELLY_MAX_STAKE_U);
+      const stake = Math.min(Math.max(KELLY_FRACTION * f, 0) * st.bankroll, KELLY_MAX_STAKE_U);
       // Mise nulle si pas d'edge (hit-rate expansif trop bas) — le résultat
       // compte quand même pour le hit-rate des paris suivants.
-      if (stake > 0) bankroll += out.win ? stake * b : -stake;
-      if (out.win) kWins++;
-      kBets++;
+      if (stake > 0) st.bankroll += out.win ? stake * b : -stake;
+      if (out.win) st.kWins++;
+      st.kBets++;
     }
-    row.profitU = Math.round(cumul * 100) / 100;
+    applyMatchToFormStore(formStore, m);
+  }
+
+  const strategies: BacktestStrategyRow[] = states.map((st) => {
+    const row = st.row;
+    row.profitU = Math.round(st.cumul * 100) / 100;
     row.hitRate = row.nBets > 0 ? row.wins / row.nBets : null;
     row.roiPct = row.nBets > 0 ? (row.profitU / (row.nBets * FLAT_STAKE_U)) * 100 : null;
-    row.profitKellyU = Math.round((bankroll - KELLY_BANKROLL_START_U) * 100) / 100;
+    row.profitKellyU = Math.round((st.bankroll - KELLY_BANKROLL_START_U) * 100) / 100;
     row.sampleOk = row.nBets >= MIN_SAMPLE_BETS;
     return row;
   });
