@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as Sentry from "@sentry/nextjs";
 import { useAnalytics } from "@/components/analytics-provider";
@@ -16,6 +17,7 @@ export default function Error({
 }) {
   const t = useTranslations("errors");
   const { track } = useAnalytics();
+  const router = useRouter();
 
   useEffect(() => {
     // Capture in Sentry (will respect beforeSend consent gate)
@@ -50,7 +52,7 @@ export default function Error({
           <RefreshCw className="mr-2 h-4 w-4" />
           {t("error.retry")}
         </Button>
-        <Button variant="outline" onClick={() => (window.location.href = "/")}>
+        <Button variant="outline" onClick={() => router.push("/")}>
           <Home className="mr-2 h-4 w-4" />
           {t("error.home")}
         </Button>

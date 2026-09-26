@@ -11,7 +11,6 @@ export const cs2Adapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
     // Filtrer matchs futurs/live

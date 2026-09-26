@@ -25,7 +25,6 @@ function getDb(): BSD | null {
   if (!fs.existsSync(dbPath)) return null;
   try {
     // Accès direct à Bun.sqlite via globalThis (pas de require/import = pas de Turbopack resolution)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const BunSqlite = (globalThis as any).Bun?.sqlite;
     if (!BunSqlite) return null;
     return new BunSqlite.Database(dbPath, { readonly: true }) as unknown as BSD;
