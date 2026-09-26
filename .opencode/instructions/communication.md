@@ -62,3 +62,16 @@ act or ask. (See AGENTS.md → COMPONENTS.md rule.)
 - Reporting a problem that needs the user to choose
 
 Default to terse. Expand only when the situation earns it.
+
+## Rapport de fin de tâche (obligatoire, automatisé)
+
+À **chaque fin de tâche finie** (pas seulement en fin de session) :
+
+1. **Une entrée dans `.context/RAPPORT-TACHES.md`** — en tête du tableau, une
+   ligne : date, tâche, bead lié, fichiers touchés, vérifications (lint /
+   typecheck / tests), statut. 1 tâche finie = 1 maj du rapport, toujours.
+2. **Un rapport point d'arrêt à l'utilisateur** — court : tâche et statut,
+   fichiers modifiés, vérifications passées, bead(s) lié(s), prochaine étape.
+
+La règle est injectée automatiquement au démarrage de chaque session OpenCode
+par le plugin `.opencode/plugins/ps-loop.ts` (bloc `[boucle auto · plugin ps-loop]`).
