@@ -37,13 +37,20 @@ export type MmaFight = {
   /** Best available bookmaker odds. */
   best_odds_a?: number;
   best_odds_b?: number;
+  /** Cote X (nul) du 1X2 1xBet — absente si le book ne la propose pas. */
+  draw_odds?: number;
+  /** Proba X devigée (marché) [0..1]. */
+  prob_x?: number;
   /** AI computed fair odds (1/prob). */
   ai_odds_a?: number;
   ai_odds_b?: number;
-  /** Expected value percentage per side. */
+  /** Expected value percentage per side (marché : books vs consensus devig). */
   ev_a_pct?: number;
   ev_b_pct?: number;
-  /** Value bet flag (EV > 5%). */
+  /** EV du modèle PariScore vs cotes book (%) — p×(o−1)−(1−p), nul = défaite. */
+  mv_ev_a_pct?: number;
+  mv_ev_b_pct?: number;
+  /** Value bet flag (EV marché > 5% OU EV modèle > 5%). */
   bet_a?: boolean;
   bet_b?: boolean;
   /** Title fight or main event. */

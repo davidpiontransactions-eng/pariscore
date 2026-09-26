@@ -99,11 +99,13 @@ function _devig(bookmakers, nameA, nameB) {
   const nA = nameA.toLowerCase().trim();
   const nB = nameB.toLowerCase().trim();
   const fairAs = [];
+  const fairXs = [];
   const bestOddsA = [];
   const bestOddsB = [];
+  const bestOddsX = [];
 
   for (const bk of bookmakers) {
-    let oA = null, oB = null;
+    let oA = null, oB = null, oX = null;
     for (const mkt of (bk.markets || [])) {
       if (mkt.key !== 'h2h') continue;
       for (const out of (mkt.outcomes || [])) {
@@ -111,32 +113,43 @@ function _devig(bookmakers, nameA, nameB) {
         const n = out.name.toLowerCase().trim();
         if (n === nA) oA = out.price;
         else if (n === nB) oB = out.price;
+        else if (n === 'draw' || n === 'x' || n === 'nul' || n === 'equality') oX = out.price;
       }
     }
     if (oA && oB && oA > 1 && oB > 1) {
       const pA = 1 / oA;
       const pB = 1 / oB;
-      fairAs.push(pA / (pA + pB));
+      // 1X2 : si la cote X existe, normalisation 3 voies (sinon 2 voies,
+      // comportement historique conservé à l'identique).
+      const pX = (oX && oX > 1) ? 1 / oX : 0;
+      const sum = pA + pB + pX;
+      fairAs.push(pA / sum);
+      fairXs.push(pX / sum);
       bestOddsA.push(oA);
       bestOddsB.push(oB);
+      if (oX && oX > 1) bestOddsX.push(oX);
     }
   }
 
   if (!fairAs.length) return null;
 
   const fairA = fairAs.reduce((a, b) => a + b, 0) / fairAs.length;
-  const fairB = 1 - fairA;
+  const fairX = fairXs.reduce((a, b) => a + b, 0) / fairXs.length;
+  const fairB = 1 - fairA - fairX;
   const bestA = Math.max(...bestOddsA);
   const bestB = Math.max(...bestOddsB);
 
-  const evA = fairA * (bestA - 1) - fairB;
-  const evB = fairB * (bestB - 1) - fairA;
+  // EV marché : la défaite inclut l'issue X (1-fairA = fairB + fairX).
+  const evA = fairA * (bestA - 1) - (1 - fairA);
+  const evB = fairB * (bestB - 1) - (1 - fairB);
 
   return {
     fair_a:   Math.round(fairA * 1000) / 1000,
     fair_b:   Math.round(fairB * 1000) / 1000,
+    prob_x:   fairXs.length && fairX > 0 ? Math.round(fairX * 1000) / 1000 : null,
     best_odds_a: Math.round(bestA * 100) / 100,
     best_odds_b: Math.round(bestB * 100) / 100,
+    best_odds_draw: bestOddsX.length ? Math.round(Math.max(...bestOddsX) * 100) / 100 : null,
     ev_a_pct: Math.round(evA * 1000) / 10,
     ev_b_pct: Math.round(evB * 1000) / 10,
     bet_a:    evA > 0.05,
@@ -369,6 +382,8 @@ function _fetchOdds1xBet() {
           outcomes: [
             { name: f.fighter1, price: f.odds_f1 },
             { name: f.fighter2, price: f.odds_f2 },
+            // X (nul) du 1X2 1xBet — optionnel, présent si le scraper l'a capté
+            ...(f.odds_x ? [{ name: 'Draw', price: f.odds_x }] : []),
           ],
         }],
       }],
@@ -421,6 +436,18 @@ async function getMMAFights(apiKey) {
       const mb    = mmaModelBand(nameA, nameB);    // {p,lo,hi} own model + bootstrap CI | null
       const mp    = mb ? mb.p : null;              // P(A wins) point estimate
 
+      // PariScore stacked ensemble — weights NOT calibrated (fixe, pas de backtest)
+      // Sources: devig marché (55%), DRatings independent model (30%), own logistic (15%)
+      // TODO: calibrer via Platt Scaling sur 100 derniers combats (spec RAPPORT_MMA_ENGINEERING §6)
+      const psA = blendProbs([{ p: d ? d.fair_a : null, w: 0.55 }, { p: dr ? dr.prob_a : null, w: 0.30 }, { p: mp, w: 0.15 }]);
+      const psB = blendProbs([{ p: d ? d.fair_b : null, w: 0.55 }, { p: dr ? dr.prob_b : null, w: 0.30 }, { p: mp != null ? 1 - mp : null, w: 0.15 }]);
+
+      // Edge MODÈLE vs cotes book : p×(o−1) − (1−p). L'issue X compte dans la
+      // défaite (psA+psB=1). Book unique ⇒ ev_marché toujours ≈ −marge : sans
+      // ce calcul, aucun value bet n'est jamais détecté (bead ParisScorebis-pzru).
+      const mvA = (d && psA != null) ? psA * (d.best_odds_a - 1) - (1 - psA) : null;
+      const mvB = (d && psB != null) ? psB * (d.best_odds_b - 1) - (1 - psB) : null;
+
       enriched.push({
         fighter_a:      nameA,
         fighter_b:      nameB,
@@ -436,24 +463,26 @@ async function getMMAFights(apiKey) {
         model_prob_b:   mp != null ? Math.round((1 - mp) * 1000) / 1000 : null,
         model_lo_a:     mb ? mb.lo : null,
         model_hi_a:     mb ? mb.hi : null,
-        // PariScore stacked ensemble (devig market-anchored + DRatings + own model)
-        // PariScore stacked ensemble — weights NOT calibrated (fixe, pas de backtest)
-        // Sources: devig marché (55%), DRatings independent model (30%), own logistic (15%)
-        // TODO: calibrer via Platt Scaling sur 100 derniers combats (spec RAPPORT_MMA_ENGINEERING §6)
-        ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.55 }, { p: dr ? dr.prob_a : null, w: 0.30 }, { p: mp, w: 0.15 }]),
-        ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.55 }, { p: dr ? dr.prob_b : null, w: 0.30 }, { p: mp != null ? 1 - mp : null, w: 0.15 }]),
+        ps_prob_a:      psA,
+        ps_prob_b:      psB,
         // Best odds
         best_odds_a:    d ? d.best_odds_a : null,
         best_odds_b:    d ? d.best_odds_b : null,
+        // 1X2 : cote X (nul) et proba X devigée (null si le book ne la expose pas)
+        draw_odds:      d ? d.best_odds_draw : null,
+        prob_x:         d ? d.prob_x : null,
         ai_odds_a:      d ? Math.round(1 / d.fair_a * 100) / 100 : null,
         ai_odds_b:      d ? Math.round(1 / d.fair_b * 100) / 100 : null,
         vegas_odds_a:   d ? d.best_odds_a : null,
         vegas_odds_b:   d ? d.best_odds_b : null,
-        // EV
+        // EV (marché : book(s) vs consensus devig)
         ev_a_pct:       d ? d.ev_a_pct : null,
         ev_b_pct:       d ? d.ev_b_pct : null,
-        bet_a:          d ? d.bet_a : false,
-        bet_b:          d ? d.bet_b : false,
+        // EV modèle (ensembliste vs cotes book) — % ; le flag bet_* OR des deux
+        mv_ev_a_pct:    mvA != null ? Math.round(mvA * 1000) / 10 : null,
+        mv_ev_b_pct:    mvB != null ? Math.round(mvB * 1000) / 10 : null,
+        bet_a:          (d ? d.bet_a : false) || (mvA != null && mvA > 0.05),
+        bet_b:          (d ? d.bet_b : false) || (mvB != null && mvB > 0.05),
         // Meta
         vegas_books:    d ? d.books : 0,
         weight_class:   '',

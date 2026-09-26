@@ -44,6 +44,7 @@ function read1xBetDirect(now: number): MmaEventRaw[] {
         event_name: evName,
         best_odds_a: f.odds_f1 ?? undefined,
         best_odds_b: f.odds_f2 ?? undefined,
+        draw_odds: f.odds_x ?? undefined,
       });
     }
     return [...events.values()];

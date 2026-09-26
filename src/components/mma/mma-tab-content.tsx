@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { MmaFilters } from "./mma-filters";
 import { MmaFightCard, type MmaFight } from "./mma-fight-card";
 import { MmaTopValueWidget } from "./mma-top-value-widget";
+import { Mma1xBetGrid } from "./mma-1xbet-grid";
 import { CagePattern } from "./cage-pattern";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
@@ -299,7 +300,11 @@ export function MmaTabContent() {
         </div>
       ) : (
         <div role="tabpanel" id={`${tabsId}-panel-prematch`} aria-labelledby={`${tabsId}-prematch`}>
-          <MmaFilters weightClass={weightClass} onWeightClassChange={setWeightClass} />
+          {/* Filtre catégorie de poids : masqué si la source (ex: 1xBet seul)
+              ne fournit aucune catégorie — cliquer un chip viderait la liste. */}
+          {prematch.some((b) => b.fight.weight_class) && (
+            <MmaFilters weightClass={weightClass} onWeightClassChange={setWeightClass} />
+          )}
 
           <StrategyFilterDropdown
             sport="mma"
@@ -309,6 +314,9 @@ export function MmaTabContent() {
 
           {/* Top Value Bets widget */}
           <MmaTopValueWidget fights={prematch.map((b) => b.fight)} className="mt-3" />
+
+          {/* Grille offre 1X2 (V1/X/V2) + edge modèle + Kelly */}
+          <Mma1xBetGrid fights={prematch.map((b) => b.fight)} className="mt-3" />
 
           {/* Filtre par heure de début (fenêtre glissante 1h → 24h) */}
           <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-3" />
