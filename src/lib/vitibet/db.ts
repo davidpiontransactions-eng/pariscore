@@ -165,6 +165,49 @@ export function getTopByIndex(limit: number): VitibetTip[] {
 }
 
 /**
+ * Écart-type empirique σ des ERREURS de prédiction des totaux Vitibet :
+ * erreur = (score réel D+E) − (score prédit D+E) sur les matchs finished
+ * avec les 4 scores complets. Sert au pill « Over XX pts conseillé »
+ * (src/lib/vitibet/over.ts, bead f1qc).
+ *
+ * Retourne null si l'échantillon est trop petit (n < 30) ou si σ ≤ 0 —
+ * jamais de pill fabriqué sur une estimation bruitée.
+ */
+export function scoreErrorSigma(): { sigma: number; n: number } | null {
+  const db = getDb();
+  if (!db) return null;
+  try {
+    const rows = db
+      .prepare(
+        `SELECT score_reel_d, score_reel_e, score_predit_d, score_predit_e
+         FROM vitibet_tips
+         WHERE statut = 'finished'`
+      )
+      .all() as Record<string, unknown>[];
+
+    const errors: number[] = [];
+    for (const row of rows) {
+      const rd = numOrNull(row.score_reel_d);
+      const re = numOrNull(row.score_reel_e);
+      const pd = numOrNull(row.score_predit_d);
+      const pe = numOrNull(row.score_predit_e);
+      if (rd == null || re == null || pd == null || pe == null) continue;
+      errors.push(rd + re - (pd + pe));
+    }
+
+    const n = errors.length;
+    if (n < 30) return null;
+    const mean = errors.reduce((s, e) => s + e, 0) / n;
+    const variance = errors.reduce((s, e) => s + (e - mean) ** 2, 0) / (n - 1);
+    const sigma = Math.sqrt(variance);
+    if (!Number.isFinite(sigma) || sigma <= 0) return null;
+    return { sigma, n };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Backtest des tips Vitibet (T6) — taux de réussite réel : tip prédit vs
  * résultat FT (`score_reel_d/e`).
  *

@@ -15,6 +15,8 @@ type VitibetPayload = {
   count: number;
   tips: VitibetTip[];
   generatedAt: string;
+  /** σ des erreurs de prédiction des totaux (pill Over, f1qc) — null si n < 30. */
+  scoreSigma?: { sigma: number; n: number } | null;
 };
 
 type VitibetBacktestPayload = {
@@ -92,7 +94,13 @@ export function useVitibetTop(limit = 10) {
     fetchJson,
     SWR_OPTS,
   );
-  return { tips: data?.tips ?? [], error, isLoading, isReady: !!data };
+  return {
+    tips: data?.tips ?? [],
+    scoreSigma: data?.scoreSigma ?? null,
+    error,
+    isLoading,
+    isReady: !!data,
+  };
 }
 
 /** Backtest des tips Vitibet (T6) : taux de réussite FT vs prédit. */
