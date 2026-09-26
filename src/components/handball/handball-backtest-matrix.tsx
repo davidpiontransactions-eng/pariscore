@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type {
   BacktestMatrixResult,
   MatrixCell,
@@ -54,6 +55,7 @@ function CellView({ cell }: { cell: MatrixCell | undefined }) {
 export function HandballBacktestMatrix() {
   const [win, setWin] = useState<"full" | "d30">("full");
   const [marketKey, setMarketKey] = useState<string | null>(null);
+  const [mOpen, setMOpen] = useState(false);
 
   const { data, error, isLoading } = useSWR<MatrixPayload>(
     `/api/handball/backtest-matrix?window=${win}`,
@@ -82,7 +84,19 @@ export function HandballBacktestMatrix() {
 
   const { matrix } = data;
   const markets = matrix.markets;
-  const active = marketKey && markets.some((m) => m.key === marketKey) ? marketKey : markets[0]?.key;
+  // Marchés classés du meilleur au moins bon (ROI global période courante) —
+  // le tri s'adapte au choix Période complète / 30 jours.
+  const sortedMarkets = [...markets].sort((a, b) => {
+    const ra = matrix.global[a.key]?.roiPct;
+    const rb = matrix.global[b.key]?.roiPct;
+    if (ra == null && rb != null) return 1;
+    if (rb == null && ra != null) return -1;
+    if (ra != null && rb != null && ra !== rb) return rb - ra;
+    return (matrix.global[b.key]?.nBets ?? 0) - (matrix.global[a.key]?.nBets ?? 0);
+  });
+  // Défaut = meilleur marché (celui en tête du classement).
+  const active =
+    marketKey && markets.some((m) => m.key === marketKey) ? marketKey : sortedMarkets[0]?.key;
   const market = markets.find((m) => m.key === active);
   const globalCell = active ? matrix.global[active] : undefined;
 
@@ -129,29 +143,86 @@ export function HandballBacktestMatrix() {
           </button>
         ))}
       </div>
+      {/* Sélecteur de marché — ascenseur : liste scrollable classée du meilleur
+          au moins bon ROI (période courante), miroir du filtre championnats */}
       <div className="flex flex-wrap gap-1.5">
-        {markets.map((m) => (
-          <button
-            key={m.key}
-            type="button"
-            onClick={() => setMarketKey(m.key)}
-            aria-pressed={active === m.key}
-            title={m.market}
-            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-              active === m.key
-                ? "border-transparent bg-[#00e676] text-black"
-                : "border-border hover:bg-muted"
-            }`}
-          >
-            {m.emoji} {m.label}
-          </button>
-        ))}
+        <Popover open={mOpen} onOpenChange={setMOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-pressed={!!active}
+              aria-label="Filtrer par type de marché"
+              title={market?.market}
+              className="inline-flex max-w-full min-h-[44px] items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors hover:bg-muted aria-pressed:bg-foreground aria-pressed:text-background"
+            >
+              <span aria-hidden="true">📈</span>
+              <span className="truncate">
+                {market ? `${market.emoji} ${market.label}` : "Tous les marchés"}
+              </span>
+              <span className={`tabular-nums ${active && mOpen ? "opacity-80" : ""}`}>
+                ROI {signedPct(globalCell?.roiPct ?? null)}
+              </span>
+              <span aria-hidden="true" className="text-[10px] opacity-70">
+                ▾
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" sideOffset={8} className="w-[min(92vw,22rem)] p-2">
+            <div
+              role="listbox"
+              aria-label="Types de marché"
+              className="max-h-[55vh] overflow-y-auto overscroll-contain divide-y divide-[#f0f0f0] rounded-md border border-[#f0f0f0]"
+            >
+              {sortedMarkets.map((m) => {
+                const g = matrix.global[m.key];
+                const on = active === m.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    role="option"
+                    aria-selected={on}
+                    onClick={() => {
+                      setMarketKey(m.key);
+                      setMOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-xs transition-colors min-h-[40px] ${
+                      on
+                        ? "bg-foreground font-semibold text-background"
+                        : "hover:bg-muted focus-visible:bg-muted"
+                    } outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]`}
+                  >
+                    <span className="truncate" title={m.market}>
+                      {m.emoji} {m.label}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 tabular-nums">
+                      <span className={on ? "opacity-80" : "text-[#717171]"}>
+                        {pct(g?.hitRate, 0)}
+                      </span>
+                      <span
+                        className={
+                          on ? "opacity-80" : roiCls(g?.roiPct ?? null)
+                        }
+                      >
+                        {signedPct(g?.roiPct)}
+                        {!g?.sampleOk && " ⚠️"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[10px] text-[#717171]">
+              Triés du meilleur au moins bon ROI · hit + ROI globaux (période
+              courante) · ⚠️ échantillon &lt; 10 paris
+            </p>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
-          <HandballTableCaption>Performance par championnat — triés par ROI ↓</HandballTableCaption>
-          <thead>
+          <HandballTableCaption>Performance par championnat — triés par ROI ↓</HandballTableCaption>          <thead>
             <tr className="border-b border-[#f0f0f0] text-left text-[#717171]">
               <th className="py-1.5 pr-2 font-medium">Championnat</th>
               <th className="px-2 py-1.5 text-right font-medium">Matchs</th>
