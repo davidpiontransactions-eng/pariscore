@@ -227,7 +227,17 @@ const TEAM_ALIASES = {
   "Hong Kong": { q: ["Hong Kong Handball"], accept: ["hongkonghand"] },
   "Hong Kong W": { q: ["Hong Kong Women Handball", "Hong Kong Handball Women"], accept: ["hongkongwomen", "hongkonghand"] },
   "Kazakhstan W": { q: ["Kazakhstan Women Handball", "Kazakhstan Handball Women"], accept: ["kazakhstanwomen", "kazakhstanhand"] },
-  "Uzbekistan W": { q: ["Uzbekistan Women Handball"], accept: ["uzbekistanwomen", "uzbekistanhand"] },
+  "Uzbekistan W": { q: ["Uzbekistan Women Handball", "Uzbekistan Handball Women"], accept: ["uzbekistanwomen", "uzbekistanhand"] },
+  // Bundesliga 1 & 2 (sonde TSDB 2026-09-27) : nos noms flashscore ne
+  // correspondent pas aux strTeam TSDB → alias vérifiés un par un.
+  // Non couverts après sondes multiples (fallback initiales assumé) :
+  // Bietigheim-Metterzimmern, Dessauer, Dormagen, Eisenach, Elbflorenz,
+  // Ferndorf, Hagen — absents de TheSportsDB côté handball.
+  "Coburg 2000": { q: ["Coburg 2000", "HSC 2000 Coburg"], accept: ["2000coburg", "hsc2000coburg"] },
+  Ludwigshafen: { q: ["Ludwigshafen", "TSG Friesenheim"], accept: ["friesenheim"] },
+  Essen: { q: ["Essen", "TUSEM Essen"], accept: ["tusemessen"] },
+  Leipzig: { q: ["Leipzig", "SC DHfK Leipzig"], accept: ["dhfkleipzig"] },
+  Potsdam: { q: ["Potsdam", "1. VfL Potsdam"], accept: ["vflpotsdam"] },
 };
 
 // Ligues d'équipes nationales → pas de badges clubs (fallback monogramme).

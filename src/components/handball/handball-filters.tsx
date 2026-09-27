@@ -23,12 +23,16 @@ export function HandballFilters({
   onSelect: (l: string | null) => void;
 }) {
   const leagues = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const m of matches)
-      map.set(m.league.name, (map.get(m.league.name) || 0) + 1);
+    // country = pays du 1er match rencontré (clé de drapeau pour le badge)
+    const map = new Map<string, { count: number; country?: string }>();
+    for (const m of matches) {
+      const cur = map.get(m.league.name);
+      if (cur) cur.count += 1;
+      else map.set(m.league.name, { count: 1, country: m.league.country });
+    }
     // Tri 1xbet : ligues majeures en tête (tier), puis volume
     return sortHandballLeagueEntries(
-      [...map.entries()].map(([name, count]) => ({ name, count })),
+      [...map.entries()].map(([name, v]) => ({ name, count: v.count, country: v.country })),
     );
   }, [matches]);
 

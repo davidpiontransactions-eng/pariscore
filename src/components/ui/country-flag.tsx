@@ -48,6 +48,7 @@ const NAME_TO_ISO: Record<string, string> = {
   BULGARIA: "bg",
   CYPRUS: "cy",
   UKRAINE: "ua",
+  LATVIA: "lv",
 };
 
 /** Résout un nom/code pays vers un code ISO minuscule, ou "" si inconnu. */

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-24T21:03:12.271Z",
-  "total_bytes": 18120990,
+  "generated_at": "2026-09-27T12:40:12.886Z",
+  "total_bytes": 19349229,
   "assets": [
     {
       "file": "leagues/ehf-champions-league.png",
@@ -228,6 +228,15 @@
       "size": 90009
     },
     {
+      "file": "teams/coburg-2000.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/3ccv161622584638.png",
+      "label": "HSC 2000 Coburg",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 220613
+    },
+    {
       "file": "teams/cocks-2.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/kvrlhb1626394817.png",
       "label": "Riihimäki Cocks",
@@ -298,6 +307,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 126662
+    },
+    {
+      "file": "teams/essen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/lzub491622584417.png",
+      "label": "TUSEM Essen",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 175843
     },
     {
       "file": "teams/fasano.png",
@@ -381,6 +399,15 @@
       "size": 66548
     },
     {
+      "file": "teams/grosswallstadt.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/9ywjcy1627152128.png",
+      "label": "TV Grosswallstadt",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 260541
+    },
+    {
       "file": "teams/guif.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/12torl1638046850.png",
       "label": "Eskilstuna Guif",
@@ -433,6 +460,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 9818
+    },
+    {
+      "file": "teams/hamm-westfalen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/ku167f1662032996.png",
+      "label": "ASV Hamm-Westfalen",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 40493
     },
     {
       "file": "teams/hammarby.png",
@@ -642,6 +678,15 @@
       "size": 153901
     },
     {
+      "file": "teams/leipzig.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/ia2c4n1567621688.png",
+      "label": "SC DHfK Leipzig",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 160822
+    },
+    {
       "file": "teams/lemgo.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/2yin7i1567542157.png",
       "label": "TBV Lemgo",
@@ -667,6 +712,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 180476
+    },
+    {
+      "file": "teams/ludwigshafen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/0gch3d1567621200.png",
+      "label": "TSG Friesenheim",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 207173
     },
     {
       "file": "teams/lugi.png",
@@ -795,6 +849,15 @@
       "size": 52603
     },
     {
+      "file": "teams/nordhorn-lingen.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/5r8yrv1568744303.png",
+      "label": "HSG Nordhorn-Lingen",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 30079
+    },
+    {
       "file": "teams/nordsjaelland.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/dz7yil1638046821.png",
       "label": "Nordsjælland Håndbold",
@@ -856,6 +919,15 @@
       "attribution_requise": false,
       "ok": true,
       "size": 225951
+    },
+    {
+      "file": "teams/potsdam.png",
+      "url_source": "https://r2.thesportsdb.com/images/media/team/badge/lhfnsg1731958062.png",
+      "label": "1. VfL Potsdam",
+      "licence": "TheSportsDB fan-copyright, usage éditorial",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 132675
     },
     {
       "file": "teams/provence-aix.png",

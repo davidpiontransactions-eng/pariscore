@@ -3,11 +3,14 @@
 import { useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { pillClass } from "./handball-pill";
+import { HandballLeagueBadge } from "./handball-league-badge";
 
 // Popover de filtre championnats GÉNÉRIQUE — extrait de HandballFilters pour
 // être partagé par le calendrier (via HandballFilters) et le widget Top 10
-// par stratégie (bead ParisScorebis-3l6w). Un seul déclencheur (🏆 ligue +
-// compteur + chevron) → popover avec recherche + liste verticale à ascenseur.
+// par stratégie (bead ParisScorebis-3l6w). Un seul déclencheur (libellé ligue +
+// compteur + chevron, pilule Flashscore sans emoji) → popover avec recherche +
+// liste verticale à ascenseur.
 
 /** Normalisation d'une recherche (casse, diacritiques, ponctuation). */
 function norm(s: string): string {
@@ -18,7 +21,7 @@ function norm(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export type LeagueOption = { name: string; count: number };
+export type LeagueOption = { name: string; count: number; country?: string };
 
 export function HandballLeaguePopover({
   leagues,
@@ -70,13 +73,23 @@ export function HandballLeaguePopover({
           aria-label={
             selected ? `Championnat sélectionné : ${selected}` : "Filtrer par championnat"
           }
-          className="inline-flex max-w-full min-h-[44px] items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors hover:bg-muted aria-pressed:bg-foreground aria-pressed:text-background"
+          className={`${pillClass(!!selected)} max-w-full justify-between`}
         >
-          <span aria-hidden="true">🏆</span>
-          <span className="truncate">{selected ?? "Tous les championnats"}</span>
-          <span className="tabular-nums">({currentCount})</span>
-          <span aria-hidden="true" className="text-[10px] opacity-70">
-            ▾
+          {selected ? (
+            // Ligue active : logo + drapeau + nom (badge partagé avec le calendrier)
+            <HandballLeagueBadge
+              leagueName={selected}
+              country={leagues.find((l) => l.name === selected)?.country}
+              className="min-w-0"
+            />
+          ) : (
+            <span className="truncate">Tous les championnats</span>
+          )}
+          <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
+            ({currentCount})
+            <span aria-hidden="true" className="text-[10px] opacity-70">
+              ▾
+            </span>
           </span>
         </button>
       </PopoverTrigger>
@@ -108,7 +121,7 @@ export function HandballLeaguePopover({
             <span className="shrink-0 tabular-nums text-muted-foreground">{total}</span>
           </button>
 
-          {filtered.map(({ name, count }) => (
+          {filtered.map(({ name, count, country }) => (
             <button
               key={name}
               type="button"
@@ -117,7 +130,10 @@ export function HandballLeaguePopover({
               aria-selected={selected === name}
               className={rowCls(selected === name)}
             >
-              <span className="truncate">{name}</span>
+              {/* Logo compétition + drapeau + nom (DB handball-logos) */}
+              <span className="flex min-w-0 flex-1 items-center">
+                <HandballLeagueBadge leagueName={name} country={country} className="min-w-0" />
+              </span>
               <span
                 className={`shrink-0 tabular-nums ${selected === name ? "opacity-80" : "text-muted-foreground"}`}
               >

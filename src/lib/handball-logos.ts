@@ -24,9 +24,14 @@ const LEAGUE_LOGOS: Record<string, string> = {
   "1division||denmark": "/logos/handball/leagues/herre-handbold.png",
   "1divisionwomen||denmark": "/logos/handball/leagues/herre-handbold.png",
   "danishcup||denmark": "/logos/handball/leagues/herre-handbold.png",
-  // Coupes d'Europe EHF
-  "championsleaguewomen": "/logos/handball/leagues/ehf-champions-league.png",
-  "europeancup": "/logos/handball/leagues/ehf-european-league.png",
+  // Coupes d'Europe EHF (clés normalisées sans accents/ponctuation)
+  championsleague: "/logos/handball/leagues/ehf-champions-league.png", // EHF CL (hommes)
+  championsleaguewomen: "/logos/handball/leagues/ehf-champions-league.png",
+  europeanleague: "/logos/handball/leagues/ehf-european-league.png", // « European League » (payload)
+  europeancup: "/logos/handball/leagues/ehf-european-league.png",
+  europeancupwomen: "/logos/handball/leagues/ehf-european-league.png", // « European Cup Women »
+  ehfeurocupwomen: "/logos/handball/leagues/ehf-european-league.png",
+  ehfeurocupwomenplayoffs: "/logos/handball/leagues/ehf-european-league.png",
 };
 
 /** Chemin du logo d'une ligue, ou null si non couvert (fallback drapeau). */
@@ -179,6 +184,19 @@ const TEAM_LOGOS: Record<string, string> = {
   southkoreaw: "/logos/handball/teams/south-korea-w.png", // South Korea W
   wislaplock: "/logos/handball/teams/wisla-plock.png", // Wisla Plock
   uzbekistanw: "/logos/handball/teams/uzbekistan-w.png", // Uzbekistan W
+
+  // Bundesliga 1 & 2 (mission enrichissement 2026-09-27, sources TheSportsDB)
+  grosswallstadt: "/logos/handball/teams/grosswallstadt.png", // Grosswallstadt
+  hammwestfalen: "/logos/handball/teams/hamm-westfalen.png", // Hamm-Westfalen
+  nordhornlingen: "/logos/handball/teams/nordhorn-lingen.png", // Nordhorn-Lingen
+  coburg2000: "/logos/handball/teams/coburg-2000.png", // Coburg 2000 (= HSC 2000 Coburg)
+  essen: "/logos/handball/teams/essen.png", // Essen (= TUSEM Essen)
+  leipzig: "/logos/handball/teams/leipzig.png", // Leipzig (= SC DHfK Leipzig)
+  ludwigshafen: "/logos/handball/teams/ludwigshafen.png", // Ludwigshafen (= TSG Friesenheim)
+  potsdam: "/logos/handball/teams/potsdam.png", // Potsdam (= 1. VfL Potsdam)
+  // Non couverts par TheSportsDB (sonde 2026-09-27) → fallback initiales assumé :
+  // Bietigheim-Metterzimmern, Dessauer, Dormagen, Eisenach, Elbflorenz,
+  // Ferndorf, Hagen.
 };
 
 /** Chemin du logo d'une équipe, ou null si non couverte (fallback initiales). */
@@ -249,6 +267,31 @@ const LEAGUE_COUNTRY: Record<string, string> = {
   "Lietuvos Lyga": "LITHUANIA",
   "AXA League": "LUXEMBOURG",
   "Allsvenskan Women": "SWEDEN",
+  // ── Compétitions européennes & mondiales (repli si le payload n'a pas le pays)
+  "European League": "EUROPE",
+  "European Cup Women": "EUROPE",
+  "EHF Euro Cup Women": "EUROPE",
+  "EHF Euro Cup Women - Play Offs": "EUROPE",
+  "Baltic League": "EUROPE",
+  "Club World Championship": "WORLD",
+  "Club World Championship - Qualification": "WORLD",
+  "Club World Championship - 9th-10th places": "WORLD",
+  "Asian Games - Play Offs": "ASIA",
+  // ── Domestiques manquantes relevées sur le flux 2026-09-27 (repli)
+  "Kvindeligaen Women": "DENMARK",
+  Proligue: "FRANCE",
+  "Division de Honor Plata": "SPAIN",
+  "Division de Honor Women": "SPAIN",
+  "Liga Nationala": "ROMANIA",
+  "Liga Nationala Women": "ROMANIA",
+  Virsliga: "LATVIA",
+  "A RHG": "BULGARIA",
+  Aktialiiga: "FINLAND",
+  "Olis Deildin": "ICELAND",
+  "Superlig Women": "TURKEY",
+  "Hungarian Cup": "HUNGARY",
+  "Slovakia Cup Women": "SLOVAKIA",
+  "Suomen Cup Women": "FINLAND",
 };
 
 /** Pays d'une ligue (fallback quand le match ne porte pas le pays). */
@@ -289,6 +332,10 @@ const COUNTRY_ISO: Record<string, string> = {
   "NORTH MACEDONIA": "MK",
   RUSSIA: "RU",
   EUROPE: "EU",
+  LATVIA: "LV",
+  ROMANIA: "RO",
+  BULGARIA: "BG",
+  BELGIUM: "BE",
 };
 
 /** Drapeau emoji d'un pays flashscore (EUROPE→🇪🇺, ASIA→🌏). */
