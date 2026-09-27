@@ -1021,13 +1021,32 @@ function getCacheStatus() {
 // Lit le JSON pousser par tools/push-odds-1xbet.ps1 (VPN Serbie).
 // Returns { scraped_at, fights_count, fights: [...] } ou null si fichier absent.
 const FS_1XBET = require('fs');
-const PATH_1XBET = require('path').join(__dirname, '..', 'data', 'odds_1xbet_mma.json');
 const _1xbetCache = { data: null, ts: 0 };
+
+// Résolution robuste du JSON : en build Next standalone le service est BUNDLED
+// → __dirname = dossier du chunk (…/.next/server/…), pas services/ — le
+// path.join(__dirname,'..','data',…) ne trouve alors JAMAIS le fichier et le
+// fallback 1xBet ne se déclenche jamais en prod (constaté 2026-09-27 :
+// getMMAFights → [] → route en read1xBetDirect brut sans modèle).
+// Candidates : cwd d'abord (dev = racine repo, prod = /home/ubuntu/pariscore),
+// puis __dirname/../data (exécution directe depuis services/).
+function _resolve1xBetPath() {
+  const p = require('path');
+  const candidates = [
+    p.join(process.cwd(), 'data', 'odds_1xbet_mma.json'),
+    p.join(__dirname, '..', 'data', 'odds_1xbet_mma.json'),
+  ];
+  for (const c of candidates) {
+    try { if (FS_1XBET.existsSync(c)) return c; } catch (_) {}
+  }
+  return candidates[0];
+}
 
 function getOdds1xBet() {
   const now = Date.now();
   if (_1xbetCache.data && (now - _1xbetCache.ts) < 300 * 1000) return _1xbetCache.data;
   try {
+    const PATH_1XBET = _resolve1xBetPath();
     if (!FS_1XBET.existsSync(PATH_1XBET)) return null;
     // Staleness check: if file is older than 48h, log warning and return null
     const stat = FS_1XBET.statSync(PATH_1XBET);
