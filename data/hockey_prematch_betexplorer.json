@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-09-26T09:51:25.504Z",
+  "updatedAt": "2026-09-27T10:33:09.376Z",
   "source": "betexplorer.com (hockey next)",
   "leagues": {
     "nhl": {
       "matches": [],
-      "error": "Aucun tableau trouvé"
+      "error": "page.evaluate: TypeError: Assignment to constant variable.\n    at eval (eval at evaluate (:311:30), <anonymous>:13:21)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
     },
     "khl": {
       "matches": []
