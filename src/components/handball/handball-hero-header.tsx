@@ -106,11 +106,16 @@ function CourtLines() {
 
 const SILHOUETTE_SRC = "/images/handball/silhouette-couple.svg";
 const FALLBACK_SRC = "/images/handball/hero-action.jpg";
+/** Photo d'action (match réel) — encart épuré mobile (bead ParisScorebis-q8rl). */
+const MOBILE_PHOTO_SRC = "/images/handball/hero-action.jpg";
+const MOBILE_PHOTO_FALLBACK = SILHOUETTE_SRC;
 
 export function HandballHeroHeader({ className }: { className?: string }) {
   const reduceMotion = useReducedMotion() ?? false;
   // Visuel combo : silhouette SVG en premier, photo hero en repli si erreur
   const [visualSrc, setVisualSrc] = useState<string>(SILHOUETTE_SRC);
+  // Encart mobile épuré : photo d'action en premier, silhouette en repli
+  const [mobileSrc, setMobileSrc] = useState<string>(MOBILE_PHOTO_SRC);
 
   const containerVariants = useMemo(
     () => ({
@@ -151,7 +156,60 @@ export function HandballHeroHeader({ className }: { className?: string }) {
           style={{ background: "linear-gradient(105deg, rgba(255,255,255,0.72) 0%, rgba(232,245,252,0.35) 55%, rgba(255,255,255,0.72) 100%)" }}
         />
 
-        <div className="relative px-5 py-5 sm:px-8 sm:py-6">
+        {/* ── < lg (mobile / tablette) : encart ÉPURÉ — slogan + photo du sport
+            uniquement, ni CTA ni panneau stratégies (bead ParisScorebis-q8rl). ── */}
+        <div className="relative px-5 py-5 sm:px-8 sm:py-6 lg:hidden">
+          <div className="flex flex-col gap-4">
+            {/* Nom du sport (miroir du badge desktop, sans icône — encart épuré) */}
+            <motion.div variants={itemVariants} className="flex items-center">
+              <span
+                className="rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em]"
+                style={{ backgroundColor: "#04121f", color: SKY }}
+              >
+                Handball
+              </span>
+            </motion.div>
+
+            <motion.h1
+              variants={itemVariants}
+              className="text-2xl font-black tracking-tight sm:text-3xl"
+              style={{ color: FOT.ink, letterSpacing: "-0.03em" }}
+            >
+              60 minutes, 60 buts,
+              <br />
+              <span style={{ color: SKY_INK }}>1 seul bon pick.</span>
+            </motion.h1>
+
+            <motion.div
+              variants={itemVariants}
+              className="relative overflow-hidden rounded-xl"
+              style={{
+                backgroundColor: "#04121f",
+                border: `1px solid ${FOT.border}`,
+                boxShadow: "0 0 48px rgba(0,230,118,0.35), 0 8px 24px rgba(2,136,209,0.2)",
+              }}
+            >
+              {/* Photo d'action locale (asset public) + repli silhouette en SVG */}
+              <img
+                src={mobileSrc}
+                alt="Action de handball — visuel hero"
+                className="h-44 w-full object-cover sm:h-56"
+                onError={() => {
+                  // Repli si la photo est indisponible (évite la boucle onError)
+                  if (mobileSrc !== MOBILE_PHOTO_FALLBACK) setMobileSrc(MOBILE_PHOTO_FALLBACK);
+                }}
+              />
+              <span
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-10"
+                style={{ background: `linear-gradient(180deg, transparent, ${SKY}33)` }}
+                aria-hidden
+              />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ── ≥ lg (desktop) : encart complet, strictement inchangé ── */}
+        <div className="relative hidden px-5 py-5 sm:px-8 sm:py-6 lg:block">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             {/* Bloc gauche : accroche */}
             <div className="min-w-0 flex-1">

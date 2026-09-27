@@ -6,6 +6,7 @@ import { useHandballMatches } from "@/hooks/use-handball-matches";
 import { useVitibetTips } from "@/hooks/use-vitibet-tips";
 import { useHandballTop8, type StrategyChip } from "@/hooks/use-handball-top8";
 import { HandballMatchCard } from "./handball-match-card";
+import { pillClass } from "./handball-pill";
 import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
 import { HandballStrategyBar } from "./handball-strategy-bar";
@@ -22,6 +23,7 @@ import { HandballNews } from "./handball-news";
 import { HandballTableCaption } from "./handball-table-caption";
 import { HandballErrorBoundary } from "./handball-error-boundary";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
+import type { VitibetTip } from "@/lib/vitibet/types";
 // Type-only : effacé à la compilation, le moteur de backtest reste côté serveur.
 import type { DailyStrategyBacktest } from "@/lib/handball-backtest-today";
 import type { HandballMatch } from "@/lib/handball-data";
@@ -56,6 +58,25 @@ const fetchJson = <T,>(url: string): Promise<T> =>
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json() as Promise<T>;
   });
+
+/**
+ * Carte « vide » : ni cote (1X2 / 1-2), ni pronostic Vitibet exploitable
+ * (INDEX et probas tous absents → la carte n'afficherait que des « – »).
+ */
+function isBlankCard(
+  match: HandballMatch,
+  tip: VitibetTip | null | undefined
+): boolean {
+  const hasOdds =
+    match.odds?.home != null || match.odds?.draw != null || match.odds?.away != null;
+  const hasTip =
+    tip != null &&
+    (tip.indexValue != null ||
+      tip.probHome != null ||
+      tip.probDraw != null ||
+      tip.probAway != null);
+  return !hasOdds && !hasTip;
+}
 
 const fmtSigned = (v: number, digits = 1): string => {
   const s = v.toFixed(digits);
@@ -361,10 +382,9 @@ export function HandballTabContent() {
   // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
   const [detailMatch, setDetailMatch] = useState<HandballMatch | null>(null);
   // Filtre temporel du calendrier (demande user) : fenêtres relatives
-  // (dans 1h/2h/4h/8h) + jours civils (aujourd'hui/demain), « all » = reset.
-  const [timeFilter, setTimeFilter] = useState<
-    "all" | "h1" | "h2" | "h4" | "h8" | "today" | "tomorrow"
-  >("all");
+  // (dans 1h/2h/4h/8h), « all » = reset. Les pastilles civils Aujourd'hui /
+  // Demain ont été retirées — le sélecteur de jour du calendrier prend le relais.
+  const [timeFilter, setTimeFilter] = useState<"all" | "h1" | "h2" | "h4" | "h8">("all");
 
   const isLive = (m: { status: string }) =>
     m.status === "live" || m.status === "halftime";
@@ -389,13 +409,8 @@ export function HandballTabContent() {
   // Filtres combinés : ligue + fenêtre temporelle (relative ou jour civil).
   const filtered = useMemo(() => {
     const now = Date.now();
-    const today = PARIS_DAY_FMT.format(new Date(now));
-    const tomorrow = PARIS_DAY_FMT.format(new Date(now + 86_400_000));
     return displayed.filter((m) => {
       if (selectedLeague && m.league.name !== selectedLeague) return false;
-      const day = parisDay(m.kickoff);
-      if (timeFilter === "today") return day === today;
-      if (timeFilter === "tomorrow") return day === tomorrow;
       const H = 3_600_000;
       const limits = { h1: H, h2: 2 * H, h4: 4 * H, h8: 8 * H } as const;
       if (timeFilter in limits) {
@@ -448,83 +463,69 @@ export function HandballTabContent() {
           </span>
         </div>
 
-        {/* Onglets internes du tableau */}
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Vues du calendrier">
+        {/* Onglets internes du tableau — bandeau épuré façon Flashscore (sans
+            emoji) : label long sur ≥ md, label court en dessous (miroir
+            `.filters__text--long/--short`, bascule Flashscore à 800px). */}
+        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Vues du calendrier">
           <button
             type="button"
             role="tab"
             aria-selected={mode === "live"}
             onClick={() => setMode("live")}
-            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-              mode === "live"
-                ? "border-transparent bg-red-500 font-semibold text-white"
-                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
-            }`}
+            className={pillClass(mode === "live")}
           >
-            🔴 Live ({live.length})
+            Live ({live.length})
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === "prematch"}
             onClick={() => setMode("prematch")}
-            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-              mode === "prematch"
-                ? "border-transparent bg-foreground font-semibold text-background"
-                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
-            }`}
+            className={pillClass(mode === "prematch")}
           >
-            📅 Calendrier
+            Calendrier
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === "results"}
             onClick={() => setMode("results")}
-            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-              mode === "results"
-                ? "border-transparent bg-foreground font-semibold text-background"
-                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
-            }`}
+            className={pillClass(mode === "results")}
           >
-            📆 Résultats du jour ({resultsToday.length})
+            <span className="md:hidden">Résultats ({resultsToday.length})</span>
+            <span className="hidden md:inline">Résultats du jour ({resultsToday.length})</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === "top10"}
             onClick={() => setMode("top10")}
-            className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-              mode === "top10"
-                ? "border-transparent bg-foreground font-semibold text-background"
-                : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
-            }`}
+            className={pillClass(mode === "top10")}
           >
-            🏆 Top 10
+            Top 10
           </button>
         </div>
 
-        {/* Filtres temporels (demande user) : dans 1h/2h/4h/8h + aujourd'hui/demain
-            — combinés au filtre ligue. Visibles seulement sur les vues de matchs
-            (pas sur Résultats ni Top 10). « Tous » = reset. */}
+        {/* Filtres temporels (demande user) : fenêtres « dans 1h/2h/4h/8h » seules
+            (Aujourd'hui/Demain retirés — le sélecteur de jour fait le job).
+            Visibles seulement sur les vues de matchs (pas sur Résultats ni
+            Top 10). « Tous » = reset. */}
         {(mode === "prematch" || mode === "live") && (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             <HandballFilters
               matches={displayed}
               selected={selectedLeague}
               onSelect={setSelectedLeague}
             />
 
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par moment de coup d'envoi">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par moment de coup d'envoi">
               {(
                 [
                   ["all", "Tous"],
-                  ["h1", "⏳ Dans 1h"],
-                  ["h2", "⏳ Dans 2h"],
-                  ["h4", "⏳ Dans 4h"],
-                  ["h8", "⏳ Dans 8h"],
-                  ["today", "📅 Aujourd'hui"],
-                  ["tomorrow", "📆 Demain"],
+                  ["h1", "Dans 1h"],
+                  ["h2", "Dans 2h"],
+                  ["h4", "Dans 4h"],
+                  ["h8", "Dans 8h"],
                 ] as const
               ).map(([key, label]) => (
                 <button
@@ -532,11 +533,7 @@ export function HandballTabContent() {
                   type="button"
                   aria-pressed={timeFilter === key}
                   onClick={() => setTimeFilter(key)}
-                  className={`min-h-[32px] rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-                    timeFilter === key
-                      ? "border-transparent bg-[#00e676] font-semibold text-black"
-                      : "border-[#f0f0f0] text-[#222222] hover:bg-[#fafafa]"
-                  }`}
+                  className={pillClass(timeFilter === key)}
                 >
                   {label}
                 </button>
@@ -663,9 +660,21 @@ export function HandballTabContent() {
             ) : (
               /* Grille de cartes (prematch) */
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {filtered.map((m) => (
-                  <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tipFor(m)} />
-                ))}
+                {filtered.map((m) => {
+                  const tip = tipFor(m);
+                  // Mobile : carte vide (aucune cote, aucun tip) masquée pour ne
+                  // pas enchaîner des lignes de « – » — desktop inchangé.
+                  if (isBlankCard(m, tip)) {
+                    return (
+                      <div key={m.id} className="max-sm:hidden">
+                        <HandballMatchCard match={m} onClick={setDetailMatch} tip={tip} />
+                      </div>
+                    );
+                  }
+                  return (
+                    <HandballMatchCard key={m.id} match={m} onClick={setDetailMatch} tip={tip} />
+                  );
+                })}
               </div>
             )}
           </>

@@ -1,30 +1,32 @@
 "use client";
 
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
+import { pillClass } from "./handball-pill";
 
-const STRATEGIES: { key: HandballStrategyKey; label: string; emoji: string }[] = [
-  { key: "bestTeam", label: "Équipe", emoji: "🏆" },
-  { key: "bestTeam1x2", label: "1X2", emoji: "📊" },
-  { key: "over55", label: "Over", emoji: "⬆️" },
-  { key: "under62", label: "U62.5", emoji: "⬇️" },
-  { key: "handicap", label: "HC", emoji: "🎯" },
-  { key: "btts30", label: "BTTS", emoji: "⚡" },
-  { key: "htLeader", label: "HT", emoji: "⏱️" },
-  { key: "valueBet", label: "EV+", emoji: "💰" },
+// Onglet stratégie du Top 10 — pilules Flashscore sans emoji (bandeau épuré,
+// charte partagée avec les filtres du calendrier).
+const STRATEGIES: { key: HandballStrategyKey; label: string }[] = [
+  { key: "bestTeam", label: "Équipe" },
+  { key: "bestTeam1x2", label: "1X2" },
+  { key: "over55", label: "Over" },
+  { key: "under62", label: "U62.5" },
+  { key: "handicap", label: "HC" },
+  { key: "btts30", label: "BTTS" },
+  { key: "htLeader", label: "HT" },
+  { key: "valueBet", label: "EV+" },
 ];
 
 export function HandballStrategyBar({ active, onChange }: { active: HandballStrategyKey; onChange: (k: HandballStrategyKey) => void }) {
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1">
+    <div className="flex flex-wrap gap-2">
       {STRATEGIES.map(s => (
-        // Pills stratégie : état pressed + cible tactile 44px
         <button
           key={s.key}
           onClick={() => onChange(s.key)}
           aria-pressed={active === s.key}
-          className={`whitespace-nowrap px-2.5 py-1.5 rounded-full text-xs border transition-colors min-h-[44px] ${active === s.key ? "bg-foreground text-background" : "hover:bg-muted"}`}
+          className={pillClass(active === s.key)}
         >
-          {s.emoji} {s.label}
+          {s.label}
         </button>
       ))}
     </div>
