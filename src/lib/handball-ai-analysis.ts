@@ -163,7 +163,7 @@ export function buildAiPrompt(a: HandballAnalysisPayload): { system: string; pro
         ? `${side.team} (rang ${side.standing?.rank ?? "—"}, ${side.standing?.points ?? "—"} pts, ${side.standing ? `${side.standing.wins}V-${side.standing.draws}N-${side.standing.losses}D` : "—"} ; ${side.metrics.map((x) => `${x.label} ${x.avg == null ? "—" : x.avg.toFixed(1)}/m`).join(", ")})`
         : "—";
     lines.push("");
-    lines.push(`**StarLigue (saison ${a.starligue.season ?? "?"}, snapshot ${a.starligue.scrapedAt ?? "?"})**`);
+    lines.push(`**${a.starligue.league ?? "StarLigue"} (saison ${a.starligue.season ?? "?"}, snapshot ${a.starligue.scrapedAt ?? "?"})**`);
     lines.push(`- ${m(a.starligue.home)} vs ${m(a.starligue.away)}`);
   }
   lines.push("");

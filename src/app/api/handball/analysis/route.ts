@@ -38,6 +38,7 @@ import {
   loadLnhTeamStats,
   type LnhMetricDef,
 } from "@/lib/lnh-stats";
+import { findHblRow, loadHblStanding, loadHblTeamStats } from "@/lib/hbl-stats";
 import { handballPlayerPhoto } from "@/lib/handball-photos";
 
 /** Base points documentée (demande utilisateur). */
@@ -105,8 +106,11 @@ export type HandballAnalysisPayload = {
   };
   match1x2: { home: number; draw: number; away: number };
   teams: { home: TeamHistoryStats | null; away: TeamHistoryStats | null };
-  /** Stats StarLigue (snapshots LNH) — null si les 2 équipes sont hors ligue. */
+  /** Stats StarLigue (snapshots LNH) — null si les 2 équipes sont hors ligue.
+   *  Repli Bundesliga (snapshots HBL) : `league`/`source` distinguent les 2. */
   starligue: {
+    league: string;
+    source: string;
     season: string | null;
     scrapedAt: string | null;
     metrics: LnhMetricDef[];
@@ -235,14 +239,63 @@ export async function GET(request: Request) {
   };
   const homeLnh = lnhSide(home);
   const awayLnh = lnhSide(away);
-  const starligue =
-    homeLnh || awayLnh
+
+  // 5bis. Bundesliga (1.HBL + 2.HBL) — REPLI si les 2 équipes sont hors LNH.
+  // Snapshots data/hbl_*.json (scripts/scrape-hbl.js, cron 2×/semaine) : la
+  // source LNH ne couvre que la France (bead ParisScorebis-wvwv).
+  const hblTeamStats = loadHblTeamStats();
+  const hblStanding = loadHblStanding();
+  const hblSide = (name: string): StarLigueSide | null => {
+    const stats = findHblRow(hblTeamStats?.teams, name);
+    const standing = findHblRow(hblStanding?.standing, name);
+    if (!stats && !standing) return null;
+    return {
+      team: stats?.team ?? standing?.team ?? name,
+      played: stats?.played ?? standing?.played ?? null,
+      standing: standing
+        ? {
+            rank: standing.rank,
+            points: standing.points,
+            played: standing.played,
+            wins: standing.wins,
+            draws: standing.draws,
+            losses: standing.losses,
+            goalsFor: standing.goals_for,
+            goalsAgainst: standing.goals_against,
+            goalDiff: standing.goal_diff,
+          }
+        : null,
+      metrics: (hblTeamStats?.metrics ?? []).map((def) => ({
+        key: def.key,
+        label: def.label,
+        total: stats?.metrics[def.key]?.total ?? null,
+        avg: stats?.metrics[def.key]?.avg ?? null,
+      })),
+    };
+  };
+  const hblFallback = !homeLnh && !awayLnh;
+  const homeHbl = hblFallback ? hblSide(home) : null;
+  const awayHbl = hblFallback ? hblSide(away) : null;
+
+  const starligue = homeLnh || awayLnh
+    ? {
+        league: "StarLigue",
+        source: "lnh.fr",
+        season: lnhTeamStats?.season ?? lnhStanding?.season ?? null,
+        scrapedAt: lnhTeamStats?.scraped_at ?? lnhStanding?.scraped_at ?? null,
+        metrics: lnhTeamStats?.metrics ?? [],
+        home: homeLnh,
+        away: awayLnh,
+      }
+    : homeHbl || awayHbl
       ? {
-          season: lnhTeamStats?.season ?? lnhStanding?.season ?? null,
-          scrapedAt: lnhTeamStats?.scraped_at ?? lnhStanding?.scraped_at ?? null,
-          metrics: lnhTeamStats?.metrics ?? [],
-          home: homeLnh,
-          away: awayLnh,
+          league: "Bundesliga",
+          source: "opel-hbl.de",
+          season: hblTeamStats?.season ?? hblStanding?.season ?? null,
+          scrapedAt: hblTeamStats?.scraped_at ?? hblStanding?.scraped_at ?? null,
+          metrics: hblTeamStats?.metrics ?? [],
+          home: homeHbl,
+          away: awayHbl,
         }
       : null;
 
@@ -271,8 +324,8 @@ export async function GET(request: Request) {
       `Splits documentés : buts marqués/encaissés et PPG sur L5 et L10, en situation Home (l'équipe reçoit) et Away (l'équipe est reçue) ; différence = marqués − encaissés.`,
       `Buteurs : queue de Poisson sur la moyenne du joueur (snapshot HBL + StarLigue), λ ajusté au rythme attendu de l'équipe (×0.75 à ×1.35).`,
       starligue
-        ? `StarLigue (lnh.fr, saison ${starligue.season ?? "?"}) : classement + 5 métriques/équipe (buts marqués, encaissés, arrêts, passes, pertes de balles) — snapshot ${starligue.scrapedAt ?? "?"}.`
-        : "StarLigue : équipes hors snapshots LNH (les stats proviennent de l'historique DB et des buteurs).",
+        ? `${starligue.league} (${starligue.source}, saison ${starligue.season ?? "?"}) : classement + ${starligue.metrics.length} métriques/équipe — snapshot ${starligue.scrapedAt ?? "?"}.`
+        : "StarLigue/Bundesliga : équipes hors snapshots LNH et HBL (les stats proviennent de l'historique DB et des buteurs).",
       `Mise à jour : cron hebdomadaire (lundi) — scripts/scrape-handball-history.mjs.`,
     ],
   };

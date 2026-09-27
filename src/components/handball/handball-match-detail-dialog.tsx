@@ -98,6 +98,8 @@ type AnalysisPayload = {
   match1x2: { home: number; draw: number; away: number };
   teams: { home: TeamHistoryStats | null; away: TeamHistoryStats | null };
   starligue: {
+    league: string;
+    source: string;
     season: string | null;
     scrapedAt: string | null;
     metrics: { order: string; key: string; label: string }[];
@@ -919,7 +921,7 @@ function StarLigueBlock({
     <section className="space-y-2">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
-          StarLigue — classement &amp; stats équipes
+          {data.league ?? "StarLigue"} — classement &amp; stats équipes
         </h4>
         <span className="text-[10px] text-[#717171]">saison {data.season ?? "—"}</span>
       </header>

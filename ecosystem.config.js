@@ -20,6 +20,7 @@
  *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (lundi 04:20 UTC)
  *   16. `pariscore-cron-handball-photos`: photos joueurs handball (Wikipedia) (lundi 04:45 UTC)
  *   17. `pariscore-cron-handball-matrix`: matrice backtest 8 marchés × ligues (lundi 04:40 UTC)
+ *   18. `pariscore-cron-hbl-stats`   : stats équipes + classement Bundesliga 1 & 2 (lundi + jeudi 05:00 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -430,6 +431,33 @@ module.exports = {
       },
       error_file: 'logs/cron-hbl-players.err.log',
       out_file: 'logs/cron-hbl-players.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job stats équipes + classement Bundesliga (1.HBL + 2.HBL) ===
+      // Scrape l'API Synergy officielle derrière opel-hbl.de (GRATUITE, sans
+      // token, robots.txt 404 — sondage 2026-09-27) :
+      //   /api/synergy/season-statistic/team-overview + /api/synergy/standings
+      // → data/hbl_teamstats.json + data/hbl_standing.json, consommés par
+      // src/lib/hbl-stats.ts → GET /api/handball/analysis (onglet « Stats
+      // équipes », REPLI quand les 2 équipes sont hors snapshots LNH — bead
+      // ParisScorebis-wvwv : la source LNH ne couvre que la StarLigue).
+      // Cadence 2×/semaine demandée (lundi + jeudi) ; ~10 GET, ~1,5 Mo/run.
+      // Écriture all-or-nothing : un run en échec n'écrase jamais un JSON bon.
+      name: 'pariscore-cron-hbl-stats',
+      script: 'scripts/scrape-hbl.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 5 * * 1,4', // lundi + jeudi 05:00 UTC (2×/semaine)
+      autorestart: false,           // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-hbl-stats.err.log',
+      out_file: 'logs/cron-hbl-stats.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
