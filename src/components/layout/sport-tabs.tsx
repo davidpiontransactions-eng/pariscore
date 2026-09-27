@@ -22,7 +22,30 @@ import {
   CrosshairPicto,
   SnookerPicto,
   HandballPicto,
+  FsFootballPicto,
+  FsTennisPicto,
+  FsBasketballPicto,
+  FsHockeyPicto,
+  FsHandballPicto,
+  FsRugbyPicto,
 } from "@/components/ui/sport-pictograms";
+
+// ─── Charte headbar Flashscore (thème clair flashscore.com, tokens relevés 2026)
+// --color-combination-7 / -12 / text-secondary / text-primary / brandBalancer
+const FS_BG = "#eeeeee";
+const FS_BORDER = "#c8cdcd";
+const FS_INACTIVE = "text-[#555e61] hover:text-[#001e28]";
+const FS_ACTIVE = "text-[#e80040]";
+
+/** Pictos « charte Flashscore » par sport (les autres gardent le picto maison). */
+const FS_PICTO: Record<string, ComponentType<{ className?: string }>> = {
+  football: FsFootballPicto,
+  tennis: FsTennisPicto,
+  basketball: FsBasketballPicto,
+  hockey: FsHockeyPicto,
+  handball: FsHandballPicto,
+  rugby: FsRugbyPicto,
+};
 
 // ─── Définition d'un onglet sport ────────────────────────────────────────────
 type SportTab = {
@@ -61,7 +84,7 @@ function LiveBadge({ count }: { count: number }) {
     <span
       className={cn(
         "ml-1 inline-flex h-4 min-w-4 items-center justify-center",
-        "rounded-full bg-rose-500/20 px-1 text-[10px] font-semibold leading-none text-rose-400",
+        "rounded-full bg-rose-500/15 px-1 text-[10px] font-semibold leading-none text-rose-600",
         "tabular-nums"
       )}
     >
@@ -165,10 +188,12 @@ export function SportTabs({
     <LiquidGlass
       tier="tier1"
       noSheen
+      // Fond gris Flashscore en style inline (prioritaire sur la classe glass)
+      style={{ backgroundColor: FS_BG }}
       className={cn(
         "sticky top-0 z-40",
         "h-10",
-        "border-b border-white/[0.04]",
+        "border-b border-[#c8cdcd]",
         className
       )}
       role="tablist"
@@ -188,7 +213,8 @@ export function SportTabs({
           {visibleTabs.map((tab) => {
             const isActive = activeSport === tab.id;
             const liveCount = liveCounts[tab.id] ?? 0;
-            const Icon = tab.icon;
+            // Picto Flashscore quand il existe pour ce sport, sinon picto maison
+            const Icon = FS_PICTO[tab.id] ?? tab.icon;
 
             return (
               <button
@@ -204,20 +230,19 @@ export function SportTabs({
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/50",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  isActive ? FS_ACTIVE : FS_INACTIVE
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                {/* Icône masquée en mobile (< sm) : textes seuls, façon Flashscore */}
+                <Icon className="hidden h-4 w-4 sm:block" />
+                <span>{tab.label}</span>
                 <LiveBadge count={liveCount} />
 
-                {/* Barre active animée sous l'onglet */}
+                {/* Barre active animée sous l'onglet (trait Flashscore : 3px) */}
                 {isActive && (
                   <motion.div
                     layoutId="sport-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    className="absolute bottom-0 left-3 right-3 h-[3px] rounded-t-[2px] bg-[#e80040]"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -237,10 +262,9 @@ export function SportTabs({
                   setShowMore((v) => !v);
                 }}
                 className={cn(
-                  "flex h-full items-center gap-1 px-2.5 text-xs font-medium",
-                  "text-muted-foreground hover:text-foreground transition-colors",
+                  "flex h-full items-center gap-1 px-2.5 text-xs font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/50",
-                  showMore && "text-foreground"
+                  showMore ? "text-[#001e28]" : FS_INACTIVE
                 )}
                 aria-expanded={showMore}
                 aria-haspopup="true"
@@ -306,7 +330,7 @@ export function SportTabs({
         <div
           className={cn(
             "pointer-events-none absolute right-0 top-0 h-full w-8",
-            "bg-gradient-to-l from-white to-transparent",
+            "bg-gradient-to-l from-[#eeeeee] to-transparent",
             "md:hidden"
           )}
           aria-hidden="true"
