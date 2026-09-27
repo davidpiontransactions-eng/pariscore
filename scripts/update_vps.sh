@@ -54,10 +54,16 @@ fi
 # Decide what's required.
 NEED_INSTALL=0   # npm install
 NEED_BUILD=0     # next build
+if [ -n "${FORCE_BUILD:-}" ]; then
+  NEED_BUILD=1   # override manuelle : FORCE_BUILD=1 bash update_vps.sh
+fi
 if [ -z "$CHANGED" ]; then
   NEED_INSTALL=1; NEED_BUILD=1   # safe default
 else
-  if printf '%s\n' "$CHANGED" | grep -qE '^(src/|app/|next\.config|tsconfig|postcss|tailwind|components\.json|prisma/)'; then
+  # services/ INCLUS : les services sont BUNDLÉS dans les chunks Next
+  # (constat 2026-09-27 : services_01bjv5_._.js contient mmaService) — les
+  # classer en "legacy" laissait un bundle périmé après un fix service.
+  if printf '%s\n' "$CHANGED" | grep -qE '^(src/|app/|services/|next\.config|tsconfig|postcss|tailwind|components\.json|prisma/)'; then
     NEED_BUILD=1
   fi
   if printf '%s\n' "$CHANGED" | grep -qE '^(package\.json|bun\.lock|package-lock\.json)'; then
