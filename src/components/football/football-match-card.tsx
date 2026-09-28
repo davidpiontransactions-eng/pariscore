@@ -15,7 +15,7 @@ import { SportImage } from "@/components/ui/sport-image";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { getSportHero } from "@/lib/sport-images";
 import { parisKickoff, parisDayLabel } from "@/lib/football-time";
-import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { countryFlag } from "@/lib/country-flag";
 
 import { MetricComparePanel } from "@/components/football/MetricComparePanel";
 import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardTable";

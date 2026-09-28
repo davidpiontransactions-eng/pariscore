@@ -10,7 +10,7 @@ import { Search, ChevronDown } from "lucide-react";
 import { CalendarDateNav, parisDateKey, parisDateFull } from "@/components/football/calendar-date-nav";
 import { parisKickoff } from "@/lib/football-time";
 import { FollowButton } from "@/components/shared/follow-button";
-import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { countryFlag } from "@/lib/country-flag";
 import { bsdIdToLeagueUrl } from "@/lib/league-id-bridge";
 
 type BSTeam = { id: string; name: string; shortName?: string; logo?: string; color?: string };

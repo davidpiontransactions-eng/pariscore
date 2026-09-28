@@ -9,7 +9,7 @@ import {
   type TopStratTag,
 } from "@/components/football/fotmob-calendar-table";
 import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
-import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { countryFlag } from "@/lib/country-flag";
 import {
   parisTodayKey,
   shiftDateKey,

@@ -355,17 +355,23 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
     const isLive = (/progress|live|playing|in_play|inplay|set/.test(statusStr) && !finishedRx.test(statusStr))
       || (m.current_set != null && !finishedRx.test(statusStr));
 
-    // Parse per-set game scores from sets_detail
+    // Coercion stricte (9eo6) : `?? 0` ne neutralise ni NaN ni string/objet —
+    // un payload BSD dégradé (quota 429/402) propage NaN jusqu'aux récursions
+    // Markov → « Maximum call stack size exceeded » sur l'onglet tennis.
+    const toInt0 = (v: unknown): number => {
+      const n = typeof v === "number" ? v : Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
     const setsDetail: Array<{ p1: number; p2: number }> = Array.isArray(m.sets_detail)
       ? m.sets_detail.map((s) => ({
-          p1: s.p1 ?? 0,
-          p2: s.p2 ?? 0,
+          p1: toInt0(s.p1),
+          p2: toInt0(s.p2),
         }))
       : [];
 
     // Current game scores
-    const gameP1 = m.current_game_p1 ?? 0;
-    const gameP2 = m.current_game_p2 ?? 0;
+    const gameP1 = toInt0(m.current_game_p1);
+    const gameP2 = toInt0(m.current_game_p2);
 
     // Parse current point string like "15-30" or "40-AV"
     let pointP1 = 0;

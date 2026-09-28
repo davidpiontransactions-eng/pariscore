@@ -4,7 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useFollowStore } from "@/stores/use-follow-store";
 import { partitionFollowed, toFollowId } from "@/lib/fotmob-follow";
-import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { countryFlag } from "@/lib/country-flag";
 import { bsdIdToLeagueUrl } from "@/lib/league-id-bridge";
 import { parisKickoff } from "@/lib/football-time";
 import { cn } from "@/lib/utils";

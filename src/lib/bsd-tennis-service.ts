@@ -7,7 +7,7 @@ const BSD_BASE = "https://sports.bzzoiro.com/tennis";
 
 function getKey(): string {
   const key = process.env.BSD_API_KEY;
-  if (!key) throw new AppError("CONFIG", "BSD_API_KEY not configured", 503);
+  if (!key) throw new AppError("BSD_API_KEY not configured", "CONFIG", 503);
   return key;
 }
 
@@ -25,9 +25,22 @@ async function bsdFetch<T>(path: string, options?: { signal?: AbortSignal }): Pr
     headers: { Authorization: `Token ${key}`, Accept: "application/json" },
     signal: options?.signal ?? AbortSignal.timeout(15000),
   });
-  if (res.status === 402) throw new AppError("BSD_PAYMENT", "Sports Addon required (402)", 402);
-  if (res.status === 429) throw new AppError("BSD_RATE_LIMIT", "Rate limited (429)", 429);
-  if (!res.ok) throw new AppError("BSD_ERROR", `BSD HTTP ${res.status}`, res.status);
+  // NB : AppError(message, code, statusCode) — l'ordre était inversé avant
+  // 9eo6 (le code atterrissait dans `message`, cassant le test
+  // `code === "BSD_RATE_LIMIT"` des retry côté routes).
+  if (res.status === 402) throw new AppError("Sports Addon required (402)", "BSD_PAYMENT", 402);
+  if (res.status === 429) {
+    // Doc BSD : Retry-After = secondes jusqu'à minuit UTC (quota journalier)
+    // ou 1 s (burst 25 req/s). On le propage pour que les routes décident
+    // d'un retry rapide vs fallback immédiat.
+    const retryAfter = Number(res.headers.get("Retry-After"));
+    const err = new AppError("Rate limited (429)", "BSD_RATE_LIMIT", 429);
+    if (Number.isFinite(retryAfter) && retryAfter >= 0) {
+      (err as AppError & { retryAfterSec?: number }).retryAfterSec = retryAfter;
+    }
+    throw err;
+  }
+  if (!res.ok) throw new AppError(`BSD HTTP ${res.status}`, "BSD_ERROR", res.status);
   return res.json() as Promise<T>;
 }
 

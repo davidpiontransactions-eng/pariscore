@@ -28,14 +28,17 @@ type BrokerState = {
   snapshotAt: number;
   subscribers: Set<Subscriber>;
   timer: ReturnType<typeof setInterval> | null;
-  /** Flag anti-reentrant : évite 2 polls BSD concurrents si un poll dépasse 5s. */
+  /** Flag anti-reentrant : évite 2 polls BSD concurrents si un poll dépasse l'intervalle (10 s). */
   polling: boolean;
   /** Hash du dernier snapshot diffusé (évite de repousser des données identiques). */
   lastHash: string;
 };
 
 const GLOBAL_KEY = "__tennisLiveBroker";
-const POLL_INTERVAL_MS = 5_000;
+// Doc BSD : « Poll live lists no more often than every 10 s » (burst 25 req/s)
+// — à 5 s on provoquait nos propres 429 (9eo6). Le cache route 8 s + client 8 s
+// absorbent la latence, le snapshot stale couvre les creux.
+const POLL_INTERVAL_MS = 10_000;
 
 function getState(): BrokerState {
   const g = globalThis as unknown as Record<string, BrokerState | undefined>;

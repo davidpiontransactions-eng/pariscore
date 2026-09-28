@@ -103,31 +103,38 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
       return { ...prematch, setOver75: 50, setUnder125: 50 };
     }
     // (Reset mémoïsations Markov géré dans adjustLambdaLive — couche modèle.)
-    const modelSurface = toModelSurface(match.stats?.surface ?? "Hard");
-    const liveCtx: LiveGamesContext = {
-      ...buildLiveContext(liveState),
-      observedServeA: liveStats ? estimateServePointsWon(liveStats, "A") : null,
-      observedServeB: liveStats ? estimateServePointsWon(liveStats, "B") : null,
-    };
-    const result = predictTotalGames(
-      serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
-      serveStatsB ?? { servePtsWonPct: null, returnPtsWonPct: null },
-      modelSurface,
-      3, // best-of-3 ( marché cible )
-      match.playerA.elo,
-      match.playerB.elo,
-      liveCtx,
-    );
-    return {
-      over18_5: result.over18_5,
-      over19_5: result.over19_5,
-      over21_5: result.over21_5,
-      setOver75: result.setOver75,
-      setUnder125: result.setUnder125,
-      lambda: result.lambda,
-      recommendedBet: result.recommendedBet,
-      source: result.source,
-    };
+    // try/catch défensif (9eo6) : une entrée live corrompue (quota BSD) ne
+    // doit pas faire monter un RangeError jusqu'à la boundary de l'onglet.
+    try {
+      const modelSurface = toModelSurface(match.stats?.surface ?? "Hard");
+      const liveCtx: LiveGamesContext = {
+        ...buildLiveContext(liveState),
+        observedServeA: liveStats ? estimateServePointsWon(liveStats, "A") : null,
+        observedServeB: liveStats ? estimateServePointsWon(liveStats, "B") : null,
+      };
+      const result = predictTotalGames(
+        serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
+        serveStatsB ?? { servePtsWonPct: null, returnPtsWonPct: null },
+        modelSurface,
+        3, // best-of-3 ( marché cible )
+        match.playerA.elo,
+        match.playerB.elo,
+        liveCtx,
+      );
+      return {
+        over18_5: result.over18_5,
+        over19_5: result.over19_5,
+        over21_5: result.over21_5,
+        setOver75: result.setOver75,
+        setUnder125: result.setUnder125,
+        lambda: result.lambda,
+        recommendedBet: result.recommendedBet,
+        source: result.source,
+      };
+    } catch (err) {
+      console.warn("[PredictiveBets] modèle live en échec — panneau masqué :", (err as Error).message);
+      return null;
+    }
   }, [
     prematch,
     liveState?.scoreA.games,

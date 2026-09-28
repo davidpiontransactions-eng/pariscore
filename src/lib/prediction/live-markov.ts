@@ -122,6 +122,11 @@ export function setWinProb(
   gamesB: number,
   serverNext: Player
 ): number {
+  // Garde anti-RangeError (bug ParisScorebis-9eo6) : sans cas terminal valide
+  // (NaN n'est jamais ≥ 6), la récursion gamesA+1 est infinie →
+  // « Maximum call stack size exceeded » pendant le render des cards tennis.
+  if (!Number.isFinite(gamesA) || !Number.isFinite(gamesB)) return 0.5;
+  if (!Number.isFinite(holdA) || !Number.isFinite(holdB)) return 0.5;
   const key: string = memoKey(gamesA, gamesB, serverNext, holdA, holdB);
 
   // Vérifier la mémoïsation
@@ -202,6 +207,9 @@ export function setScoreDistribution(
   gamesA: number = 0,
   gamesB: number = 0
 ): Record<string, number> {
+  // Garde anti-RangeError (9eo6) — voir setWinProb.
+  if (!Number.isFinite(gamesA) || !Number.isFinite(gamesB)) return {};
+  if (!Number.isFinite(holdA) || !Number.isFinite(holdB)) return {};
   const key: string = memoKey(gamesA, gamesB, serverFirst, holdA, holdB);
 
   const cached = distMemo.get(key);
@@ -332,6 +340,9 @@ export function expectedRemainingGames(
   gamesA: number = 0,
   gamesB: number = 0
 ): number {
+  // Garde anti-RangeError (9eo6) — voir setWinProb.
+  if (!Number.isFinite(gamesA) || !Number.isFinite(gamesB)) return 0;
+  if (!Number.isFinite(holdA) || !Number.isFinite(holdB)) return 0;
   const key: string = memoKey(gamesA, gamesB, serverFirst, holdA, holdB);
 
   const cached = gamesMemo.get(key);
@@ -746,6 +757,10 @@ export function gameWinProbFromScore(
   pServeA: number,
   pServeB: number
 ): number {
+  // Garde anti-RangeError (9eo6) — voir setWinProb. Les points peuvent
+  // arriver non coercés depuis BSD en période de quota.
+  if (!Number.isFinite(ptsA) || !Number.isFinite(ptsB)) return 0.5;
+  if (!Number.isFinite(pServeA) || !Number.isFinite(pServeB)) return 0.5;
   // Terminaux défensifs (le feed ne devrait jamais les produire).
   if (ptsA >= 4 && ptsA - ptsB >= 2) return 1;
   if (ptsB >= 4 && ptsB - ptsA >= 2) return 0;

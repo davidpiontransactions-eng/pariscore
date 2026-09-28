@@ -50,6 +50,15 @@ async function fetchWithTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
     const transient =
       code === "BSD_RATE_LIMIT" || (typeof status === "number" && status >= 500 && status < 600);
     if (!transient) throw err;
+    // 429 BSD : ne réessaie QUE si la reprise est imminente (burst ≤ 5 s,
+    // Retry-After: 1). Un quota journalier (Retry-After ~ heures, ou absent)
+    // remonte immédiatement → la route bascule sur ses autres sources.
+    if (code === "BSD_RATE_LIMIT") {
+      const retryAfter = (err as { retryAfterSec?: number }).retryAfterSec;
+      if (retryAfter == null || retryAfter > 5) throw err;
+      await new Promise((r) => setTimeout(r, Math.max(1, retryAfter) * 1000));
+      return fn();
+    }
     await new Promise((r) => setTimeout(r, 300));
     return fn();
   }
