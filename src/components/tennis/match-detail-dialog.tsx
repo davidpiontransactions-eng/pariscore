@@ -86,6 +86,14 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
   const va = hasA ? (valueA as number) : 0;
   const vb = hasB ? (valueB as number) : 0;
   const pct = hasA || hasB ? (va + vb > 0 ? (va / (va + vb)) * 100 : 50) : 0;
+  // Lisibilité (charte FotMob) : % → entier, autres floats → 1 décimale
+  // avec virgule FR — plus de « 63.95348837209303% ».
+  const disp = (n: number): string =>
+    unit === "%"
+      ? String(Math.round(n))
+      : Number.isInteger(n)
+        ? String(n)
+        : n.toFixed(1).replace(".", ",");
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/15 p-3">
@@ -94,7 +102,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="text-base font-bold" style={{ color: pct >= 50 ? undefined : undefined }}>
-          {hasA ? va : "—"}{hasA ? unit ?? "" : ""}
+          {hasA ? disp(va) : "—"}{hasA ? unit ?? "" : ""}
         </span>
         <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
           <div
@@ -103,7 +111,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
           />
         </div>
         <span className="text-base font-bold">
-          {hasB ? vb : "—"}{hasB ? unit ?? "" : ""}
+          {hasB ? disp(vb) : "—"}{hasB ? unit ?? "" : ""}
         </span>
       </div>
     </div>
@@ -304,7 +312,13 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-[min(90vw,56rem)] overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+      {/* Coque OPAQUE charte FotMob claire : la classe `liquid-glass--clear`
+          du DialogContent commun n'a AUCUNE CSS dans le repo → popup
+          transparente (seul border/shadow) + tokens par défaut parfois sombres.
+          `bg-white!` force le fond (important = bat toute règle non-layered)
+          et les variables scopées redditionnent tout le sous-arbre en clair,
+          quel que soit le thème global. */}
+      <DialogContent className="bg-white! text-[#222222] border-[#e5e5e5] [--background:#ffffff] [--foreground:#222222] [--card:#ffffff] [--card-foreground:#222222] [--muted:#f1f2f3] [--muted-foreground:#717171] [--border:#e5e5e5] [--input:#e5e5e5] [--primary:#111827] [--primary-foreground:#ffffff] [--secondary:#f1f2f3] [--secondary-foreground:#222222] [--accent:#10b981] [--accent-foreground:#ffffff] [--ring:#10b981] [--popover:#ffffff] [--popover-foreground:#222222] max-h-[90vh] sm:max-h-[90dvh] w-[95vw] max-w-[min(90vw,56rem)] overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader className="border-b border-border/60 px-5 py-4">
           <div className="flex items-center gap-2">
@@ -385,9 +399,9 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                         label={t("centralProb")}
                         value={
                           <div className="flex items-baseline gap-2">
-                            <span style={{ color: playerA.color }}>{probA.toFixed(2)}%</span>
+                            <span style={{ color: playerA.color }}>{Math.round(probA)}%</span>
                             <span className="text-sm font-semibold text-muted-foreground">/</span>
-                            <span style={{ color: playerB.color }}>{probB.toFixed(2)}%</span>
+                            <span style={{ color: playerB.color }}>{Math.round(probB)}%</span>
                           </div>
                         }
                         description={
@@ -410,8 +424,8 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                       <KpiCard
                         icon={<Target className="h-4 w-4" />}
                         label={t("confidence")}
-                        value={`${(stats.confidence * 100).toFixed(2)}%`}
-                        description={t("confidenceHint", { lo: stats.ic[0].toFixed(2), hi: stats.ic[1].toFixed(2) })}
+                        value={`${Math.round(stats.confidence * 100)}%`}
+                        description={t("confidenceHint", { lo: stats.ic[0].toFixed(1), hi: stats.ic[1].toFixed(1) })}
                         badge={`IC 95%`}
                       />
                     </>
