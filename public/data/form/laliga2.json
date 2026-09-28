@@ -4,50 +4,14 @@
     "leagueId": "laliga2",
     "leagueName": "Spain2",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-27T10:07:51.451264Z",
+    "lastUpdated": "2026-09-28T11:07:55.257504Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
-    "teamCount": 25,
+    "teamCount": 24,
     "window": 8,
     "targetWindow": 5,
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Burgos",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 7,
-      "ga": 2
-    },
-    {
-      "teamName": "Almeria",
-      "gp": 5,
-      "w": 5,
-      "d": 0,
-      "l": 0,
-      "gf": 13,
-      "ga": 4
-    },
-    {
-      "teamName": "Ceuta",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 6
-    },
-    {
-      "teamName": "Real Zaragoza",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 5,
-      "ga": 7
-    },
     {
       "teamName": "Leonesa",
       "gp": 5,
@@ -58,40 +22,13 @@
       "ga": 10
     },
     {
-      "teamName": "Castellon",
+      "teamName": "Valladolid",
       "gp": 5,
       "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 11,
-      "ga": 3
-    },
-    {
-      "teamName": "Mallorca",
-      "gp": 3,
-      "w": 3,
-      "d": 0,
-      "l": 0,
-      "gf": 7,
-      "ga": 0
-    },
-    {
-      "teamName": "Granada",
-      "gp": 5,
-      "w": 2,
       "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 8
-    },
-    {
-      "teamName": "Huesca",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 6
+      "l": 1,
+      "gf": 6,
+      "ga": 3
     },
     {
       "teamName": "Malaga",
@@ -103,22 +40,49 @@
       "ga": 7
     },
     {
-      "teamName": "Real Sociedad B",
+      "teamName": "Burgos",
+      "gp": 5,
+      "w": 4,
+      "d": 2,
+      "l": 0,
+      "gf": 10,
+      "ga": 5
+    },
+    {
+      "teamName": "Mirandes",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 6
+    },
+    {
+      "teamName": "Leganes",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
+    },
+    {
+      "teamName": "Ceuta",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 6
+    },
+    {
+      "teamName": "Huesca",
       "gp": 5,
       "w": 1,
       "d": 2,
       "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Albacete",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 8
+      "gf": 4,
+      "ga": 6
     },
     {
       "teamName": "Cordoba",
@@ -130,22 +94,13 @@
       "ga": 8
     },
     {
-      "teamName": "Fc Andorra",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 10,
-      "ga": 6
-    },
-    {
-      "teamName": "Cadiz",
-      "gp": 5,
-      "w": 1,
+      "teamName": "Mallorca",
+      "gp": 4,
+      "w": 3,
       "d": 0,
-      "l": 4,
-      "gf": 3,
-      "ga": 8
+      "l": 1,
+      "gf": 7,
+      "ga": 1
     },
     {
       "teamName": "Racing",
@@ -157,6 +112,42 @@
       "ga": 8
     },
     {
+      "teamName": "Albacete",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 8
+    },
+    {
+      "teamName": "Eibar",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 10,
+      "ga": 6
+    },
+    {
+      "teamName": "Real Zaragoza",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 7
+    },
+    {
+      "teamName": "Almeria",
+      "gp": 5,
+      "w": 5,
+      "d": 0,
+      "l": 0,
+      "gf": 13,
+      "ga": 4
+    },
+    {
       "teamName": "Las Palmas",
       "gp": 5,
       "w": 4,
@@ -166,40 +157,31 @@
       "ga": 2
     },
     {
-      "teamName": "Deportivo",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 8,
-      "ga": 6
-    },
-    {
-      "teamName": "Valladolid",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 6,
-      "ga": 3
-    },
-    {
-      "teamName": "Mirandes",
+      "teamName": "Fc Andorra",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
-      "gf": 6,
+      "gf": 10,
       "ga": 6
     },
     {
-      "teamName": "Girona",
-      "gp": 4,
+      "teamName": "Castellon",
+      "gp": 5,
       "w": 2,
       "d": 1,
       "l": 1,
       "gf": 9,
-      "ga": 5
+      "ga": 7
+    },
+    {
+      "teamName": "Cadiz",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 3,
+      "ga": 8
     },
     {
       "teamName": "Sporting Gijon",
@@ -211,22 +193,13 @@
       "ga": 4
     },
     {
-      "teamName": "Leganes",
+      "teamName": "Granada",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
-      "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "Eibar",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 1,
-      "gf": 11,
-      "ga": 5
+      "gf": 9,
+      "ga": 8
     },
     {
       "teamName": "Sabadell",
@@ -236,9 +209,63 @@
       "l": 0,
       "gf": 7,
       "ga": 3
+    },
+    {
+      "teamName": "Deportivo",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Real Sociedad B",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
     }
   ],
   "away": [
+    {
+      "teamName": "Leonesa",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 8
+    },
+    {
+      "teamName": "Valladolid",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 5,
+      "ga": 10
+    },
+    {
+      "teamName": "Malaga",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 12,
+      "ga": 6
+    },
+    {
+      "teamName": "Girona",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 5,
+      "ga": 3
+    },
     {
       "teamName": "Burgos",
       "gp": 5,
@@ -249,12 +276,12 @@
       "ga": 3
     },
     {
-      "teamName": "Almeria",
+      "teamName": "Mirandes",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 2,
-      "gf": 6,
+      "gf": 7,
       "ga": 10
     },
     {
@@ -267,40 +294,13 @@
       "ga": 10
     },
     {
-      "teamName": "Real Zaragoza",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 3,
-      "ga": 6
-    },
-    {
-      "teamName": "Leonesa",
+      "teamName": "Leganes",
       "gp": 5,
       "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 8
-    },
-    {
-      "teamName": "Castellon",
-      "gp": 5,
-      "w": 4,
       "d": 1,
-      "l": 0,
-      "gf": 8,
-      "ga": 6
-    },
-    {
-      "teamName": "Granada",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 6,
-      "ga": 8
+      "l": 4,
+      "gf": 3,
+      "ga": 9
     },
     {
       "teamName": "Huesca",
@@ -312,57 +312,12 @@
       "ga": 12
     },
     {
-      "teamName": "Malaga",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 12,
-      "ga": 6
-    },
-    {
-      "teamName": "Real Sociedad B",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 8
-    },
-    {
-      "teamName": "Albacete",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 4
-    },
-    {
       "teamName": "Cordoba",
       "gp": 5,
       "w": 2,
       "d": 0,
       "l": 3,
       "gf": 8,
-      "ga": 11
-    },
-    {
-      "teamName": "Fc Andorra",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 11,
-      "ga": 5
-    },
-    {
-      "teamName": "Cadiz",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 5,
       "ga": 11
     },
     {
@@ -375,6 +330,51 @@
       "ga": 8
     },
     {
+      "teamName": "Albacete",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Eibar",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 9,
+      "ga": 2
+    },
+    {
+      "teamName": "Real Zaragoza",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 3,
+      "ga": 6
+    },
+    {
+      "teamName": "Real Oviedo",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 5,
+      "ga": 3
+    },
+    {
+      "teamName": "Almeria",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 10
+    },
+    {
       "teamName": "Las Palmas",
       "gp": 5,
       "w": 2,
@@ -382,6 +382,51 @@
       "l": 2,
       "gf": 8,
       "ga": 9
+    },
+    {
+      "teamName": "Fc Andorra",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 11,
+      "ga": 5
+    },
+    {
+      "teamName": "Castellon",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Cadiz",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 11
+    },
+    {
+      "teamName": "Sporting Gijon",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "Granada",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 6,
+      "ga": 8
     },
     {
       "teamName": "Deportivo",
@@ -393,58 +438,13 @@
       "ga": 5
     },
     {
-      "teamName": "Mirandes",
+      "teamName": "Real Sociedad B",
       "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 10
-    },
-    {
-      "teamName": "Valladolid",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 5,
-      "ga": 10
-    },
-    {
-      "teamName": "Girona",
-      "gp": 3,
       "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 5,
-      "ga": 3
-    },
-    {
-      "teamName": "Sporting Gijon",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 6
-    },
-    {
-      "teamName": "Leganes",
-      "gp": 5,
-      "w": 0,
       "d": 1,
-      "l": 4,
-      "gf": 3,
-      "ga": 9
-    },
-    {
-      "teamName": "Eibar",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
+      "l": 2,
       "gf": 9,
-      "ga": 2
+      "ga": 8
     }
   ]
 }
