@@ -27,7 +27,7 @@ import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top
 import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
 import { useTeamAttackDefenseStats } from "@/hooks/use-team-attack-defense-stats";
 import { MatchCardSkeleton } from "@/components/mobile/match-card-skeleton";
-import { FootballLiveCardSkeleton } from "./football-live-card";
+import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
 import { FootballBankerWidget } from "./football-banker";
 import { FootballTop10Widget } from "./football-top10-widget";
@@ -62,6 +62,10 @@ const FootballMatchDetailDialog = lazy(() =>
 );
 
 type FootFilter = StrategyFilter;
+
+/** Nombre maximal de cartes live riches affichées au-dessus du tableau Flashscore.
+ *  Le tableau reste la vue d'ensemble complète (une soirée peut avoir 50+ matchs). */
+const LIVE_CARD_LIMIT = 6;
 
 export function FootballTabContent() {
   const t = useTranslations("common");
@@ -413,8 +417,19 @@ export function FootballTabContent() {
                       EN DIRECT ({liveMatches.length})
                     </h2>
                   </div>
-                  {/* Tableau Live (style Flashscore, groupé par ligue) — remplace
-                      les cartes : minute, score, cotes 1X2, favoris, détail. */}
+                  {/* Cartes live riches (style AiScore) — score, stats BSD
+                      complètes, corners/buts/passes, 3 paris prédictifs,
+                      évolution xG. Section « moment fort » : les cartes ne
+                      couvrent que les premiers matchs, le tableau Flashscore
+                      ci-dessous reste la vue d'ensemble complète. */}
+                  <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {liveMatches.slice(0, LIVE_CARD_LIMIT).map((m) => (
+                      <FootballLiveCard key={m.id} match={m} onOpenDetail={openDetail} />
+                    ))}
+                  </div>
+                  {/* Tableau Live (style Flashscore, groupé par ligue) — vue
+                      d'ensemble complète : minute, score, cotes 1X2, favoris,
+                      détail. */}
                   <FlashscoreFootballList
                     matches={liveMatches}
                     favoriteIds={favorites}

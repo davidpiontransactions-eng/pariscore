@@ -2,16 +2,84 @@
 
 import { useState, useMemo, useRef, useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircle, LayoutGrid, Zap, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreFlash } from "@/components/shared/score-flash";
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
-import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { countryFlag } from "@/lib/country-flag";
 import { CORNER_OVER_MIN_PROB } from "@/lib/football-predictions";
 import { WatchButton } from "@/components/shared/watch-button";
 import { FollowButton } from "@/components/shared/follow-button";
+import { useFootballMatchStats } from "@/hooks/use-football-match-stats";
+import type { MomentumTimePoint } from "@/lib/football-timeline";
+
+// ─── Heatmap momentum (heatmap descriptive) ──────────────────────────────
+// Une cellule par bucket de 5 min : vert = domicile domine, rose = extérieur.
+// L'opacité encode l'intensité de la domination, d'où le nom « descriptive ».
+function MomentumHeatmap({ momentum }: { momentum: MomentumTimePoint[] }) {
+  if (momentum.length < 2) return null;
+  const cells = [...momentum].sort((a, b) => a.minute - b.minute);
+
+  return (
+    <div className="mt-3 border-t border-border/40 pt-3">
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-muted-foreground">
+          <LayoutGrid className="h-3 w-3" aria-hidden="true" /> Heatmap momentum
+        </span>
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" /> Dom.
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-sm bg-rose-500" /> Ext.
+          </span>
+        </span>
+      </div>
+      <div
+        className="flex h-5 gap-px overflow-hidden rounded-md"
+        role="img"
+        aria-label="Heatmap momentum par tranches de 5 minutes — vert : avantage domicile, rose : extérieur"
+      >
+        {cells.map((c) => {
+          const home = c.value >= 0;
+          const intensity = Math.min(1, Math.abs(c.value) / 100);
+          return (
+            <div
+              key={c.minute}
+              className="flex-1"
+              title={`${c.minute}' — ${home ? "domicile" : "extérieur"} ${Math.round(Math.abs(c.value))}`}
+              style={{
+                backgroundColor: home
+                  ? `rgba(16, 185, 129, ${(0.18 + intensity * 0.72).toFixed(2)})`
+                  : `rgba(244, 63, 94, ${(0.18 + intensity * 0.72).toFixed(2)})`,
+              }}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-0.5 flex justify-between text-[10px] text-muted-foreground/60">
+        <span>0&apos;</span>
+        <span>{cells[Math.floor(cells.length / 2)].minute}&apos;</span>
+        <span>{cells[cells.length - 1].minute}&apos;</span>
+      </div>
+    </div>
+  );
+}
+
+/** Puissance du match : intensité moyenne de la domination (0-100) + camp en avantage. */
+function matchPower(momentum: MomentumTimePoint[]) {
+  if (momentum.length === 0) return null;
+  const avgAbs = momentum.reduce((s, p) => s + Math.abs(p.value), 0) / momentum.length;
+  const net = momentum.reduce((s, p) => s + p.value, 0) / momentum.length;
+  return {
+    power: Math.round(Math.min(100, avgAbs)),
+    leanHome: net >= 0,
+    net: Math.round(net),
+  };
+}
+
 
 // ─── Sparkline xG Live ───────────────────────────────────────────────────
 
@@ -232,6 +300,10 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
   const p = match.prediction;
   // Hook appelé inconditionnellement (règles des hooks) avant l'early return.
   const [expanded, setExpanded] = useState(false);
+  // Timeline momentum/pression : absente du flux list live (champs « lazy » de
+  // FootballLiveState) → fetch dédié sur la route cache 60 s. Best-effort :
+  // `timeline` null → blocs intensité/heatmap/puissance simplement omis.
+  const timeline = useFootballMatchStats(match.id, live != null);
 
   // Annonceur live contextuel : le score est annoncé en toutes lettres à
   // chaque but (aria-atomic = message complet, jamais un chiffre nu).
@@ -414,6 +486,69 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           </div>
         )}
 
+        {/* Intensité (pression live) + puissance du match — le rythme réel,
+            pas seulement les cumulés. Blocs omis si la timeline est absente.
+            La pression est rendue en jauge StatRow (theme-neutre) : le
+            PressureDuoDonuts existant porte la palette claire FOT en inline
+            style, ililegit sur cette carte sombre. */}
+        {timeline && (() => {
+          const pow = matchPower(timeline.momentum);
+          if (!pow) return null;
+          const label = pow.power >= 55 ? "Intense" : pow.power >= 30 ? "Soutenue" : "Calme";
+          const leader = pow.leanHome
+            ? match.home.shortName || match.home.name
+            : match.away.shortName || match.away.name;
+          return (
+            <div className="mt-3 rounded-2xl border border-border/40 bg-muted/20 p-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Zap className="h-3 w-3" aria-hidden="true" /> Puissance du match
+                </span>
+                <span className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black tabular-nums">{pow.power}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">/ 100</span>
+                  <span
+                    className={cn(
+                      "rounded-md px-1.5 py-0.5 text-[11px] font-bold",
+                      pow.power >= 55
+                        ? "bg-rose-500/15 text-rose-500"
+                        : pow.power >= 30
+                          ? "bg-amber-500/15 text-amber-500"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border/50">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-rose-500 transition-[width]"
+                  style={{ width: `${pow.power}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {leader} domine ({pow.net >= 0 ? "+" : ""}
+                {pow.net})
+              </p>
+              {/* Intensité : pression live par camp (attaques + dangereuses + possession + tirs) */}
+              <div className="mt-2.5 border-t border-border/40 pt-2.5">
+                <div className="mb-1.5 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Flame className="h-3 w-3" aria-hidden="true" /> Pression live
+                </div>
+                <StatRow
+                  label="Press."
+                  home={timeline.pressure.homePct}
+                  away={timeline.pressure.awayPct}
+                />
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Heatmap descriptive — momentum 5' par cellule, domination en couleur */}
+        {timeline && <MomentumHeatmap momentum={timeline.momentum} />}
+
         {/* xGd badge + Top predictions */}
         {(xGdPct !== null || topBadges.length > 0) && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/40 pt-3">
@@ -451,7 +586,12 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
 
         {/* Sparkline xG Live — Innovation 3 */}
         {(() => {
-          const rawPts = live.xgPerMinute;
+          // Repli timeline (/stats) : le champ `xgPerMinute` est absent du flux
+          // list live, donc sans ce repli la courbe ne s'affichait jamais ici.
+          const rawPts =
+            live.xgPerMinute && live.xgPerMinute.length > 0
+              ? live.xgPerMinute
+              : timeline?.xgPerMinute;
           if (rawPts && rawPts.length > 0) {
             // Calculer le xG cumulé à chaque minute
             let homeSum = 0;
