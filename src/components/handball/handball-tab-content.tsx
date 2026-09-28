@@ -9,6 +9,7 @@ import { HandballMatchCard } from "./handball-match-card";
 import { pillClass } from "./handball-pill";
 import { HandballMatchDetailDialog } from "./handball-match-detail-dialog";
 import { HandballFilters } from "./handball-filters";
+import { HandballLeaguePopover, type LeagueOption } from "./handball-league-popover";
 import { HandballStrategyBar } from "./handball-strategy-bar";
 import { HandballTop8Widget } from "./handball-top8-widget";
 import { HandballVitibetTop10 } from "./handball-vitibet-top10";
@@ -152,12 +153,52 @@ function HandballResultsToday({
       revalidateOnFocus: false,
     });
 
-  // Taux de réussite concrétisé des picks du jour (verdicts sur résultats finaux).
+  // ── Filtres de la table 7 jours (demande user : par date + championnat) ──
+  const [day, setDay] = useState<string | null>(null);
+  const [league, setLeague] = useState<string | null>(null);
+
+  /** Fenêtre filtrée par JOURNEE (avant filtre ligue) — base des compteurs. */
+  const dayBase = useMemo(() => {
+    const all = results?.matches ?? [];
+    if (!day) return all;
+    return all.filter((m) => parisDay(m.kickoff) === day);
+  }, [results, day]);
+
+  /** Table affichée = jour × championnat combinés. */
+  const dayMatches = useMemo(
+    () => (league ? dayBase.filter((m) => m.league.name === league) : dayBase),
+    [dayBase, league],
+  );
+
+  /** Journées présentes (desc) → pilules de date avec compteurs. */
+  const dayOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of results?.matches ?? []) {
+      const d = parisDay(m.kickoff);
+      map.set(d, (map.get(d) ?? 0) + 1);
+    }
+    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [results]);
+
+  /** Championnats de la fenêtre (compteurs = après filtre jour). */
+  const leagueOptions = useMemo<LeagueOption[]>(() => {
+    const map = new Map<string, { count: number; country?: string }>();
+    for (const m of dayBase) {
+      const cur = map.get(m.league.name);
+      if (cur) cur.count++;
+      else map.set(m.league.name, { count: 1, country: m.league.country || undefined });
+    }
+    return [...map.entries()]
+      .map(([name, v]) => ({ name, count: v.count, country: v.country }))
+      .sort((a, b) => b.count - a.count);
+  }, [dayBase]);
+
+  // Taux de réussite concrétisé des picks (verdicts sur la SéLECTION filtrée).
   const verdictSummary = useMemo(() => {
     if (!results) return null;
     let won = 0;
     let total = 0;
-    for (const m of results.matches) {
+    for (const m of dayMatches) {
       const chips = chipsByMatch?.get(String(m.id));
       if (!chips) continue;
       for (const c of chips) {
@@ -168,7 +209,7 @@ function HandballResultsToday({
       }
     }
     return total > 0 ? { won, total } : null;
-  }, [results, chipsByMatch]);
+  }, [dayMatches, chipsByMatch]);
 
   return (
     <div className="space-y-4">
@@ -276,7 +317,14 @@ function HandballResultsToday({
           <h3 className="text-sm font-semibold text-[#222222]">📆 Résultats — 7 derniers jours</h3>
           {results && (
             <span className="text-xs text-[#717171]">
-              {results.count} match(s) terminé(s)
+              {dayMatches.length} match(s) terminé(s)
+              {(day || league) && (
+                <span className="text-[#717171]/70">
+                  {" "}
+                  (filtre{day ? ` du ${day.split("-").reverse().join("/")}` : ""}
+                  {league ? ` · ${league}` : ""})
+                </span>
+              )}
             </span>
           )}
           {verdictSummary && (
@@ -286,6 +334,44 @@ function HandballResultsToday({
             </span>
           )}
         </div>
+
+        {/* Filtres table : journée (pilules) + championnat (popover partagé) */}
+        {results && results.matches.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <HandballLeaguePopover
+              leagues={leagueOptions}
+              total={dayBase.length}
+              selected={league}
+              onSelect={setLeague}
+            />
+            <div
+              className="flex flex-wrap gap-1.5"
+              role="group"
+              aria-label="Filtrer par journée"
+            >
+              <button
+                type="button"
+                aria-pressed={day === null}
+                onClick={() => setDay(null)}
+                className={pillClass(day === null)}
+              >
+                Toutes ({results.matches.length})
+              </button>
+              {dayOptions.map(([d, n]) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={day === d}
+                  onClick={() => setDay(d)}
+                  className={pillClass(day === d)}
+                  title={fmtDayLabel(d)}
+                >
+                  {`${d.slice(8)}/${d.slice(5, 7)} (${n})`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {resultsLoading ? (
           <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
@@ -299,6 +385,22 @@ function HandballResultsToday({
           <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
             Aucun résultat sur les 7 derniers jours
           </div>
+        ) : dayMatches.length === 0 ? (
+          <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
+            Aucun résultat pour ce filtre
+            {(day || league) && (
+              <button
+                type="button"
+                className="ml-2 underline text-[#222222] hover:no-underline"
+                onClick={() => {
+                  setDay(null);
+                  setLeague(null);
+                }}
+              >
+                Réinitialiser
+              </button>
+            )}
+          </div>
         ) : (
           <>
             {results.stale && (
@@ -309,7 +411,7 @@ function HandballResultsToday({
             {(() => {
               // Groupement par journée Europe/Paris, du plus récent au plus ancien.
               const groups = new Map<string, HandballMatch[]>();
-              for (const m of results.matches) {
+              for (const m of dayMatches) {
                 const d = parisDay(m.kickoff);
                 const list = groups.get(d);
                 if (list) list.push(m);
