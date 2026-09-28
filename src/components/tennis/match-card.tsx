@@ -559,9 +559,10 @@ export function MatchCard({
           />
         )}
 
-        {/* Live Matrix — cotes justes par état de points du jeu (Betfair
-            Tennis Trader) : prédit l'évolution des cotes 1xBet selon le
-            prochain point. Se masque lui-même hors live / match terminé. */}
+        {/* Live Matrix « La Fourche » — pivot cote 1xBet + 2 issues du
+            prochain point (cotes justes, delta, P(jeu)/P(match)) :
+            « qui gagne ce jeu ? » + où va la cote en 1 regard.
+            Se masque lui-même hors live / match terminé. */}
         {!isSynthetic && (
           <LiveScoreMatrix
             match={match}

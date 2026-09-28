@@ -820,7 +820,11 @@
     "deuce": "Deuce 40-40",
     "cellTip": "{score} → P(match {player}): {prob}% · fair odds {odd}",
     "noOdds": "Live 1xBet odds unavailable — model still shown",
-    "matchOver": "Match finished"
+    "matchOver": "Match finished",
+    "branchWin": "{player} wins the point",
+    "takesGame": "TAKES THE GAME",
+    "pGame": "P(game)",
+    "pMatch": "P(match)"
   },
   "mostAces": {
     "title": "Most aces",

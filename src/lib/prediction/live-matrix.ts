@@ -39,6 +39,34 @@ export type LiveMatrixCell = {
   fairOddB: number;
 };
 
+/**
+ * Branche de « La Fourche » — état du jeu/match APRÈS le prochain point
+ * gagné par le joueur désigné. Probabilités exprimées du point de vue de A
+ * (l'affichage dérive celles du bénéficiaire : 1 − p).
+ */
+export type LiveForkBranch = {
+  /** Ce point met fin au jeu (pour son gagnant). */
+  gameEnding: boolean;
+  /** P(A gagne le jeu) après ce point. */
+  pGameA: number;
+  /** P(A gagne le set) après ce point. */
+  pSetA: number;
+  /** P(A gagne le match) après ce point. */
+  pMatchA: number;
+  /** Cote juste A (après), plafonnée à 999. */
+  fairOddA: number;
+  /** Cote juste B (après), plafonnée à 999. */
+  fairOddB: number;
+};
+
+/** Les deux issues possibles du prochain point (décision en 1 regard). */
+export type LiveMatrixFork = {
+  /** Issue « A gagne le point ». */
+  winPointA: LiveForkBranch;
+  /** Issue « B gagne le point ». */
+  winPointB: LiveForkBranch;
+};
+
 /** Modèle complet consommé par le composant d'affichage. */
 export type LiveMatrixModel = {
   /** Grille 4×4 : cells[ptsA][ptsB]. */
@@ -58,6 +86,8 @@ export type LiveMatrixModel = {
   pWinSetFresh: number;
   /** Best-of-3 ? */
   bo3: boolean;
+  /** Les deux issues du prochain point (« La Fourche »). */
+  fork: LiveMatrixFork;
 };
 
 /** Paramètres d'entrée de buildLiveMatrix. */
@@ -164,6 +194,38 @@ export function buildLiveMatrix(input: LiveMatrixInput): LiveMatrixModel {
     cells.push(row);
   }
 
+  // ── « La Fourche » : les deux issues du prochain point ──────────────────
+  // Calcul depuis les points BRUTS (0..3, 4+ = avantage) — la grille 4×4
+  // clamp, elle, avantage et deuce en (3,3) : utiliser `current` ici
+  // annulerait tout delta de cote au deuce.
+  const [rawA, rawB] = input.points;
+  const gameEndingIfA = rawA + 1 >= 4 && rawA + 1 - rawB >= 2;
+  const gameEndingIfB = rawB + 1 >= 4 && rawB + 1 - rawA >= 2;
+  const pGameAAfterA = gameEndingIfA
+    ? 1
+    : gameWinProbFromScore(rawA + 1, rawB, server, pServeA, pServeB);
+  const pGameAAfterB = gameEndingIfB
+    ? 0
+    : gameWinProbFromScore(rawA, rawB + 1, server, pServeA, pServeB);
+  const mkBranch = (pGameAfter: number, gameEnding: boolean): LiveForkBranch => {
+    const pSet = pGameAfter * setAfterWin + (1 - pGameAfter) * setAfterLoss;
+    memo.clear();
+    const pMatch = dp(sA, sB, pSet);
+    const pBOpp = Math.max(0.001, Math.min(0.999, 1 - pMatch));
+    return {
+      gameEnding,
+      pGameA: pGameAfter,
+      pSetA: pSet,
+      pMatchA: pMatch,
+      fairOddA: pMatch > 0.001 ? Math.min(999, 1 / pMatch) : 999,
+      fairOddB: Math.min(999, 1 / pBOpp),
+    };
+  };
+  const fork: LiveMatrixFork = {
+    winPointA: mkBranch(pGameAAfterA, gameEndingIfA),
+    winPointB: mkBranch(pGameAAfterB, gameEndingIfB),
+  };
+
   return {
     cells,
     current: { ptsA: currentPtsA, ptsB: currentPtsB },
@@ -174,6 +236,7 @@ export function buildLiveMatrix(input: LiveMatrixInput): LiveMatrixModel {
     pServeB,
     pWinSetFresh,
     bo3,
+    fork,
   };
 }
 

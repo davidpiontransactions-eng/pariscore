@@ -495,8 +495,9 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
           className="mt-2"
         />
 
-        {/* Live Matrix — cotes justes par état de points du jeu (Betfair
-            Tennis Trader). Se masque lui-même hors live / match terminé. */}
+        {/* Live Matrix « La Fourche » — pivot cote 1xBet + 2 issues du
+            prochain point (cotes justes, delta, P(jeu)/P(match)).
+            Se masque lui-même hors live / match terminé. */}
         <LiveScoreMatrix
           match={match}
           liveState={isLive ? liveState : undefined}

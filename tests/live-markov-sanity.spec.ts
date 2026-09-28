@@ -15,6 +15,7 @@ import {
   clearAllMemos,
   gameWinProbFromScore,
   blendServeRecent,
+  setWinProb,
 } from "../src/lib/prediction/live-markov";
 import {
   playerTotalGames,
@@ -762,6 +763,33 @@ describe("live-matrix (6ljb)", () => {
     }
   });
 
+  it("fourche : fork présent et monotone (A gagne le point ≥ B gagne le point)", () => {
+    const m = buildLiveMatrix(baseInput);
+    expect(m.fork.winPointA.pGameA).toBeGreaterThanOrEqual(m.fork.winPointB.pGameA);
+    expect(m.fork.winPointA.pMatchA).toBeGreaterThanOrEqual(m.fork.winPointB.pMatchA);
+    const pa = m.fork.winPointA.pMatchA;
+    if (pa > 0.001 && pa < 0.999) {
+      expect(m.fork.winPointA.fairOddA * pa).toBeCloseTo(1, 6);
+    }
+  });
+
+  it("fourche : 40-30 → le point de A clôt le jeu (gameEnding)", () => {
+    const m = buildLiveMatrix({ ...baseInput, games: [5, 4], points: [3, 2] });
+    expect(m.fork.winPointA.gameEnding).toBe(true);
+    expect(m.fork.winPointA.pGameA).toBe(1);
+    expect(m.fork.winPointB.gameEnding).toBe(false);
+    expect(m.fork.winPointB.pGameA).toBeLessThan(1);
+  });
+
+  it("fourche au deuce : deltas non nuls (points BRUTS, pas le clamp 3-3)", () => {
+    const m = buildLiveMatrix({ ...baseInput, points: [3, 3] });
+    expect(m.fork.winPointA.gameEnding).toBe(false);
+    expect(m.fork.winPointB.gameEnding).toBe(false);
+    // B sert (A retourne, pPointA = 0.38) : Av. A > Av. B en proba.
+    expect(m.fork.winPointA.pGameA).toBeGreaterThan(m.fork.winPointB.pGameA);
+    expect(m.fork.winPointA.fairOddA).toBeLessThan(m.fork.winPointB.fairOddA);
+  });
+
   it("matrixBreakPointSide détecte la balle de break", () => {
     // B sert, A au retour à 40-30 → balle de break A.
     expect(matrixBreakPointSide(3, 2, "B")).toBe("A");
@@ -773,5 +801,32 @@ describe("live-matrix (6ljb)", () => {
     expect(matrixBreakPointSide(4, 3, "B")).toBe("A");
     // 40-30 pour le serveur : rien.
     expect(matrixBreakPointSide(3, 2, "A")).toBeNull();
+  });
+});
+
+// ─── Gardes anti-RangeError (9eo6) ──────────────────────────────────────────
+// Un payload BSD non coercé (quota 429/402) pouvait injecter NaN dans les
+// récursions → « Maximum call stack size exceeded » sur l'onglet tennis.
+
+describe("gardes NaN — anti « Maximum call stack size exceeded » (9eo6)", () => {
+  beforeEach(() => clearAllMemos());
+
+  it("setWinProb renvoie 0.5 si jeux/holds non finis (récursion stoppée)", () => {
+    expect(setWinProb(0.7, 0.6, 0, 0, 1, Number.NaN, 0, "A")).toBe(0.5);
+    expect(setWinProb(0.7, 0.6, 0, 0, 1, 3, Number.NaN, "A")).toBe(0.5);
+    expect(setWinProb(Number.NaN, 0.6, 0, 0, 1, 3, 3, "A")).toBe(0.5);
+  });
+
+  it("setScoreDistribution / expectedRemainingGames renvoient le défaut", () => {
+    expect(setScoreDistribution(0.7, 0.6, "A", Number.NaN, 3)).toEqual({});
+    expect(setScoreDistribution(0.7, 0.6, "A", 3, Number.NaN)).toEqual({});
+    expect(expectedRemainingGames(0.7, 0.6, "A", Number.NaN, 3)).toBe(0);
+    expect(expectedRemainingGames(0.7, 0.6, "A", 3, Number.NaN)).toBe(0);
+  });
+
+  it("gameWinProbFromScore renvoie 0.5 si points/holds non finis", () => {
+    expect(gameWinProbFromScore(Number.NaN, 2, "A", 0.6, 0.55)).toBe(0.5);
+    expect(gameWinProbFromScore(3, 3, "A", Number.NaN, 0.55)).toBe(0.5);
+    expect(gameWinProbFromScore(3, Number.NaN, "A", 0.6, Number.NaN)).toBe(0.5);
   });
 });

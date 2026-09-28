@@ -820,7 +820,11 @@
     "deuce": "Égalité 40-40",
     "cellTip": "{score} → P(match {player}) : {prob}% · cote juste {odd}",
     "noOdds": "Cotes live 1xBet indisponibles — le modèle reste consultable",
-    "matchOver": "Match terminé"
+    "matchOver": "Match terminé",
+    "branchWin": "{player} gagne le point",
+    "takesGame": "PREND LE JEU",
+    "pGame": "P(jeu)",
+    "pMatch": "P(match)"
   },
   "mostAces": {
     "title": "Most aces",
