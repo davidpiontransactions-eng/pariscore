@@ -88,6 +88,8 @@ const fmtDayLabel = (isoDate: string): string =>
 
 type ResultsTodayPayload = {
   date: string;
+  /** Fenêtre glissante en jours (défaut 7 — bead 4pvy). */
+  days?: number;
   matches: HandballMatch[];
   source: string;
   scrapedAt: string | null;
@@ -139,7 +141,7 @@ function HandballResultsToday({
   chipsByMatch?: ReadonlyMap<string, readonly StrategyChip[]>;
 }) {
   const { data: results, error: resultsError, isLoading: resultsLoading } =
-    useSWR<ResultsTodayPayload>("/api/handball/results-today", fetchJson, {
+    useSWR<ResultsTodayPayload>("/api/handball/results-today?days=7", fetchJson, {
       refreshInterval: 5 * 60_000,
       dedupingInterval: 2 * 60_000,
       revalidateOnFocus: false,
@@ -268,10 +270,10 @@ function HandballResultsToday({
         )}
       </section>
 
-      {/* Liste des résultats du jour */}
+      {/* Liste des résultats — 7 derniers jours groupés par journée (4pvy) */}
       <section className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2">
-          <h3 className="text-sm font-semibold text-[#222222]">📆 Résultats du jour</h3>
+          <h3 className="text-sm font-semibold text-[#222222]">📆 Résultats — 7 derniers jours</h3>
           {results && (
             <span className="text-xs text-[#717171]">
               {results.count} match(s) terminé(s)
@@ -279,7 +281,7 @@ function HandballResultsToday({
           )}
           {verdictSummary && (
             <span className="text-xs font-semibold" title="Picks des stratégies concrétisés sur les résultats (Over/Under sans ligne = non verdictés)">
-              Picks du jour : {verdictSummary.won}/{verdictSummary.total} ✅ (
+              Picks (7 j) : {verdictSummary.won}/{verdictSummary.total} ✅ (
               {Math.round((verdictSummary.won / verdictSummary.total) * 100)}%)
             </span>
           )}
@@ -295,7 +297,7 @@ function HandballResultsToday({
           </div>
         ) : results.matches.length === 0 ? (
           <div className="py-6 text-center text-sm text-[#717171]" aria-live="polite">
-            Aucun résultat aujourd&apos;hui
+            Aucun résultat sur les 7 derniers jours
           </div>
         ) : (
           <>
@@ -304,8 +306,26 @@ function HandballResultsToday({
                 ⚠️ Snapshot Flashscore de plus de 20h — résultats potentiellement incomplets.
               </p>
             )}
-            <ul className="space-y-2">
-              {results.matches.map((m) => {
+            {(() => {
+              // Groupement par journée Europe/Paris, du plus récent au plus ancien.
+              const groups = new Map<string, HandballMatch[]>();
+              for (const m of results.matches) {
+                const d = parisDay(m.kickoff);
+                const list = groups.get(d);
+                if (list) list.push(m);
+                else groups.set(d, [m]);
+              }
+              const daysDesc = [...groups.keys()].sort().reverse();
+              return daysDesc.map((day) => (
+                <div key={day} className="space-y-1.5">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-[#717171]">
+                    {fmtDayLabel(day)}
+                    <span className="ml-1 font-normal normal-case">
+                      · {groups.get(day)!.length} match(s)
+                    </span>
+                  </h4>
+                  <ul className="space-y-2">
+                    {groups.get(day)!.map((m) => {
                 const chips = chipsByMatch?.get(String(m.id));
                 const diff = (m.score?.home ?? 0) - (m.score?.away ?? 0);
                 return (
@@ -362,11 +382,14 @@ function HandballResultsToday({
                   </button>
                 </li>
                 );
-              })}
-            </ul>
-          </>
-        )}
-      </section>
+                    })}
+                    </ul>
+                  </div>
+                ));
+              })()}
+            </>
+          )}
+        </section>
     </div>
   );
 }
@@ -454,7 +477,7 @@ export function HandballTabContent() {
           <h3 className="text-sm font-semibold text-[#222222]">📅 Calendrier handball</h3>
           <span className="text-xs text-[#717171]">
             {mode === "results"
-              ? `${resultsToday.length} résultat(s) du jour`
+              ? `${resultsToday.length} résultat(s) aujourd'hui — panneau sur 7 j`
               : mode === "live"
                 ? `${live.length} match(s) en direct`
                 : mode === "top10"
@@ -493,7 +516,7 @@ export function HandballTabContent() {
             className={pillClass(mode === "results")}
           >
             <span className="md:hidden">Résultats ({resultsToday.length})</span>
-            <span className="hidden md:inline">Résultats du jour ({resultsToday.length})</span>
+            <span className="hidden md:inline">Résultats 7 j ({resultsToday.length} auj.)</span>
           </button>
           <button
             type="button"

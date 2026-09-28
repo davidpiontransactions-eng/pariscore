@@ -97,6 +97,34 @@ export function isFlashscoreFresh(
   return age != null && age <= FLASHSCORE_MAX_AGE_MS;
 }
 
+/**
+ * Cycle de vie RÉEL d'un match (bead 4pvy) — les flags du feed Flashscore
+ * mentent : un match fini peut rester `isLive: true` (statut périmé dans le
+ * feed J-x, snapshot non rafraîchi). Règle : le COUP DE SIFFLET FINAL prime.
+ *   - `isFinished` → terminé ;
+ *   - coup d'envoi dépassé de +3 h (régulation + MT + prolongation + marge) → terminé ;
+ *   - flag live ET coup d'envoi ≥ maintenant − 15 min → live ;
+ *   - sinon → à venir.
+ */
+export type HandballLifecycle = "finished" | "live" | "upcoming";
+
+export const HANDBALL_MAX_DURATION_MS = 3 * 3_600_000;
+
+export function resolveHandballLifecycle(
+  m: { time?: string | null; isLive?: boolean; isFinished?: boolean },
+  now: number = Date.now(),
+): HandballLifecycle {
+  if (m.isFinished) return "finished";
+  const t = m.time ? Date.parse(m.time) : NaN;
+  if (Number.isFinite(t)) {
+    if (now > t + HANDBALL_MAX_DURATION_MS) return "finished";
+    if (m.isLive && now >= t - 15 * 60_000) return "live";
+    return "upcoming";
+  }
+  // Pas d'heure exploitable : seul le flag parle (jamais de faux « finished »).
+  return m.isLive ? "live" : "upcoming";
+}
+
 export function toHandballMatch(m: FlashscoreMatch, _idx: number): HandballMatch {
   let score: { home: number; away: number; homeHalf?: number; awayHalf?: number } | undefined;
   if (m.score && m.score !== "- - -") {
@@ -115,6 +143,10 @@ export function toHandballMatch(m: FlashscoreMatch, _idx: number): HandballMatch
   let status: "live" | "finished" | "not_started" = "not_started";
   if (m.isLive) status = "live";
   else if (m.isFinished) status = "finished";
+  // Fix 4pvy : le temps écoulé prime sur le flag live périmé — un match dont
+  // le coup de sifflet final est passé (+3 h) sort DU LIVE partout (onglet
+  // live, compteur Résultats, prematch) et devient « finished ».
+  if (resolveHandballLifecycle(m) === "finished") status = "finished";
 
   let odds: { home?: number; draw?: number; away?: number } | undefined;
   if (m.odds && m.odds.length >= 2) {

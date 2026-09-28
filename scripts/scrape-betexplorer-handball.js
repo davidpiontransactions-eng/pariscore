@@ -73,6 +73,8 @@ const TARGET_LEAGUES = [
   { slug: 'france/starligue', label: 'France: Starligue' },
   { slug: 'spain/liga-asobal', label: 'Spain: Liga ASOBAL' },
   { slug: 'europe/champions-league', label: 'Europe: Champions League' },
+  // Danemark — Herre Håndbold Ligaen (bead 4ym0 : fixtures + H2H Ribe-Esbjerg/GOG…)
+  { slug: 'denmark/herre-handbold-ligaen', label: 'Denmark: Herre Handbold Ligaen' },
 ];
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
@@ -413,6 +415,14 @@ function parseResultsRows(html) {
   return rows;
 }
 
+/** Date locale ISO (YYYY-MM-DD) à J+offset — les dates Livesport sont locales. */
+function isoLocalDay(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /** Table de fixtures d'une page ligue (table-main--leaguefixtures). */
 function parseLeagueFixtures(html) {
   const out = [];
@@ -435,7 +445,23 @@ function parseLeagueFixtures(html) {
     const dateCell = block.match(
       /<td[^>]*class="[^"]*(?:table-main__datetime|h-text-right)[^"]*"[^>]*>([\s\S]*?)<\/td>/
     );
-    const date = dateCell ? parseFixtureDate(dateCell[1]) : null;
+    let date = dateCell ? parseFixtureDate(dateCell[1]) : null;
+    // Fix 4ym0 : J/J+1 rendus en toutes lettres — « Today 17:30 » (page
+    // /fixtures/) ou colonne date vide avec title="Today's match" (home) →
+    // la fixture du jour était dropée (date null → exclue du H2H/pairs).
+    if (!date && dateCell) {
+      const txt = dateCell[1].replace(/<[^>]*>/g, '').trim().toLowerCase();
+      if (txt.startsWith('today')) date = isoLocalDay(0);
+      else if (txt.startsWith('tomorrow')) date = isoLocalDay(1);
+    }
+    if (!date) {
+      const ds = block.match(
+        /<td[^>]*class="[^"]*table-main__daysign[^"]*"[^>]*title="([^"]*)"/
+      );
+      const title = (ds?.[1] ?? '').toLowerCase();
+      if (title.includes('today')) date = isoLocalDay(0);
+      else if (title.includes('tomorrow')) date = isoLocalDay(1);
+    }
     if (date) lastDate = date;
     out.push({
       url: a[1],

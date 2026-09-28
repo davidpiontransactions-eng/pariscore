@@ -287,13 +287,14 @@ describe("getRecentForm — derniers FT de l'équipe", () => {
 });
 
 describe("TARGET_LEAGUES — config ligues cibles (G13 StarLigue)", () => {
-  test("les 4 ligues cibles sont en dur, slug « pays/ligue »", () => {
+  test("les 5 ligues cibles sont en dur, slug « pays/ligue » (Danemark ajouté — 4ym0)", () => {
     const slugs = TARGET_LEAGUES.map((l) => l.slug);
     expect(slugs).toEqual([
       "germany/bundesliga",
       "france/starligue",
       "spain/liga-asobal",
       "europe/champions-league",
+      "denmark/herre-handbold-ligaen",
     ]);
     for (const l of TARGET_LEAGUES) {
       expect(l.slug).toMatch(/^[a-z]+\/[a-z0-9-]+$/);

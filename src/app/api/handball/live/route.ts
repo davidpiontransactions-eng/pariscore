@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
-import { isFlashscoreFresh, resolveHandballDataFile } from "@/lib/handball-flashscore";
+import { isFlashscoreFresh, resolveHandballDataFile, resolveHandballLifecycle } from "@/lib/handball-flashscore";
 import { readFileSync, existsSync } from "fs";
 
 const CACHE_TTL = 30_000;
@@ -40,7 +40,15 @@ function loadFlashscoreLive(): Array<{
     const data = JSON.parse(readFileSync(filePath, "utf-8"));
     const matches = (data.matches || []) as FlashscoreMatch[];
     return matches
-      .filter((m) => m.isLive && m.home && m.away)
+      // Fix 4pvy : defense en profondeur — le flag isLive ne suffit pas
+      // (feed périmé), le cycle de vie réel tranche (fini → exclu du live).
+      .filter(
+        (m) =>
+          m.isLive &&
+          m.home &&
+          m.away &&
+          resolveHandballLifecycle(m) === "live",
+      )
       .map((m) => {
         let scoreObj: { home: number; away: number; homeHalf?: number; awayHalf?: number } | undefined;
         if (m.score && m.score !== "- - -") {
