@@ -112,7 +112,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
  | tennis-calendar-section | tennis-calendar-section.tsx | Section calendrier FotMob tennis (prematch+live, filtres, pills, popup) — home tennis + vue Stratégies |
  | tennis-radar-chart | tennis-radar-chart.tsx | Spider 6 axes PowerScore (dégradés, badge duel, caption partielle) — popup détail |
  | tennis-heatmap | tennis-heatmap.tsx | Heatmap 2 joueurs × 6 metrics (tri Power Index, vert/rouge absolus) — popup détail |
- | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — TennisCalendarSection + Top 10 matchs par stratégie (deep-link ?strat=&win=, focus pill) |
+ | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — 2 onglets : Calendrier & Top 10 (TennisCalendarSection + focus pill) | Backtesting Stratégies/Type de marché |
+ | tennis-backtest-matrix | tennis-backtest-matrix.tsx | Matrice backtest tennis (9 marchés 1xbet × segments surface/H-F/type tournoi/bande cote, hit + ROI + verdicts, fenêtre 30j) — onglet Backtesting du calendrier |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
 | tennis-strategy-top5-widget | tennis-strategy-top5-widget.tsx | Top 5 matchs par métrique (Élo surface, service, retour…) — filtres déroulants, miroir du widget foot sidebar |
  | tennis-strategy-top10-matches-widget | tennis-top10-matches-widget.tsx | Top 10 matchs tennis par stratégie de pari (Élo, momentum, service, fatigue, over/under…) — sélecteur stratégie + fenêtre, miroir du widget foot |
