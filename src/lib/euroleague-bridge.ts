@@ -7,6 +7,7 @@
  */
 
 import { execFile } from "child_process";
+import os from "os";
 import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
@@ -77,9 +78,18 @@ export async function fetchEuroGames(
   season = "2025",
 ): Promise<EuroLeagueBridgeResult> {
   const pythonBin = process.platform === "win32" ? "python" : "python3";
+  // Fix prod 2026-09-29 : le process PM2 tourne sans HOME ni PATH → python3 ne
+  // voit PAS ~/.local/lib/pythonX/site-packages (pip --user) → ImportError.
+  // On durcit l'env : HOME et PATH garantis.
+  const env = {
+    ...process.env,
+    HOME: process.env.HOME || os.homedir(),
+    PATH: process.env.PATH || "/usr/local/bin:/usr/bin:/bin",
+  };
   try {
     const { stdout } = await execFileAsync(pythonBin, ["-c", pythonScript(league, season)], {
       timeout: 15_000,
+      env,
     });
     const data = JSON.parse(stdout.trim()) as EuroLeagueBridgeResult;
     return { games: Array.isArray(data?.games) ? data.games : [], error: data?.error };

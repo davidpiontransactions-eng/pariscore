@@ -21,6 +21,7 @@ import {
   type EspnBbMatch,
   type EuroBbMatch,
 } from "@/lib/basketball-calendar";
+import { shiftDateKey } from "@/lib/fotmob-filter";
 import type { FotmobCalMatch } from "@/components/football/fotmob-calendar-table";
 
 type CalPayload = {
@@ -70,6 +71,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(fresh.data);
   }
 
+  // Off-by-one Paris/US (fix prod 2026-09-29) : ESPN `?dates=D` indexe par jour
+  // US — un match à 23:00Z du D est déjà le jour D+1 à Paris. On fetch D ET D-1,
+  // le filtre date Paris de buildBasketballCalendar garde les bons (dédup par id).
+  const prevYyyymmdd = shiftDateKey(dateKey, -1).replaceAll("-", "");
+
+  // Saison euro dynamique : la saison YYYY court d'octobre YYYY à juin YYYY+1.
+  const now = new Date();
+  const euroSeason = now.getMonth() >= 7 ? String(now.getFullYear()) : String(now.getFullYear() - 1);
+
   // Les services ESPN résolvent [] en cas d'erreur (httpsGetJson → null) ;
   // le bridge euro résout { games: [], error } ; fetchFiba résout [].
   const svc = {
@@ -77,26 +87,35 @@ export async function GET(request: NextRequest) {
     nba: require("../../../../../services/basketballService") as { getNbaMatches: (d?: string) => Promise<EspnBbMatch[]> },
     wnba: require("../../../../../services/wnbaService") as { getWnbaMatches: (d?: string) => Promise<EspnBbMatch[]> },
   };
-  const [nba, wnba, euro, cup, fiba] = await Promise.all([
+  const [nba, nbaPrev, wnba, wnbaPrev, euro, cup, fiba, fibaPrev] = await Promise.all([
     svc.nba.getNbaMatches(yyyymmdd).catch(() => [] as EspnBbMatch[]),
+    svc.nba.getNbaMatches(prevYyyymmdd).catch(() => [] as EspnBbMatch[]),
     svc.wnba.getWnbaMatches(yyyymmdd).catch(() => [] as EspnBbMatch[]),
-    fetchEuroGames("euroleague").catch(() => ({ games: [] as EuroBbMatch[], error: "bridge" })),
-    fetchEuroGames("eurocup").catch(() => ({ games: [] as EuroBbMatch[], error: "bridge" })),
+    svc.wnba.getWnbaMatches(prevYyyymmdd).catch(() => [] as EspnBbMatch[]),
+    fetchEuroGames("euroleague", euroSeason).catch(() => ({ games: [] as EuroBbMatch[], error: "bridge" })),
+    fetchEuroGames("eurocup", euroSeason).catch(() => ({ games: [] as EuroBbMatch[], error: "bridge" })),
     fetchFibaMatches(yyyymmdd),
+    fetchFibaMatches(prevYyyymmdd),
   ]);
 
   const matches = buildBasketballCalendar(dateKey, {
-    nba,
-    wnba,
+    nba: [...(nba ?? []), ...(nbaPrev ?? [])],
+    wnba: [...(wnba ?? []), ...(wnbaPrev ?? [])],
     euroleague: euro.games,
     eurocup: cup.games,
-    fiba,
+    fiba: [...fiba, ...fibaPrev],
   });
 
   const data: CalPayload = {
     date: dateKey,
     matches,
-    sources: { nba: nba.length, wnba: wnba.length, euroleague: euro.games.length, eurocup: cup.games.length, fiba: fiba.length },
+    sources: {
+      nba: (nba?.length ?? 0) + (nbaPrev?.length ?? 0),
+      wnba: (wnba?.length ?? 0) + (wnbaPrev?.length ?? 0),
+      euroleague: euro.games.length,
+      eurocup: cup.games.length,
+      fiba: fiba.length + fibaPrev.length,
+    },
     generatedAt: new Date().toISOString(),
   };
 
