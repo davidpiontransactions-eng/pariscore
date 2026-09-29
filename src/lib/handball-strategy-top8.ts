@@ -117,6 +117,30 @@ export function buildFormStore(finished: HandballMatch[]): FormStore {
   return store;
 }
 
+/**
+ * TeamForm à partir des séries chronologiques de l'historique DB
+ * (TeamHistoryStats.scoredSeries / concededSeries, plus anciens → plus récents).
+ * Repli du form-store pour les équipes ABSENTES de la fenêtre Flashscore
+ * (8 jours) : clubs de coupe ou hors championnat, aucun match terminé dans
+ * `finished` → forme/moyennes/lambdas CMP alimentés par SQLite à la place.
+ * htLeads/htTrails = 0 (pas de données mi-temps dans les séries brutes).
+ */
+export function teamFormFromSeries(gf: number[], ga: number[]): HandballTeamForm | null {
+  const n = Math.min(gf.length, ga.length);
+  if (n === 0) return null;
+  const goalsFor = gf.slice(0, n);
+  const goalsAgainst = ga.slice(0, n);
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+  for (let i = 0; i < n; i++) {
+    if (goalsFor[i] > goalsAgainst[i]) wins++;
+    else if (goalsFor[i] === goalsAgainst[i]) draws++;
+    else losses++;
+  }
+  return { gf: goalsFor, ga: goalsAgainst, wins, draws, losses, htLeads: 0, htTrails: 0 };
+}
+
 /** Moyenne des N dernières valeurs */
 function avgLast(arr: number[], n: number): number {
   if (arr.length === 0) return 0;

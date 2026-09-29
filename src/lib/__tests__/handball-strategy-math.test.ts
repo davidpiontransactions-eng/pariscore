@@ -9,6 +9,7 @@ import {
   buildFormStore,
   ppg,
   formSummaryStr,
+  teamFormFromSeries,
 } from "../handball-strategy-top8";
 import type { HandballMatch } from "../handball-data";
 
@@ -120,5 +121,40 @@ describe("valueBet — aucun edge fabriqué sans forme", () => {
       expect(Math.abs(e.value)).toBeLessThan(60); // edge % raisonnable, pas garbage
       if (e.trend != null) expect(Math.abs(e.trend)).toBeLessThan(60);
     }
+  });
+});
+
+describe("teamFormFromSeries - repli DB coupe (serie chronologique)", () => {
+  test("serie marques/encaisses -> TeamForm avec V/N/D recomptes", () => {
+    // Ordre ancien -> recent (schema TeamHistoryStats.scoredSeries)
+    const f = teamFormFromSeries([30, 25, 33, 28], [29, 25, 35, 27]);
+    expect(f).not.toBeNull();
+    expect(f!.gf).toEqual([30, 25, 33, 28]);
+    expect(f!.ga).toEqual([29, 25, 35, 27]);
+    expect(f!.wins).toBe(2); // 30-29, 28-27
+    expect(f!.draws).toBe(1); // 25-25
+    expect(f!.losses).toBe(1); // 33-35
+    expect(f!.htLeads).toBe(0); // pas de donnees mi-temps dans les series
+    expect(f!.htTrails).toBe(0);
+  });
+
+  test("derniers 5 coerentent avec le L5 de l'historique (slice -5)", () => {
+    const gf = [34, 27, 36, 41, 34, 36, 34, 33, 40, 38, 30, 29, 31];
+    const ga = [29, 24, 27, 34, 30, 32, 35, 36, 35, 42, 34, 38, 32];
+    const f = teamFormFromSeries(gf, ga);
+    const last5gf = f!.gf.slice(-5); // [40, 38, 30, 29, 31] -> 33.6
+    const last5ga = f!.ga.slice(-5); // [35, 42, 34, 38, 32] -> 36.2
+    const avg = (a: number[]) => Math.round((a.reduce((s, v) => s + v, 0) / a.length) * 10) / 10;
+    expect(avg(last5gf)).toBe(33.6);
+    expect(avg(last5ga)).toBe(36.2);
+  });
+
+  test("series vides ou tailles decales -> null ou alignement mini", () => {
+    expect(teamFormFromSeries([], [])).toBeNull();
+    expect(teamFormFromSeries([30], [])).toBeNull();
+    const f = teamFormFromSeries([30, 28], [25]);
+    expect(f!.gf).toEqual([30]); // tronque au plus court
+    expect(f!.ga).toEqual([25]);
+    expect(f!.wins).toBe(1);
   });
 });

@@ -13,7 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { HandballTableCaption } from "./handball-table-caption";
 import { HandballLiveCommentaryPanel } from "./handball-live-commentary-panel";
 import type { HandballMatch } from "@/lib/handball-data";
-import { buildFormStore, formSummaryStr } from "@/lib/handball-strategy-top8";
+import { buildFormStore, formSummaryStr, teamFormFromSeries } from "@/lib/handball-strategy-top8";
 import {
   computeHandballPredictiveBets,
   devigHandball1x2,
@@ -1239,15 +1239,35 @@ export function HandballMatchDetailDialog({
   open,
   onOpenChange,
 }: Props) {
+  // Analyse DB (stats equipes / historique SQLite) - declaree AVANT le
+  // form-store : ses series servent de repli quand la fenetre Flashscore
+  // ne couvre pas les equipes (match de coupe, clubs hors fenetre 8 jours).
+  const [analysis, setAnalysis] = useState<AnalysisPayload | null>(null);
+  const [analysisState, setAnalysisState] = useState<PlayersState>("idle");
   // Form store unique (mémo) : alimente à la fois les 3 paris et l'affichage forme.
   const formStore = useMemo(() => {
-    if (!finished || finished.length === 0) return null;
+    const base =
+      finished && finished.length > 0 &&
+      !finished.some((m) => m.home.id == null || m.away.id == null)
+        ? buildFormStore(finished)
+        : null;
     // Garde-fou : sans ids d'équipe, toutes les équipes tomberaient dans le
     // même bucket "undefined" → on saute la forme plutôt que d'afficher du faux.
-    if (finished.some((m) => m.home.id == null || m.away.id == null)) return null;
-    return buildFormStore(finished);
-  }, [finished]);
-
+    // Garde ids : base = null si un id d'equipe manque (ancien comportement).
+    if (!analysis || !match) return base;
+    // Repli historique DB : sans match termine dans la fenetre Flashscore,
+    // les series SQLite (deja fetchees pour l'onglet Stats) completent le
+    // store - forme recente, moyennes prematch et verdict modele.
+    const merged = new Map(base ?? []);
+    const fill = (id: number | null | undefined, team: TeamHistoryStats | null) => {
+      if (id == null || !team || merged.has(String(id))) return;
+      const entry = teamFormFromSeries(team.scoredSeries, team.concededSeries);
+      if (entry) merged.set(String(id), entry);
+    };
+    fill(match.home.id, analysis.teams.home);
+    fill(match.away.id, analysis.teams.away);
+    return merged.size > 0 ? merged : null;
+  }, [finished, analysis, match]);
   // 3 paris prédictifs — pur (match + form-store), ne throw jamais (G3).
   const bets = useMemo(
     () =>
@@ -1300,9 +1320,6 @@ export function HandballMatchDetailDialog({
     });
     return `/api/handball/analysis?${params.toString()}`;
   }, [match]);
-
-  const [analysis, setAnalysis] = useState<AnalysisPayload | null>(null);
-  const [analysisState, setAnalysisState] = useState<PlayersState>("idle");
 
   // Onglet actif : l'analyse IA n'est générée QU'à la visite de l'onglet « IA »
   // (et une seule fois — cache VPS 24h derrière). Sur match terminé, on ouvre
