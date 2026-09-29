@@ -1,10 +1,9 @@
 {
-  "updatedAt": "2026-09-28T11:32:41.866Z",
+  "updatedAt": "2026-09-29T11:12:26.132Z",
   "source": "frozenpool.dobbersports.com",
   "games": {
     "yesterday": [],
-    "today": [],
-    "tomorrow": [
+    "today": [
       {
         "home": "CAR",
         "away": "FLA",
@@ -59,6 +58,41 @@
         "date": "2026-09-29",
         "progress": "10:30 PM",
         "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-09-29&team=VGK"
+      }
+    ],
+    "tomorrow": [
+      {
+        "home": "PHI",
+        "away": "PIT",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:30 PM",
+        "date": "2026-09-30",
+        "progress": "7:30 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-09-30&team=PHI"
+      },
+      {
+        "home": "TOR",
+        "away": "NYI",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:30 PM",
+        "date": "2026-09-30",
+        "progress": "7:30 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-09-30&team=TOR"
+      },
+      {
+        "home": "COL",
+        "away": "L.A",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "10:00 PM",
+        "date": "2026-09-30",
+        "progress": "10:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-09-30&team=COL"
       }
     ]
   },
