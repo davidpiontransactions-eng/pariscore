@@ -32,40 +32,59 @@ export type EuroLeagueBridgeResult = {
 };
 
 function pythonScript(league: string, season: string): string {
+  // API réelle de euroleague_api 0.1.1 (fix prod 2026-09-29 : la classe
+  // EuroLeagueAPI de l'ancien script N'EXISTE PAS dans le package) :
+  // euroleague_api.schedule.Schedule(competition='E'|'U').get_schedule(season)
+  // → DataFrame (380 lignes E / 224 U en 2026). Colonnes : date ('Sep 24, 2026',
+  // jour local salle) + startime ('20:15', heure locale) + played ('true'|'false').
+  // PAS de scores dans ce feed → matchs joués = 'finished' sans score ; heures
+  // converties Paris → UTC (approximation tz salle). Le package est installé
+  // côté VPS : pip3 install --user --break-system-packages euroleague_api.
   return `
 import sys
 try:
-    from euroleague_api import EuroLeagueAPI
-    api = EuroLeagueAPI()
-    if "${league}" == "euroleague":
-        games = api.get_euroleague_games(season=${season})
-    else:
-        games = api.get_eurocup_games(season=${season})
-
     import json
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    from euroleague_api.schedule import Schedule
+
+    comp = "E" if "${league}" == "euroleague" else "U"
+    api = Schedule(competition=comp)
+    df = api.get_schedule(season=${season})
+
+    PARIS = ZoneInfo("Europe/Paris")
     result = []
-    for g in games:
+    for _, r in df.iterrows():
+        try:
+            local = datetime.strptime(str(r["date"]) + " " + str(r["startime"]), "%b %d, %Y %H:%M").replace(tzinfo=PARIS)
+            start = local.astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%dT%H:%M:%SZ")
+        except Exception:
+            start = ""
+        played = str(r.get("played", "false")).lower() == "true"
+        try:
+            rd = int(r.get("gameday", 0))
+        except Exception:
+            rd = 0
         result.append({
-            "code": getattr(g, "code", 0),
-            "id": getattr(g, "game_code", 0),
-            "home": {"id": getattr(g, "home_team_code", 0), "name": getattr(g, "home_team", ""), "code": getattr(g, "home_team_code", "")},
-            "away": {"id": getattr(g, "away_team_code", 0), "name": getattr(g, "away_team", ""), "code": getattr(g, "away_team_code", "")},
-            "status": getattr(g, "game_status", "scheduled"),
-            "startTime": getattr(g, "game_date", ""),
-            "homeScore": getattr(g, "home_team_score", None),
-            "awayScore": getattr(g, "away_team_score", None),
-            "round": getattr(g, "round", 0),
-            "group": getattr(g, "group_name", None),
-            "venue": getattr(g, "venue", None),
+            "code": 0,
+            "id": str(r.get("gamecode", "")),
+            "home": {"id": 0, "name": str(r.get("hometeam", "")), "code": str(r.get("homecode", ""))},
+            "away": {"id": 0, "name": str(r.get("awayteam", "")), "code": str(r.get("awaycode", ""))},
+            "status": "finished" if played else "scheduled",
+            "startTime": start,
+            "homeScore": None,
+            "awayScore": None,
+            "round": rd,
+            "group": str(r.get("group", "")) or None,
+            "venue": str(r.get("arenaname", "")) or None,
         })
     print(json.dumps({"games": result}))
-except ImportError:
-    # euroleague_api non installé — retourner données simulées
+except ImportError as e:
     import json
-    print(json.dumps({"games": [], "error": "euroleague_api not installed"}))
+    print(json.dumps({"games": [], "error": f"euroleague_api indisponible : {e}"}))
 except Exception as e:
     import json
-    print(json.dumps({"games": [], "error": str(e)}))
+    print(json.dumps({"games": [], "error": str(e)[:200]}))
 `;
 }
 
