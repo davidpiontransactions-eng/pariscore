@@ -1,0 +1,50 @@
+{
+  "title": "Gantt — Enrichissement bases matchs Basketball (NBA/WNBA/Euro E+U → pariscore.db)",
+  "timeline": { "labels": ["2026-09-29", "2026-09-29", "2026-09-29"] },
+  "tracks": [
+    {
+      "name": "Orchestration",
+      "items": [
+        { "label": "Spec + validation sources live (ESPN site.web, api-live v2 games)", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "ETL seed",
+      "items": [
+        { "label": "seed_historique_basketball.js (table + upsert + CLI --leagues/--dry/--throttle)", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "Backfill local",
+      "items": [
+        { "label": "NBA + WNBA (ESPN 1 req/jour, ~1420 jours, scores+quarts)", "start": "2026-09-29", "end": "2026-09-29" },
+        { "label": "EuroLeague + EuroCup (api-live 10 saison-compétitions, scores)", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "Lib & API",
+      "items": [
+        { "label": "basketball-history-db.ts (readonly, bun:sqlite → better-sqlite3)", "start": "2026-09-29", "end": "2026-09-29" },
+        { "label": "Route /api/basketball/history (filtres + cache 5 min)", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "QA & gates",
+      "items": [
+        { "label": "Tests unitaires normalisation ESPN/Euro + lint + typecheck", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "Deploy VPS",
+      "items": [
+        { "label": "Push + seed prod pariscore.db + route vérifiée 200 + volumes", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    },
+    {
+      "name": "Docs",
+      "items": [
+        { "label": "Entry 99 RAPPORT-TACHES + GANTT.md + gantt final", "start": "2026-09-29", "end": "2026-09-29" }
+      ]
+    }
+  ]
+}
