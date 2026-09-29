@@ -287,7 +287,7 @@ describe("getRecentForm — derniers FT de l'équipe", () => {
 });
 
 describe("TARGET_LEAGUES — config ligues cibles (G13 StarLigue)", () => {
-  test("les 5 ligues cibles sont en dur, slug « pays/ligue » (Danemark ajouté — 4ym0)", () => {
+  test("les 6 ligues cibles sont en dur, slug « pays/ligue » (coupe danoise ajoutée)", () => {
     const slugs = TARGET_LEAGUES.map((l) => l.slug);
     expect(slugs).toEqual([
       "germany/bundesliga",
@@ -295,6 +295,7 @@ describe("TARGET_LEAGUES — config ligues cibles (G13 StarLigue)", () => {
       "spain/liga-asobal",
       "europe/champions-league",
       "denmark/herre-handbold-ligaen",
+      "denmark/danish-cup",
     ]);
     for (const l of TARGET_LEAGUES) {
       expect(l.slug).toMatch(/^[a-z]+\/[a-z0-9-]+$/);

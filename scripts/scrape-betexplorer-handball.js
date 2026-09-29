@@ -75,6 +75,10 @@ const TARGET_LEAGUES = [
   { slug: 'europe/champions-league', label: 'Europe: Champions League' },
   // Danemark — Herre Håndbold Ligaen (bead 4ym0 : fixtures + H2H Ribe-Esbjerg/GOG…)
   { slug: 'denmark/herre-handbold-ligaen', label: 'Denmark: Herre Handbold Ligaen' },
+  // Danemark — coupe nationale (Pokalturnering/Danish Cup) : fixtures + H2H des
+  // 1/8 → Final4 (résultats déjà collectés par le sweep results global, 7/8
+  // matchs de 1/8 en DB au 2026-09-29 — la ligue cible ajoute fixtures NS + H2H).
+  { slug: 'denmark/danish-cup', label: 'Denmark: Danish Cup' },
 ];
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
