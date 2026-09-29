@@ -3,7 +3,41 @@
 > **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-24 (Session 12 — Module de recherche tennis P8 UI + VPS deploy)
 > **Auteur** : Chef de projet
 > **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues · 🆕 **Session 10 (2026-07-20)** : 10 skills Tier 1 frontend installés, bug `sync-skills.js` fixé · 🆕 **Session 11 (2026-07-22)** : Tennisabstract Elo scraper (1087 joueurs) + WINP_K 4→10 + VPS deploy + cron + GANTT · 🆕 **Session 12 (2026-07-24)** : Search bar tennis joueurs+tournois (P8 UI) + fix bug casse import + VPS deploy + graphify
-> **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets) · `gantt-refonte-tennis.json` (sprint refonte tennis 20-30/07)
+> **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets) · `gantt-refonte-tennis.json` (sprint refonte tennis 20-30/07) · `gantt-basket-history.json/svg` (bases basket 2026-09-29)
+
+---
+
+## 0sex. Session 16 — Enrichissement bases matchs Basketball (2026-09-29)
+
+> **Objectif** : backfiller l'historique complet des matchs basketball dans `pariscore.db`
+> (table `basketball_match_history`, miroir `handball_match_history`) pour alimenter
+> H2H/backtest/résultats basket. Suite de la session Calendrier Basket (entry 96-98).
+
+### Sources validées live
+| Source | Endpoint | Volume |
+|---|---|---|
+| NBA + WNBA | ESPN `site.web.api.espn.com` scoreboard `?dates=` (1 req/jour, ~1 448 jours) | 4 187 + 944 |
+| EuroLeague + EuroCup | `api-live.euroleague.net/v2` games (1 req/saison-compétition, E/U 2022→2026) | 1 401 + 781 |
+
+### Livrables
+| Fichier | Rôle |
+|---|---|
+| `seed_historique_basketball.js` | ETL : table + upsert idempotent + CLI `--leagues/--dry/--throttle` ; garde anti-placeholder 0-0 (matchs à venir Euro) |
+| `src/lib/basketball-history-db.ts` | Lecture readonly défensive (bun:sqlite → better-sqlite3) : filtres league/from/to/team, meta, team keys |
+| `src/app/api/basketball/history/route.ts` | GET filtré + cache multi-worker 5 min |
+| `gantt-basket-history.json/svg` | Gantt de la mission |
+
+### Volumes finaux : 7 313 matchs (0 placeholder, 0 erreur ETL) — **prod vérifié**
+
+### Gates : 9 tests bun · lint 0 · tsc 0 · deploys `c8369ac4` + `c82e67f0` (VPS_DEPLOY_OK ×2) + backfill prod
+
+### Clôture prod (entry 100)
+- **Bug prod fermé** : `/api/basketball/history` renvoyait `meta:null` — root cause = cwd pm2 `.next/standalone` (server.js chdir) + copie `pariscore.db` du build **sans la table** (snapshot) → catch silencieux « no such table ». Fix `basketball-history-db.ts` : validation table à l'ouverture + candidats `DATABASE_PATH` > racine projet > copie cwd + warn diag inconditionnel (`c82e67f0`). Hypothèse « bundler casse bun:sqlite » écartée par probe des chunks réels (stub `[externals]` = require natif intact).
+- **Prod validé** : meta 7313 (NBA 4187 / EuroLeague 1401 / EuroCup 781 / WNBA 944) · filtres NBA/team=BOS avec scores+quarts+venue · 0 warn pm2.
+
+### Incidents
+- Runner deploy bloqué au scp (powershell PID vivant, 10 min sans progression) → contournement : scp+ssh manuels depuis Git Bash
+- euroleague_api 0.1.1 sans `EuroLeagueAPI` → api-live HTTP direct (cf. entry 98)
 
 ---
 

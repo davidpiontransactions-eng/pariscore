@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="496" height="600" viewBox="0 0 496 600" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="696" viewBox="0 0 496 696" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
 <style>
   .bg { fill: #0b0e17; }
   .grid-bg { fill: #131722; }
@@ -18,52 +18,64 @@
   .item-label { fill: #e6edf3; font-size: 11px; }
   .sep { stroke: #1f2533; stroke-width: 1; }
 </style>
-<rect class="bg" width="496" height="600"/>
-<text class="title" x="20" y="32">Gantt — Enrichissement bases matchs Basketball (NBA/WNBA/Euro E+U → pariscore.db)</text>
-<text class="subtitle" x="20" y="50">3 jours · 7 tracks · 9 tâches · généré 2026-09-29</text>
+<rect class="bg" width="496" height="696"/>
+<text class="title" x="20" y="32">Gantt — Enrichissement bases matchs Basketball (7 313 matchs NBA/WNBA/Euro E+U → pariscore.db)</text>
+<text class="subtitle" x="20" y="50">3 jours · 7 tracks · 12 tâches · généré 2026-09-29</text>
 <rect class="grid-bg" x="220" y="60" width="252" height="30"/>
-<line class="grid-line" x1="220" y1="60" x2="220" y2="590"/>
+<line class="grid-line" x1="220" y1="60" x2="220" y2="686"/>
 <text class="header-date" x="262" y="79">29/09</text>
-<line class="grid-line" x1="304" y1="60" x2="304" y2="590"/>
+<line class="grid-line" x1="304" y1="60" x2="304" y2="686"/>
 <text class="header-date" x="346" y="79">29/09</text>
-<line class="grid-line" x1="388" y1="60" x2="388" y2="590"/>
+<line class="grid-line" x1="388" y1="60" x2="388" y2="686"/>
 <text class="header-date" x="430" y="79">29/09</text>
-<line class="grid-line" x1="472" y1="60" x2="472" y2="590"/>
+<line class="grid-line" x1="472" y1="60" x2="472" y2="686"/>
 <rect class="track-bg" x="0" y="92" width="216" height="28" rx="3"/>
 <text class="track-name" x="10" y="110">Orchestration</text>
-<rect class="item item" x="224" y="94" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="110">Spec + validation sources live (ESPN …</text>
+<rect class="item item-done" x="224" y="94" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="110">✅ Spec + validation sources live (ESP…</text>
 <rect class="track-bg" x="0" y="138" width="216" height="28" rx="3"/>
 <text class="track-name" x="10" y="156">ETL seed</text>
-<rect class="item item" x="224" y="140" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="156">seed_historique_basketball.js (table …</text>
-<rect class="track-bg" x="0" y="184" width="216" height="28" rx="3"/>
-<text class="track-name" x="10" y="202">Backfill local</text>
-<rect class="item item" x="224" y="186" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="202">NBA + WNBA (ESPN 1 req/jour, ~1420 jo…</text>
+<rect class="item item-done" x="224" y="140" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="156">✅ seed_historique_basketball.js (tabl…</text>
+<rect class="track-bg" x="0" y="170" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="188">ETL seed</text>
+<rect class="item item-done" x="224" y="172" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="188">✅ Garde anti-placeholder 0-0 (matchs …</text>
 <rect class="track-bg" x="0" y="216" width="216" height="28" rx="3"/>
 <text class="track-name" x="10" y="234">Backfill local</text>
-<rect class="item item" x="224" y="218" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="234">EuroLeague + EuroCup (api-live 10 sai…</text>
-<rect class="track-bg" x="0" y="262" width="216" height="28" rx="3"/>
-<text class="track-name" x="10" y="280">Lib &amp; API</text>
-<rect class="item item" x="224" y="264" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="280">basketball-history-db.ts (readonly, b…</text>
+<rect class="item item-done" x="224" y="218" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="234">✅ NBA 4 187 (2023-10 → 2026-06) + WNB…</text>
+<rect class="track-bg" x="0" y="248" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="266">Backfill local</text>
+<rect class="item item-done" x="224" y="250" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="266">✅ EuroLeague 1 401 + EuroCup 781 (E/U…</text>
 <rect class="track-bg" x="0" y="294" width="216" height="28" rx="3"/>
 <text class="track-name" x="10" y="312">Lib &amp; API</text>
-<rect class="item item" x="224" y="296" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="312">Route /api/basketball/history (filtre…</text>
-<rect class="track-bg" x="0" y="340" width="216" height="28" rx="3"/>
-<text class="track-name" x="10" y="358">QA &amp; gates</text>
-<rect class="item item" x="224" y="342" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="358">Tests unitaires normalisation ESPN/Eu…</text>
-<rect class="track-bg" x="0" y="386" width="216" height="28" rx="3"/>
-<text class="track-name" x="10" y="404">Deploy VPS</text>
-<rect class="item item" x="224" y="388" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="404">Push + seed prod pariscore.db + route…</text>
-<rect class="track-bg" x="0" y="432" width="216" height="28" rx="3"/>
-<text class="track-name" x="10" y="450">Docs</text>
-<rect class="item item" x="224" y="434" width="76" height="24" rx="4"/>
-<text class="item-label" x="230" y="450">Entry 99 RAPPORT-TACHES + GANTT.md + …</text>
+<rect class="item item-done" x="224" y="296" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="312">✅ basketball-history-db.ts (readonly,…</text>
+<rect class="track-bg" x="0" y="326" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="344">Lib &amp; API</text>
+<rect class="item item-done" x="224" y="328" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="344">✅ Route /api/basketball/history (leag…</text>
+<rect class="track-bg" x="0" y="372" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="390">QA &amp; gates</text>
+<rect class="item item-done" x="224" y="374" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="390">✅ 9 tests bun (fixtures mémoire, zéro…</text>
+<rect class="track-bg" x="0" y="418" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="436">Deploy VPS</text>
+<rect class="item item-done" x="224" y="420" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="436">✅ Deploy c8369ac4 (runner bloqué au s…</text>
+<rect class="track-bg" x="0" y="450" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="468">Deploy VPS</text>
+<rect class="item item" x="224" y="452" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="468">⏳ Backfill prod pariscore.db + route …</text>
+<rect class="track-bg" x="0" y="496" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="514">Docs</text>
+<rect class="item item-done" x="224" y="498" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="514">✅ GANTT.md section + gantt final</text>
+<rect class="track-bg" x="0" y="528" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="546">Docs</text>
+<rect class="item item" x="224" y="530" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="546">⏳ Entry 99 RAPPORT-TACHES (chiffres p…</text>
 <line class="sep" x1="0" y1="60" x2="496" y2="60"/>
 </svg>
