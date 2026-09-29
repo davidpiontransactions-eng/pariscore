@@ -17,7 +17,8 @@ const https = require('https');
 const fs    = require('fs');
 const path  = require('path');
 
-const ESPN_HOST = 'site.api.espn.com';
+// Fix prod 2026-09-29 : site.api.espn.com bloqué 403 par le WAF ESPN → site.web.api.espn.com (cf. basketballService).
+const ESPN_HOST = 'site.web.api.espn.com';
 const ESPN_SCOREBOARD = '/apis/site/v2/sports/basketball/wnba/scoreboard';
 const ESPN_STANDINGS  = '/apis/v2/sports/basketball/wnba/standings';
 const ESPN_INJURIES   = '/apis/site/v2/sports/basketball/wnba/injuries';
