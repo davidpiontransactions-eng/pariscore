@@ -328,7 +328,7 @@ function HomeInner() {
               <TennisTop10MatchesWidget />
               <TennisCalendarSection />
             </div>
-          ) : activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" ? null : (
+          ) : activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" || activeTab === "basketball" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}

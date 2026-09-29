@@ -58,6 +58,8 @@ interface SportsSidebarState {
   collapsed: boolean;
   /** Mode sélectionné dans la sous-barre header (Prematch / Live). */
   headerMode: "prematch" | "live";
+  /** Sous-onglet actif par sport (ex: basketball -> "matchs" | "calendrier" | "h2h" | "fiba"). */
+  sportSubTabs: Record<string, string>;
 
   setSearchQuery: (query: string) => void;
   setTimeFilter: (filter: TimeFilterKey) => void;
@@ -73,7 +75,7 @@ interface SportsSidebarState {
   /** Sync onglet central → store (pas d'effet de bord inverse). */
   syncSportFromTab: (sportId: string) => void;
   setMode: (sportId: string, mode: MatchViewMode) => void;
-  setTreeStatus: (status: "all" | "live" | "prematch") => void;
+  setTreeStatus: (treeStatus: "all" | "live" | "prematch") => void;
   setHeaderMode: (mode: "prematch" | "live") => void;
   setDrawerOpen: (open: boolean) => void;
   clearFilters: () => void;
@@ -90,13 +92,15 @@ interface SportsSidebarState {
   /** Désactive l'ensemble actif, revient aux favoris normaux. */
   clearActiveLeagueSet: () => void;
   /** Afficher / masquer les cotes 1X2. */
-  setHideOdds: (hide: boolean) => void;
+  setHideOdds: (hideOdds: boolean) => void;
   /** Ajoute/retire une équipe de la liste des suivies. */
   toggleFollowedTeam: (teamId: string) => void;
   /** Vérifie si une équipe est suivie. */
   isFollowedTeam: (teamId: string) => boolean;
   /** Bascule le mode réduit/étendu de la sidebar. */
   toggleCollapsed: () => void;
+  /** Définit le sous-onglet actif pour un sport (ex: basketball -> "calendrier"). */
+  setSubTab: (sportId: string, tab: string) => void;
 }
 
 const DEFAULTS = {
@@ -114,6 +118,7 @@ const DEFAULTS = {
   teamsCustomized: false,
   collapsed: false,
   headerMode: "prematch" as "prematch" | "live",
+  sportSubTabs: { basketball: "matchs" } as Record<string, string>,
 };
 
 const DEFAULT_NAMED_SETS: Record<string, string[]> = {
@@ -266,6 +271,11 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
       isFollowedTeam: (teamId) => get().followedTeamIds.includes(teamId),
 
       toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
+
+      setSubTab: (sportId, tab) =>
+        set((s) => ({
+          sportSubTabs: { ...s.sportSubTabs, [sportId]: tab },
+        })),
     }),
     {
       name: "pariscore.sportsSidebar",
@@ -285,6 +295,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         teamsCustomized: s.teamsCustomized,
         collapsed: s.collapsed,
         headerMode: s.headerMode,
+        sportSubTabs: s.sportSubTabs,
       }),
     },
   ),

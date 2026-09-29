@@ -75,12 +75,17 @@ export type FotmobFilterBarProps = {
   onToggleTop: () => void;
   /** Nombre de matchs Top corrélés (badge du toggle). */
   topCount?: number;
+  /** Cache la rangée datepicker (ex. calendrier basket : CalendarDateNav au-dessus). */
+  hideDatePicker?: boolean;
+  /** Cache le toggle Top (sources sans corrélation Top10, ex. basket). */
+  hideTop?: boolean;
 };
 
 export function FotmobFilterBar(p: FotmobFilterBarProps) {
   return (
     <div className="flex flex-col gap-2">
-      {/* Datepicker : hier / jour / demain */}
+      {/* Datepicker : hier / jour / demain (masqué si hideDatePicker) */}
+      {!p.hideDatePicker && (
       <div className="flex items-center justify-center gap-2">
         <button
           type="button" onClick={p.onPrevDay} aria-label="Jour précédent"
@@ -106,6 +111,7 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
           <ChevronRight className="size-4" />
         </button>
       </div>
+      )}
       {/* Filtres : En direct / Par heure / recherche */}
       <div className="flex items-center gap-2">
         <button
@@ -126,6 +132,7 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
         </button>
         <HourSegments hours={p.hours} onHours={p.onHours} count={p.count} />
         {/* Toggle Top stratégies (E pill) : filtre les matchs corrélés au Top10. */}
+        {!p.hideTop && (
         <button
           type="button"
           onClick={p.onToggleTop}
@@ -158,6 +165,7 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
             </span>
           )}
         </button>
+        )}
         <div
           className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full border px-3 py-1.5"
           style={{ backgroundColor: C.pillBg, borderColor: C.pillBorder }}

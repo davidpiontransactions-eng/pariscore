@@ -7,6 +7,7 @@ import { Settings, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AutoHideHeader } from "@/components/layout/auto-hide-header";
 import { SportTabs } from "@/components/layout/sport-tabs";
+import { SportSubTabs } from "@/components/layout/sport-sub-tabs";
 import SearchModal, { useSearchModal } from "@/components/layout/search-modal";
 import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -150,6 +151,8 @@ export function SiteHeader() {
           {/* Top separator with glow */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           <SportTabs activeSport={activeSport ?? "football"} onSportChange={handleSportChange} />
+          {/* Niveau 2.5 — sous-onglets du sport actif (basketball : Matchs/Calendrier/H2H/FIBA) */}
+          <SportSubTabs />
         </div>
       </AutoHideHeader>
 

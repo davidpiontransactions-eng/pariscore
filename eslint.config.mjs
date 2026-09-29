@@ -55,7 +55,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
   // Legacy CommonJS / bridge files — `require()` est le pattern natif (scripts .js legacy,
   // package bridge pariscore-services, routes API Next qui chargent les services legacy).
   // Garder la règle ON pour le reste de src/** (code Next.js moderne en ESM).
-  files: ["scripts/**/*.{js,ts,tsx,mjs,cjs}", "packages/pariscore-services/**/*.{js,ts}", "src/app/api/f1/**", "src/app/api/cs2/**", "src/app/api/cycling/**", "src/app/api/mma/**", "src/app/api/nba/**", "src/app/api/wnba/**"],
+  files: ["scripts/**/*.{js,ts,tsx,mjs,cjs}", "packages/pariscore-services/**/*.{js,ts}", "src/app/api/f1/**", "src/app/api/cs2/**", "src/app/api/cycling/**", "src/app/api/mma/**", "src/app/api/nba/**", "src/app/api/wnba/**", "src/app/api/basketball/**"],
   rules: {
     "@typescript-eslint/no-require-imports": "off",
   },

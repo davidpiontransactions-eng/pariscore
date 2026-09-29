@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useId, useRef } from "react";
-import { Radio, CalendarClock, BarChart3 } from "lucide-react";
+import { Radio, CalendarClock, CalendarDays, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { MatchViewMode } from "@/lib/match-view";
@@ -13,6 +13,13 @@ type Props = {
   prematchCount: number;
   idBase?: string;
   className?: string;
+  /** Insère l'onglet « Aujourd'hui » avant Live (bug audit basket #2 : le défaut
+   *  "today" n'était jamais rendu → aucun onglet actif au chargement). */
+  includeToday?: boolean;
+  /** Nombre de matchs du jour (badge de l'onglet Aujourd'hui, défaut 0). */
+  todayCount?: number;
+  /** Masque l'onglet Classements (sports sans standings, ex. basket — bug audit #3). */
+  hideRankings?: boolean;
 };
 
 /* Teintes FotMob clair — identiques au calendrier */
@@ -35,10 +42,15 @@ export function MatchViewTabs({
   prematchCount,
   idBase,
   className,
+  includeToday = false,
+  todayCount = 0,
+  hideRankings = false,
 }: Props) {
   const t = useTranslations("matchTabs");
+  const todayRef = useRef<HTMLButtonElement>(null);
   const liveRef = useRef<HTMLButtonElement>(null);
   const prematchRef = useRef<HTMLButtonElement>(null);
+  const rankingsRef = useRef<HTMLButtonElement>(null);
   const fallbackId = useId();
   const tabIdBase = idBase ?? fallbackId;
 
@@ -51,6 +63,19 @@ export function MatchViewTabs({
     icon: typeof Radio;
     badgeBg: string;
   }> = [
+    ...(includeToday
+      ? [
+          {
+            id: "today" as const,
+            label: t("today", { defaultValue: "Aujourd'hui" }),
+            aria: t("todayAria", { defaultValue: "Matchs du jour", n: todayCount }),
+            count: todayCount,
+            ref: todayRef,
+            icon: CalendarDays,
+            badgeBg: C.muted,
+          },
+        ]
+      : []),
     {
       id: "live",
       label: t("live"),
@@ -69,15 +94,19 @@ export function MatchViewTabs({
       icon: CalendarClock,
       badgeBg: C.muted,
     },
-    {
-      id: "rankings",
-      label: t("rankings", { defaultValue: "Classements" }),
-      aria: t("rankingsAria", { defaultValue: "Classements" }),
-      count: 0,
-      ref: useRef<HTMLButtonElement>(null),
-      icon: BarChart3,
-      badgeBg: C.muted,
-    },
+    ...(hideRankings
+      ? []
+      : [
+          {
+            id: "rankings" as const,
+            label: t("rankings", { defaultValue: "Classements" }),
+            aria: t("rankingsAria", { defaultValue: "Classements" }),
+            count: 0,
+            ref: rankingsRef,
+            icon: BarChart3,
+            badgeBg: C.muted,
+          },
+        ]),
   ];
 
   const activate = useCallback(
@@ -87,18 +116,22 @@ export function MatchViewTabs({
     [active, onChange],
   );
 
+  // Cycle clavier sur les onglets VISIBLES (roving tabindex) — l'ancienne
+  // version codait live/prematch en dur et ignorait today/rankings.
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") {
       return;
     }
     event.preventDefault();
-    const current = active === "live" ? "live" : "prematch";
+    const ids = tabs.map((t) => t.id);
+    const idx = Math.max(0, ids.indexOf(active));
     let next: MatchViewMode;
-    if (event.key === "Home") next = "live";
-    else if (event.key === "End") next = "prematch";
-    else next = current === "live" ? "prematch" : "live";
+    if (event.key === "Home") next = ids[0];
+    else if (event.key === "End") next = ids[ids.length - 1];
+    else if (event.key === "ArrowLeft") next = ids[(idx - 1 + ids.length) % ids.length];
+    else next = ids[(idx + 1) % ids.length];
     activate(next);
-    (next === "live" ? liveRef : prematchRef).current?.focus();
+    tabs.find((t) => t.id === next)?.ref.current?.focus();
   };
 
   return (

@@ -278,11 +278,12 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | wnba-tab-content | wnba-tab-content.tsx | Contenu de l'onglet WNBA |
 
-## Basketball (`src/components/basketball/`) — 17 components
+## Basketball (`src/components/basketball/`) — 18 components
 
 | Component | File | Role |
 |-----------|------|------|
 | basketball-tab-content | basketball-tab-content.tsx | Onglet principal unifié NBA+WNBA+EuroLeague+domestique + sous-nav H2H |
+| basketball-calendar | basketball-calendar.tsx | Vue Calendrier 4 ligues (mix Flashscore/FotMob) : CalendarDateNav light + filter bar + table groupée par ligue + dialog détail |
 | basketball-match-card | basketball-match-card.tsx | Carte match avec win prob, Four Factors, odds |
 | basketball-match-detail-dialog | basketball-match-detail-dialog.tsx | Dialog détail match (teams, win prob, Four Factors, odds, value, H2H) |
 | basketball-odds-comparator | basketball-odds-comparator.tsx | Tableau multi-bookmakers avec tri, best odds, value detection |
@@ -300,13 +301,14 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | h2h-players-tab | h2h-players-tab.tsx | Tableau joueurs 2 équipes avec tri colonnes |
 | over-under-table | over-under-table.tsx | Tableau générique O/U : seuils + barres % + option 3 colonnes |
 
-## Layout (`src/components/layout/`) — 11 components
+## Layout (`src/components/layout/`) — 12 components
 
 | Component | File | Role |
 |-----------|------|------|
 | site-header | site-header.tsx | Orchestrateur principal headbar 2 niveaux (logo + search + actions + sport tabs) |
 | auto-hide-header | auto-hide-header.tsx | Header sticky + auto-hide au scroll descendant (framer-motion) |
 | sport-tabs | sport-tabs.tsx | Niveau 2 — 12 onglets sport + badges live temps réel |
+| sport-sub-tabs | sport-sub-tabs.tsx | Niveau 2.5 — sous-onglets du sport actif (basketball : Matchs/Calendrier/H2H/FIBA), charte Flashscore, état store `sportSubTabs` ; null si sport sans config |
 | search-modal | search-modal.tsx | Modale recherche Ctrl+K (API /api/v1/search, autocomplete, keyboard nav) |
 | notifications-dropdown | notifications-dropdown.tsx | Dropdown notifications (push, email, value bets, digest) |
 | user-menu | user-menu.tsx | Menu utilisateur popover (NextAuth session, thème, langue, login/logout) |

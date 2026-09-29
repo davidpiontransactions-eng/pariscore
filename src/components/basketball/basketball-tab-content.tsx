@@ -31,6 +31,11 @@ const FibaScoreboard = dynamic(
   { ssr: false },
 );
 
+const BasketballCalendar = dynamic(
+  () => import("./basketball-calendar").then((m) => m.BasketballCalendar),
+  { ssr: false },
+);
+
 type BasketballTabContentProps = {
   className?: string;
 };
@@ -51,10 +56,14 @@ type UnifiedMatch = {
   consensus?: BasketballMatch["consensus"];
 };
 
-type PageView = "matchs" | "h2h" | "fiba";
+type PageView = "matchs" | "calendrier" | "h2h" | "fiba";
 
 export function BasketballTabContent({ className }: BasketballTabContentProps) {
-  const [pageView, setPageView] = useState<PageView>("matchs");
+  // pageView piloté par le store (sportSubTabs.basketball) : le toggle interne
+  // et la rangée SportSubTabs de la headbar restent synchronisés.
+  const pageViewRaw = useSportsSidebarStore((s) => s.sportSubTabs.basketball);
+  const pageView = (pageViewRaw as PageView | undefined) ?? "matchs";
+  const setPageView = (v: PageView) => useSportsSidebarStore.getState().setSubTab("basketball", v);
   const [viewMode, setViewMode] = useState<MatchViewMode>("today");
   const [selectedLeagues, setSelectedLeagues] = useState<BasketballLeagueId[]>([
     "nba", "wnba", "euroleague", "eurocup",
@@ -159,6 +168,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
           <div className="flex rounded-lg bg-white/[0.06] p-0.5">
             {([
               { id: "matchs" as const, label: "Matchs" },
+              { id: "calendrier" as const, label: "Calendrier" },
               { id: "h2h" as const, label: "H2H" },
               { id: "fiba" as const, label: "FIBA WC" },
             ]).map((tab) => (
@@ -182,6 +192,8 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
               onChange={setViewMode}
               liveCount={liveCount}
               prematchCount={prematchCount}
+              includeToday
+              hideRankings
             />
           )}
         </div>
@@ -202,6 +214,11 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
             <div key={i}>{String(e)}</div>
           ))}
         </div>
+      )}
+
+      {/* Vue Calendrier (style Flashscore/FotMob, 4 ligues) */}
+      {pageView === "calendrier" && (
+        <BasketballCalendar />
       )}
 
       {/* Vue H2H */}

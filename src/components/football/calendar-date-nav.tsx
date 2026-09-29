@@ -37,9 +37,12 @@ type Props = {
   selectedDate: Date;
   onSelect: (d: Date) => void;
   className?: string;
+  /** "dark" (défaut, thème page) | "light" (charte FotMob — calendrier basket). */
+  variant?: "dark" | "light";
 };
 
-export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
+export function CalendarDateNav({ selectedDate, onSelect, className, variant = "dark" }: Props) {
+  const light = variant === "light";
   const days = useMemo(() => {
     const result: Date[] = [];
     const now = new Date();
@@ -61,7 +64,12 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
           prev.setDate(prev.getDate() - 1);
           onSelect(prev);
         }}
-        className="shrink-0 snap-start rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+        className={cn(
+          "shrink-0 snap-start rounded-full p-2 transition-colors",
+          light
+            ? "text-[#717171] hover:bg-[#e6e6e6] hover:text-[#222222]"
+            : "text-slate-400 hover:bg-slate-800 hover:text-white",
+        )}
         aria-label="Jour précédent"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -80,14 +88,19 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
             className={cn(
               "shrink-0 snap-start flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 min-w-[52px] transition-all",
               isSelected
-                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-500/10"
-                : "bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800/50",
+                ? light
+                  ? "text-white shadow-sm"
+                  : "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-500/10"
+                : light
+                  ? "bg-[#f0f0f0] text-[#222222] border border-[#f0f0f0] hover:bg-[#e6e6e6]"
+                  : "bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800/50",
             )}
+            style={isSelected && light ? { backgroundColor: "#00985f", borderColor: "#00985f" } : undefined}
           >
             <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
             <span className={cn(
               "text-lg font-bold leading-none",
-              isSelected ? "text-emerald-300" : "text-slate-200",
+              isSelected ? (light ? "text-white" : "text-emerald-300") : light ? "text-[#222222]" : "text-slate-200",
             )}>
               {dayNum}
             </span>
@@ -103,7 +116,12 @@ export function CalendarDateNav({ selectedDate, onSelect, className }: Props) {
           next.setDate(next.getDate() + 1);
           onSelect(next);
         }}
-        className="shrink-0 snap-start rounded-full p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+        className={cn(
+          "shrink-0 snap-start rounded-full p-2 transition-colors",
+          light
+            ? "text-[#717171] hover:bg-[#e6e6e6] hover:text-[#222222]"
+            : "text-slate-400 hover:bg-slate-800 hover:text-white",
+        )}
         aria-label="Jour suivant"
       >
         <ChevronRight className="h-4 w-4" />

@@ -88,7 +88,8 @@ export type FibaMatch = {
   };
 };
 
-function normalizeEvent(event: ESPNEvent): FibaMatch {
+/** Exporté pour réuse par /api/basketball/calendar (même normalisation, zéro dupliqué). */
+export function normalizeEvent(event: ESPNEvent): FibaMatch {
   const comp = event.competitions?.[0];
   const home = comp?.competitors?.find((c) => c.homeAway === "home");
   const away = comp?.competitors?.find((c) => c.homeAway === "away");

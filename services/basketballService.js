@@ -89,7 +89,8 @@ function _loadNbaElo() {
 // ─── HTTP natif ────────────────────────────────────────────────────────────────
 function httpsGetJson(host, path) {
   return new Promise((resolve) => {
-    const opts = { host, path, method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0 PariScore', 'Accept': 'application/json' } };
+    // Fix P0 2026-09-29 : ESPN (WAF Akamai) renvoie 403 sans 'Accept-Encoding: identity'.
+    const opts = { host, path, method: 'GET', headers: { 'User-Agent': 'Mozilla/5.0 PariScore', 'Accept': 'application/json', 'Accept-Encoding': 'identity' } };
     const req = https.request(opts, (res) => {
       let buf = '';
       res.on('data', c => buf += c);
@@ -671,7 +672,14 @@ function computeNbaTopBets(matches, topN = 3) {
 }
 
 // ─── Public ──────────────────────────────────────────────────────────────────────
-async function getNbaMatches() {
+async function getNbaMatches(date) {
+  // Mode daté (YYYYMMDD) → scoreboard ?dates= : bypass du cache live 90s, les
+  // appels datés (calendrier) gèrent leur propre cache côté route (5 min).
+  if (date) {
+    const d = await httpsGetJson(ESPN_HOST, `${ESPN_SCOREBOARD}?dates=${date}`);
+    const events = (d && Array.isArray(d.events)) ? d.events : [];
+    return events.map(_normalizeEvent).filter(m => m.id);
+  }
   if (Date.now() - _cache.ts < TTL_MS && _cache.data) return _cache.data;
   await Promise.all([
     _fetchStandings().catch(() => {}),   // défense (PF/PA)
