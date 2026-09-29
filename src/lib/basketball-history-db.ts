@@ -1,11 +1,22 @@
 // Lecture readonly de l'historique basketball (table `basketball_match_history`
-// de pariscore.db) — même pattern défensif que src/lib/handball-history-db.ts :
-// bun:sqlite en priorité (runtime de prod), better-sqlite3 en repli (node),
-// base absente → retour vide et l'UI dégrade proprement.
+// de pariscore.db) — bun:sqlite en priorité (runtime de prod pm2 = bun),
+// better-sqlite3 en repli (node uniquement : better-sqlite3 n'est pas supporté
+// sous bun, cf. oven-sh/bun#4290). Base indisponible → retour vide, l'UI
+// dégrade proprement.
+//
+// ⚠️ Piège prod (entry 99 .context/RAPPORT-TACHES.md) : sous pm2 le cwd du
+// process Next standalone est `.next/standalone` (server.js fait
+// process.chdir(__dirname)) et sa copie `pariscore.db` — tracée par le file
+// tracing du build — est un SNAPSHOT du build : elle peut n'avoir pas la table
+// (serve meta:null silencieux) ou l'avoir périmée (données figées). Ordre des
+// candidats : DATABASE_PATH explicite > racine projet (parent) > copie cwd.
+// Le require("bun:sqlite") LITTÉRAL est volontaire : le stub bundler
+// [externals] le réécrit en require natif intact (prouvé en prod) — ne pas le
+// transformer en indirection.
 //
 // La table est peuplée par seed_historique_basketball.js (racine) :
 // NBA/WNBA via ESPN site.web scoreboard par jour, EuroLeague/EuroCup via
-// api-live.euroleague.net v2 games (cf. entry 99 .context/RAPPORT-TACHES.md).
+// api-live.euroleague.net v2 games.
 
 import path from "node:path";
 
@@ -54,40 +65,98 @@ const SQLITE_FILE = process.env.DATABASE_PATH || path.join(process.cwd(), "paris
 let _db: BSD | null = null;
 let _dbUnavailable = false;
 
-/** Ouvre la base readonly — injectable pour les tests (":memory:"). */
-function getDb(file: string = SQLITE_FILE): BSD | null {
-  if (_dbUnavailable && file === SQLITE_FILE) return null;
-  if (_db && file === SQLITE_FILE) return _db;
+/** Ouvre un fichier sqlite readonly — bun:sqlite d'abord, better-sqlite3 en repli node. */
+function openSqlite(file: string): BSD {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Database } = require("bun:sqlite") as {
       Database: new (file: string, opts?: object) => BSD;
     };
-    const db = new Database(file, { readonly: true });
-    if (file === SQLITE_FILE) _db = db;
-    return db;
-  } catch {
+    return new Database(file, { readonly: true });
+  } catch (bunErr) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Database = require("better-sqlite3") as unknown as {
         new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
       };
-      const db = new Database(file, { readonly: true, fileMustExist: true });
-      if (file === SQLITE_FILE) _db = db;
-      return db;
+      return new Database(file, { readonly: true, fileMustExist: true });
     } catch (err) {
-      if (file === SQLITE_FILE) {
-        _dbUnavailable = true;
-        // Toujours loggé (prod compris) : un échec silencieux se traduit par
-        // des listes vides sans aucune trace côté serveur.
-        console.warn(
-          `[basketball-history] ${file} non lisible — historique basket désactivé. ` +
-            `Détail: ${(err as Error).message}`,
-        );
-      }
-      return null;
+      throw new Error(
+        `bun:sqlite: ${(bunErr as Error).message} | better-sqlite3: ${(err as Error).message}`,
+      );
     }
   }
+}
+
+/** La table basketball_match_history existe-t-elle dans cette base ? */
+function hasHistoryTable(db: BSD): boolean {
+  try {
+    return !!db
+      .prepare(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='basketball_match_history' LIMIT 1",
+      )
+      .get();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fichiers candidats, par priorité :
+ * 1. DATABASE_PATH explicite (seul candidat) — pattern crons oddalerts/vitibet ;
+ * 2. sinon, en contexte Next standalone (cwd = .next/standalone) : racine
+ *    projet (../pariscore.db) D'ABORD — la copie tracée est un snapshot du
+ *    build, potentiellement absente ou périmée — puis la copie cwd en repli ;
+ * 3. sinon (dev/scripts, cwd = racine) : cwd d'abord, parent en repli.
+ */
+function dbCandidates(): string[] {
+  const cwd = process.cwd();
+  const cwdDb = path.join(cwd, "pariscore.db");
+  if (SQLITE_FILE !== cwdDb) return [SQLITE_FILE];
+  const parentDb = path.join(cwd, "..", "pariscore.db");
+  return path.basename(cwd) === "standalone" ? [parentDb, cwdDb] : [cwdDb, parentDb];
+}
+
+/**
+ * Ouvre la base readonly — injectable pour les tests (":memory:").
+ * Chaque candidat est validé : la table basketball_match_history doit exister.
+ */
+function getDb(file: string = SQLITE_FILE): BSD | null {
+  if (_dbUnavailable && file === SQLITE_FILE) return null;
+  if (_db && file === SQLITE_FILE) return _db;
+
+  const candidates = file !== SQLITE_FILE ? [file] : dbCandidates();
+  const attempts: string[] = [];
+  for (const candidate of candidates) {
+    let db: BSD;
+    try {
+      db = openSqlite(candidate);
+    } catch (err) {
+      attempts.push(`${candidate} → ${(err as Error).message.split("\n")[0]}`);
+      continue;
+    }
+    if (!hasHistoryTable(db)) {
+      try {
+        db.close();
+      } catch {
+        /* ignore */
+      }
+      attempts.push(`${candidate} → table basketball_match_history absente`);
+      continue;
+    }
+    if (file === SQLITE_FILE) _db = db;
+    return db;
+  }
+
+  if (file === SQLITE_FILE) {
+    _dbUnavailable = true;
+    // Toujours loggé (prod compris) : un échec silencieux se traduit par des
+    // listes vides sans aucune trace côté serveur.
+    console.warn(
+      `[basketball-history] base introuvable — historique basket désactivé. Tentatives: ${attempts.join(" ; ")}`,
+    );
+  }
+  return null;
 }
 
 function toMatch(row: Record<string, unknown>): BasketballHistoryMatch {
@@ -164,7 +233,8 @@ export function loadBasketballHistory(
       )
       .all(...params);
     return rows.map((r) => toMatch(r as Record<string, unknown>));
-  } catch {
+  } catch (err) {
+    console.warn(`[basketball-history] query matches échouée: ${(err as Error).message}`);
     return [];
   }
 }
@@ -186,7 +256,8 @@ export function basketballHistoryMeta(file?: string): BasketballHistoryMeta | nu
       maxDate: String(r.max),
     }));
     return { total: byLeague.reduce((a, b) => a + b.n, 0), byLeague };
-  } catch {
+  } catch (err) {
+    console.warn(`[basketball-history] query meta échouée: ${(err as Error).message}`);
     return null;
   }
 }
@@ -202,7 +273,8 @@ export function listBasketballTeamKeys(file?: string): string[] {
       )
       .all();
     return (rows as Record<string, unknown>[]).map((r) => String(r.key));
-  } catch {
+  } catch (err) {
+    console.warn(`[basketball-history] query team keys échouée: ${(err as Error).message}`);
     return [];
   }
 }
