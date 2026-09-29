@@ -4,7 +4,7 @@
     "leagueId": "j1_league",
     "leagueName": "Japan",
     "season": "2026/27",
-    "lastUpdated": "2026-09-28T11:08:55.845230Z",
+    "lastUpdated": "2026-09-29T10:51:07.962188Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,15 @@
     "partial": true
   },
   "home": [
+    {
+      "teamName": "Fc Tokyo",
+      "gp": 4,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 6,
+      "ga": 5
+    },
     {
       "teamName": "K. Frontale",
       "gp": 4,
@@ -22,13 +31,13 @@
       "ga": 8
     },
     {
-      "teamName": "Cerezo Osaka",
+      "teamName": "Vissel Kobe",
       "gp": 4,
       "w": 3,
       "d": 1,
       "l": 0,
-      "gf": 5,
-      "ga": 1
+      "gf": 8,
+      "ga": 4
     },
     {
       "teamName": "S. Hiroshima",
@@ -40,22 +49,13 @@
       "ga": 2
     },
     {
-      "teamName": "Fc Tokyo",
-      "gp": 4,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 6,
-      "ga": 5
-    },
-    {
-      "teamName": "Vissel Kobe",
+      "teamName": "Cerezo Osaka",
       "gp": 4,
       "w": 3,
       "d": 1,
       "l": 0,
-      "gf": 8,
-      "ga": 4
+      "gf": 5,
+      "ga": 1
     }
   ],
   "away": [
@@ -67,6 +67,15 @@
       "l": 1,
       "gf": 11,
       "ga": 7
+    },
+    {
+      "teamName": "Vissel Kobe",
+      "gp": 4,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 4,
+      "ga": 1
     },
     {
       "teamName": "S. Hiroshima",
@@ -94,15 +103,6 @@
       "l": 0,
       "gf": 13,
       "ga": 3
-    },
-    {
-      "teamName": "Vissel Kobe",
-      "gp": 4,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 4,
-      "ga": 1
     }
   ]
 }

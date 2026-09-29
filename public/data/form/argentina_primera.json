@@ -4,7 +4,7 @@
     "leagueId": "argentina_primera",
     "leagueName": "Argentina",
     "season": "2026/27",
-    "lastUpdated": "2026-09-28T11:09:08.858304Z",
+    "lastUpdated": "2026-09-29T10:51:20.673611Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,12 +13,21 @@
   },
   "home": [
     {
-      "teamName": "Defensa Y J.",
+      "teamName": "I. Rivadavia",
+      "gp": 4,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 11,
+      "ga": 6
+    },
+    {
+      "teamName": "Velez Sarsfield",
       "gp": 5,
       "w": 4,
       "d": 1,
       "l": 0,
-      "gf": 8,
+      "gf": 7,
       "ga": 3
     },
     {
@@ -31,13 +40,13 @@
       "ga": 3
     },
     {
-      "teamName": "I. Rivadavia",
-      "gp": 4,
+      "teamName": "Defensa Y J.",
+      "gp": 5,
       "w": 4,
-      "d": 0,
+      "d": 1,
       "l": 0,
-      "gf": 11,
-      "ga": 6
+      "gf": 8,
+      "ga": 3
     },
     {
       "teamName": "Instituto",
@@ -47,18 +56,18 @@
       "l": 0,
       "gf": 9,
       "ga": 3
-    },
-    {
-      "teamName": "Velez Sarsfield",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 7,
-      "ga": 3
     }
   ],
   "away": [
+    {
+      "teamName": "Argentinos Jrs",
+      "gp": 6,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 6
+    },
     {
       "teamName": "Independiente",
       "gp": 5,
@@ -66,15 +75,6 @@
       "d": 0,
       "l": 1,
       "gf": 8,
-      "ga": 3
-    },
-    {
-      "teamName": "Barracas C.",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 3,
       "ga": 3
     },
     {
@@ -96,13 +96,13 @@
       "ga": 4
     },
     {
-      "teamName": "Argentinos Jrs",
-      "gp": 6,
+      "teamName": "Barracas C.",
+      "gp": 5,
       "w": 2,
       "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 6
+      "l": 1,
+      "gf": 3,
+      "ga": 3
     }
   ]
 }

@@ -4,7 +4,7 @@
     "leagueId": "ligue1",
     "leagueName": "France",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-28T11:07:43.689555Z",
+    "lastUpdated": "2026-09-29T10:49:58.333892Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 20,
     "window": 8,
@@ -13,22 +13,22 @@
   },
   "home": [
     {
-      "teamName": "Metz",
+      "teamName": "Auxerre",
       "gp": 5,
-      "w": 0,
+      "w": 3,
       "d": 1,
-      "l": 4,
-      "gf": 4,
-      "ga": 11
+      "l": 2,
+      "gf": 6,
+      "ga": 6
     },
     {
-      "teamName": "Angers",
+      "teamName": "Lorient",
       "gp": 5,
       "w": 2,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 6
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 8
     },
     {
       "teamName": "Nantes",
@@ -40,22 +40,49 @@
       "ga": 6
     },
     {
-      "teamName": "Auxerre",
+      "teamName": "Paris SG",
       "gp": 5,
-      "w": 3,
-      "d": 1,
+      "w": 2,
+      "d": 0,
       "l": 2,
-      "gf": 6,
+      "gf": 11,
       "ga": 6
     },
     {
-      "teamName": "Le Mans",
-      "gp": 3,
-      "w": 1,
-      "d": 2,
+      "teamName": "Monaco",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 10,
+      "ga": 4
+    },
+    {
+      "teamName": "Paris Fc",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
       "l": 0,
-      "gf": 6,
-      "ga": 5
+      "gf": 9,
+      "ga": 4
+    },
+    {
+      "teamName": "Nice",
+      "gp": 5,
+      "w": 1,
+      "d": 4,
+      "l": 0,
+      "gf": 5,
+      "ga": 6
+    },
+    {
+      "teamName": "Lens",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 12,
+      "ga": 6
     },
     {
       "teamName": "Marseille",
@@ -76,24 +103,6 @@
       "ga": 6
     },
     {
-      "teamName": "Paris SG",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 11,
-      "ga": 6
-    },
-    {
-      "teamName": "Brest",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
       "teamName": "Toulouse",
       "gp": 5,
       "w": 2,
@@ -103,30 +112,12 @@
       "ga": 7
     },
     {
-      "teamName": "Le Havre",
-      "gp": 5,
-      "w": 0,
+      "teamName": "Le Mans",
+      "gp": 3,
+      "w": 1,
       "d": 2,
-      "l": 2,
-      "gf": 3,
-      "ga": 5
-    },
-    {
-      "teamName": "Monaco",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 10,
-      "ga": 4
-    },
-    {
-      "teamName": "Lyon",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
       "l": 0,
-      "gf": 12,
+      "gf": 6,
       "ga": 5
     },
     {
@@ -139,22 +130,40 @@
       "ga": 7
     },
     {
-      "teamName": "Lorient",
+      "teamName": "Angers",
       "gp": 5,
       "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 8
+      "d": 1,
+      "l": 3,
+      "gf": 4,
+      "ga": 6
     },
     {
-      "teamName": "Nice",
+      "teamName": "Brest",
       "gp": 5,
       "w": 1,
-      "d": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Le Havre",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 3,
+      "ga": 5
+    },
+    {
+      "teamName": "Lyon",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
       "l": 0,
-      "gf": 5,
-      "ga": 6
+      "gf": 12,
+      "ga": 5
     },
     {
       "teamName": "Lille",
@@ -166,22 +175,13 @@
       "ga": 5
     },
     {
-      "teamName": "Lens",
+      "teamName": "Metz",
       "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 12,
-      "ga": 6
-    },
-    {
-      "teamName": "Paris Fc",
-      "gp": 5,
-      "w": 3,
+      "w": 0,
       "d": 1,
-      "l": 0,
-      "gf": 9,
-      "ga": 4
+      "l": 4,
+      "gf": 4,
+      "ga": 11
     },
     {
       "teamName": "Troyes",
@@ -195,31 +195,13 @@
   ],
   "away": [
     {
-      "teamName": "Metz",
+      "teamName": "Lorient",
       "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 4,
-      "ga": 10
-    },
-    {
-      "teamName": "Angers",
-      "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 2,
       "l": 2,
       "gf": 5,
-      "ga": 7
-    },
-    {
-      "teamName": "Nantes",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 8
+      "ga": 5
     },
     {
       "teamName": "Auxerre",
@@ -231,13 +213,58 @@
       "ga": 12
     },
     {
-      "teamName": "Le Mans",
-      "gp": 2,
+      "teamName": "Nantes",
+      "gp": 5,
       "w": 0,
       "d": 1,
-      "l": 1,
+      "l": 4,
+      "gf": 2,
+      "ga": 8
+    },
+    {
+      "teamName": "Paris SG",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 9,
+      "ga": 6
+    },
+    {
+      "teamName": "Monaco",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Paris Fc",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 6,
+      "ga": 5
+    },
+    {
+      "teamName": "Nice",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
       "gf": 3,
-      "ga": 4
+      "ga": 8
+    },
+    {
+      "teamName": "Lens",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 3,
+      "gf": 8,
+      "ga": 9
     },
     {
       "teamName": "Marseille",
@@ -258,24 +285,6 @@
       "ga": 11
     },
     {
-      "teamName": "Paris SG",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Brest",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
       "teamName": "Toulouse",
       "gp": 5,
       "w": 1,
@@ -285,30 +294,12 @@
       "ga": 9
     },
     {
-      "teamName": "Le Havre",
-      "gp": 5,
+      "teamName": "Le Mans",
+      "gp": 2,
       "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
-    },
-    {
-      "teamName": "Monaco",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 8,
-      "ga": 6
-    },
-    {
-      "teamName": "Lyon",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
+      "d": 1,
       "l": 1,
-      "gf": 6,
+      "gf": 3,
       "ga": 4
     },
     {
@@ -321,22 +312,40 @@
       "ga": 11
     },
     {
-      "teamName": "Lorient",
+      "teamName": "Angers",
       "gp": 5,
-      "w": 2,
+      "w": 1,
       "d": 2,
       "l": 2,
       "gf": 5,
-      "ga": 5
+      "ga": 7
     },
     {
-      "teamName": "Nice",
+      "teamName": "Brest",
       "gp": 5,
       "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 3,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
+    },
+    {
+      "teamName": "Le Havre",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
       "ga": 8
+    },
+    {
+      "teamName": "Lyon",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 4
     },
     {
       "teamName": "Lille",
@@ -348,22 +357,13 @@
       "ga": 3
     },
     {
-      "teamName": "Lens",
+      "teamName": "Metz",
       "gp": 5,
       "w": 0,
       "d": 2,
       "l": 3,
-      "gf": 8,
-      "ga": 9
-    },
-    {
-      "teamName": "Paris Fc",
-      "gp": 5,
-      "w": 2,
-      "d": 3,
-      "l": 0,
-      "gf": 6,
-      "ga": 5
+      "gf": 4,
+      "ga": 10
     },
     {
       "teamName": "Troyes",
