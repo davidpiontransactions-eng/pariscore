@@ -41,6 +41,29 @@
 
 ---
 
+## 0sex-bis. Session 17 — Test visuel front basket + FIX H2H (2026-09-30)
+
+> **Objectif** : « Je ne vois pas de modification au niveau Frontend, les tableaux
+> ne sont pas remplis » — test visuel prod + correction en orchestration.
+
+### Test visuel (tunnel ssh → :3100, screenshots)
+| Vue | État avant fix |
+|---|---|
+| Calendrier basket | ✅ remplie (EuroCup 11 + EuroLeague) — rien à corriger |
+| Matchs | Vide = intersaison/préseason (normal) + clé i18n `matchTabs.today` brute |
+| **H2H** | ❌ « Sélectionnez deux équipes » avec **dropdowns sans aucune option** |
+
+### Root cause & fix (entry 105, commit `03267317`)
+- ESPN `scoreboard?dates=A-B` → **400 depuis le 29/09** + `_httpsGet` ne rejetait pas les statuts d'erreur → `[]` silencieux partout (équipes, saison, historique, paires).
+- Fix : rejet HTTP ≥400 · `getTeams` via endpoint `/teams` · **SQLite `basketball_match_history` (7313 matchs) = source primaire** H2H · caches `_v2` · DATA_DIR candidates (standalone) · i18n fr/en.
+
+### Vérifs
+- Gates : lint 0 · tsc 0 · test node BOS-LAL (6 confrontations, stats 93 games, form6, split, Over).
+- Deploy **VPS_DEPLOY_OK** → prod : 30 équipes NBA / 12 WNBA dans les dropdowns, H2H Celtics–Lakers stats complètes.
+- Test visuel post-fix : dropdown peuplé (30 options), sélection Celtics + Lakers OK (capture finale bloquée par le webview Freebuff, infra).
+
+---
+
 ## 0quin. Session 12 — Module de recherche tennis P8 UI + VPS deploy (2026-07-24)
 
 > **Objectif** : intégrer le module de recherche joueurs + tournois dans l'onglet Tennis.
