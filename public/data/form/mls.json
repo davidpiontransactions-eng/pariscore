@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-09-29T10:51:14.145253Z",
+    "lastUpdated": "2026-09-30T10:39:14.986797Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,31 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Philadelphia",
+      "teamName": "Cincinnati",
       "gp": 8,
-      "w": 6,
+      "w": 5,
       "d": 2,
-      "l": 0,
-      "gf": 21,
-      "ga": 8
-    },
-    {
-      "teamName": "St. Louis City",
-      "gp": 8,
-      "w": 6,
-      "d": 2,
-      "l": 0,
-      "gf": 20,
-      "ga": 10
-    },
-    {
-      "teamName": "Colorado Rapids",
-      "gp": 8,
-      "w": 6,
-      "d": 1,
       "l": 1,
-      "gf": 11,
-      "ga": 5
+      "gf": 25,
+      "ga": 17
     },
     {
       "teamName": "Nashville Sc",
@@ -49,32 +31,50 @@
       "ga": 4
     },
     {
-      "teamName": "Cincinnati",
+      "teamName": "Colorado Rapids",
       "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 25,
-      "ga": 17
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 4,
+      "w": 6,
       "d": 1,
-      "l": 3,
-      "gf": 24,
-      "ga": 19
+      "l": 1,
+      "gf": 11,
+      "ga": 5
     },
     {
       "teamName": "St. Louis City",
       "gp": 8,
+      "w": 6,
+      "d": 2,
+      "l": 0,
+      "gf": 20,
+      "ga": 10
+    },
+    {
+      "teamName": "Philadelphia",
+      "gp": 8,
+      "w": 6,
+      "d": 2,
+      "l": 0,
+      "gf": 21,
+      "ga": 8
+    }
+  ],
+  "away": [
+    {
+      "teamName": "Inter Miami",
+      "gp": 8,
       "w": 4,
-      "d": 3,
-      "l": 1,
-      "gf": 14,
+      "d": 2,
+      "l": 2,
+      "gf": 17,
+      "ga": 14
+    },
+    {
+      "teamName": "Vancouver",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 18,
       "ga": 9
     },
     {
@@ -87,22 +87,22 @@
       "ga": 11
     },
     {
-      "teamName": "Vancouver",
+      "teamName": "St. Louis City",
       "gp": 8,
-      "w": 5,
-      "d": 1,
-      "l": 2,
-      "gf": 18,
+      "w": 4,
+      "d": 3,
+      "l": 1,
+      "gf": 14,
       "ga": 9
     },
     {
-      "teamName": "Inter Miami",
+      "teamName": "Philadelphia",
       "gp": 8,
       "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 17,
-      "ga": 14
+      "d": 1,
+      "l": 3,
+      "gf": 24,
+      "ga": 19
     }
   ]
 }

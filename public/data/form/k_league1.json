@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-09-29T10:51:11.060354Z",
+    "lastUpdated": "2026-09-30T10:39:11.663168Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -22,22 +22,13 @@
       "ga": 6
     },
     {
-      "teamName": "Daejeon Citizen",
-      "gp": 8,
-      "w": 4,
-      "d": 3,
-      "l": 1,
-      "gf": 17,
-      "ga": 11
-    },
-    {
-      "teamName": "Seoul",
+      "teamName": "Ulsan",
       "gp": 8,
       "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 11,
-      "ga": 6
+      "d": 0,
+      "l": 3,
+      "gf": 15,
+      "ga": 12
     },
     {
       "teamName": "Jeju Utd",
@@ -49,24 +40,33 @@
       "ga": 8
     },
     {
-      "teamName": "Ulsan",
+      "teamName": "Seoul",
       "gp": 8,
       "w": 5,
-      "d": 0,
-      "l": 3,
-      "gf": 15,
-      "ga": 12
+      "d": 2,
+      "l": 1,
+      "gf": 11,
+      "ga": 6
+    },
+    {
+      "teamName": "Daejeon Citizen",
+      "gp": 8,
+      "w": 4,
+      "d": 3,
+      "l": 1,
+      "gf": 17,
+      "ga": 11
     }
   ],
   "away": [
     {
-      "teamName": "Gangwon",
+      "teamName": "Anyang",
       "gp": 8,
       "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 12,
-      "ga": 11
+      "d": 2,
+      "l": 3,
+      "gf": 11,
+      "ga": 13
     },
     {
       "teamName": "Jeonbuk",
@@ -78,13 +78,13 @@
       "ga": 7
     },
     {
-      "teamName": "Anyang",
+      "teamName": "Jeju Utd",
       "gp": 8,
-      "w": 3,
+      "w": 5,
       "d": 2,
-      "l": 3,
-      "gf": 11,
-      "ga": 13
+      "l": 1,
+      "gf": 12,
+      "ga": 7
     },
     {
       "teamName": "Seoul",
@@ -96,13 +96,13 @@
       "ga": 7
     },
     {
-      "teamName": "Jeju Utd",
+      "teamName": "Gangwon",
       "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
+      "w": 3,
+      "d": 3,
+      "l": 2,
       "gf": 12,
-      "ga": 7
+      "ga": 11
     }
   ]
 }

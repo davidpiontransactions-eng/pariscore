@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-09-29T10:51:04.927333Z",
+    "lastUpdated": "2026-09-30T10:39:05.606036Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,13 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Qingdao West C.",
+      "teamName": "Yunnan Yukun",
       "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
+      "w": 6,
+      "d": 1,
+      "l": 1,
+      "gf": 20,
+      "ga": 10
     },
     {
       "teamName": "Beijing Guoan",
@@ -31,22 +31,13 @@
       "ga": 9
     },
     {
-      "teamName": "Zhejiang",
+      "teamName": "Qingdao West C.",
       "gp": 8,
-      "w": 5,
-      "d": 1,
-      "l": 2,
-      "gf": 23,
-      "ga": 15
-    },
-    {
-      "teamName": "Yunnan Yukun",
-      "gp": 8,
-      "w": 6,
-      "d": 1,
-      "l": 1,
-      "gf": 20,
-      "ga": 10
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 13,
+      "ga": 6
     },
     {
       "teamName": "Shandong T.",
@@ -56,17 +47,26 @@
       "l": 1,
       "gf": 21,
       "ga": 13
+    },
+    {
+      "teamName": "Zhejiang",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 23,
+      "ga": 15
     }
   ],
   "away": [
     {
-      "teamName": "Qingdao West C.",
+      "teamName": "S. Shenhua",
       "gp": 8,
-      "w": 3,
-      "d": 4,
-      "l": 1,
-      "gf": 11,
-      "ga": 11
+      "w": 4,
+      "d": 1,
+      "l": 3,
+      "gf": 16,
+      "ga": 14
     },
     {
       "teamName": "Beijing Guoan",
@@ -78,24 +78,6 @@
       "ga": 11
     },
     {
-      "teamName": "Chengdu",
-      "gp": 8,
-      "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 10,
-      "ga": 10
-    },
-    {
-      "teamName": "S. Shenhua",
-      "gp": 8,
-      "w": 4,
-      "d": 1,
-      "l": 3,
-      "gf": 16,
-      "ga": 14
-    },
-    {
       "teamName": "Shanghai Port",
       "gp": 8,
       "w": 5,
@@ -103,6 +85,24 @@
       "l": 2,
       "gf": 15,
       "ga": 12
+    },
+    {
+      "teamName": "Qingdao West C.",
+      "gp": 8,
+      "w": 3,
+      "d": 4,
+      "l": 1,
+      "gf": 11,
+      "ga": 11
+    },
+    {
+      "teamName": "Chengdu",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 10,
+      "ga": 10
     }
   ]
 }
