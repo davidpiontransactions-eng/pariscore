@@ -67,6 +67,7 @@
 ### Suite Session 17 (même journée) — bead ParisScorebis-mb00 : sous-onglet Stats & Classements (entry 106)
 - **Livré** : service ESPN stats + SQLite PPG Home/Away · route `/api/basketball/standings` (cache 10 min) · tableau 18 métriques filtrable (ligue/conf/métrique) · **heatmap de rangs style matplotlib** (vert 1er → rouge dernier, colorbar, en-têtes rotés) · sous-onglet headbar.
 - Commits `4120acaa` + `079b621a` (fix chemin services) → **VPS_DEPLOY_OK ×2**, prod vérifiée visuellement.
+- **Bead clôturée (entry 107, commit `7eb4843b`, VPS_DEPLOY_OK)** : + sous-onglets **Live** (flux unifié, matchs serrés) et **Backtest** (walk-forward sans fuite fenêtre 10 sur 7313 matchs ; prod : NBA edge PPG ≥3 → +22.7 % ROI, over 215.5 → +46.6 %, Euro home → +19.1 %). Headbar finale : Matchs · Calendrier · Live · Stats & Classements · Backtest · H2H · FIBA WC.
 
 ---
 
