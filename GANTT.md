@@ -64,6 +64,12 @@
 
 ---
 
+### Suite Session 17 (même journée) — bead ParisScorebis-mb00 : sous-onglet Stats & Classements (entry 106)
+- **Livré** : service ESPN stats + SQLite PPG Home/Away · route `/api/basketball/standings` (cache 10 min) · tableau 18 métriques filtrable (ligue/conf/métrique) · **heatmap de rangs style matplotlib** (vert 1er → rouge dernier, colorbar, en-têtes rotés) · sous-onglet headbar.
+- Commits `4120acaa` + `079b621a` (fix chemin services) → **VPS_DEPLOY_OK ×2**, prod vérifiée visuellement.
+
+---
+
 ## 0quin. Session 12 — Module de recherche tennis P8 UI + VPS deploy (2026-07-24)
 
 > **Objectif** : intégrer le module de recherche joueurs + tournois dans l'onglet Tennis.
