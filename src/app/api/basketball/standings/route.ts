@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // Service legacy JS (dossier services/, non bundlé).
-    const svc = require("../../../../../../services/basketballStandingsService.js") as {
+    const svc = require("../../../../../services/basketballStandingsService.js") as {
       getStandingsFull: (league: string) => Promise<unknown>;
     };
     const data = await svc.getStandingsFull(league);
