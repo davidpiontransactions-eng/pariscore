@@ -2,7 +2,30 @@
   "$schema": "https://opencode.ai/config.json",
   "shell": "cmd",
   "tools": { "bash": false },
+  "permission": { "bash": "deny", "glob": "allow", "grep": "allow", "read": "allow" },
   "plugin": ["./.opencode/plugins/pariscore-superpowers", "./.opencode/plugins/i-have-adhd.mjs", "./.opencode/node_modules/ecc-universal/.opencode", "./.opencode/plugins/open-code-review", "./.opencode/plugins/ps-shell"],
+  "agent": {
+    "free-space-bunny": {
+      "description": "Modèle gratuit OpenCode Zen, rétention nulle. Bon pour le code et les données confidentielles du projet.",
+      "mode": "subagent",
+      "model": "opencode/space-bunny-free"
+    },
+    "free-longcat": {
+      "description": "Modèle gratuit OpenCode Zen, rétention nulle. Alternative code/confidentiel à Space Bunny.",
+      "mode": "subagent",
+      "model": "opencode/longcat-2.5-preview-free"
+    },
+    "free-mimo": {
+      "description": "Modèle gratuit OpenCode Zen. ⚠️ DONNÉES UTILISÉES POUR ENTRAÎNER pendant la période gratuite — ne pas lui soumettre de secrets.",
+      "mode": "subagent",
+      "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "free-nemotron": {
+      "description": "Modèle gratuit OpenCode Zen. ⚠️ NVIDIA trial : NE PAS soumettre de données personnelles ou confidentielles, l'usage est journalisé.",
+      "mode": "subagent",
+      "model": "opencode/nemotron-3-ultra-free"
+    }
+  },
   "provider": {
     "mimo": {
       "npm": "@ai-sdk/openai-compatible",
@@ -368,6 +391,7 @@
         "google/gemma-4-31b-it": { "name": "Gemma 4 31B", "limit": { "context": 32768, "output": 8192 } },
         "openai/gpt-oss-20b": { "name": "GPT-OSS 20B", "limit": { "context": 131072, "output": 32768 } }
       }
+
     }
   }
 }

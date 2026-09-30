@@ -150,10 +150,14 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
 | live-stats-breakdown | live-stats-breakdown.tsx | Stats live bilatérales (jauges possession/attaques/att. dangereuses) + surbrillance seuils funnel In-Play + probabilités live projetées |
+| live-stats-strip | live-stats-strip.tsx | Bandeau de stats live défilant façon PackBall (8 chips : coups, cadrés, corners, possession, cartes, buts, att. dangereuses, attaques) |
+| exg-forecast | exg-forecast.tsx | Forecast N prochaines minutes : buts + corners attendus par camp, P(au moins 1 but), fenêtre 5'/10'/15' (moteur `football-next-window-forecast.ts`) |
+| shot-quality-panel | shot-quality-panel.tsx | Qualité des tirs : répartition buts/sauvés/ratés, conversion, cadrement, xG moyen par tir, écart xG–réel (moteur `football-shot-quality.ts`) |
 | lineup-pitch | lineup-pitch.tsx | Terrain tactique interactif (compos probables/officiels, schéma, notes, absences) |
 | match-conditions-widget | match-conditions-widget.tsx | Widget conditions match (arbitre, sévérité cartons, stade, météo) |
 | MatchPredictiveCard | MatchPredictiveCard.tsx | Carte analyse prédictive ML (badge tendance, résumé, 3 paris, zéro lien externe) |
 | momentum-chart | momentum-chart.tsx | Graphique momentum football (ticker d'événements agrégés inclus) |
+| pressure-timeline | pressure-timeline.tsx | Timeline de pression minute par minute (barres divergentes home/away, marqueurs but/corner/tir, diff-bar %, fenêtre Plein/10'/5') |
 | pressure-duo-donuts | pressure-duo-donuts.tsx | Donuts pression LIVE vs ATTENDUE (baseline pré-match) + détection d'anomalie (outsider/favori) |
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
 | top-strategies-table | top-strategies-table.tsx | Tableau Top stratégies (badges confiance ≥70/60, cotes, EV, tendance) |

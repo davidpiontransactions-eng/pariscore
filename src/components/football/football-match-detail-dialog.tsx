@@ -18,6 +18,10 @@ import { computeRadarData } from "@/lib/football-radar";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
 import { expectedPressureBaseline, detectPressureAnomaly } from "@/lib/football-live-thresholds";
 import { MomentumChart } from "./momentum-chart";
+import { PressureTimeline } from "./pressure-timeline";
+import { LiveStatsStrip } from "./live-stats-strip";
+import { ExgForecast } from "./exg-forecast";
+import { ShotQualityPanel } from "./shot-quality-panel";
 import { PressureDuoDonuts } from "./pressure-duo-donuts";
 import { LiveStatsBreakdown } from "./live-stats-breakdown";
 import { FOT } from "./fotmob-theme";
@@ -713,21 +717,38 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             )}
 
             {!loading && !error && stats && (
-              <MomentumChart
-                momentum={stats.momentum}
-                events={stats.events}
-                dangerous={stats.dangerous}
-                layers={stats.layers}
-                pressure={stats.pressure}
-                liveStats={view?.live && view.live.homeShotsOnTarget !== null && view.live.awayShotsOnTarget !== null && view.live.homeCorners !== null && view.live.awayCorners !== null ? {
-                  homeSOT: view.live.homeShotsOnTarget,
-                  awaySOT: view.live.awayShotsOnTarget,
-                  homeCorners: view.live.homeCorners,
-                  awayCorners: view.live.awayCorners,
-                } : undefined}
-                homeName={view?.home.shortName ?? "Domicile"}
-                awayName={view?.away.shortName ?? "Extérieur"}
-              />
+              <>
+                {/* Bandeau de stats live façon PackBall (lecture rapide) */}
+                <LiveStatsStrip
+                  live={view.live}
+                  homeName={view?.home.shortName ?? "Domicile"}
+                  awayName={view?.away.shortName ?? "Extérieur"}
+                />
+                {/* Timeline de pression minute par minute (barres divergentes) */}
+                <PressureTimeline
+                  momentum={stats.momentum}
+                  events={stats.events}
+                  pressure={stats.pressure}
+                  currentMinute={view?.live?.minute ?? undefined}
+                  homeName={view?.home.shortName ?? "Domicile"}
+                  awayName={view?.away.shortName ?? "Extérieur"}
+                />
+                <MomentumChart
+                  momentum={stats.momentum}
+                  events={stats.events}
+                  dangerous={stats.dangerous}
+                  layers={stats.layers}
+                  pressure={stats.pressure}
+                  liveStats={view?.live && view.live.homeShotsOnTarget !== null && view.live.awayShotsOnTarget !== null && view.live.homeCorners !== null && view.live.awayCorners !== null ? {
+                    homeSOT: view.live.homeShotsOnTarget,
+                    awaySOT: view.live.awayShotsOnTarget,
+                    homeCorners: view.live.homeCorners,
+                    awayCorners: view.live.awayCorners,
+                  } : undefined}
+                  homeName={view?.home.shortName ?? "Domicile"}
+                  awayName={view?.away.shortName ?? "Extérieur"}
+                />
+              </>
             )}
           </div>
         )}
@@ -752,6 +773,21 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
               timelineTotals={stats?.totals ?? null}
               timelineXg={stats?.xgTotals ?? null}
               matchId={view.id}
+            />
+            {/* Forecast N prochaines minutes : ExG / ExC (parité PackBall) */}
+            <ExgForecast
+              live={view.live}
+              prematch={{ homeProb: view.prediction.homeProb, drawProb: view.prediction.drawProb }}
+              homeName={view.home.shortName ?? "Domicile"}
+              awayName={view.away.shortName ?? "Extérieur"}
+            />
+            {/* Qualité des tirs (option 1 du plan T4 — pas de heatmap sans x/y) */}
+            <ShotQualityPanel
+              live={view.live}
+              totals={stats?.totals ?? null}
+              xgTotals={stats?.xgTotals ?? null}
+              homeName={view.home.shortName ?? "Domicile"}
+              awayName={view.away.shortName ?? "Extérieur"}
             />
           </div>
         )}
