@@ -27,7 +27,7 @@ export function useEuroLeagueMatches(
   if (season) params.set("season", season);
 
   const { data, error, isLoading, mutate } = useSWR<EuroLeagueResponse>(
-    `/api/euroleague/matches?${params.toString()}`,
+    `/api/v1/euroleague/matches?${params.toString()}`,
     fetcher,
     {
       refreshInterval: league === "euroleague" ? 60_000 : 300_000, // EuroLeague live plus fréquent
