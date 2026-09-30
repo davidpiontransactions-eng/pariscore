@@ -63,7 +63,115 @@ const TTL = {
   standings: 6 * 3600 * 1000,
 };
 
-const DATA_DIR = path.join(__dirname, '..', 'data', 'basketball_h2h');
+// Bundle standalone : __dirname = dossier du chunk (.next/server/…) → le
+// path.join(__dirname,'..','data',…) ne trouve JAMAIS les caches (pattern fix
+// mmaService entry 98). Lectures : 1er candidat existant. Écritures : cwd/data
+// (racine en dev comme en prod standalone — cwd forcé par server.js).
+const DATA_DIRS = [
+  path.join(process.cwd(), 'data', 'basketball_h2h'),
+  path.join(__dirname, '..', 'data', 'basketball_h2h'),
+];
+const DATA_DIR = DATA_DIRS[0];
+function _findData(file) {
+  for (const dir of DATA_DIRS) {
+    const full = path.join(dir, file);
+    try { if (fs.statSync(full).isFile()) return full; } catch (_) { /* suivant */ }
+  }
+  return path.join(DATA_DIR, file);
+}
+
+// ── Repli/primaire SQLite : pariscore.db.basketball_match_history ──────────
+// ESPN scoreboard en plage `dates=A-B` renvoie 400 depuis le 2026-09-29
+// (constat prod, entry 100) → getSeasonMatches/getPairHistory renvoyaient []
+// silencieusement (le code HTTP >= 400 n'était pas rejeté) → sélecteurs H2H
+// vides et stats toutes nulles. La table SQLite (7 313 matchs NBA/WNBA/Euro,
+// scores + quarts, clé event = id ESPN, home_key/away_key = abbr) devient la
+// source primaire côté historique ; ESPN ne sert plus qu'en repli.
+let _histDb = null;
+let _histDbTried = false;
+function _historyDb() {
+  if (_histDbTried) return _histDb;
+  _histDbTried = true;
+  const candidates = [
+    process.env.DATABASE_PATH,
+    path.join(process.cwd(), 'pariscore.db'),
+    path.join(process.cwd(), '..', 'pariscore.db'),
+  ].filter(Boolean);
+  // Drivers : bun:sqlite (runtime prod pm2 = bun) puis better-sqlite3 (node).
+  const open = () => {
+    try {
+      const { Database } = require('bun:sqlite');
+      return (file) => new Database(file, { readonly: true });
+    } catch (_) {
+      try {
+        const Database = require('better-sqlite3');
+        return (file) => new Database(file, { readonly: true, fileMustExist: true });
+      } catch (e2) {
+        console.warn('[H2H] SQLite indisponible:', e2.message);
+        return null;
+      }
+    }
+  };
+  const openDb = open();
+  if (openDb) {
+    for (const file of candidates) {
+      try {
+        const db = openDb(file);
+        const ok = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='basketball_match_history' LIMIT 1").get();
+        if (ok) { _histDb = db; break; }
+        try { db.close(); } catch (_) { /* ignore */ }
+      } catch (_) { /* candidat suivant */ }
+    }
+  }
+  return _histDb;
+}
+
+/** Map abbr ESPN ({BOS:{id,name,abbr,logo}}) — via getTeams (endpoint /teams). */
+const _teamMapCache = { nba: null, wnba: null };
+async function _teamMap(league) {
+  if (_teamMapCache[league]) return _teamMapCache[league];
+  const teams = await getTeams(league);
+  const map = new Map(teams.map((t) => [t.abbr, t]));
+  _teamMapCache[league] = map;
+  return map;
+}
+
+/**
+ * Historique SQLite au format interne du service (ou null si indisponible).
+ * ids/logos ESPN résolus via la map abbr→team (getTeams) pour que le H2H
+ * sélectionné avec des ids ESPN retrouve ses matchs.
+ */
+async function _historyMatches(league) {
+  const db = _historyDb();
+  if (!db) return null;
+  const lg = league === 'nba' ? 'NBA' : 'WNBA';
+  let rows;
+  try {
+    rows = db.prepare(
+      'SELECT key, date, time_utc, home, away, home_key, away_key, home_score, away_score, home_quarters, away_quarters FROM basketball_match_history WHERE league = ? ORDER BY date ASC'
+    ).all(lg);
+  } catch (e) {
+    console.warn('[H2H] lecture history échouée:', e.message);
+    return null;
+  }
+  if (!rows.length) return null;
+  const tm = await _teamMap(league).catch(() => null);
+  const info = (abbr) => ((tm && tm.get(abbr)) || null);
+  const qs = (v) => { try { const a = JSON.parse(v || 'null'); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
+  return rows.map((r) => {
+    const h = info(r.home_key), a = info(r.away_key);
+    return {
+      id: String(r.key).replace(/^(nba|wnba)-/, ''),
+      league,
+      date: `${r.date}T${r.time_utc ? r.time_utc.slice(11) : '00:00Z'}`,
+      completed: true,
+      home: { id: h ? h.id : r.home_key, name: r.home, abbr: r.home_key, logo: h ? h.logo : null, score: r.home_score, q: qs(r.home_quarters) },
+      away: { id: a ? a.id : r.away_key, name: r.away, abbr: r.away_key, logo: a ? a.logo : null, score: r.away_score, q: qs(r.away_quarters) },
+      homeScore: r.home_score,
+      awayScore: r.away_score,
+    };
+  });
+}
 
 // ── HTTP helpers (pattern des services existants) ──────────────────────────
 
@@ -83,6 +191,13 @@ function _httpsGet(host, urlPath, timeoutMs = 15000) {
       let buf = '';
       r.on('data', (c) => { buf += c; });
       r.on('end', () => {
+        // Fix 2026-09-30 : un JSON d'erreur ESPN ({"code":400}) parsait bien →
+        // resolve → events undefined → [] silencieux en aval. On rejette désormais
+        // tout statut >= 400 pour que le fallback/repli s'applique.
+        if (r.statusCode && r.statusCode >= 400) {
+          reject(new Error(`HTTP ${r.statusCode} — ${host}${urlPath.slice(0, 60)}`));
+          return;
+        }
         try { resolve(JSON.parse(buf)); } catch (e) { reject(new Error(`HTTP ${r.statusCode} — réponse non JSON (${host}${urlPath.slice(0, 60)})`)); }
       });
     });
@@ -110,7 +225,7 @@ function _loadJson(file, ttlMs) {
   const m = _mem.get(file);
   if (m && Date.now() - m.ts < ttlMs) return m.data;
   try {
-    const full = path.join(DATA_DIR, file);
+    const full = _findData(file);
     const st = fs.statSync(full);
     if (Date.now() - st.mtimeMs < ttlMs) {
       const data = JSON.parse(fs.readFileSync(full, 'utf8'));
@@ -224,11 +339,27 @@ async function _fetchScoreboardRange(league, start, end) {
 /** Saison courante (cache disque 6h). Matchs complétés uniquement. */
 async function getSeasonMatches(league) {
   _assertLeague(league);
-  const file = `${league}_season.json`;
+  // _v2 : invalide les caches « count:0 » issus de la période ESPN ranges 400.
+  const file = `${league}_season_v2.json`;
   const cached = _loadJson(file, TTL.season);
   if (cached) return cached;
   const season = LEAGUES[league].currentSeason();
   const { start, end } = LEAGUES[league].range(season);
+  // Source primaire SQLite (entry 100) : couvre la saison courante NBA/WNBA.
+  const hist = await _historyMatches(league).catch(() => null);
+  if (hist && hist.length) {
+    const iso = (ymd) => `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`;
+    const matches = hist.filter((m) => {
+      const d = m.date.slice(0, 10);
+      return d >= iso(start) && d <= iso(end) && m.homeScore + m.awayScore > 0;
+    });
+    if (matches.length) {
+      const payload = { season, fetchedAt: new Date().toISOString(), count: matches.length, matches };
+      _saveJson(file, payload);
+      return payload;
+    }
+  }
+  // Repli ESPN (plage mensuelle) — inopérant tant que ranges = 400.
   const all = await _fetchScoreboardRange(league, start, end);
   const matches = all.filter((m) => m.completed && m.homeScore + m.awayScore > 0);
   const payload = { season, fetchedAt: new Date().toISOString(), count: matches.length, matches };
@@ -349,9 +480,24 @@ async function _mapLimit(items, concurrency, fn) {
 /** H2H d'une paire : saisons 2009→courante, via schedules des 2 équipes (cache paire 7j). */
 async function getPairHistory(league, teamAId, teamBId) {
   _assertLeague(league);
-  const file = `${league}_h2hpair_${teamAId}_${teamBId}.json`;
+  // _v2 : invalide les archives vides de la période ESPN ranges 400.
+  const file = `${league}_h2hpair_${teamAId}_${teamBId}_v2.json`;
   const cached = _loadJson(file, TTL.history);
   if (cached) return cached;
+  // Source primaire SQLite (entry 100) : l'historique 2023+ contient déjà la
+  // paire (ids ESPN résolus par la map abbr→team). ESPN schedule ignorait de
+  // surcroît le paramètre season (renvoyait la saison courante uniquement).
+  const hist = await _historyMatches(league).catch(() => null);
+  if (hist && hist.length) {
+    const all = hist.filter((m) => {
+      const ids = [m.home.id, m.away.id];
+      return ids.includes(String(teamAId)) && ids.includes(String(teamBId));
+    }).sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (all.length) {
+      if (all.length >= 8) _saveJson(file, all); // même règle d'archivage qu'ESPN
+      return all;
+    }
+  }
   const cur = LEAGUES[league].currentSeason();
   const seasons = [];
   for (let y = HISTORY_FIRST_SEASON; y <= cur; y++) seasons.push(y);
@@ -654,22 +800,25 @@ function _assertLeague(league) {
 /** Liste des équipes (id, nom, abbr, logo) — depuis le scoreboard saison. */
 async function getTeams(league) {
   _assertLeague(league);
-  const file = `${league}_teams.json`;
+  // _v2 : invalide les listes vides de la période ESPN ranges 400.
+  const file = `${league}_teams_v2.json`;
   const cached = _loadJson(file, TTL.standings);
   if (cached) return cached;
-  const season = await getSeasonMatches(league);
-  const map = new Map();
-  for (const m of [...season.matches].slice(0, 120)) {
-    for (const side of ['home', 'away']) {
-      const t = m[side];
-      if (t && t.id && !map.has(t.id)) map.set(t.id, { id: t.id, name: t.name, abbr: t.abbr, logo: t.logo });
-    }
-  }
-  // Fallback logo ESPN CDN si absent
-  const teams = [...map.values()].map((t) => ({
-    ...t,
-    logo: t.logo || `https://a.espncdn.com/i/teamlogos/basketball/${league}/500/${t.id}.png`,
-  }));
+  // Fix 2026-09-30 : la liste n'est PLUS dérivée du scoreboard saison (ranges
+  // ESPN = 400 depuis le 29/09) mais de l'endpoint /teams (1 requête, complet).
+  const cfg = LEAGUES[league];
+  const d = await _espnGet(`/apis/site/v2/sports/${cfg.sportPath}/teams?limit=300`);
+  const lg = d && d.sports && d.sports[0] && Array.isArray(d.sports[0].leagues) ? d.sports[0].leagues[0] : null;
+  const raw = lg && Array.isArray(lg.teams) ? lg.teams : [];
+  const teams = raw
+    .map((x) => (x && x.team) || x)
+    .filter((t) => t && t.id)
+    .map((t) => ({
+      id: String(t.id),
+      name: t.displayName || t.name || String(t.id),
+      abbr: t.abbreviation || '',
+      logo: _teamLogo(t) || `https://a.espncdn.com/i/teamlogos/basketball/${league}/500/${t.id}.png`,
+    }));
   if (teams.length) _saveJson(file, teams);
   return teams;
 }

@@ -211,6 +211,8 @@
   "matchTabs": {
     "live": "Live",
     "prematch": "Pre-match",
+    "today": "Aujourd'hui",
+    "todayAria": "Matchs du jour ({n})",
     "rankings": "Classements & Résultats",
     "liveAria": "{n} matchs en direct",
     "prematchAria": "{n} matchs à venir",
