@@ -36,6 +36,11 @@ const BasketballCalendar = dynamic(
   { ssr: false },
 );
 
+const BasketballStandings = dynamic(
+  () => import("./basketball-standings").then((m) => m.BasketballStandings),
+  { ssr: false },
+);
+
 type BasketballTabContentProps = {
   className?: string;
 };
@@ -56,7 +61,7 @@ type UnifiedMatch = {
   consensus?: BasketballMatch["consensus"];
 };
 
-type PageView = "matchs" | "calendrier" | "h2h" | "fiba";
+type PageView = "matchs" | "calendrier" | "stats" | "h2h" | "fiba";
 
 export function BasketballTabContent({ className }: BasketballTabContentProps) {
   // pageView piloté par le store (sportSubTabs.basketball) : le toggle interne
@@ -169,6 +174,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
             {([
               { id: "matchs" as const, label: "Matchs" },
               { id: "calendrier" as const, label: "Calendrier" },
+              { id: "stats" as const, label: "Stats & Classements" },
               { id: "h2h" as const, label: "H2H" },
               { id: "fiba" as const, label: "FIBA WC" },
             ]).map((tab) => (
@@ -219,6 +225,11 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       {/* Vue Calendrier (style Flashscore/FotMob, 4 ligues) */}
       {pageView === "calendrier" && (
         <BasketballCalendar />
+      )}
+
+      {/* Vue Stats & Classements (classement filtrable + heatmap rangs) */}
+      {pageView === "stats" && (
+        <BasketballStandings />
       )}
 
       {/* Vue H2H */}

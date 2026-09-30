@@ -1057,6 +1057,8 @@ module.exports = {
   computeTeamOverStats, computeTeamSpreadStats, computeMatchOverStats,
   computeBTTSStats, computeOverDistribution, THRESHOLDS,
   _fetchTeamSchedule, _espnGet,
+  // internals partagés aux services soeurs (basketballStandingsService)
+  _loadJson, _saveJson, _findData, _historyDb,
   currentSeason: (l) => LEAGUES[l].currentSeason(),
   invalidateCache() { _mem.clear(); },
 };
