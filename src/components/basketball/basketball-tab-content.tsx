@@ -41,12 +41,22 @@ const BasketballStandings = dynamic(
   { ssr: false },
 );
 
+const BasketballLive = dynamic(
+  () => import("./basketball-live").then((m) => m.BasketballLive),
+  { ssr: false },
+);
+
+const BasketballBacktest = dynamic(
+  () => import("./basketball-backtest").then((m) => m.BasketballBacktest),
+  { ssr: false },
+);
+
 type BasketballTabContentProps = {
   className?: string;
 };
 
-/** Match unifié pour l'UI (source ESPN ou EuroLeague). */
-type UnifiedMatch = {
+/** Match unifié pour l'UI (source ESPN ou EuroLeague) — réexporté de basketball-types. */
+export type UnifiedMatch = {
   id: string;
   league: string;
   scheduledAt: string;
@@ -56,12 +66,11 @@ type UnifiedMatch = {
   pHome: number | null;
   pAway: number | null;
   edgeElo: number | null;
-  /** Fix B8 : fields additionnels mappés depuis le match NBA complet */
   injuries?: BasketballMatch["injuries"];
   consensus?: BasketballMatch["consensus"];
 };
 
-type PageView = "matchs" | "calendrier" | "stats" | "h2h" | "fiba";
+type PageView = "matchs" | "calendrier" | "live" | "stats" | "backtest" | "h2h" | "fiba";
 
 export function BasketballTabContent({ className }: BasketballTabContentProps) {
   // pageView piloté par le store (sportSubTabs.basketball) : le toggle interne
@@ -174,7 +183,9 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
             {([
               { id: "matchs" as const, label: "Matchs" },
               { id: "calendrier" as const, label: "Calendrier" },
+              { id: "live" as const, label: "Live" },
               { id: "stats" as const, label: "Stats & Classements" },
+              { id: "backtest" as const, label: "Backtest" },
               { id: "h2h" as const, label: "H2H" },
               { id: "fiba" as const, label: "FIBA WC" },
             ]).map((tab) => (
@@ -227,9 +238,22 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         <BasketballCalendar />
       )}
 
+      {/* Vue Live (matchs en cours, rafraîchi) */}
+      {pageView === "live" && (
+        <BasketballLive
+          matches={allMatches}
+          isLoading={isLoading}
+        />
+      )}
+
       {/* Vue Stats & Classements (classement filtrable + heatmap rangs) */}
       {pageView === "stats" && (
         <BasketballStandings />
+      )}
+
+      {/* Vue Backtest (stratégies sur basketball_match_history) */}
+      {pageView === "backtest" && (
+        <BasketballBacktest />
       )}
 
       {/* Vue H2H */}

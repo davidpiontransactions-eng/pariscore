@@ -18,7 +18,9 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
   basketball: [
     { id: "matchs", label: "Matchs" },
     { id: "calendrier", label: "Calendrier" },
+    { id: "live", label: "Live" },
     { id: "stats", label: "Stats & Classements" },
+    { id: "backtest", label: "Backtest" },
     { id: "h2h", label: "H2H" },
     { id: "fiba", label: "FIBA WC" },
   ],
