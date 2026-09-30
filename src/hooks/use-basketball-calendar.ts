@@ -23,7 +23,7 @@ const fetcher = async (url: string): Promise<BasketballCalendarData> => {
 
 export function useBasketballCalendar(dateKey: string) {
   const { data, isLoading, error, mutate } = useSWR<BasketballCalendarData>(
-    `/api/basketball/calendar?date=${encodeURIComponent(dateKey)}`,
+    `/api/v1/basketball/calendar?date=${encodeURIComponent(dateKey)}`,
     fetcher,
     {
       refreshInterval: 120_000, // matchs live du jour

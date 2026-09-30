@@ -19,7 +19,7 @@ export type BasketballStandingsPayload = {
 /** Hook SWR du classement basket (nba|wnba) — cache serveur 10 min. */
 export function useBasketballStandings(league: "nba" | "wnba") {
   const { data, error, isLoading } = useSWR<BasketballStandingsPayload>(
-    `/api/basketball/standings?league=${league}`,
+    `/api/v1/basketball/standings?league=${league}`,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 5 * 60_000 },
   );

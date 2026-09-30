@@ -80,7 +80,7 @@ export function BasketballBacktest({ className }: { className?: string }) {
     setLoading(true);
     setError(null);
     try {
-      const d = (await fetcher(`/api/basketball/backtest?leagues=${encodeURIComponent(lg)}`)) as Payload;
+      const d = (await fetcher(`/api/v1/basketball/backtest?leagues=${encodeURIComponent(lg)}`)) as Payload;
       setData(d);
     } catch (e) {
       setError(String(e));

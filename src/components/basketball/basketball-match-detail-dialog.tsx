@@ -105,7 +105,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
     setOddsLoading(true);
     const params = new URLSearchParams({ league, home, away });
     // Fetch current odds
-    fetch(`/api/basketball/odds?${params}`)
+    fetch(`/api/v1/basketball/odds?${params}`)
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled) setOdds(data.odds ?? []);
@@ -118,7 +118,7 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
       });
     // Fetch odds history (line movement)
     const histParams = new URLSearchParams({ league, home, away, history: "true" });
-    fetch(`/api/basketball/odds?${histParams}`)
+    fetch(`/api/v1/basketball/odds?${histParams}`)
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled) setOddsHistory(data.snapshots ?? []);
