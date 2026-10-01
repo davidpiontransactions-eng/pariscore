@@ -10,6 +10,7 @@ import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { LeagueSelector } from "./basketball-league-selector";
 import { BasketballMatchCard, BasketballMatchCardSkeleton } from "./basketball-match-card";
 import { BasketballErrorBoundary } from "./basketball-error-boundary";
+import { BasketballHeroHeader } from "./basketball-hero-header";
 import { useBasketballMatches } from "@/hooks/use-basketball-matches";
 import { useEuroLeagueMatches } from "@/hooks/use-euroleague-matches";
 import type { BasketballLeagueId } from "@/lib/basketball-data";
@@ -174,6 +175,16 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
   return (
     <BasketballErrorBoundary>
     <div className={cn("flex flex-col gap-3", className)}>
+      {/* Hero — encart présentationnel dédié au sport (miroir football/hockey/handball).
+          Affiché sur tous les sous-onglets ; les compteurs viennent de allMatches
+          déjà chargés plus haut, donc aucun fetch supplémentaire. */}
+      <BasketballHeroHeader
+        liveCount={liveCount}
+        upcomingCount={prematchCount}
+        leagueCount={selectedLeagues.length}
+        onCta={() => setPageView("matchs")}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Basket</h2>
