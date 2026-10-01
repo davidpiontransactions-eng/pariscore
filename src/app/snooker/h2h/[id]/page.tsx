@@ -3,6 +3,7 @@
 import { use, useMemo } from "react";
 import useSWR from "swr";
 import { buildPlayerIndex, findCuePlayer, type PlayerLike } from "@/lib/snooker/player-match";
+import { scoreFromPowerScore as playerScore } from "@/lib/snooker/player-score";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -31,21 +32,6 @@ type Player = {
   avgBreak?: number;
   photoUrl?: string;
 };
-
-function normalize(val: number, min: number, max: number): number {
-  if (max === min) return 50;
-  return Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
-}
-
-function playerScore(p: Player): number {
-  const elo = normalize(p.eloRating, 1200, 1800);
-  const win = p.winPct ?? 50;
-  const century = normalize(p.centuryRate ?? 0, 0, 30);
-  const decider = p.deciderWinPct ?? 50;
-  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
-  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
-}
 
 function logBinomPMF(k: number, n: number, p: number): number {
   if (p <= 0) return k === 0 ? 0 : -Infinity;
@@ -101,18 +87,15 @@ function overTotalProb(pFrame: number, bestOf: number, threshold: number): numbe
 }
 
 /**
- * Ligne Over totale par match : la plus haute ligne dont P(total > ligne) ≥ 60 %
- * (proche de 60 %). Fallback si aucune ligne n'atteint 60 % (match très
- * déséquilibré) : la ligne `need`, non-triviale la plus probable.
+ * Lignes Over frames style book, fixes par format :
+ * `need + 0.5` (le plus petit total non-trivial) et `need + 2.5`.
+ * Bo9 → 5.5 / 7.5 · Bo7 → 4.5 / 6.5. Plafond `bestOf - 0.5` (jamais de
+ * ligne au-delà du total max atteignable, ex. Bo5 → 3.5 / 4.5).
  */
-function bestOverTotalLine(pFrame: number, bestOf: number): number {
+function overTotalLines(bestOf: number): number[] {
   const need = Math.ceil(bestOf / 2);
-  let best = need;
-  for (let t = need; t <= bestOf - 1; t++) {
-    if (overTotalProb(pFrame, bestOf, t) >= 60) best = t;
-    else break; // décroissante en t — inutile de continuer
-  }
-  return best;
+  const lines = [need + 0.5, Math.min(need + 2.5, bestOf - 0.5)];
+  return lines[0] === lines[1] ? [lines[0]] : lines;
 }
 
 /**
@@ -264,8 +247,8 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
   const finished = match.status === "finished";
 
   const matchProb = matchWinProb(pFrameDec, bo);
-  const overLine = bestOverTotalLine(pFrameDec, bo);
-  const overProb = overTotalProb(pFrameDec, bo, overLine);
+  const need = Math.ceil(bo / 2);
+  const overLines = overTotalLines(bo);
   const first2P1 = firstToK(pFrameDec, 2);
   const first2P2 = firstToK(1 - pFrameDec, 2);
 
@@ -355,11 +338,20 @@ export default function SnookerH2HPage({ params }: { params: Promise<{ id: strin
 
         {/* Predictions */}
         <div className="rounded-xl bg-white p-4 border border-gray-100">
-          <h3 className="text-[12px] font-bold text-gray-900 mb-3">Prédictions modèle</h3>
+          <h3 className="text-[12px] font-bold text-gray-900 mb-1">Prédictions modèle</h3>
+          <p className="text-[11px] text-gray-500 mb-3">
+            Bo{bo} · {need} frames gagnantes · Over frames :{" "}
+            <span className="tabular-nums">{overLines.map((l) => `Over ${l}`).join(" · ")}</span>
+          </p>
           <div className="space-y-2">
             {[
               { label: "Gagnant du match", p1: matchProb, name1: match.player1, name2: match.player2 },
-              { label: `Over ${overLine} frames`, p1: overProb, name1: "Over", name2: "Under" },
+              ...overLines.map((line) => ({
+                label: `Over ${line} frames`,
+                p1: overTotalProb(pFrameDec, bo, line),
+                name1: "Over",
+                name2: "Under",
+              })),
               { label: "1er à 2 frames", p1: first2P1, name1: match.player1, name2: match.player2 },
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">

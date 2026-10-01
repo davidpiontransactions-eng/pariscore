@@ -36,6 +36,8 @@ export type PowerMetric = {
   value: number | null;
   /** Valeur brute pour affichage (ex. "2146 Élo", "4/5"). */
   display?: string;
+  /** Bornes de la normalisation, pour le tooltip. */
+  hint?: string;
 };
 
 export type PowerScore = {

@@ -3,6 +3,10 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import Link from "next/link";
+import {
+  scoreFromPowerScore as playerScore,
+  scoreFromPowerScoreRounded as powerScore,
+} from "@/lib/snooker/player-score";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -50,30 +54,6 @@ function matchWinProb(pFrame: number, bestOf: number): number {
     pWin += Math.exp(logBinomPMF(i, bestOf, pFrame));
   }
   return (1 - pWin) * 100;
-}
-
-function normalize(val: number, min: number, max: number): number {
-  if (max === min) return 50;
-  return Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
-}
-
-function powerScore(p: Player): number {
-  const elo = normalize(p.eloRating, 1200, 1800);
-  const win = p.winPct ?? 50;
-  const century = normalize(p.centuryRate ?? 0, 0, 30);
-  const decider = p.deciderWinPct ?? 50;
-  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
-  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
-  return Math.round(elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10);
-}
-
-function playerScore(p: Player): number {
-  const elo = normalize(p.eloRating, 1200, 1800);
-  const win = p.winPct ?? 50;
-  const century = normalize(p.centuryRate ?? 0, 0, 30);
-  const decider = p.deciderWinPct ?? 50;
-  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
 }
 
 // ── UI Components ─────────────────────────────────────────────────────────

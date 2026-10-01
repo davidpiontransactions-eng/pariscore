@@ -19,6 +19,9 @@ import { BankrollSimulator } from "@/components/snooker/bankroll-simulator";
 import { addBet, isTracked } from "@/lib/snooker/bet-tracker";
 import { kellyCriterion, verdictColor } from "@/lib/snooker/kelly";
 import { buildPlayerIndex, findCuePlayer } from "@/lib/snooker/player-match";
+import { scoreFromPowerScore as playerScore } from "@/lib/snooker/player-score";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { SnookerBacktestHistory } from "@/components/snooker/snooker-backtest-history";
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -398,22 +401,6 @@ function computeBestPlayer(p1: ApiPlayer, p2: ApiPlayer): "a" | "b" {
   return s1 >= s2 ? "a" : "b";
 }
 
-/** Score 0-100 d'un joueur sur 5 métriques snooker. */
-function playerScore(p: ApiPlayer): number {
-  // Elo : 1200-1800 → 0-100
-  const elo = normalize(p.eloRating, 1200, 1800);
-  // Win% : déjà 0-100 (l'API renvoie des pourcentages)
-  const win = p.winPct ?? 50;
-  // Century rate : 0-30% → 0-100
-  const century = normalize(p.centuryRate ?? 0, 0, 30);
-  // Decider win% : déjà 0-100
-  const decider = p.deciderWinPct ?? 50;
-  // max_break CueTracker (40-147) — pas un vrai avg, neutre si absent
-  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
-
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
-}
-
 // ─── Badge PowerScore (sous le nom du joueur) ──────────────────────────────
 
 /** Retourne la couleur du badge selon le score 0-100. */
@@ -654,6 +641,11 @@ export function SnookerTabContent() {
   const [showMetricsInfo, setShowMetricsInfo] = useState(false);
   // Match live ouvert dans le popup live (id — les données suivent le refresh SWR)
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
+
+  // Sous-onglet snooker piloté par la headbar (sport-sub-tabs.tsx) :
+  // calendrier | live | backtesting — le store est la source unique.
+  const subViewRaw = useSportsSidebarStore((s) => s.sportSubTabs.snooker);
+  const subView = (subViewRaw as string | undefined) ?? "calendrier";
 
   // Détection live pour refresh fréquent
   const [hasLive, setHasLive] = useState(false);
@@ -946,6 +938,9 @@ export function SnookerTabContent() {
 
   return (
     <div className="space-y-6">
+      {/* ======== SOUS-ONGLET CALENDRIER ======== */}
+      {subView === "calendrier" && (
+        <>
       {/* ======== HERO SNOOKER ======== */}
       <SnookerHero
         totalMatches={matchesRes.data?.total ?? matches.length}
@@ -1268,7 +1263,11 @@ export function SnookerTabContent() {
           <span>{calFiltered.length} matchs affichés</span>
         </div>
       </section>
+        </>
+      )}
 
+      {subView === "live" && (
+        <>
       {/* ======== PARIS RECOMMANDÉS — Meilleurs paris toutes confiances ======== */}
       {top10.filter(t => t.confidence === "high").length > 0 && (
         <section
@@ -1300,6 +1299,13 @@ export function SnookerTabContent() {
           </div>
         </section>
       )}
+        </>
+      )}
+
+      {subView === "backtesting" && (
+        <>
+          {/* Backtest historique (SnookerDB — walk-forward Elo) */}
+          <SnookerBacktestHistory />
 
       {/* ======== TOP 10 PAR MARCHÉ DE PARI — 1xBet ======== */}
       <section
@@ -1622,12 +1628,20 @@ export function SnookerTabContent() {
           </div>
         ))}
       </div>
+        </>
+      )}
 
+      {subView === "live" && (
+        <>
       {/* ======== PARIS ======== */}
       <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
         <SnookerBetsPanel />
       </LiquidGlass>
+        </>
+      )}
 
+      {subView === "calendrier" && (
+        <>
       {/* ======== TOUTES LES CARTES MATCHS ======== */}
       <section className="space-y-3">
         <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -1675,7 +1689,11 @@ export function SnookerTabContent() {
           </div>
         )}
       </section>
+        </>
+      )}
 
+      {subView === "live" && (
+        <>
       {/* ======== LIVE TRACKER ======== */}
       {liveMatches.length > 0 && (
         <section className="space-y-3">
@@ -1710,7 +1728,11 @@ export function SnookerTabContent() {
           </div>
         </section>
       )}
+        </>
+      )}
 
+      {subView === "calendrier" && (
+        <>
       {/* ======== LEADERBOARD JOUEURS ======== */}
       {players.length > 0 && (
         <section className="space-y-3">
@@ -1738,6 +1760,8 @@ export function SnookerTabContent() {
           </div>
         </section>
       )}
+        </>
+      )}
 
       {/* ======== POPUP JOUEUR ======== */}
       {selectedPlayerId && (
@@ -1747,6 +1771,8 @@ export function SnookerTabContent() {
         />
       )}
 
+      {subView === "backtesting" && (
+        <>
       {/* ======== PRÉCISION DU MODÈLE ======== */}
       <section className="px-0 sm:px-0">
         <SnookerAccuracyDashboard />
@@ -1756,6 +1782,8 @@ export function SnookerTabContent() {
       <section className="px-0 sm:px-0">
         <BankrollSimulator />
       </section>
+        </>
+      )}
 
       {/* ======== POPUP VIDEO HIGHLIGHTS ======== */}
       {videoQuery && (

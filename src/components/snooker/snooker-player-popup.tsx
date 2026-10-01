@@ -25,6 +25,8 @@ type PlayerDetail = {
   formLast10: string;
 };
 
+import { scoreFromPowerScoreRounded } from "@/lib/snooker/player-score";
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 type PlayerListItem = {
@@ -237,14 +239,13 @@ export function SnookerPlayerPopup({
     fetcher,
   );
 
-  const powerScoreOf = (p: PlayerListItem) =>
-    Math.round(
-      (p.eloRating / 1800) * 30 +
-      p.winPct * 0.25 +
-      Math.min(100, (p.centuryRate / 30) * 100) * 0.20 +
-      p.deciderWinPct * 0.15 +
-      Math.min(100, ((p.avgBreak - 20) / 60) * 100) * 0.10
-    );
+  // Avant, cette formule locale différait de celle des 5 autres copies :
+  // Elo divisé par 1800 SANS plancher à 1200, et fenêtre avgBreak 20-80 au lieu
+  // de 40-147. Le même joueur avait donc deux PowerScore différents selon la
+  // page. `scoreFromPowerScore` est désormais l'unique source ; le rang dans le
+  // classement change donc pour les joueurs à l'Elo < 1200 ou à l'avgBreak < 40,
+  // ce qui est la correction voulue et non une régression.
+  const powerScoreOf = (p: PlayerListItem) => scoreFromPowerScoreRounded(p);
 
   const psRank = (() => {
     if (!player || !allPlayersData?.players) return null;

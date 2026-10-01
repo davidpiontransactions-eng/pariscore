@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { quickElo } from "@/lib/snooker/elo-engine";
 import { buildPlayerIndex, findCuePlayer, type PlayerLike } from "@/lib/snooker/player-match";
+import { scoreFromPowerScore as playerScore } from "@/lib/snooker/player-score";
 const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 export const runtime = "nodejs";
@@ -29,21 +30,6 @@ type Match = {
   /** Cotes FlashScore : {home, away} — pas {player1, player2} (audit lot3). */
   odds?: { home: number; away: number };
 };
-
-function normalize(val: number, min: number, max: number): number {
-  if (max === min) return 50;
-  return Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
-}
-
-function playerScore(p: Player): number {
-  const elo = normalize(p.eloRating, 1200, 1800);
-  const win = p.winPct ?? 50;
-  const century = normalize(p.centuryRate ?? 0, 0, 30);
-  const decider = p.deciderWinPct ?? 50;
-  // avgBreak = max_break CueTracker (40-147), neutre si absent
-  const maxBreak = p.avgBreak != null ? normalize(p.avgBreak, 40, 147) : 50;
-  return elo * 0.30 + win * 0.25 + century * 0.20 + decider * 0.15 + maxBreak * 0.10;
-}
 
 function logBinomPMF(k: number, n: number, p: number): number {
   if (p <= 0) return k === 0 ? 0 : -Infinity;
