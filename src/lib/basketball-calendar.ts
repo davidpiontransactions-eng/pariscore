@@ -8,6 +8,7 @@
  */
 
 import type { FotmobCalMatch } from "@/components/football/fotmob-calendar-table";
+import { euroLeagueLogo } from "./euroleague-logos";
 
 /* ─── Types d'entrée (formes brutes des sources) ─── */
 
@@ -30,8 +31,8 @@ export type EuroBbMatch = {
   status?: string | null;
   homeScore?: number | null;
   awayScore?: number | null;
-  home?: { name?: string } | null;
-  away?: { name?: string } | null;
+  home?: { name?: string; code?: string } | null;
+  away?: { name?: string; code?: string } | null;
   round?: number | string | null;
 };
 
@@ -102,8 +103,8 @@ export function euroBbToCal(m: EuroBbMatch, league: { id: string; name: string }
   return {
     id: `${league.id}-${m.id}`,
     scheduledAt: m.startTime || "",
-    home: { name: m.home?.name || "?" },
-    away: { name: m.away?.name || "?" },
+    home: { name: m.home?.name || "?", logo: euroLeagueLogo(m.home?.code) },
+    away: { name: m.away?.name || "?", logo: euroLeagueLogo(m.away?.code) },
     league: { id: league.id, name: league.name, country: null, logo: null },
     round: m.round != null && m.round !== 0 ? `J${m.round}` : null,
     live,

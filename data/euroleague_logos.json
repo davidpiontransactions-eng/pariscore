@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-01",
+  "source": "API Wikipedia (prop=pageimages, thumbnail 300px) — logos officiels des clubs",
+  "note_licence": "Logos de clubs (marques déposées) référencés via Wikipédia : usage illustratif référentiel (scores/résultats). À faire valider juridiquement pour tout autre usage.",
+  "skipped": [],
+  "teams": {
+    "ASV": {
+      "file": "images/basketball/euroleague/ASV.png",
+      "name": "LDLC ASVEL VILLEURBANNE",
+      "wiki_title": "ASVEL Lyon-Villeurbanne",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/fr/thumb/b/bf/Logo_ASVEL_Lyon_Villeurbanne_-_2018.svg/langfr-330px-Logo_ASVEL_Lyon_Villeurbanne_-_2018.svg.png?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 11.5,
+      "http_verifie": "ok"
+    },
+    "BAR": {
+      "file": "images/basketball/euroleague/BAR.png",
+      "name": "FC BARCELONA",
+      "wiki_title": "FC Barcelona Bàsquet",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/250px-FC_Barcelona_%28crest%29.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 19.2,
+      "http_verifie": "ok"
+    },
+    "BAS": {
+      "file": "images/basketball/euroleague/BAS.png",
+      "name": "KOSNER BASKONIA VITORIA-GASTEIZ",
+      "wiki_title": "Saski Baskonia",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/6/6a/Saski_Baskonia.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 132.3,
+      "http_verifie": "ok"
+    },
+    "DUB": {
+      "file": "images/basketball/euroleague/DUB.png",
+      "name": "DUBAI BASKETBALL",
+      "wiki_title": "Dubai Basketball",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/d/de/Dubai_Basketball.svg/120px-Dubai_Basketball.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 17.3,
+      "http_verifie": "ok"
+    },
+    "HTA": {
+      "file": "images/basketball/euroleague/HTA.png",
+      "name": "HAPOEL IBI TEL AVIV",
+      "wiki_title": "Hapoel Tel Aviv B.C.",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/6/64/Hapoel_Tel_Aviv.svg/330px-Hapoel_Tel_Aviv.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 23.2,
+      "http_verifie": "ok"
+    },
+    "IST": {
+      "file": "images/basketball/euroleague/IST.png",
+      "name": "ANADOLU EFES ISTANBUL",
+      "wiki_title": "Anadolu Efes S.K.",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/7/74/Anadolu_Efes_SK_logo.svg/250px-Anadolu_Efes_SK_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 19.5,
+      "http_verifie": "ok"
+    },
+    "MAD": {
+      "file": "images/basketball/euroleague/MAD.png",
+      "name": "REAL MADRID",
+      "wiki_title": "Real Madrid Baloncesto",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/b/be/Real_Madrid_Baloncesto.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 90.0,
+      "http_verifie": "ok"
+    },
+    "MCO": {
+      "file": "images/basketball/euroleague/MCO.png",
+      "name": "AS MONACO",
+      "wiki_title": "AS Monaco Basket",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/d/d3/AS_Monaco_Basket.svg/250px-AS_Monaco_Basket.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 65.1,
+      "http_verifie": "ok"
+    },
+    "MIL": {
+      "file": "images/basketball/euroleague/MIL.png",
+      "name": "EA7 EMPORIO ARMANI MILAN",
+      "wiki_title": "Olimpia Milano",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/3/3d/Pallacanestro_Olimpia_Milano_logo.svg/120px-Pallacanestro_Olimpia_Milano_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 12.2,
+      "http_verifie": "ok"
+    },
+    "MUN": {
+      "file": "images/basketball/euroleague/MUN.png",
+      "name": "FC BAYERN MUNICH",
+      "wiki_title": "FC Bayern Munich (basketball)",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/9/93/FC_Bayern_Munich_%28basketball%29_logo.svg/330px-FC_Bayern_Munich_%28basketball%29_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 50.3,
+      "http_verifie": "ok"
+    },
+    "OLY": {
+      "file": "images/basketball/euroleague/OLY.png",
+      "name": "OLYMPIACOS PIRAEUS",
+      "wiki_title": "Olympiacos B.C.",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/7/7f/Olympiacos_BC_logo.svg/250px-Olympiacos_BC_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 36.6,
+      "http_verifie": "ok"
+    },
+    "PAM": {
+      "file": "images/basketball/euroleague/PAM.png",
+      "name": "VALENCIA BASKET",
+      "wiki_title": "Valencia Basket",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/5/5c/Valencia_Basket_%2840_anys%29.svg/120px-Valencia_Basket_%2840_anys%29.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 14.4,
+      "http_verifie": "ok"
+    },
+    "PAN": {
+      "file": "images/basketball/euroleague/PAN.png",
+      "name": "PANATHINAIKOS AKTOR ATHENS",
+      "wiki_title": "Panathinaikos B.C.",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/1/18/Panathinaikos_BC_logo.svg/330px-Panathinaikos_BC_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 27.1,
+      "http_verifie": "ok"
+    },
+    "PAR": {
+      "file": "images/basketball/euroleague/PAR.png",
+      "name": "PARTIZAN MOZZART BET BELGRADE",
+      "wiki_title": "KK Partizan",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/8/80/KK_Partizan_logo.svg/250px-KK_Partizan_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 44.8,
+      "http_verifie": "ok"
+    },
+    "PRS": {
+      "file": "images/basketball/euroleague/PRS.png",
+      "name": "PARIS BASKETBALL",
+      "wiki_title": "Paris Basketball",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/8/86/Logo_Paris_Basketball.svg/500px-Logo_Paris_Basketball.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 62.4,
+      "http_verifie": "ok"
+    },
+    "RED": {
+      "file": "images/basketball/euroleague/RED.png",
+      "name": "CRVENA ZVEZDA MERIDIANBET BELGRADE",
+      "wiki_title": "KK Crvena zvezda",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/0/01/KK_Crvena_zvezda_logo.svg/250px-KK_Crvena_zvezda_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 25.3,
+      "http_verifie": "ok"
+    },
+    "TEL": {
+      "file": "images/basketball/euroleague/TEL.png",
+      "name": "MACCABI RAPYD TEL AVIV",
+      "wiki_title": "Maccabi Tel Aviv B.C.",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/6/6b/Maccabi_Tel_Aviv_BC_logo.svg/250px-Maccabi_Tel_Aviv_BC_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 48.2,
+      "http_verifie": "ok"
+    },
+    "ULK": {
+      "file": "images/basketball/euroleague/ULK.png",
+      "name": "FENERBAHCE BEKO ISTANBUL",
+      "wiki_title": "Fenerbahçe S.K. (basketball)",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/0/0b/Fenerbah%C3%A7e_Men%27s_Basketball_logo.svg/250px-Fenerbah%C3%A7e_Men%27s_Basketball_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 45.3,
+      "http_verifie": "ok"
+    },
+    "VIR": {
+      "file": "images/basketball/euroleague/VIR.png",
+      "name": "VIRTUS BOLOGNA",
+      "wiki_title": "Virtus Bologna",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/commons/1/14/Virtus_Bologna_2027.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 104.7,
+      "http_verifie": "ok"
+    },
+    "ZAL": {
+      "file": "images/basketball/euroleague/ZAL.png",
+      "name": "ZALGIRIS KAUNAS",
+      "wiki_title": "BC Žalgiris",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/0/0e/BC_%C5%BDalgiris_logo.svg/330px-BC_%C5%BDalgiris_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 25.9,
+      "http_verifie": "ok"
+    },
+    "ARI": {
+      "file": "images/basketball/euroleague/ARI.png",
+      "name": "ARIS THESSALONIKI BETSSON",
+      "wiki_title": "Aris B.C.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/0/03/Aris_Thessaloniki_BC_logo.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "poids_ko": 48.5,
+      "http_verifie": "ok"
+    },
+    "BAH": {
+      "file": "images/basketball/euroleague/BAH.png",
+      "name": "BAHCESEHIR COLLEGE ISTANBUL",
+      "wiki_title": "Bahçeşehir Koleji S.K.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/commons/9/91/Bah%C3%A7e%C5%9Fehir_Koleji_Spor_Kul%C3%BCb%C3%BC_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 497.3,
+      "http_verifie": "ok"
+    },
+    "BES": {
+      "file": "images/basketball/euroleague/BES.png",
+      "name": "BESIKTAS GAIN ISTANBUL",
+      "wiki_title": "Beşiktaş J.K. (men's basketball)",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/Be%C5%9Fikta%C5%9F_logo.png/3840px-Be%C5%9Fikta%C5%9F_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 587.1,
+      "http_verifie": "ok"
+    },
+    "BOU": {
+      "file": "images/basketball/euroleague/BOU.png",
+      "name": "COSEA JL BOURG-EN-BRESSE",
+      "wiki_title": "JL Bourg Basket",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/5/5c/JL_Bourg_Basket_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 96.5,
+      "http_verifie": "ok"
+    },
+    "BUD": {
+      "file": "images/basketball/euroleague/BUD.png",
+      "name": "BUDUCNOST VOLI PODGORICA",
+      "wiki_title": "KK Budućnost",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/f/f7/KK_Budu%C4%87nost_logo.svg/500px-KK_Budu%C4%87nost_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 79.9,
+      "http_verifie": "ok"
+    },
+    "CLU": {
+      "file": "images/basketball/euroleague/CLU.png",
+      "name": "U-BT CLUJ-NAPOCA",
+      "wiki_title": "U-BT Cluj-Napoca",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Cfmuniversitateacluj.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 60.9,
+      "http_verifie": "ok"
+    },
+    "HAM": {
+      "file": "images/basketball/euroleague/HAM.png",
+      "name": "VEOLIA TOWERS HAMBURG",
+      "wiki_title": "Hamburg Towers",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/1/1f/Hamburg_Towers_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 73.4,
+      "http_verifie": "ok"
+    },
+    "JER": {
+      "file": "images/basketball/euroleague/JER.png",
+      "name": "HAPOEL MIDTOWN JERUSALEM",
+      "wiki_title": "Hapoel Jerusalem B.C.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/2/2b/Hapoel_Jerusalem_B.C._logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 103.3,
+      "http_verifie": "ok"
+    },
+    "KLA": {
+      "file": "images/basketball/euroleague/KLA.png",
+      "name": "NEPTUNAS KLAIPEDA",
+      "wiki_title": "BC Neptūnas",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/2/22/BC_Nept%C5%ABnas_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 70.0,
+      "http_verifie": "ok"
+    },
+    "LJU": {
+      "file": "images/basketball/euroleague/LJU.png",
+      "name": "CEDEVITA OLIMPIJA LJUBLJANA",
+      "wiki_title": "KK Cedevita Olimpija",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/d/d2/Cedevita_Olimpija_Ljubljana_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 30.4,
+      "http_verifie": "ok"
+    },
+    "LKB": {
+      "file": "images/basketball/euroleague/LKB.png",
+      "name": "LIETKABELIS PANEVEZYS",
+      "wiki_title": "BC Lietkabelis",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/9/9b/BC_Lietkabelis_logo.svg/330px-BC_Lietkabelis_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 60.4,
+      "http_verifie": "ok"
+    },
+    "LLI": {
+      "file": "images/basketball/euroleague/LLI.png",
+      "name": "LONDON LIONS",
+      "wiki_title": "London Lions (basketball)",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/c/cd/London_Lions_logo_%282025%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 24.4,
+      "http_verifie": "ok"
+    },
+    "MAN": {
+      "file": "images/basketball/euroleague/MAN.png",
+      "name": "BAXI MANRESA",
+      "wiki_title": "Bàsquet Manresa",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/a/aa/Kids%26Us_Manresa.svg/330px-Kids%26Us_Manresa.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 53.2,
+      "http_verifie": "ok"
+    },
+    "NIN": {
+      "file": "images/basketball/euroleague/NIN.png",
+      "name": "NINERS CHEMNITZ",
+      "wiki_title": "Niners Chemnitz",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/de/d/d8/Logo-NINERS_Chemnitz.png?utm_source=de.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 1105.5,
+      "http_verifie": "ok"
+    },
+    "NIO": {
+      "file": "images/basketball/euroleague/NIO.png",
+      "name": "PANIONIOS COSMORAMA TRAVEL ATHENS",
+      "wiki_title": "Panionios B.C.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/commons/7/79/PGSS_BC_Logo_Dark_BG_Flat%400.5x.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 21.9,
+      "http_verifie": "ok"
+    },
+    "TRN": {
+      "file": "images/basketball/euroleague/TRN.png",
+      "name": "DOLOMITI ENERGIA TRENTO",
+      "wiki_title": "Aquila Basket Trento",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/5/59/Aquila_Basket_Trento_logo.svg/500px-Aquila_Basket_Trento_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 83.9,
+      "http_verifie": "ok"
+    },
+    "TTK": {
+      "file": "images/basketball/euroleague/TTK.png",
+      "name": "TURK TELEKOM ANKARA",
+      "wiki_title": "Türk Telekom B.K.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/c/cb/T%C3%BCrk_Telekom_Basketbol_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 54.2,
+      "http_verifie": "ok"
+    },
+    "ULM": {
+      "file": "images/basketball/euroleague/ULM.png",
+      "name": "RATIOPHARM ULM",
+      "wiki_title": "Ratiopharm Ulm",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/e/ed/Ratiopharm_Ulm_logo.svg/250px-Ratiopharm_Ulm_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 31.0,
+      "http_verifie": "ok"
+    },
+    "VNC": {
+      "file": "images/basketball/euroleague/VNC.png",
+      "name": "UMANA REYER VENICE",
+      "wiki_title": "Reyer Venezia",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/e/eb/Reyer_Venezia_logo_2022.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 101.1,
+      "http_verifie": "ok"
+    },
+    "WRO": {
+      "file": "images/basketball/euroleague/WRO.png",
+      "name": "SLASK WROCLAW",
+      "wiki_title": "Śląsk Wrocław (basketball)",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/a/a8/%C5%9Al%C4%85sk_Wroc%C5%82aw_%28basketball%29_logo.svg/330px-%C5%9Al%C4%85sk_Wroc%C5%82aw_%28basketball%29_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 74.5,
+      "http_verifie": "ok"
+    }
+  }
+}
