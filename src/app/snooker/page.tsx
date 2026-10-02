@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SnookerTabContent } from "@/components/snooker/snooker-tab-content";
+import { SportPageSync } from "@/components/layout/sport-page-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,10 @@ export const metadata: Metadata = {
 export default function SnookerPage() {
   return (
     <main className="min-h-screen bg-bg-deep">
+      {/* Positionne selectedSportId → header « Snooker » actif + rangée de
+          sous-onglets rendue (sinon early return, et les vues Résultats /
+          Backtesting restent inaccessibles). */}
+      <SportPageSync sport="snooker" />
       <SnookerTabContent />
     </main>
   );

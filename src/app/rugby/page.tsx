@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
+import { SportPageSync } from "@/components/layout/sport-page-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export const metadata: Metadata = {
 export default function RugbyPage() {
   return (
     <main className="min-h-screen bg-bg-deep">
+      <SportPageSync sport="rugby" />
       <RugbyTabContent />
     </main>
   );

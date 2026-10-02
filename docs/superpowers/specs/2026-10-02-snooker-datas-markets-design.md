@@ -1,4 +1,6 @@
-## 📋 SPEC — Snooker : datas visibles, backtesting par marché, conformité design
+## 📋 SPEC — Snooker : sous-onglets, backtesting par marché, conformité charte
+
+## 🔴 VAGUE 0 — La navigation par sous-onglet ne s'affiche pas (BLOQUANT)
 
 > Brainstorming du 2026-10-02. Cadrage validé par David.
 > Statut : **en cours** — vague 0 en construction.
@@ -89,3 +91,67 @@ Restent en TODO, non commencés, et **non commencables avant la vague 3** (ils
 servent à habiller une page qui doit déjà afficher ses données). Détail des
 arbitrages déjà tranchés dans `todo.md` (style, garde-fous, budget, droits à
 l'image).
+
+---
+
+## Vague 0 — CORRECTION : la page n'est PAS vide (diagnostic révisé)
+
+**Ce qui avait été avancé est faux.** La page affiche normalement ses données :
+`12 matchs analysés`, cartes joueur avec photos, scores réels (Trump/McGill 0:0 en
+live, Murphy/Vafaei 5:1, Gilbert/Wilson 2:5…), compteurs modèle par ligne. L'API
+locale répond **HTTP 200 avec 12 matchs**.
+
+Cause de l'erreur de diagnostic : le test Playwright attendait **10 s**, alors que
+le premier compile Turbopack prend **~20 s**. La mesure a concluded à une panne
+qui n'existait pas. **Leçon : toujours sonder au-delà du délai de compilation, ou
+attendre un signal réseau explicite.**
+
+En revanche deux constats **confirmés** subsistent :
+
+1. **Aucune surface de tableau n'est rendue** : `0 <table>`, `0 <thead>`, `0 <th>`,
+   et donc `.th-broadcast` = 0 occurrence. Les 3 surfaces typographiques vivent dans
+   les onglets **Résultats** et **Backtesting**, qui ne sont pas accessibles.
+2. **La headbar de sous-onglets ne s'affiche pas** : `Calendrier / Stratégie Top 10
+   / Live / Backtesting / Résultats` sont absents du DOM. Seuls les filtres
+   calendrier (`ALL / LIVE / ODDS / FINISHED / SCHEDULED`) apparaissent.
+
+→ **Vague 0 devient « faire fonctionner la navigation par sous-onglet »**, ce qui
+rend du même coup accessibles les tableaux existants.
+
+### Vague 3 — Charte lavande confirmée comme référence (arbitré le 2026-10-02)
+
+David confirme : **`DESIGN_CHARTER.md` fait foi** — shell lavande `#F0ECF8`,
+primary `#7B3FA0`. Le rendu actuel noir + vert néon `#00e676` est une **dérive**,
+pas une intention. Cela élargit le chantier : la correction porte sur **tous les
+sports**, pas seulement le snooker.
+
+**Périmètre vague 3 : toutes les sous-vues demandées** (Résultats, Backtesting,
+Live, Top 10, Stratégies, Comparer) — arbitré le 2026-10-02.
+
+### Défauts de rendu constatés sur captures (1440 px, local)
+
+| Défaut | Preuve |
+|---|---|
+| Fond **noir `#0e1217`** au lieu du lavande charte | `getComputedStyle(body).backgroundColor = rgb(14, 18, 23)` |
+| Vert **néon `#00e676`** hors charte | badges, barres de progress, scores |
+| **3 cartes noires vides** en haut de grille | capture s2 — colonnes de droite sans contenu |
+| Hauteur **inégale** entre cartes | carte Trump/McGill s'arrête avant les autres |
+| Nav sport sur **« Football »** sur une page snooker | capture s1 |
+| Heure `??:??` sur le match live | capture s1, carte SNOOKER (1) |
+| Badge `O5.5F 93%` **déborde** de son cadre + collé au score | capture s1 |
+| Pastille joueur tronquée (`.min-h` / `overflow`) | badges `MS`, `GD` coupés |
+| Hero = ⅓ de l'écran pour annoncer `0 avec cotes` | capture s1 |
+| `Max Break 147` **identique sur 5 joueurs** | valeurs statiques, pas des données réelles |
+
+### Surclaim à corriger (rappelé par l'audit)
+
+Le hero annonce encore **« 5 stratégies prédictives — Elo, forme, scoring, clutch,
+momentum »** alors que `MODEL_WEIGHTS` a été réduit à **l'Élo seul** (61,55 %
+d'accuracy mesurée, Brier 0,2328). Il promet aussi un **« % ROI positif »** alors
+que le compteur affiche `0 avec cotes` et qu'aucun ROI n'est calculable sans cotes
+historiques. Même nature que le défaut SEO déjà corrigé une fois
+(`docs/snooker/PLAFFOND-PREDICTIF.md`).
+
+- [ ] Hero : « 5 stratégies » → Élo seul + la précision mesurée
+- [ ] Retirer la promesse de « ROI positif » tant qu'aucune cote n'est disponible
+- [ ] `Max Break` : vérifier si la valeur est réelle ou un placeholder 147
