@@ -2,6 +2,284 @@
 
 ---
 
+## 🎱 SNOOKER — Sous-onglet « Visuels » : images générées automatiquement (IA)
+
+> **Demandé par David le 2026-10-02.** « Personnalise l'onglet Snooker, quel que soit
+> le sous-onglet, d'images que tu génères automatiquement en rapport avec le snooker,
+> les top joueurs et l'actu du snooker. »
+
+**Ambition** : un sous-onglet « Visuels » qui rend l'onglet snooker reconnaissable
+en un coup d'œil, alimenté par des visuels générés et **mis à jour automatiquement**
+selon 3 axes : le snooker en général, les **top joueurs** du moment, l'**actu** du jour.
+
+### Direction artistique — référence fournie (2026-10-02)
+
+Référence : <https://www.behance.net/gallery/245292655/Sports-Banners-Betting-Casa-de-Apostas>
+— « *3D Cartoon Style Projects Created for Casino/Betting/iGaming — Immersive,
+generated images* ». Tags du projet : `cartoon`, `casino`, `betting`, `iGaming`,
+`gambling`, `Slots`, `Sports Design`. Formats observés : **1400×781** (bannière 16:9),
+1400×507 (bandeau large), 1400×1045, 1080×1350 (story).
+
+⚠️ **Copyright** : la page porte « © All Rights Reserved — utilisation interdite sans
+l'accord explicite du propriétaire ». **Usage comme référence de style uniquement.**
+Ne jamais reprendre, hotlinker ou derivative ses visuels ; tout est régénéré. Même
+règle que la collection `.agents/design-md/` (inspiration, pas copie).
+
+- [ ] **Style : 3D cartoon / rendu 3D stylisé** — pas de photoréalisme. Personnages
+      simplifiés, proportions légèrement caricaturales, éclairage de salle (faisceau
+      du plafond sur la table), fond en dégradé sombre, texture « glossy » douce
+- [ ] ⚠️ **Le style cartoon résout le problème des faux visages** décrit plus bas :
+      un personnage 3D stylisé ne prétend pas être la photo d'un joueur réel. Reste à
+      gérer : ne pas laisser croire que le personnage dessiné *est* un joueur nommé
+      → **le nom réel vient du composant, jamais de l'image**
+- [ ] Palette : on garde le **style** de la référence mais on remplace ses couleurs
+      par la charte PariScore (lavande/violet, `--bg-deep` #F0ECF8, `--primary`
+      #7B3FA0). **Pas** l'esthétique casino verte/rouge saturée — sinon on jette la
+      charte du site pour un visuel
+- [ ] ⚠️ **Décision à trancher sur le texte dans l'image** : les générateurs écrivent
+      mal les accents et les noms propres. Deux options :
+      - **(a) RECOMMANDÉ** — générer le visuel **sans texte** et composer le texte
+        **en HTML/CSS par-dessus**. Net, traduisable (cf. TODO traduction du fil
+        d'actu), accessible, 0 risque de faute. C'est ce que font les sites pro.
+      - (b) laisser le modèle écrire dans l'image → plus « natif », mais à contrôler
+        ligne par ligne à chaque génération
+- [ ] Textes en overlay : **contraste WCAG AA** vérifié sur chaque visuel, dégradé
+      sombre en pied plutôt qu'un aplat (poids nul, lisible sur n'importe quelle image)
+- [ ] Formats : viser **1 Carrousel 4:5 mobile + 1 bannière 16:9** par sujet, pas 6
+      formats — moins de génération, donc moins de coût (voir plus bas)
+
+⚠️ **Le vrai problème de ce chantier n'est pas la génération, c'est le coût et le
+contrôle du contenu.** Une image générée par IA sur un sujet sportif est une source
+d'erreur factuelle : une main de Ronnie qui tient 3 billards, un Crucible vide alors
+qu'il est plein, un joueur portant le maillot d'une équipe où il n'a jamais joué.
+**Une fausse image d'actu snooker détruit la crédibilité de tout le site** — c'est
+pire que pas d'image du tout. Les garde-fous ci-dessous ne sont pas optionnels.
+
+### Choix du modèle / moteur
+
+- [ ] Vérifier ce que `@google/genai` expose **réellement** en génération d'image
+      (`GEMINI_API_KEY` est déjà dans `.env`) — ne pas supposer un nom de modèle,
+      le lire dans la lib installée
+- [ ] ⚠️ **Alternative bien moins risquée** : les photos des joueurs existent déjà
+      (CueTracker, résolu par `playerPhotoUrl` dans le calendrier snooker). Un
+      « top joueurs » affiché avec les **vraies photos** est plus professionnel
+      qu'une image IA. **À trancher avec David : IA ou photos réelles ?**
+      Recommandation : photos réelles pour les joueurs, IA uniquement pour l'ambiance.
+
+### Garde-fous de contenu (obligatoires)
+
+- [ ] **Aucun joueur nommé dans un visuel IA** sans verification — les visages
+      générés sont toujours faux. Si un joueur est mentionné, le visuel est
+      **stylisé / non figuratif** (silhouette, salle, table, ambiance) et le texte
+      d accompaniment porte le nom réel
+- [ ] Chaque visuel généré passe par un **prompt figé et versionné** dans le repo
+      (pas de prompt libre construit depuis une actu) → le style reste cohérent
+      d'un jour à l'autre et le résultat est reproductible
+- [ ] Pas de faux score, pas de faux classement, pas de faux logo de tournoi dans
+      l'image. Toute donnée chiffrée vient du composant, jamais de l'image
+
+### Coût / infrastructure (le vrai chantier)
+
+- [ ] Génération **hors du chemin critique** : jamais à la volée sur le clic
+      utilisateur. Cache disque sur le modèle de `football-press-review-service.ts`
+      (`.cache/<nom>/`)
+- [ ] Budget explicite : **N visuels max par jour**, et **1 seule régénération** par
+      sujet. Une image = un appel payant ; sans plafond, une boucle cron vide le
+      compte Gemini
+- [ ] Cron quotidien (comme `pariscore-cron-press-review`, `ecosystem.config.js:304`)
+      qui régénère uniquement les sujets dont le **contexte a changé** (nouveau
+      tournoi, nouveau top joueur, actu du jour)
+- [ ] Format de sortie **WebP/AVIF**, plusieurs tailles (la grille est en 3 colonnes
+      responsive), `next/image` avec `sizes` correct — sinon on annule le gain de
+      poids décrit dans la TODO minimalisme ci-dessous
+
+### Réalisation
+
+- [ ] `src/components/snooker/snooker-visuals.tsx` + entrée `sport-sub-tabs.tsx`
+      → nouvel onglet `visuels` (6ᵉ onglet : attention, la headbar s'allonge — voir
+      la TODO minimalisme, c'est contre l'objectif de David)
+- [ ] ⚠️ **Arbitrage à faire avec David avant de coder** : un 6ᵉ onglet surcharge
+      la navigation, alors que sa demande « quel que soit le sous-onglet » suggère
+      plutôt un **bandeau de visuels en haut de l'onglet snooker, commun à tous les
+      sous-onglets**. C'est plus cohérent avec « moins de bruit » et ça évite de
+      rajouter une 6ᵉ entrée à la headbar
+- [ ] Accessibilité : chaque visuel = `alt` descriptif réel (pas `alt=""` décoratif
+      si du texte est posé dessus), ratio de contraste respecté si du texte est
+      superposé
+
+---
+
+## 🎱 SNOOKER — Typographie des titres de tableaux (audit d'agent, 2026-10-02)
+
+> **Demandé par David le 2026-10-02** : « la typographie devient un élément central du
+> design… une typographie expérimentale pour les titres des tableaux pour se démarquer
+> de la concurrence… mais pas au point d'être illisible ».
+> Audit réalisé par un agent dédié. **Recommandation : option A, sans hésitation.**
+
+### État actuel (vérifié dans le code)
+
+`src/app/layout.tsx:2` charge 4 polices : **Geist**, **Geist Mono**, **Archivo**
+(`axes:["wdth"]` → vraie police variable, `:79-83`), **Space Grotesk** (`:88-91`).
+Les classes de signature existent déjà dans `globals.css:504-550` (`.score-display`,
+`.score-hero`, `.score-hover`) mais **ne servent qu'à 1-2 endroits** et
+`.font-display-ui` (`:538`) est du **CSS mort — zéro usage**.
+
+Il n'existe **aucune classe typographique pour un en-tête de tableau** : les `<th>`
+snooker sont du Geist générique + une couleur inline.
+
+### Option A — RETENUE : Archivo étiré, voix « broadcast »
+
+Différenciation par **l'axe de largeur** d'une police déjà chargée — donc **0 octet,
+0 requête réseau**. Contraste `wdth 125` sur les en-têtes contre `wdth 118` sur les
+scores : l'œil sépare « colonne de données » et « score » sans jamais lire une police
+étrangère. C'est le « contraste marqué » demandé, sans risque de déchiffrement.
+
+```css
+/* En-têtes de tableaux — Archivo étiré. Jamais sur les cellules ni sur les chiffres. */
+.th-broadcast {
+  font-family: var(--font-archivo), var(--font-geist-sans), sans-serif;
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125, "wght" 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+```
+
+- [ ] Appliquer sur les **3 surfaces** de titres de tableaux snooker
+- [ ] **Test des 5 secondes** : « quelle est la probabilité du 3ᵉ match » doit rester
+      instantané à 320px et 1440px. Échec → descendre `wdth` à 112, ou revenir à Geist
+- [ ] Réversible en une valeur (c'est le gros avantage de A)
+
+### Option B — plan B, aujourd'hui **refusée**
+
+`Uncut Sans` est déjà dans le repo (`hockey-hero-header.tsx:155`) et son rapport de
+glyphe est le seul vraiment distinct de Geist — mais le `@font-face` ne déclare que
+`weight: 400` → un `wght 700` est **synthétisé** (faux-bold cassé), et c'est une
+**requête tierce** (interdite par `.agents/references/performance-checklist.md:62`).
+Ne la re-proposer qu'après **self-host** d'une coupe 700 en `next/font/local`.
+
+### Option C — **REFUSÉE** : Big Shoulders Display (condensée « avant-gardiste »)
+
+La plus spectaculaire des trois, et la moins adaptée : elle contredit **deux règles
+écrites** de `DESIGN_CHARTER.md` — « Pas de typo fun » (`:371`) et le critère
+« améliore la lisibilité des données ? sinon SKIP » (`:352`). En condensé extrême,
+`MATCHS` et `ACCURACY` deviennent des traits illisibles. **Si David veut malgré tout
+du stunt, c'est un point à lui demander explicitement**, pas à décider ici.
+
+### 🔴 Défaut d'accessibilité trouvé au passage — à corriger quel que soit le choix
+
+Contrastes **mesurés** sur les vraies surfaces :
+
+| Combinaison | Ratio | Verdict |
+|---|---|---|
+| `#717171` (inline actuel) sur blanc | 4,88:1 | AA ✅ (marginal) |
+| **`#717171` sur le shell lavande `#F0ECF8`** | **4,20:1** | ❌ **échoue AA** |
+| `var(--muted-foreground)` `#6B5B8D` sur `#F0ECF8` | 5,15:1 | AA ✅ |
+| `var(--primary)` `#7B3FA0` sur `#F0ECF8` | 5,90:1 | AA ✅ |
+
+- [ ] Remplacer les `color: "#717171"` inline des en-têtes par
+      `var(--muted-foreground)` — c'est le seul vrai défaut a11y mesuré
+- [ ] ⚠️ Toute famille stunt future exige une **dérogation écrite** au
+      `DESIGN_CHARTER.md:83` (interdit toute `font-family` hors `var(--font-*)`)
+
+---
+
+## 🎱 SNOOKER — Recherche vocale (retrouver un joueur ou une prédiction)
+
+> **Demandé par David le 2026-10-02.** Aucun code de reconnaissance vocale n'existe
+> dans le repo (vérifié : zéro `SpeechRecognition` / `webkitSpeech`).
+
+⚠️ **Contrainte à dire clairement** : l'API Web Speech n'existe **que dans Chrome /
+Edge / Opera (desktop) et Safari iOS/macOS récent**. **Firefox ne l'a pas**, et les
+versions mobiles Android hors Chrome l'excluent souvent. La recherche vocale ne peut
+donc **jamais être l'unique chemin d'accès** à une fonctionnalité — sinon on coupe
+une partie de nos utilisateurs. Elle est un **accélérateur**, jamais un remplacement
+duchamp texte.
+
+- [ ] Détection de capacité : `window.SpeechRecognition ?? window.webkitSpeechRecognition`
+      → si absent, **ne pas afficher** le micro (pas de bouton mort)
+- [ ] Langue : `recognition.lang` = la locale du visiteur (cohérent avec la langue
+      du fil d'actualité, TODO « traduction selon la langue de l'utilisateur »)
+      → un joueur nommé « Trump » se dit différemment en fr et en en
+- [ ] **Recherche hybride** : la reconnaissance ne sert qu'à **produire une chaîne**,
+      qui passe ensuite dans le **filtre joueur / prédiction existant**. Ne pas écrire
+      un matcher vocal séparé — du code en double pour rien (Hard Rule #14, Le Ladder)
+- [ ] Normaliser le flux : le dicté returns « ronny o sullivan » pour
+      « Ronnie O'Sullivan » → alias déjà gérés par le résolveur de joueurs, vérifier
+      qu'il couvre les cas vocal (initiales, « OSullivan » sans apostrophe)
+- [ ] a11y : le micro est un `button` avec `aria-label`, état
+      `aria-pressed`, et **transcription affichée en direct** pendant l'écoute
+      (sinon l'utilisateur sourd ou sourd-muet n'a aucun retour). Retour visuel :
+      l'onde sonore seule ne suffit pas
+- [ ] Arrêt propre : `recognition.abort()` au démontage du composant, sinon le micro
+      reste ouvert après navigation — c'est le bug le plus fréquent de cette API
+- [ ] Message d'erreur explicite si la permission micro est refusée (l'utilisateur
+      ne comprend pas pourquoi rien ne se passe)
+- [ ] Where : `snooker-tab-content.tsx` — un seul point d'entrée, au-dessus des
+      sous-onglets, pour servir « joueur » **et** « prédiction »
+
+---
+
+## 🎱 SNOOKER — UX/UI : minimalisme stratégique, performance & poids des pages
+
+> **Demandé par David le 2026-10-02.** « La simplicité est stratégique : moins de bruit
+> améliore la compréhension, la confiance et la satisfaction. » Trois volets :
+> alléger l'UI, alléger les pages, héberger vert.
+> ⚠️ **Point de vigilance** : plusieurs chantiers déjà ouverts dans ce fichier vont
+> **à l'encontre** de cet objectif (6ᵉ onglet « Visuels », fil d'actualité, bandeau de
+> visuels…). À chaque fois, vérifier que l'ajout reste un gain net et pas du bruit.
+
+### Volet 1 — Moins de bruit, moins de charge cognitive
+
+- [ ] Auditer `snooker-tab-content.tsx` (≈1950 lignes, 5 sous-onglets) : combien
+      d'éléments visibles **en même temps** sur l'écran par défaut ? Quel est le
+      chemin minimal « j'ouvre l'app → je vois un pari → je clique » ?
+- [ ] Chaque sous-onglet doit avoir **une** action principale, pas 5. Le reste
+      passe derrière un « voir plus »
+- [ ] Supprimer les éléments qui n'ont jamais été cliqués (survoler les maths
+      Cumberland/le brier du backtesting : est-ce lu ?)
+- [ ] Contraste : le défaut a11y mesuré dans la TODO typographie
+      (`#717171` sur lavande = 4,20:1) se paie aussi en « bruit visuel »
+
+### Volet 2 — Poids des pages et vitesse perçue
+
+- [ ] Mesurer avant de toucher : `bundlephobia`/`next build` sur la route snooker,
+      poids JS par route. Savoir quelle route est la plus lourde **avant** d'optimiser
+- [ ] `sharp` et `next/image` sont déjà en place (dépendances du projet) → vérifier
+      que **toutes** les images passent par `next/image` avec un `sizes` correct, et
+      que le format de sortie est bien WebP/AVIF
+- [ ] Les images de joueurs et les vignettes du futur fil d'actualité sont les
+      **poids n°1 prévisibles** d'un site sportif : `sizes`, `priority` sur la seule
+      image above-the-fold, `loading="lazy"` partout ailleurs
+- [ ] Les polices : 4 familles chargées pour toute l'app. Si l'option A est retenue,
+      c'est **0 famille ajoutée** — argument perf qui compte
+- [ ] ⚠️ Le futur fil d'actualité **rajoute 4 requêtes réseau**. Cache TTL + cron
+      (déjà prévu dans sa TODO), sinon on dégrade la vitesse perçue qu'on cherche à
+      améliorer
+
+### Volet 3 — Hébergement vert
+
+- [ ] Faire le **point sur l'existant** avant de promettre : le VPS est déjà en France
+      (51.75.21.239, Scaleway) et l'app tourne sous **Bun** — une part du travail est
+      déjà faite
+- [ ] Trancher ce qui est réellement actionnable : l'empreinte du front (poids,
+      requêtes, polices) et celle de l'hébergement sont deux choses distinctes, et
+      le levier realistic côté projet c'est le front + l'orchestration des crons
+- [ ] Mesurer avant d'annoncer : nb de requêtes par page, poids transféré, et
+      fréquence réelle des crons (un cron qui scrape toutes les 30 min pour des
+      données qui changent 1×/jour est du gaspillage, donc de l'énergie)
+
+### Ce qui ne se mesure pas dans un commit
+
+⚠️ Cette TODO est un **cap**, pas une tâche. Elle n'est pas « finie » quand une liste
+est cochée — elle se juge sur 3 métriques à mesurer avant/après : **temps de
+chargement**, **poids transféré**, **nombre d'éléments visibles par écran**. Les
+noter ici avant de commencer.
+
+---
+
 ## 🎱 SNOOKER — Fil d'actualité (4 sources) + photos + traduction selon la langue de l'utilisateur
 
 > **Demandé par David le 2026-10-02.** Objectif : « ça mettra + de professionnalisme ».
