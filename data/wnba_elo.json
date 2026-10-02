@@ -1,15 +1,15 @@
 {
-  "generated": "2026-10-01T18:05:34.568Z",
+  "generated": "2026-10-02T17:31:57.694Z",
   "source": "espn-scoreboard",
   "season_start": "2026-05-01",
-  "games_count": 346,
+  "games_count": 347,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 346,
+    "n": 347,
     "brier": 0.2089,
     "baseline_brier": 0.25,
-    "accuracy": 65.3
+    "accuracy": 65.4
   },
   "ratings": {
     "3": {
@@ -22,11 +22,11 @@
     },
     "5": {
       "name": "Indiana Fever",
-      "elo": 1626,
-      "gp": 47,
+      "elo": 1605,
+      "gp": 48,
       "form_l10_winpct": 50,
-      "form_l10_margin": 2.4,
-      "last_game": "2026-09-29T22:30Z"
+      "form_l10_margin": 1.9,
+      "last_game": "2026-10-02T01:00Z"
     },
     "6": {
       "name": "Los Angeles Sparks",
@@ -78,11 +78,11 @@
     },
     "17": {
       "name": "Las Vegas Aces",
-      "elo": 1632,
-      "gp": 48,
-      "form_l10_winpct": 80,
-      "form_l10_margin": 13.1,
-      "last_game": "2026-09-29T22:30Z"
+      "elo": 1653,
+      "gp": 49,
+      "form_l10_winpct": 90,
+      "form_l10_margin": 15.7,
+      "last_game": "2026-10-02T01:00Z"
     },
     "18": {
       "name": "Connecticut Sun",
