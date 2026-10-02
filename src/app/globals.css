@@ -535,6 +535,31 @@
   font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
 }
 
+/* ── Voix « broadcast » des EN-TÊTES de tableaux ───────────────────────────
+   Même famille que les scores (Archivo variable), mais sur l'axe de la
+   LARGEUR : wdth 125 contre wdth 118 pour les scores. C'est cette
+   différence d'axe qui crée le contraste — l'œil sépare « colonne de
+   données » et « score » sans jamais lire une police étrangère. Aucun octet
+   ajouté : Archivo est déjà chargée (layout.tsx, axes: ["wdth"]).
+
+   Jamais sur les cellules ni sur les chiffres : les données gardent
+   .score-display (wdth 118 + tabular-nums) pour que les colonnes restent
+   stables pendant les updates live.
+
+   Garde-fou lisibilité : `wdth` 125 resserre fortement les jambages, donc
+   jamais en dessous de 12px (13px recommandé). Plancher vérifié à 320px. */
+.th-broadcast {
+  font-family: var(--font-archivo), var(--font-geist-sans), sans-serif;
+  font-stretch: 125%;
+  /* font-stretch seul suffit sur les navigateurs modernes ; font-variation-
+     settings est le repli Safari < 16 */
+  font-variation-settings: "wdth" 125, "wght" 700;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
 /* Hover weight shift — feedback subtil sur les scores interactifs */
 .score-hover {
   transition: font-variation-settings 200ms var(--ease-standard),

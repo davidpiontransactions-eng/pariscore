@@ -1437,9 +1437,10 @@ export function SnookerTabContent() {
             </button>
           </div>
 
-          {/* Column headers — desktop */}
+          {/* Column headers — desktop. th-broadcast = Archivo étiré (wdth 125).
+              Plancher 12px imposé : sous 12px, wdth 125 ferme les jambages. */}
           <div
-            className="hidden items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px]"
+            className="th-broadcast hidden items-center px-3 py-2 text-[12px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px]"
             style={{
               color: "#717171",
               borderBottom: "1px solid #f5f5f5",
@@ -1695,23 +1696,26 @@ export function SnookerTabContent() {
                     Résultats des matchs de snooker terminés sur les 7 derniers jours
                   </caption>
                   <thead>
-                    <tr style={{ background: "#fafafa", borderBottom: "1px solid #f0f0f0" }}>
-                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                    <tr
+                      className="th-broadcast text-[12px]"
+                      style={{ background: "#fafafa", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      <th scope="col" className="px-3 py-2 text-left" style={{ color: "#717171" }}>
                         Date
                       </th>
-                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                      <th scope="col" className="px-3 py-2 text-left" style={{ color: "#717171" }}>
                         Tournoi
                       </th>
-                      <th scope="col" className="px-3 py-2 text-right font-semibold" style={{ color: "#717171" }}>
+                      <th scope="col" className="px-3 py-2 text-right" style={{ color: "#717171" }}>
                         Joueur 1
                       </th>
-                      <th scope="col" className="px-2 py-2 text-center font-semibold" style={{ color: "#717171" }}>
+                      <th scope="col" className="px-2 py-2 text-center" style={{ color: "#717171" }}>
                         Score
                       </th>
-                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                      <th scope="col" className="px-3 py-2 text-left" style={{ color: "#717171" }}>
                         Joueur 2
                       </th>
-                      <th scope="col" className="px-3 py-2 text-center font-semibold" style={{ color: "#717171" }}>
+                      <th scope="col" className="px-3 py-2 text-center" style={{ color: "#717171" }}>
                         Format
                       </th>
                     </tr>
