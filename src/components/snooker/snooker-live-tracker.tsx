@@ -19,6 +19,22 @@ interface SnookerLiveTrackerProps {
   playerAName: string;
   playerBName: string;
   isLive?: boolean;
+  /**
+   * Score RÉEL de frames, quand l'ordre des frames n'est pas connu.
+   *
+   * FlashScore ne fournit que `scoreHome` / `scoreAway` agrégés — aucun ordre
+   * frame par frame. reconstruire un ordre en empilant toutes les frames de A
+   * puis toutes celles de B produisait un « tracker » qui n'était pas un match :
+   * un parieur snooker lit cet ordre, et il était faux. On affiche donc le
+   * score réel et des points neutres plutôt qu'un ordre fabriqué.
+   */
+  scoreA?: number;
+  scoreB?: number;
+  /**
+   * `false` quand l'ordre des frames est inconnu : les points restent neutres
+   * au lieu d'afficher un faux vainqueur par frame.
+   */
+  framesKnown?: boolean;
 }
 
 function FrameDot({ winner, isActive, frameNum }: { winner?: "A" | "B"; isActive: boolean; frameNum: number }) {
@@ -37,10 +53,20 @@ function FrameDot({ winner, isActive, frameNum }: { winner?: "A" | "B"; isActive
   );
 }
 
-export function SnookerLiveTracker({ frames, bestOf, playerAName, playerBName, isLive }: SnookerLiveTrackerProps) {
+export function SnookerLiveTracker({
+  frames,
+  bestOf,
+  playerAName,
+  playerBName,
+  isLive,
+  scoreA,
+  scoreB,
+  framesKnown = true,
+}: SnookerLiveTrackerProps) {
   const framesToWin = Math.ceil(bestOf / 2);
-  const winsA = frames.filter((f) => f.winner === "A").length;
-  const winsB = frames.filter((f) => f.winner === "B").length;
+  // Le score réel prime quand il est fourni ; sinon on retombe sur les frames.
+  const winsA = scoreA ?? frames.filter((f) => f.winner === "A").length;
+  const winsB = scoreB ?? frames.filter((f) => f.winner === "B").length;
   const currentFrame = frames.length + 1;
   const maxFrames = bestOf;
   const isDecider = winsA === framesToWin - 1 && winsB === framesToWin - 1;
@@ -84,10 +110,10 @@ export function SnookerLiveTracker({ frames, bestOf, playerAName, playerBName, i
         </div>
       </div>
 
-      {/* Frame dots */}
+      {/* Frame dots — neutres si l'ordre des frames n'est pas connu */}
       <div className="flex items-center justify-center gap-1.5">
         {Array.from({ length: maxFrames }, (_, i) => {
-          const frame = frames[i];
+          const frame = framesKnown ? frames[i] : undefined;
           return (
             <FrameDot
               key={i}
@@ -98,6 +124,11 @@ export function SnookerLiveTracker({ frames, bestOf, playerAName, playerBName, i
           );
         })}
       </div>
+      {!framesKnown && (
+        <p className="text-[10px] text-gray-400 text-center">
+          Ordre des frames non communiqué par la source
+        </p>
+      )}
 
       {/* Current frame details */}
       {isLive && frames.length > 0 && (
