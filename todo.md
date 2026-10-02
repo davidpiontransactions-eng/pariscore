@@ -55,6 +55,95 @@ qu'il est plein, un joueur portant le maillot d'une équipe où il n'a jamais jo
 **Une fausse image d'actu snooker détruit la crédibilité de tout le site** — c'est
 pire que pas d'image du tout. Les garde-fous ci-dessous ne sont pas optionnels.
 
+### Variante animée — vue de table de snooker (référence du 2026-10-02)
+
+> **Demandé par David le 2026-10-02.** « Des images animées comme celle-ci pour
+> l'onglet SNOOKER, en reprenant une vue d'une table de snooker ».
+> Référence : <https://www.behance.net/gallery/255110283/3D-AI-Motion-design-commercial-advertising-betting/modules/1485969305>
+> (« 3D AI Motion design — commercial advertising / betting »).
+> ⚠️ Page en **403** pour tout fetch automatisé (Behance protège ce projet) :
+> la direction ci-dessous repose sur le titre du projet + la description de David,
+> **pas** sur l'examen des images. À revalider sur le rendu réel avant de coder.
+
+**Plan de scène** (table de snooker, pas joueur) : travelling lent au-dessus du
+tapis, billards en alignement parfait,riangle des billes qui se resserre, reflet
+mystérieux sur la surface laquée, faisceau de lumière qui balaie, skorée qui apparaît
+en fondu. Ambiance sombre, contrastée, cinématique — l'inverse d'un fond clair.
+
+#### ⚠️ Le vrai arbitrage est le poids, pas l'esthétique
+
+⚠️ **Une bannière animée plein écran est le premier levier de poids du site.**
+Un GIF 1400×781 de 3 s pèse typiquement **4 à 12 Mo**. La page snooker pèse
+aujourd'hui quelques centaines de Ko. **Un seul GIF peut doubler le poids de la
+page** — c'est exactement ce que la TODO minimalisme interdit.
+
+- [ ] **Pas de GIF.** Vidéo courte : **MP4 (H.264) + WebM (VP9)**, 3 à 5 s,
+      **boucle fluide** (dernière image = première image, sinon saut visible),
+      **720p maximum** (1400×781 en 1080p n'apporte rien sur un bandeau décoratif)
+- [ ] Budget chiffré **avant** de générer : viser **≤ 300 Ko par visuel**.
+      Au-delà : réduire la résolution, pas la durée (la durée est le pilote du
+      poids au-delà de ~4 s)
+- [ ] Servir en `<video autoplay muted loop playsinline preload="metadata">` —
+      `muted` est **obligatoire** (aucun navigateur n'autoplay un son), `playsinline`
+      obligatoire sur iOS, sinon la vidéo occupe tout l'écran en paysage
+- [ ] **Image `poster`** = la 1ʳᵉ frame, en JPEG ~20 Ko. Sans elle, l'emplacement
+      est vide pendant le chargement, avec un décalage de mise en page visible
+- [ ] `prefers-reduced-motion: reduce` → **ne pas lire la vidéo**, afficher le poster
+      en `img`. Obligation d'accessibilité, pas optionnelle (voir plus bas)
+- [ ] Ne charger la vidéo **que si elle est visible** (`IntersectionObserver`) —
+      sinon on télécharge des Mo de vidéo pour des onglets que personne n'a ouverts
+- [ ] `<source>` multiple : **WebM d'abord, MP4 en repli**. Pas l'inverse
+
+#### Coût de génération — le vrai Mur
+
+⚠️ La génération vidéo IA coûte **10 à 100× plus cher par image** que la génération
+d'image fixe. Un batch de visuels animés viderait le compte Gemini. Le pipeline doit
+donc être **image d'abord, animation ensuite** : on génère 6 images fixes bon
+marché, on ne retient que les 2 meilleures, et **seulement celles-là** sont animées.
+
+- [ ] Générer d'abord les **stills** (budget de la section précédente), faire
+      valider la direction artistique **humainement**, puis n'animer que les retenus
+- [ ] Nombre fixe de clips (ex. 3 max pour tout le site), régénérés au plus
+      une fois par semaine, jamais à chaque visite ni à chaque actu
+- [ ] Si le coût IA devient bloquant : l'animation peut être faite en **CSS**
+      (dégradés animés, `transform` sur un fond fixe) sur l'image déjà payée.
+      Zéro coût, Zéro poids ajouté, et pour un bandeau décoratif le rendu est
+      souvent suffisant. **À considérer sérieusement en premier**
+- [ ] Hebergement : les `.mp4`/`.webm` vont dans `public/`, **pas** dans le bundle
+      Next (sinon ils sont inclus dans le build et invalident le cache)
+
+#### a11y — un bandeau qui bouge en boucle est un piège
+
+- [ ] Une animation **en boucle infinie** derrière du texte est un risque réel pour
+      les personnes Trustee : « WCAG 2.2.2 Pause, Stop, Hide » exige un moyen
+      d'arrêter une animation de plus de 5 s. Prévoir un bouton pause si le clip
+      dépasse 5 s, ou un clic qui fige la boucle
+- [ ] `prefers-reduced-motion` : c'est le point d'entrée, à traiter en premier
+- [ ] Le visuel est purement décoratif → `aria-hidden="true"` + pas d'`alt`.
+      ⚠️ **S'il porte du texte** (nom du joueur, titre de l'actu), il n'est plus
+      décoratif : le texte doit exister **en HTML superposé**, comme déjà prévu pour
+      les visuels fixes. Jamais de texte qui n'existe que dans la vidéo
+- [ ] Le mouvement ne doit **jamais** porter une information unique. Un joueur ne doit
+      pas être identifiable uniquement parce que la vidéo s'anime
+
+#### Placement
+
+⚠️ Cohérence avec les 2 TODO anteriores : un bandeau animé **plein écran en haut de
+l'onglet snooker** ferait passer la page de « interface dense » à « page vitrine ».
+Or la TODO minimalisme demande explicitement moins de bruit.
+
+- [ ] **Position à trancher avec David** — 3 options par ordre de cohérence avec le
+      reste du chantier :
+      - **(a) RECOMMANDÉ** : hero **compact** (≈ 40 vh, pas 100 vh), une seule
+        animation, sous le header du site. Présente le sport, ne mange pas l'écran.
+      - (b) fond d'écran du hero, très basse opacité — ambiance sans appel à l'action
+      - (c) plein écran 100 vh, boucle 3 s — l'effet « vitrine », **en conflit
+        direct** avec la TODO minimalisme et avec les 5 sous-onglets qui doivent
+        rester accessibles au-dessus du pli
+- [ ] La video ne doit **pas** démarrer automatiquement sur mobile si l'on est déjà
+      au-dessus du budget de données — `prefers-reduced-data` quand c'est supporté,
+      et à défaut ne pas charger la vidéo sous connexion lente
+
 ### Choix du modèle / moteur
 
 - [ ] Vérifier ce que `@google/genai` expose **réellement** en génération d'image
