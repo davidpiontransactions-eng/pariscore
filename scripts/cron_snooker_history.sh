@@ -25,9 +25,15 @@ LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/snooker-history.log"
 DB="$PROJECT_DIR/data/snooker_history.db"
 
-# DATA_DIR du process pm2 (VPS : /opt/pariscorebis/data) — copie obligatoire,
-# sinon l'app lit l'autre emplacement et voit une base absente.
-PM2_DATA="${DATA_DIR:-$PROJECT_DIR/data}"
+# DATA_DIR du process pm2 — copie obligatoire, sinon l'app lit l'autre
+# emplacement et voit une base absente ou périmée.
+#
+# ⚠️ En dur par défaut, comme cron_snooker.sh / cron_snooker_refresh.sh /
+# cron_weekly_player_stats.sh. Lire `$DATA_DIR` ne suffit PAS : cette variable
+# n'existe que dans l'environnement du process pm2 (ecosystem.config.js:77),
+# pas dans celui d'un job cron — valeur vide → pas de copie → l'app continue
+# de lire une base périmée sans que rien ne l'annonce.
+PM2_DATA="${DATA_DIR:-/opt/pariscorebis/data}"
 
 mkdir -p "$LOG_DIR"
 
