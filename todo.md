@@ -2,6 +2,248 @@
 
 ---
 
+## 🎱 SNOOKER — Fil d'actualité (4 sources) + photos + traduction selon la langue de l'utilisateur
+
+> **Demandé par David le 2026-10-02.** Objectif : « ça mettra + de professionnalisme ».
+> Modèle de référence : `src/lib/handball-news.ts` (sources multiples, TTL, dédup,
+> fallback silencieux). **Deux améliorations par rapport au handball** : les photos
+> d'articles (le fil handball n'en a pas) et la traduction **bidirectionnelle**.
+
+### Sources — état vérifié le 2026-10-02 (sondes directes)
+
+| Source | Flux | Résultat | Images dans le flux |
+|---|---|---|---|
+| **BBC Sport** | `https://feeds.bbci.co.uk/sport/snooker/rss.xml` | ✅ 200, **38 items** | ✅ `media:*` / `enclosure` |
+| **SnookerHQ** | `https://snookerhq.com/feed/` | ✅ 200, **20 items** | ❌ aucune |
+| **SnookerMania** | `https://snookermania.de/feed/` | ❌ **404** — pas de flux | — |
+| **LiveSnooker** | `https://www.livesnooker.com/feed/` | ❌ **403** (WAF) | — |
+
+⚠️ **Les 2 sources qui posent problème ne sont pas optionnelles** : ce sont 2 des
+4 sources demandées. Traitement à trancher avant de coder :
+- **SnookerMania** : scraper le HTML de la home (WordPress → tenter
+  `?feed=rss2`, `/category/snooker-news/feed/`, ou l'API WP
+  `https://snookermania.de/wp-json/wp/v2/posts?per_page=20` — **à vérifier**).
+- **LiveSnooker (403)** : c'est un blocage transport, pas de contenu → passer par
+  **`scrapling`** (outil déjà dans le projet, mode stealth) ou FlareSolverr
+  (conteneur déjà présent sur le VPS). Préférer scrapling : le job est quotidien
+  et il n'y a pas de scraping massif.
+
+### Photos — stratégie en 2 temps
+
+1. **Priorité au flux** : BBC fournit l'image directement (`media:thumbnail`).
+2. **Repli `og:image`** : pour SnookerHQ (et toute source sans image dans le
+   flux), aller chercher `<meta property="og:image">` sur la page de l'article —
+   mais **1 fetch par article est trop lent** (20 articles × 1 fetch).
+   Alternative : ne fetch que les **6 premiers articles** de la source
+   (`MAX_PER_SOURCE = 6`, déjà la valeur du handball) → 6 fetches max/source,
+   en parallèle, budget 2 s par fetch, échec silencieux sur image.
+3. **Proxys d'images** : BBC/SnookerMania servent leurs images via `ichef.bbci.co.uk`
+   et `snookermania.de/wp-content` → ajouter ces domaines à
+   `images.remotePatterns` dans `next.config.ts`, sinon `next/image` casse.
+4. `alt` = titre de l'article. Repli sur une pastille/initiales si 404.
+
+### Traduction selon la langue de l'utilisateur (⚠️ généralisation du handball)
+
+`handball-news.ts:198` ne traduit **qu'EN→FR**, en dur (`translateEnTitles`).
+La demande est **bidirectionnelle** : traduire vers `fr-FR` **ou** `en` selon la
+langue du visiteur.
+
+- [ ] Lire la locale utilisateur — vérifier ce qui existe déjà dans le projet
+      (`Accept-Language` est envoyé en dur `fr-FR` dans `handball-news.ts:238`,
+      donc à remplacer par la locale réelle du client)
+- [ ] Rendre la cible dynamique : `?lang=fr|en` sur la route, ou en-tête
+      `Accept-Language` — **décider** (le `?lang=` est plus simple à tester et
+      à lier depuis le sélecteur de langue existant du header si il y en a un)
+- [ ] Traduire dans **les deux sens** : EN→FR pour BBC/LiveSnooker, FR→EN pour
+      SnookerMania (source allemande → EN ou FR ? **à trancher avec David** :
+      l'allemand n'est dans aucun des deux sens)
+- [ ] Conserver le titre **original** dans `meta` (comme le fait déjà le
+      handball) + `originalLang`, pour pouvoir basculer la langue sans
+      re-appeler Gemini
+- [ ] **1 seul appel Gemini batch** par TTL (pas un par article), `temperature 0.2`,
+      `timeoutMs 20_000`, réponse = tableau JSON de longueur EXACTE, fallback
+      silencieux sur quota/réseau/JSON invalide
+- [ ] Prompt : « style titre de presse sportive, concis », noms de joueurs de snooker
+      **et** noms de tournois **non traduits** (Crucible, UK Championship, Masters,
+      Championship League sont des noms officiels, on ne les traduit pas)
+- [ ] ⚠️ SnookerMania étant en allemand, prévoir une 3ᵉ langue cible possible —
+      ou l'exclure du lot 1 si la décision est FR/EN seulement
+
+### Fichiers à créer (miroir du handball)
+
+- [ ] `src/lib/snooker-news.ts` — sources, parsing RSS, dédup, cap
+      (`NEWS_TTL_MS = 30min`, `MAX_PER_SOURCE = 6`, `MAX_TOTAL = 24`,
+      `FETCH_TIMEOUT_MS = 10_000`), **`imageUrl` + `meta` + `originalLang` ajoutés**
+      au type `SnookerNewsItem`
+- [ ] `src/app/api/v1/snooker/news/route.ts` — `?lang=fr|en`, crash-proof comme
+      les autres routes snooker (toujours 200 + champ `error`)
+- [ ] `src/components/snooker/snooker-news.tsx` — SWR + cartes avec vignette à
+      gauche, titre cliquable (ouvre l'onglet), badge source + badge « traduit »
+- [ ] Monter `<SnookerNews />` dans `src/components/snooker/snooker-tab-content.tsx`
+      (en haut, sous le hero — position **`calendrier` uniquement** au départ, ou
+      sur tous les onglets : **à trancher avec David**)
+- [ ] `src/lib/__tests__/snooker-news.test.ts` — parsing RSS, décodage entités,
+      extraction image, dédup/cap, **traduction bidirectionnelle + fallback**
+- [ ] Cron : pré-chauffer le cache comme `pariscore-cron-press-review`
+      (`ecosystem.config.js` ligne 304) plutôt que de fetch au premier visiteur
+
+### Vérif prod
+
+- [ ] 4 sources présentes dans la réponse, avec `sources[].ok` par source
+- [ ] ≥ 1 image affichée par carte sur les 3 dernières cartes
+- [ ] `?lang=en` renvoie des titres en anglais, `?lang=fr` en français
+- [ ] Couper Gemini → les titres originaux s'affichent, **aucune page cassée**
+- [ ] SnookerMania + LiveSnooker alimentent bien le fil (sinon le signaler, ne pas
+      livrer un fil à 2 sources sur 4 sans le dire)
+
+---
+
+## 🎱 SNOOKER — H2H « modèle 1xbet » dans le popup joueur (+ photos)
+
+> **Demandé par David le 2026-10-02**, avec capture d'écran de la maquette 1xbet.
+
+**État actuel** : la page `/snooker/h2h/[id]` **existe déjà** et n'est **pas** le
+problème — elle n'est juste **pas accessible depuis le popup joueur**. Le popup
+(`snooker-player-popup.tsx:566`) ne propose que `/snooker/compare?search=` et le
+lien CueTracker.
+
+- [ ] Bouton « Tête-à-tête » dans le popup joueur → navigue vers le H2H du match
+      **courant ou à venir** de ce joueur ; à défaut, vers la page joueur
+- [ ] Reprendre la maquette 1xbet de la capture :
+  - [ ] Bandeau match : **photos des deux joueurs**, nom + nationalité, compte à
+        rebours, score live
+  - [ ] Section **TÊTE-À-TÊTE** : matchs joués / matchs nuls, victoires `1/4` vs `3/4`,
+        badges de forme `P/P/P/V` par joueur
+  - [ ] Liste **MATCHS** (confrontations directes) : date, joueur + photo,
+        score `5:6`, joueur + photo
+  - [ ] Deux colonnes **MATCHS PRÉCÉDENTS** : les N derniers de chaque joueur
+  - [ ] **PROCHAINS MATCHS** de chaque joueur
+- [ ] Source de données : `data/snooker_history.db` a déjà tout (126 301 matchs,
+  2 joueurs, date, score, tournoi) → **une route
+  `/api/v1/snooker/h2h/[id]`** suffit, pas de scrape supplémentaire
+- [ ] Photos : réutiliser le résolveur déjà branché dans le calendrier
+      (`playerPhotoUrl` sur les matchs) — vérifier que le slug CueTracker
+      (`L10_BOUNDS`-style normalisation `snookerSlug`) matche bien les 2 joueurs
+- [ ] ⚠️ **Ne pas reproduire le bug du tableau des frames** : la base porte
+      `winner_url` (voir `docs/snooker/PLAFFOND-PREDICTIF.md`), l'ordre des
+      colonnes n'est pas fiable — les scores doivent venir de l'identité du
+      vainqueur, jamais de `player_1_score > player_2_score`
+
+---
+
+## 🎱 SNOOKER — `bestOf` codé en dur (bloquant pour tous les marchés)
+
+> Constat 2026-10-02 pendant l'audit redesign. `matches/route.ts:190` renvoie
+> `bestOf: 9` en dur (et `:239` `7` pour Oddsportal) — **la finale du Crucible
+> est en Bo25**, et toutes les binomiales de l'onglet (over frames, handicap,
+> race-to, live) sont calculées sur une longueur de match **inventée**.
+
+Distribution réelle mesurée sur la base historique (2015+) :
+
+| Valeur | Matchs | Où |
+|---|---|---|
+| Bo7 | 16 896 | Opens UK/WEL/SCO/NIR, Q School, Paul Hunter |
+| Bo9 | 5 786 | Masters, German Masters, World Open |
+| Bo11 | 3 947 | **UK Championship**, Players, Shanghai (finales) |
+| Bo19 | 1 407 | **World Championship** (finale), Tour Championship |
+| Bo25 | 145 | phases finales de tournois majeurs |
+
+- [ ] Dériver `bestOf` de la ligne **total frames** du marché quand elle existe
+      (seule info de format disponible chez Oddsportal), sinon du tournoi
+      (tableau ci-dessus)
+- [ ] Ou scraper `best_of` depuis FlashScore si le champ existe dans la réponse
+- [ ] À défaut : au minimum **documenter que la valeur est un fallback**, et
+      ne plus afficher `Bo{n}` comme s'il était fiable dans l'UI
+
+---
+
+## 🏀 BASKET EUROLEAGUE — Logos calendrier + popup stats & 3 bets prematch 1xbet
+
+> **Demandé par David le 2026-10-01.** Deux lots indépendants, à traiter dans l'ordre.
+
+### Lot 1 — Logos des équipes dans la table calendrier EuroLeague
+
+**Constat code (2026-10-01)** : le bridge EuroLeague
+(`src/lib/euroleague-bridge.ts` → `euroleague_api.schedule.Schedule`) ne renvoie que
+`home/away = { id, name, code }` — **aucun champ logo**, et **aucun score** sur les
+matchs joués (le feed `get_schedule` ne porte pas les scores). La table calendrier
+affiche donc des noms sans visuel d'équipe.
+
+- [ ] Rechercher sur le web les logos officiels des clubs EuroLeague + EuroCup (~20 E + ~20 U)
+- [ ] Choisir la source **et vérifier la licence d'usage** :
+  - EB Brand Center (officiel, compte requis) — https://brandcenter.euroleague.net/
+  - CDN du site officiel — https://www.euroleaguebasketball.net/en/euroleague/teams/
+  - Repli Wikimedia Commons (licences variables → attribution obligatoire)
+- [ ] Mapper `code` (VIR, MAD, PAO, OLY…) → URL de logo. Deux options :
+  - [ ] **A. Map locale versionnée `data/euroleague_logos.json`** — zéro réseau, pas de
+        CORS/rate-limit, mise à jour manuelle. **Recommandé.**
+  - [ ] B. CDN direct depuis le composant — dépend de la dispo + `images.remotePatterns`
+- [ ] Exposer le logo côté bridge (`EuroLeagueGame.home/away.logo`) ou le résoudre au rendu via le map
+- [ ] Ajouter le domaine dans `next.config.ts` → `images.remotePatterns` si `next/image`
+- [ ] Rendre le logo dans `src/components/basketball/basketball-calendar.tsx` : `alt` accessible
+      + repli initiales si 404 (même pattern que ESPN/WNBA déjà en place)
+- [ ] Vérif prod : logos visibles EuroLeague **et** EuroCup, **0 404 image** en console
+
+### Lot 2 — Popup match EuroLeague : stats + 3 bets prematch (offre 1xbet)
+
+**Objectif UX** : cliquer un match EuroLeague ouvre un popup (stats comparatives des
+2 équipes + 3 paris prématch), sur le modèle de
+`src/components/basketball/basketball-match-detail-dialog.tsx` (déjà en place NBA/WNBA).
+
+**Contraintes produit imposées par David** : chaque pari affiché doit avoir un
+**winrate modèle ≥ 60 %** *et* une **cote 1xbet ≥ 1,15** — sinon il n'est pas proposé.
+
+| # | Marché | Libellé popup |
+|---|---|---|
+| 1 | Moneyline | « Winrate % » (vainqueur) |
+| 2 | Total points | « Over / Under points du match » |
+| 3 | Spread | « Handicap » |
+
+- [ ] Brancher les cotes **1xbet** de ces 3 marchés (scraper ou API) + mapper les libellés 1xbet
+- [ ] Moteur de proba **par marché** : compléter le walk-forward existant
+      (`/api/v1/basketball/backtest`) pour calibrer moneyline / total / spread séparément
+- [ ] Filtre dur : garder uniquement `proba ≥ 0.60` **ET** `cote ≥ 1.15` ; afficher cote + EV + Kelly
+- [ ] Endpoint dédié `GET /api/v1/basketball/euroleague/{id}/prematch-bets` (cache `createTtlCache`)
+- [ ] Popup : bloc stats comparatif + 3 cartes de pari (état vide si < 3 marchés qualifiés)
+
+### 📊 Métriques cohérentes pour comparer 2 équipes de basket (recherche 2026-10-01)
+
+Base : les métriques par **100 possessions** sont les seules comparables entre ligues
+(un match NBA ~100 possessions, un match EuroLeague ~70) — c'est ce qui permet de
+réutiliser un même modèle NBA/WNBA/EuroLeague.
+
+| Priorité | Métrique | Formule / définition | Usage |
+|---|---|---|---|
+| 1 | **Net Rating** | ORTG − DRTG | Le prédicteur le plus stable du succès long terme |
+| 1 | **Offensive Rating (ORTG)** | points marqués / 100 possessions | Force offensive normalisée |
+| 1 | **Defensive Rating (DRTG)** | points encaissés / 100 possessions | Force défensive normalisée |
+| 2 | **Pace** | possessions / 48 min | Détermine le **total points** attendu |
+| 2 | **Four Factors — eFG %** (poids ~40 %) | (FG + 0,5 × 3P) / FGA | Efficacité au tir (qualité > volume) |
+| 2 | **Four Factors — TOV %** (~25 %) | balles perdues / possessions | Contrôle du ballon |
+| 2 | **Four Factors — ORB %** (~20 %) | rebonds off. / rebonds off. dispo | Deuxièmes chances |
+| 2 | **Four Factors — FTr** (~15 %) | LF tentés / FG tentés | Agressivité, fin de match |
+| 3 | **Forme 10 derniers matchs** | Net Rating sur les 10 derniers | Momentum / blessures |
+| 3 | **Repos + déplacement** | jours de repos, back-to-back, trajet | Biais récurrent en Euroligue (déplacements longs) |
+| 3 | **H2H récent** | 3-5 dernières confrontations | Complément, **jamais** seul (échantillon faible) |
+| 4 | **Adjusted Rating** | ORTG/DRTG ajustés à la force des adversaires | Indispensable si les calendriers sont hétérogènes |
+
+**Règle de sélection** : garder peu de métriques (5-6) et **non corrélées entre elles** —
+Net Rating, Pace, eFG %, TOV %, ORB % couvrent déjà attaque/défense/rythme/rebond.
+Trop de features corrélées dégradent la calibration (et donc la fiabilité du ≥ 60 %).
+
+**Sources** :
+
+- [Four Factors of Basketball (Statathlon)](https://statathlon.com/four-factors-basketball-success/) — poids officiels Oliver (eFG% 40 / TOV% 25 / ORB% 20 / FTR 15)
+- [Advanced basketball stats: team statistics (Northwestern)](https://sites.northwestern.edu/nusportsanalytics/2021/04/05/an-introduction-to-advanced-basketball-statistics-team-statistics/)
+- [NBA metrics for outcome predictions (Nbastuffer)](https://www.nbastuffer.com/nba-metrics-for-outcome-predictions/) — Net Rating vs chance
+- [How to understand NBA stats, guide 2026 (SportsVisio)](https://www.sportsvisio.com/stories/how-to-understand-nba-stats) — ORTG/DRTG/Net Rating/Pace
+- [Dunks & Threes](https://dunksandthrees.com/) — ratings ajustés + prédictions de match
+
+---
+
+
+---
+
 ## 🧰 Frontend Tier 1 Skills — INSTALLÉS (2026-07-20 01:00)
 
 > **Objectif** : équiper le poste pour la refonte tennis avec les meilleurs skills
