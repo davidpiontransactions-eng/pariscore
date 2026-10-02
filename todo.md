@@ -275,10 +275,59 @@ scores : l'œil sépare « colonne de données » et « score » sans jamais lir
 }
 ```
 
-- [ ] Appliquer sur les **3 surfaces** de titres de tableaux snooker
+- [x] Appliquer sur les **3 surfaces** de titres de tableaux snooker — **fait, `5df062c5`**
 - [ ] **Test des 5 secondes** : « quelle est la probabilité du 3ᵉ match » doit rester
       instantané à 320px et 1440px. Échec → descendre `wdth` à 112, ou revenir à Geist
-- [ ] Réversible en une valeur (c'est le gros avantage de A)
+- [x] Réversible en une valeur (c'est le gros avantage de A)
+
+### Application concrète et minimale — ✅ LIVRÉE le 2026-10-02 (commit `5df062c5`)
+
+**1 bloc CSS**, inséré dans `globals.css` à côté de `.font-display-ui` :
+
+```css
+/* Voix « broadcast » des EN-TÊTES — Archivo étiré. Jamais sur les cellules. */
+.th-broadcast {
+  font-family: var(--font-archivo), var(--font-geist-sans), sans-serif;
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125, "wght" 700;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+```
+
+**3 surfaces appliquées**, le strict nécessaire :
+- `snooker-tab-content.tsx` — Match / Pari recommandé / Probabilité
+- `snooker-tab-content.tsx` — Date / Tournoi / Joueur 1 / Score / Joueur 2 / Format (onglet Résultats). Ces titres **n'étaient pas en majuscules** avant : ils le sont maintenant via la classe
+- `snooker-backtest-history.tsx` — Segment / Matchs / Accuracy / Brier
+
+`font-semibold` / `font-medium` / `uppercase tracking-*` devenus redondants ont été
+retirés : la classe porte poids, casse et tracking → **un seul endroit gouverne la
+typo d'un en-tête**.
+
+#### 🔴 Correction d'un constat de l'audit : le défaut de contraste N'EXISTE PAS ici
+
+L'audit annonçait « remplacer les `color: "#717171"` des en-têtes par
+`var(--muted-foreground)`, 4,20:1 sur lavande → échoue AA ». **Vérifié avant de
+modifier quoi que ce soit : faux pour ces surfaces.**
+
+| Surface | Fond réel | `#717171` | Verdict |
+|---|---|---|---|
+| 3 en-têtes snooker | `#ffffff` / `#fafafa` | **4,88:1** | AA ✅ |
+| (autres surfaces, sur lavande) | `#F0ECF8` | 4,20:1 | AA ❌ |
+
+Les couleurs sont donc **laissent intactes**. Aucun défaut à corriger, et pas de
+refonte de couleur drive-by dans le composant (Hard Rule #12).
+→ La TODO de correction de contraste, si elle existe ailleurs, doit viser les
+vraies surfaces lavande, pas celles-ci.
+
+- [x] Bloc CSS + 3 surfaces appliquées — **commit `5df062c5`**
+- [x] Gates : `typecheck` 0 · `lint` 0 · 99 tests / 527 asserts verts
+- [ ] **Test des 5 secondes restant à faire visuellement** : « quelle est la
+      probabilité du 3ᵉ match » doit rester instantané à 320px et 1440px.
+      Échec → descendre `wdth` à 112, ou revenir à Geist (réversible en une valeur)
 
 ### Option B — plan B, aujourd'hui **refusée**
 
