@@ -15,6 +15,15 @@ export type SportSubTab = { id: string; label: string };
  * Sport absent de la config → aucune rangée rendue (header inchangé ailleurs).
  */
 export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
+  // ⚠️ Les ids de la branche football doivent rester synchronisés avec le type
+  // `FootballSubTab` de src/components/football/football-sub-tabs.tsx (source
+  // des libellés + icônes de la rangée interne). Même pattern que basketball.
+  football: [
+    { id: "calendrier", label: "Calendrier" },
+    { id: "top-strategies", label: "Top stratégies" },
+    { id: "backtesting", label: "Back Testing" },
+    { id: "results", label: "Résultats" },
+  ],
   basketball: [
     { id: "matchs", label: "Matchs" },
     { id: "calendrier", label: "Calendrier" },
@@ -23,6 +32,13 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
     { id: "backtest", label: "Backtest" },
     { id: "h2h", label: "H2H" },
     { id: "fiba", label: "FIBA WC" },
+  ],
+  snooker: [
+    { id: "calendrier", label: "Calendrier" },
+    { id: "top10", label: "Stratégie Top 10" },
+    { id: "live", label: "Live" },
+    { id: "backtesting", label: "Backtesting" },
+    { id: "resultats", label: "Résultats" },
   ],
 };
 
@@ -33,14 +49,18 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
  * restent synchronisés.
  */
 export function SportSubTabs({ className }: { className?: string }) {
-  const activeSport = useSportsSidebarStore((s) => s.selectedSportId ?? "football");
-  const subTab = useSportsSidebarStore((s) => s.sportSubTabs[activeSport]);
+  // Sport EXPLICITEMENT sélectionné : sans sélection (page d'accueil), on
+  // n'affiche aucune rangée. L'ancien repli « football » rendrait des onglets
+  // cliquables dont le contenu (FootballTabContent) n'est pas monté — un
+  // contrôle mort. Les hooks restent tous au-dessus du early return.
+  const activeSport = useSportsSidebarStore((s) => s.selectedSportId);
+  const sportSubTabs = useSportsSidebarStore((s) => s.sportSubTabs);
   const setSubTab = useSportsSidebarStore((s) => s.setSubTab);
 
-  const tabs = SPORT_SUB_TABS[activeSport];
-  if (!tabs || tabs.length === 0) return null;
+  const tabs = activeSport ? SPORT_SUB_TABS[activeSport] : undefined;
+  if (!activeSport || !tabs || tabs.length === 0) return null;
 
-  const active = subTab ?? tabs[0].id;
+  const active = sportSubTabs[activeSport] ?? tabs[0].id;
 
   return (
     <div
