@@ -560,6 +560,37 @@
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
+/* ── Voix « broadcast » des EN-TÊTES de tableaux ───────────────────────────
+   Space Grotesk (wght 300-700), PAS Archivo.
+
+   Pourquoi pas Archivo étiré : Archivo est DÉJÀ la police display du projet
+   (`--font-display: var(--font-archivo)`) alors que le corps est Geist. Ce sont
+   deux grotesques quasi identiques, et l'axe wdth plafonne à 125 — soit +7 % de
+   largeur. L'effet était donc **réellement imperceptible** : c'est le retour du
+   QA visuel du 2026-10-02 (« je ne vois pas d'amélioration »).
+
+   Space Grotesk est une troisième voice, pas une clone d'Helvetica : 'a' à un
+   seul étage, contreformes serrées, 'R'/'G'/'e' reconnaissables. Elle donne une
+   différenciation RÉELLE au lieu d'un ajustement invisible. Elle est déjà
+   chargée (`layout.tsx`, wght 300-700) donc 0 octet, 0 requête, et le commentaire
+   de layout.tsx la réserve déjà aux « headers de section » — c'est exactement ça.
+
+   Garde-fous lisibilité : le tracking légèrement positif (Space Grotesk est
+   très serrée en capitales) et un plancher à 12px. Jamais sur les cellules ni
+   sur les chiffres : les données gardent .score-display (Archivo wdth 118 +
+   tabular-nums) pour que les colonnes restent stables pendant les updates live. */
+.th-broadcast {
+  font-family: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  /* Filet bas en dégradé de couleur : donne au bandeau d'en-tête sa présence de
+     « tableau de score ». inset + box-shadow et non `border` pour ne PAS
+     décaler la mise en page (sinon les lignes de données bougent de 1px). */
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--primary, #7b3fa0) 24%, transparent);
+}
 /* Hover weight shift — feedback subtil sur les scores interactifs */
 .score-hover {
   transition: font-variation-settings 200ms var(--ease-standard),

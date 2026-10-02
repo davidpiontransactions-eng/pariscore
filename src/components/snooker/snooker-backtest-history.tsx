@@ -400,7 +400,7 @@ export function SnookerBacktestHistory() {
                         Performance par segment — {dim.label}
                       </caption>
                       <thead>
-                        <tr className="th-broadcast border-b border-gray-100 text-left text-gray-500 text-[12px]">
+                        <tr className="th-broadcast border-b border-gray-100 text-left text-gray-500 text-[13px]">
                           <th className="px-4 py-1.5">Segment</th>
                           <th className="px-2 py-1.5 text-right">Matchs</th>
                           <th className="px-2 py-1.5 text-right">Accuracy</th>

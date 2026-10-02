@@ -1437,10 +1437,10 @@ export function SnookerTabContent() {
             </button>
           </div>
 
-          {/* Column headers — desktop. th-broadcast = Archivo étiré (wdth 125).
-              Plancher 12px imposé : sous 12px, wdth 125 ferme les jambages. */}
+          {/* Column headers — desktop. th-broadcast = Space Grotesk 700 (voice «
+              tableau de score »). 13px : sous 12px, le capital serifé se ferme. */}
           <div
-            className="th-broadcast hidden items-center px-3 py-2 text-[12px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px]"
+            className="th-broadcast hidden items-center px-3 py-2.5 text-[13px] md:grid md:grid-cols-[minmax(0,1fr)_minmax(100px,auto)_80px_28px]"
             style={{
               color: "#717171",
               borderBottom: "1px solid #f5f5f5",
@@ -1697,7 +1697,7 @@ export function SnookerTabContent() {
                   </caption>
                   <thead>
                     <tr
-                      className="th-broadcast text-[12px]"
+                      className="th-broadcast text-[13px]"
                       style={{ background: "#fafafa", borderBottom: "1px solid #f0f0f0" }}
                     >
                       <th scope="col" className="px-3 py-2 text-left" style={{ color: "#717171" }}>
