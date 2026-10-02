@@ -341,8 +341,10 @@ function tiebreakOdds(key: StrategyTop5Key, m: BSDFootballMatch): number | null 
 /**
  * Probabilités justes (de-vig) dérivées des cotes du book, si présentes.
  * Retourne null si le fixture ne porte pas les cotes requises.
+ * Exportée pour le backtest marchés (cotes Double Chance dérivées — jamais
+ * synthétiques : elles viennent des cotes 1X2 réelles dé-vigées).
  */
-function fairProbs(m: BSDFootballMatch): { home: number; draw: number; away: number } | null {
+export function fairProbs(m: BSDFootballMatch): { home: number; draw: number; away: number } | null {
   const h = m.odds_home;
   const d = m.odds_draw;
   const a = m.odds_away;
