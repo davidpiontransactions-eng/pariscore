@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -625,6 +626,18 @@ type CalendarFilter = "all" | "live" | "odds" | "finished" | "scheduled";
 const parisISO = (date: Date): string =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(date);
 
+/**
+ * Visuels cartoon 3D de l'onglet snooker — une seule position, tailles égales.
+ * Fichiers : public/images/snooker/visuels/ (fournis par David le 2026-10-02).
+ * `alt` descriptif et non nominatif : les personnages sont des rendus générés
+ * et ne représentent aucun joueur identifié.
+ */
+const VISUELS_SNOOKER = [
+  { src: "/images/snooker/visuels/snooker-vibe-1.jpg", alt: "Joueur de snooker en action dans une arène" },
+  { src: "/images/snooker/visuels/snooker-vibe-2.jpg", alt: "Deux joueurs de snooker près de la table" },
+  { src: "/images/snooker/visuels/snooker-vibe-3.jpg", alt: "Joueur de snooker devant le tapis vert" },
+] as const;
+
 const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
   { key: "all", label: "ALL" },
   { key: "live", label: "LIVE" },
@@ -983,6 +996,29 @@ export function SnookerTabContent() {
         totalLive={liveMatches.length}
         totalWithOdds={matches.filter((m) => m.odds && m.odds.player1 > 0).length}
       />
+
+      {/* ======== VISUELS — une seule position, tailles égales ========
+          Les 3 visuels cartoon 3D sont posés ici, au passage du scroll, hors de
+          la grille de contenu : format identique (aspect 3:2, object-cover) pour
+          que la rangée reste alignée quelle que soit la taille source réelle
+          (1024x683 / 1264x843 / 1264x843). */}
+      <section aria-label="Visuels snooker" className="grid grid-cols-3 gap-2 sm:gap-3">
+        {VISUELS_SNOOKER.map((v) => (
+          <div
+            key={v.src}
+            className="relative aspect-[3/2] overflow-hidden rounded-xl border border-border bg-muted"
+          >
+            <Image
+              src={v.src}
+              alt={v.alt}
+              fill
+              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 32vw"
+              className="object-cover"
+              priority={false}
+            />
+          </div>
+        ))}
+      </section>
 
       {/* ======== CALENDRIER COMPLET — Style FlashScore ======== */}
       <section
