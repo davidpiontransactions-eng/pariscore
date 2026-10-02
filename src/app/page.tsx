@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense, useRef } from "react";
+import { useState, Component, type ReactNode, useCallback, useEffect, lazy, Suspense, useRef } from "react";
 import {
   Code,
   HelpCircle,
@@ -39,8 +39,6 @@ import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import { TennisCalendarSection } from "@/components/tennis/tennis-calendar-section";
 import { TennisTop10MatchesWidget } from "@/components/tennis/tennis-top10-matches-widget";
-import { FootballTop10Widget } from "@/components/football/football-top10-widget";
-import { useFootballMatches } from "@/hooks/use-football-matches";
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -193,14 +191,6 @@ function HomeInner() {
   // Pills navigation active state
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
-  const { data: footballMatches, isLoading: footballLoading } = useFootballMatches();
-  const prematchMatches = useMemo(() => {
-    if (!footballMatches?.matches) return [];
-    return footballMatches.matches.filter(
-      (m: any) => !m.live || m.live.status === "FT" || m.live.status === "PEN",
-    );
-  }, [footballMatches]);
-
   const handleTabChange = useCallback((tab: string) => {
     // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
     // au store : l'arbre latéral garde le dernier sport, l'URL ?sport= reste stable.
@@ -321,27 +311,23 @@ function HomeInner() {
           </section>
         )}
 
-        {/* Calendrier des matchs — filtré par sport + mode */}
+        {/* Calendrier des matchs — filtré par sport + mode.
+            Football est exclu : son calendrier vit dans le sous-onglet
+            « Calendrier » de FootballTabContent (Vague 1), le laisser ici
+            le rendrait en double. Les autres sports gardent le leur. */}
         <section className="w-full px-4 sm:px-6 pt-6">
           {activeTab === "tennis" ? (
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
               <TennisTop10MatchesWidget />
               <TennisCalendarSection />
             </div>
-          ) : activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" || activeTab === "basketball" ? null : (
+          ) : activeTab === "football" || activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" || activeTab === "basketball" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}
             />
           )}
         </section>
-
-        {/* Top 10 matchs par stratégie — football uniquement en mode prematch */}
-        {activeTab === "football" && headerMode === "prematch" && !footballLoading && prematchMatches.length > 0 && (
-          <section className="w-full px-4 sm:px-6 pt-4">
-            <FootballTop10Widget matches={prematchMatches} />
-          </section>
-        )}
 
         {/* Hero générique supprimé — heroes dédiés par sport (football, hockey) */}
         <motion.div
@@ -388,19 +374,28 @@ function HomeInner() {
         </Suspense>
         </motion.div>
 
-        {/* Sections déplacées — Bento Grid layout */}
+        {/* Sections déplacées — Bento Grid layout
+            Le snooker est EXCLU de `BestMatchesTabs` et `UpcomingTenMatchesTable` :
+            ces deux encarts affichaient du tennis (Djokovic, Sabalenka) et du
+            football (Ittihad Tanger, São Paulo) sur la vue snooker, faute de filtre
+            sur `sport`. `Top5SelectionPanel` et `AIInsightCard` restent — Gemini
+            reçoit déjà `activeSport={activeTab}` et se limite donc au snooker. */}
         {activeTab !== "hockey" && (
         <section className="w-full px-4 sm:px-6 pt-8">
           <BentoGrid cols={4}>
             <BentoTile size="wide" variant="glass">
               <Top5SelectionPanel variant="inline" />
             </BentoTile>
-            <BentoTile size="wide" variant="glass">
-              <BestMatchesTabs id="section-best-matches" sport={activeTab} />
-            </BentoTile>
-            <BentoTile size="wide" variant="glass">
-              <UpcomingTenMatchesTable id="section-upcoming" />
-            </BentoTile>
+            {activeTab !== "snooker" && (
+              <BentoTile size="wide" variant="glass">
+                <BestMatchesTabs id="section-best-matches" sport={activeTab} />
+              </BentoTile>
+            )}
+            {activeTab !== "snooker" && (
+              <BentoTile size="wide" variant="glass">
+                <UpcomingTenMatchesTable id="section-upcoming" />
+              </BentoTile>
+            )}
             <BentoTile size="standard" variant="glass">
               <AIInsightCard id="section-gemini" activeSport={activeTab === "home" ? undefined : activeTab} />
             </BentoTile>

@@ -83,8 +83,27 @@ const PLAYER_WIKI_TITLES: Record<string, string> = {
   "marco-fu": "Marco_Fu",
 };
 
+/**
+ * Miniature Wikimedia → fichier original.
+ *
+ * Le service de miniatures renvoie désormais **HTTP 400 pour toute taille** :
+ * « Use thumbnail sizes listed on https://w.wiki/GHai ». Vérifié le 2026-10-02
+ * sur 100/120/160/180/200/220/240/250/300/320/400/500/512/640/768/800/1024/1280px,
+ * via `upload.wikimedia.org` ET `thumb.wikimedia.org`, avec et sans
+ * `Referer`/UA navigateur : **400 sur toute la grille** — alors que le fichier
+ * original répond 200 (207 Ko testé). L'ancienne logique écrasait la taille
+ * en `200px-`, donc elle pointait systématiquement vers une URL morte : c'est
+ * pour ça que tous les avatars snooker affichaient des initiales.
+ *
+ * On sert l'original et on laisse `next/image` faire la réduction (et la mise
+ * en cache) — un appel réseau au lieu d'une 404.
+ */
 function cleanThumbUrl(raw: string): string {
-  return raw.replace(/\/(\d+)px-/, "/200px-").split("?")[0];
+  const clean = raw.split("?")[0];
+  // .../wikipedia/<projet>/thumb/<rep>/<fichier>/<N>px-<fichier> → l'original
+  const m = clean.match(/\/wikipedia\/([^/]+)\/thumb\/([\s\S]+)\/\d+px-[^/]+$/);
+  if (m) return `https://upload.wikimedia.org/wikipedia/${m[1]}/${m[2]}`;
+  return clean;
 }
 
 // ─── Fetch photo ──────────────────────────────────────────────────────────
@@ -97,12 +116,15 @@ export async function fetchPlayerPhoto(cueId: string): Promise<string | undefine
   // 2) Base locale (rapide, pas de network)
   const local = loadLocalPhotos();
   if (local[cueId]) {
+    // Normalisé : le JSON contient des URLs de miniatures, désormais rejetées
+    // en 400 par Wikimedia (voir cleanThumbUrl).
+    const url = cleanThumbUrl(local[cueId]);
     if (photoCache.size >= CACHE_MAX) {
       const k = photoCache.keys().next().value;
       if (k) photoCache.delete(k);
     }
-    photoCache.set(cueId, { url: local[cueId], ts: Date.now() });
-    return local[cueId];
+    photoCache.set(cueId, { url, ts: Date.now() });
+    return url;
   }
 
   // 3) Wikipedia API (fallback pour joueurs pas dans la base)

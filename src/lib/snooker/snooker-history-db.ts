@@ -202,3 +202,106 @@ export function loadSnookerRankings(): SnookerRankingRow[] {
     db.close();
   }
 }
+
+/** Un match terminé de la fenêtre « Résultats ». */
+export type SnookerRecentResult = {
+  id: string;
+  player1: string;
+  player2: string;
+  scoreA: number;
+  scoreB: number;
+  bestOf: number;
+  tournament: string;
+  /** ISO complet (YYYY-MM-DD) — l'UI fait un format fr-FR dessus. */
+  scheduled_at: string;
+  status: "finished";
+};
+
+/**
+ * Résultats des N derniers jours, lus dans l'historique (126k matchs).
+ *
+ * ⚠️ Ne PAS lire les fixtures : `data/odds_flashscore_snooker.json` est un
+ * snapshot quotidien qui ne contient qu'UNE date (vérifié 2026-10-02 : 2026-10-01
+ * uniquement), et `matches/route.ts` filtre en plus tout ce qui est plus vieux
+ * qu'hier. Une vue « 7 derniers jours » alimentée par les fixtures est donc
+ * structurellement impossible — d'où cette lecture directe sur la DB.
+ *
+ * ⚠️ VAINQUEUR VIA `winner_url`. La base stocke le vainqueur en slot 1 dans
+ * 96,7 % des lignes : comparer `player_1_score > player_2_score` produirait une
+ * colonne « vainqueur » presque toujours le joueur 1. On compare les slugs.
+ *
+ * Lignes sans vainqueur identifiable → ignorées (score non attribué, walkover,
+ * doublon de slug).
+ */
+export function loadRecentResults(days = 7): SnookerRecentResult[] {
+  let db: BSD;
+  try {
+    db = openSqlite(SQLITE_FILE);
+  } catch (err) {
+    console.warn(
+      `[snooker-history] ${SQLITE_FILE} illisible — résultats indisponibles. Détail: ${(err as Error).message}`,
+    );
+    return [];
+  }
+  try {
+    const cutoff = new Date(Date.now() - Math.max(1, days) * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+
+    const rows = db
+      .prepare(
+        "SELECT COALESCE(NULLIF(m.date, ''), t.start_date) AS date, " +
+          "m.best_of, m.player_1, m.player_2, m.player_1_url, m.player_2_url, " +
+          "m.winner_url, m.player_1_score, m.player_2_score, " +
+          "t.name AS tournament " +
+          "FROM matches m JOIN tournament t ON m.tourn_id = t.tourn_id " +
+          // `?` et non `?1` : sur le driver better-sqlite3 (repli sous Next,
+          // où `bun:sqlite` n'est pas bundleable) `?1` fait lever
+          // « Too many parameter values were provided » — le décompte des
+          // paramètres nommés diffère entre les deux drivers.
+          "WHERE COALESCE(NULLIF(m.date, ''), t.start_date) >= ? " +
+          "AND LOWER(m.walkover) NOT IN ('1', 'true') " +
+          "AND CAST(m.player_1_score AS INTEGER) != CAST(m.player_2_score AS INTEGER) " +
+          "AND CAST(m.player_1_score AS INTEGER) > 0 " +
+          "AND m.winner_url IS NOT NULL AND m.winner_url <> '' " +
+          "ORDER BY date DESC",
+      )
+      .all(cutoff) as Record<string, unknown>[];
+
+    const out: SnookerRecentResult[] = [];
+    for (const r of rows) {
+      const date = str(r.date);
+      if (!date) continue;
+      const s1 = slug(r.player_1_url);
+      const s2 = slug(r.player_2_url);
+      const winner = slug(r.winner_url);
+      if (!s1 || !s2 || s1 === s2) continue;
+      // `winner_url` doit désigner l'un des deux joueurs, sinon ligne inexploitable.
+      if (winner !== s1 && winner !== s2) continue;
+
+      const scoreA = num(r.player_1_score);
+      const scoreB = num(r.player_2_score);
+      // Le vainqueur doit avoir le score le plus élevé — sinon la ligne est incohérente.
+      const winnerIsP1 = winner === s1;
+      if (winnerIsP1 ? scoreA <= scoreB : scoreB <= scoreA) continue;
+
+      out.push({
+        id: `${date}-${s1}-${s2}`,
+        player1: str(r.player_1),
+        player2: str(r.player_2),
+        scoreA,
+        scoreB,
+        bestOf: num(r.best_of) || 0,
+        tournament: str(r.tournament),
+        scheduled_at: date,
+        status: "finished",
+      });
+    }
+    return out;
+  } catch (err) {
+    console.warn(`[snooker-history] lecture résultats KO: ${(err as Error).message}`);
+    return [];
+  } finally {
+    db.close();
+  }
+}

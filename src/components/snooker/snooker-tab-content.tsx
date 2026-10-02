@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
-import { SnookerMatchCard } from "@/components/snooker/snooker-match-card";
 import { SnookerLiveTracker } from "@/components/snooker/snooker-live-tracker";
 import { SnookerPlayerCard } from "@/components/snooker/snooker-player-card";
 import { SnookerBetsPanel } from "@/components/snooker/snooker-bets-panel";
@@ -596,6 +595,25 @@ type PlayersResponse = {
   scraped_at: string | null;
 };
 
+/** Réponse de /api/v1/snooker/results — lecture sur l'historique, pas les fixtures. */
+type ResultsResponse = {
+  results: {
+    id: string;
+    player1: string;
+    player2: string;
+    scoreA: number;
+    scoreB: number;
+    bestOf: number;
+    tournament: string;
+    scheduled_at: string;
+    status: "finished";
+  }[];
+  total: number;
+  days: number;
+  earliestDate: string | null;
+  error?: string;
+};
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 // ---------------------------------------------------------------------------
@@ -685,22 +703,17 @@ export function SnookerTabContent() {
   /**
    * Résultats des 7 derniers jours (onglet « Résultats »).
    *
-   * Fenêtre glissante de 7×24 h sur `scheduled_at`, du plus récent au plus
-   * ancien. Volontairement large : le snooker joue 3-8 matchs par jour, donc
-   * 7 jours représente ~30 matchs — de quoi remplir un tableau sans être
-   *trimé. On exclut `live` (pas encore de résultat) et `scheduled` (pas joué).
+   * ⚠️ Lu via `/api/v1/snooker/results` et NON via `matches` : les fixtures sont
+   * un snapshot quotidien (une seule date au 2026-10-02) et `matches/route.ts`
+   * écarte de plus les matchs antérieurs à hier. Filtre les 7 jours sur ce flux
+   * ne pouvait donc renvoyer qu'aujourd'hui — constat David le 2026-10-02.
+   * La route s'appuie sur l'historique (126k matchs) et attribue le vainqueur
+   * via `winner_url`, jamais par comparaison de scores.
    */
-  const recentResults = useMemo(() => {
-    const since = Date.now() - 7 * 24 * 3600 * 1000;
-    return matches
-      .filter((m) => m.status === "finished")
-      .filter((m) => {
-        if (!m.scheduled_at) return false;
-        const t = Date.parse(m.scheduled_at);
-        return !Number.isNaN(t) && t >= since;
-      })
-      .sort((a, b) => Date.parse(b.scheduled_at ?? "") - Date.parse(a.scheduled_at ?? ""));
-  }, [matches]);
+  const resultsRes = useSWR<ResultsResponse>("/api/v1/snooker/results?days=7", fetcher, {
+    refreshInterval: 600_000,
+  });
+  const recentResults = useMemo(() => resultsRes.data?.results ?? [], [resultsRes.data]);
 
   // Index joueur pour matching fuzzy (FlashScore → CueTracker)
   const playerIndex = useMemo(() => {
@@ -1676,7 +1689,7 @@ export function SnookerTabContent() {
               </span>
             </div>
 
-            {isLoading ? (
+            {resultsRes.isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="h-11 animate-pulse rounded bg-gray-100" />
@@ -1770,57 +1783,9 @@ export function SnookerTabContent() {
         </>
       )}
 
-      {subView === "calendrier" && (
-        <>
-      {/* ======== TOUTES LES CARTES MATCHS ======== */}
-      <section className="space-y-3">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Matchs — {matchesRes.data?.total ?? 0}
-        </h3>
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : !hasData ? (
-          <div className="text-center py-10 text-slate-400 text-sm">
-            Aucun match top disponible.
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 text-sm">
-            Aucun match top disponible.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sorted.map((m) => {
-              // P_win depuis cotes (ou 0.5 si pas de cotes)
-              const pWin = m.odds
-                ? (1 / m.odds.player1) / ((1 / m.odds.player1) + (1 / m.odds.player2))
-                : 0.5;
-              return (
-              <SnookerMatchCard
-                key={m.id}
-                match={{
-                  id: m.id,
-                  playerA: { id: `p-a-${m.id}`, name: m.player1, photoUrl: m.player1PhotoUrl },
-                  playerB: { id: `p-b-${m.id}`, name: m.player2, photoUrl: m.player2PhotoUrl },
-                  tournament: m.tournament || "Snooker",
-                  bestOf: m.bestOf,
-                  scoreA: m.scoreA,
-                  scoreB: m.scoreB,
-                  status: m.status,
-                  scheduledAt: m.scheduled_at ?? undefined,
-                  pWin,
-                }}
-              />
-              );
-            })}
-          </div>
-        )}
-      </section>
-        </>
-      )}
+      {/* Cartes « Matchs — N » retirées du calendrier le 2026-10-02 (demande de
+          David) : le calendrier garde sa liste datée, la grille de cartes est
+          désormais redondante avec le sous-onglet Résultats. */}
 
       {subView === "live" && (
         <>
@@ -1859,13 +1824,13 @@ export function SnookerTabContent() {
         </>
       )}
 
-      {subView === "calendrier" && (
+      {subView === "stats" && (
         <>
       {/* ======== LEADERBOARD JOUEURS ======== */}
       {players.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Top joueurs — {players.length}
+            Statistiques joueurs — {players.length}
           </h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {players.map((p) => (

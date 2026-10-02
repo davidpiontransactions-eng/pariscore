@@ -221,14 +221,22 @@ export function SnookerHero({
                 </span>
               </motion.div>
 
-              {/* Titre principal — gradient snooker */}
+              {/* Titre principal — vert du tapis de snooker.
+                  `#1E5631` : 7,43:1 sur le shell lavande #F0ECF8 (AAA).
+                  L'ancien gradient vert néon `#00985f` → violet `#7B3FA0` était
+                  d'une part inventé (couleurs absentes de la charte) et d'autre
+                  part ne tenait pas le contraste : `#00985f` = 3,19:1 et le
+                  vert néon `#00e676` = 1,44:1 sur lavande.
+                  Le rouge bille (#C8102E = 5,06:1) est écarté volontairement :
+                  `--red` signifie « erreur, négatif » dans la charte (ligne 32),
+                  donc à ne pas poser sur le titre d'un site de pronostics. */}
               <motion.h1
                 variants={itemVariants}
                 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl"
               >
                 <span className="text-foreground">Le snooker décrypté</span>
                 <br />
-                <span className="bg-gradient-to-r from-[#00985f] to-[#7B3FA0] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#1E5631] to-[#3F7A4E] bg-clip-text text-transparent">
                   par les chiffres
                 </span>
               </motion.h1>

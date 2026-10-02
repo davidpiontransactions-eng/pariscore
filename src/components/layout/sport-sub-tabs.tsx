@@ -37,6 +37,7 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
     { id: "calendrier", label: "Calendrier" },
     { id: "top10", label: "Stratégie Top 10" },
     { id: "live", label: "Live" },
+    { id: "stats", label: "Statistiques Joueurs" },
     { id: "backtesting", label: "Backtesting" },
     { id: "resultats", label: "Résultats" },
   ],
