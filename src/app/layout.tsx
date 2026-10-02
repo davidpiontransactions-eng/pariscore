@@ -217,7 +217,12 @@ export default async function RootLayout({
 
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          /* Charte (DESIGN_CHARTER.md) : shell lavande `--background #F0ECF8`
+             + primary `#7B3FA0`. En `dark`, globals.css remplace par
+             `.dark { --background: #0E1217 }` → toute l'app devenait navy/noir,
+             hors charte, y compris les cartes snooker conçues en clair.
+             `enableSystem` n'a aucun effet avec `defaultTheme` !== "system". */
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

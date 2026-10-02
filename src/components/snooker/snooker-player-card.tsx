@@ -43,8 +43,8 @@ function StatBar({ label, value, max = 100 }: { label: string; value: number; ma
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-[10px]">
-        <span className="text-zinc-500">{label}</span>
-        <span className="font-mono text-zinc-300">{value.toFixed(1)}%</span>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-mono text-foreground">{value.toFixed(1)}%</span>
       </div>
       <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
         <div
@@ -76,9 +76,9 @@ function nationalityToCode(nat?: string): string | undefined {
 
 export function SnookerPlayerCard({ player }: { player: SnookerPlayerStats }) {
   return (
-    <Card className="group overflow-hidden border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm transition-all hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5">
+    <Card className="group overflow-hidden border-border bg-surface-card transition-all hover:border-[#00985f]/40 hover:shadow-lg hover:shadow-[#00985f]/10">
       {/* Glass shine */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/[0.02] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <CardContent className="relative z-10 p-4">
         {/* Header with PlayerAvatar */}
         <div className="flex items-center gap-3 mb-3">
@@ -90,8 +90,8 @@ export function SnookerPlayerCard({ player }: { player: SnookerPlayerStats }) {
             countryCode={nationalityToCode(player.nationality)}
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold truncate text-zinc-100">{player.name}</h3>
-            <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+            <h3 className="text-sm font-semibold truncate text-foreground">{player.name}</h3>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
               {player.nationality && <span>{player.nationality}</span>}
               {player.ranking && <span>#{player.ranking}</span>}
               <span className="font-mono text-emerald-400 font-semibold">Elo {Math.round(player.eloRating)}</span>
@@ -102,7 +102,7 @@ export function SnookerPlayerCard({ player }: { player: SnookerPlayerStats }) {
         {/* Form */}
         {player.formLast10 && (
           <div className="mb-3">
-            <div className="text-[10px] text-zinc-500 mb-1">Forme (10 derniers)</div>
+            <div className="text-[10px] text-muted-foreground mb-1">Forme (10 derniers)</div>
             <FormIndicator form={player.formLast10} />
           </div>
         )}
@@ -114,8 +114,8 @@ export function SnookerPlayerCard({ player }: { player: SnookerPlayerStats }) {
           {player.break50Rate != null && <StatBar label="Break 50+ Rate" value={player.break50Rate} />}
           {player.deciderWinPct != null && <StatBar label="Decider Win %" value={player.deciderWinPct} />}
           {player.avgBreak != null && (
-            <div className="flex justify-between text-[10px] pt-1 border-t border-zinc-800/30">
-              <span className="text-zinc-500">Max Break</span>
+            <div className="flex justify-between text-[10px] pt-1 border-t border-border">
+              <span className="text-muted-foreground">Max Break</span>
               <span className="font-mono text-emerald-400 font-semibold">{player.avgBreak.toFixed(0)}</span>
             </div>
           )}

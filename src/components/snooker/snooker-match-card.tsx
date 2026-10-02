@@ -36,11 +36,11 @@ interface SnookerMatch {
 function getStatusColor(status: string) {
   switch (status) {
     case "live":
-      return "bg-red-500/20 text-red-400 border-red-500/30";
+      return "bg-red-500/20 text-red-600 border-red-500/30";
     case "finished":
-      return "bg-zinc-500/20 text-zinc-400 border-zinc-500/30";
+      return "bg-black/5 text-muted-foreground border-border";
     default:
-      return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      return "bg-[#00985f]/10 text-[#00985f] border-[#00985f]/30";
   }
 }
 
@@ -55,20 +55,23 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl border transition-all",
-        "bg-zinc-900/40 backdrop-blur-sm",
+        // Token de carte, pas de codage en dur : le zinc-900 était lié au thème
+        // dark par défaut et laissait les cartes noires sur le shell lavande.
+        // `--surface-card` = #FFFFFF en clair / #1E2433 en sombre.
+        "bg-surface-card",
         isLive
           ? "border-red-500/40 shadow-lg shadow-red-500/10"
-          : "border-zinc-800/50 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5",
-        hasEdge && "border-emerald-500/40 shadow-lg shadow-emerald-500/10"
+          : "border-border hover:border-[#00985f]/40 hover:shadow-lg hover:shadow-[#00985f]/10",
+        hasEdge && "border-[#00985f]/40 shadow-lg shadow-[#00985f]/10"
       )}
     >
       {/* Glass shine effect */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/[0.02] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
       <div className="relative z-10 p-4">
         {/* Tournament & Status */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 truncate">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">
             {match.tournament} {match.round ? `· ${match.round}` : ""}
           </span>
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", getStatusColor(match.status))}>
@@ -87,11 +90,11 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
               sport="snooker"
             />
             <div className="text-center min-w-0">
-              <p className={cn("text-sm truncate max-w-[120px]", leaderA && "font-semibold text-emerald-400")}>
+              <p className={cn("text-sm truncate max-w-[120px]", leaderA && "font-semibold text-[#00985f]")}>
                 {match.playerA.name}
               </p>
               {match.playerA.eloRating && (
-                <p className="text-[10px] font-mono text-zinc-500">
+                <p className="text-[10px] font-mono text-muted-foreground">
                   Elo {Math.round(match.playerA.eloRating)}
                 </p>
               )}
@@ -101,15 +104,15 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
           {/* Score / VS */}
           <div className="flex flex-col items-center gap-0.5">
             <div className="flex items-center gap-1.5">
-              <span className={cn("text-xl font-mono font-bold w-6 text-center", leaderA && "text-emerald-400")}>
+              <span className={cn("text-xl font-mono font-bold w-6 text-center", leaderA && "text-[#00985f]")}>
                 {match.scoreA}
               </span>
-              <span className="text-xs font-bold text-zinc-600">:</span>
-              <span className={cn("text-xl font-mono font-bold w-6 text-center", leaderB && "text-emerald-400")}>
+              <span className="text-xs font-bold text-muted-foreground">:</span>
+              <span className={cn("text-xl font-mono font-bold w-6 text-center", leaderB && "text-[#00985f]")}>
                 {match.scoreB}
               </span>
             </div>
-            <span className="text-[10px] text-zinc-600 font-mono">Bo{match.bestOf}</span>
+            <span className="text-[10px] text-muted-foreground font-mono">Bo{match.bestOf}</span>
           </div>
 
           {/* Player B */}
@@ -121,11 +124,11 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
               sport="snooker"
             />
             <div className="text-center min-w-0">
-              <p className={cn("text-sm truncate max-w-[120px]", leaderB && "font-semibold text-emerald-400")}>
+              <p className={cn("text-sm truncate max-w-[120px]", leaderB && "font-semibold text-[#00985f]")}>
                 {match.playerB.name}
               </p>
               {match.playerB.eloRating && (
-                <p className="text-[10px] font-mono text-zinc-500">
+                <p className="text-[10px] font-mono text-muted-foreground">
                   Elo {Math.round(match.playerB.eloRating)}
                 </p>
               )}
@@ -135,18 +138,18 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
 
         {/* Probabilities & Edge */}
         {(match.probA != null || hasEdge) && (
-          <div className="mt-4 pt-3 border-t border-zinc-800/50 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
             {match.probA != null && (
               <div className="flex gap-2 text-[10px]">
-                <span className="text-zinc-500">
-                  <span className="text-emerald-400 font-mono font-semibold">{(match.probA * 100).toFixed(1)}%</span>
+                <span className="text-muted-foreground">
+                  <span className="text-[#00985f] font-mono font-semibold">{(match.probA * 100).toFixed(1)}%</span>
                   <span className="mx-1 text-zinc-700">/</span>
                   <span className="text-blue-400 font-mono font-semibold">{((match.probB || 0) * 100).toFixed(1)}%</span>
                 </span>
               </div>
             )}
             {hasEdge && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-[#00985f] border-emerald-500/30">
                 +{((match.edge || 0) * 100).toFixed(1)}% edge
               </Badge>
             )}
@@ -166,35 +169,35 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
           lines.sort((a, b) => a - b);
           if (lines.length === 0) return null;
           return (
-            <div className="mt-3 pt-3 border-t border-zinc-800/50">
-              <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <span>🎯</span> Total De Manches {market ? "— 1xBet" : "— modèle"}
               </div>
               <div className="grid grid-cols-3 gap-x-2 gap-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Ligne</span>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Plus de</span>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Moins de</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ligne</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Plus de</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Moins de</span>
                 {lines.map((line) => {
                   const over = probTotalFramesOver(match.bestOf, pFrame, line);
                   const under = 1 - over;
                   const odds = market && market.line === line ? market : null;
                   return (
                     <Fragment key={line}>
-                      <span className="font-mono text-[11px] text-zinc-300">{line}</span>
+                      <span className="font-mono text-[11px] text-foreground">{line}</span>
                       <span className="flex flex-col items-center">
-                        <span className={cn("text-center font-mono text-[11px] font-semibold", over >= 0.6 ? "text-emerald-400" : over <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                        <span className={cn("text-center font-mono text-[11px] font-semibold", over >= 0.6 ? "text-[#00985f]" : over <= 0.4 ? "text-red-600" : "text-muted-foreground")}>
                           {Math.round(over * 100)} %
                         </span>
                         {odds?.overOdds != null && (
-                          <span className="text-center font-mono text-[9px] text-zinc-500">@{odds.overOdds}</span>
+                          <span className="text-center font-mono text-[9px] text-muted-foreground">@{odds.overOdds}</span>
                         )}
                       </span>
                       <span className="flex flex-col items-center">
-                        <span className={cn("text-center font-mono text-[11px] font-semibold", under >= 0.6 ? "text-emerald-400" : under <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                        <span className={cn("text-center font-mono text-[11px] font-semibold", under >= 0.6 ? "text-[#00985f]" : under <= 0.4 ? "text-red-600" : "text-muted-foreground")}>
                           {Math.round(under * 100)} %
                         </span>
                         {odds?.underOdds != null && (
-                          <span className="text-center font-mono text-[9px] text-zinc-500">@{odds.underOdds}</span>
+                          <span className="text-center font-mono text-[9px] text-muted-foreground">@{odds.underOdds}</span>
                         )}
                       </span>
                     </Fragment>

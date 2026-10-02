@@ -70,7 +70,7 @@ function MiniStat({
 }) {
   const toneClass = {
     green: "text-emerald-400",
-    zinc: "text-zinc-100",
+    zinc: "text-foreground",
     sky: "text-sky-400",
     amber: "text-amber-400",
     purple: "text-[#7B3FA0]",
@@ -93,7 +93,7 @@ function MiniStat({
           <CountUp value={value} />
           {suffix}
         </span>
-        <span className="mt-0.5 text-[11px] text-zinc-400">{label}</span>
+        <span className="mt-0.5 text-[11px] text-muted-foreground">{label}</span>
       </div>
     </div>
   );
@@ -125,7 +125,7 @@ function QuickLink({
     >
       <Icon className="h-4 w-4" />
       <span className="text-xs font-semibold">{label}</span>
-      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white/10 px-1.5 text-[10px] font-bold">
+      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-black/5 px-1.5 text-[10px] font-bold">
         {count}
       </span>
     </a>
@@ -166,17 +166,20 @@ export function SnookerHero({
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-white/[0.06]",
-        "bg-gradient-to-b from-[#0c1220] via-[#0f1628] to-[#0c1220]",
+        "relative overflow-hidden rounded-2xl border",
+        // Fond lavande doux plutôt que le navy `#0c1220` : la charte impose le
+        // shell clair, et le hero doit se distinguer des cartes blanches sans
+        // repartir dans le noir.
+        "border-border bg-gradient-to-b from-[#EDE8F5] via-[#F7F4FC] to-[#EDE8F5]",
         className,
       )}
     >
       <motion.div initial="hidden" animate="visible" variants={containerVariants}>
         {/* Grid pattern */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)`,
+            backgroundImage: `linear-gradient(rgba(123,63,160,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(123,63,160,0.9) 1px, transparent 1px)`,
             backgroundSize: "40px 40px",
           }}
         />
@@ -194,7 +197,7 @@ export function SnookerHero({
         />
 
         {/* Vignette bas */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0c1220]/90 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#EDE8F5]/90 to-transparent" />
 
         <div className="relative px-5 py-6 sm:px-8 sm:py-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -210,7 +213,7 @@ export function SnookerHero({
                 <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#00985f]">
                   Snooker en direct
                 </span>
-                <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300/80">
+                <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[#00985f]/20 bg-[#00985f]/10 px-2 py-0.5 text-[10px] font-medium text-[#00985f]">
                   <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -223,24 +226,24 @@ export function SnookerHero({
                 variants={itemVariants}
                 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl"
               >
-                <span className="text-white">Le snooker décrypté</span>
+                <span className="text-foreground">Le snooker décrypté</span>
                 <br />
-                <span className="bg-gradient-to-r from-emerald-400 via-[#00985f] to-sky-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#00985f] to-[#7B3FA0] bg-clip-text text-transparent">
                   par les chiffres
                 </span>
               </motion.h1>
 
               {/* Description */}
               <motion.div variants={itemVariants} className="mt-4 max-w-xl">
-                <p className="text-sm leading-relaxed text-zinc-400 sm:text-base">
-                  <span className="font-semibold text-zinc-200">5 stratégies prédictives</span> calibrées
+                <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  <span className="font-semibold text-foreground">5 stratégies prédictives</span> calibrées
                   sur le snooker — Elo, forme, scoring, clutch, momentum — pour identifier les{" "}
                   <span className="inline-flex items-center gap-1 font-semibold text-[#00985f]">
                     <Target className="h-3.5 w-3.5" />
                     value bets
                   </span>{" "}
                   avec un{" "}
-                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-300">
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
                     <Percent className="h-3.5 w-3.5" />
                     ROI positif
                   </span>.
@@ -260,28 +263,28 @@ export function SnookerHero({
                   icon={Radio}
                   label="LIVE"
                   count={totalLive}
-                  color="border-emerald-500/30 text-[#00985f] hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                  color="border-[#00985f]/30 text-[#00985f] hover:bg-[#00985f]/10 hover:border-[#00985f]/50"
                   href="#live"
                 />
                 <QuickLink
                   icon={Crosshair}
                   label="Top 10"
                   count={10}
-                  color="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50"
+                  color="border-amber-500/40 text-amber-700 hover:bg-amber-500/10 hover:border-amber-600/60"
                   href="#top10"
                 />
                 <QuickLink
                   icon={BarChart3}
                   label="Stratégies"
                   count={5}
-                  color="border-sky-500/30 text-sky-400 hover:bg-sky-500/10 hover:border-sky-500/50"
+                  color="border-sky-500/40 text-sky-700 hover:bg-sky-500/10 hover:border-sky-600/60"
                   href="#strategies"
                 />
                 <QuickLink
                   icon={Target}
                   label="Comparer"
                   count={0}
-                  color="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50"
+                  color="border-[#7B3FA0]/30 text-[#7B3FA0] hover:bg-[#7B3FA0]/10 hover:border-[#7B3FA0]/50"
                   href="/snooker/compare"
                 />
               </motion.div>
@@ -290,17 +293,17 @@ export function SnookerHero({
             {/* ── Bloc droit : Scanner actif ── */}
             <motion.div
               variants={itemVariants}
-              className="shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 lg:max-w-xs"
+              className="shrink-0 rounded-xl border border-border bg-white/70 p-4 lg:max-w-xs"
             >
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00985f]/10">
                   <Target className="h-4 w-4 text-[#00985f]" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400">
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                   Scanner snooker actif
                 </span>
               </div>
-              <p className="mt-2.5 text-xs leading-relaxed text-zinc-400">
+              <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">
                 Analyse en temps réel des tournois World Snooker — Northern Ireland Open, UK Championship, Masters.
                 Les value bets apparaissent ici dès détection.
               </p>
@@ -316,7 +319,7 @@ export function SnookerHero({
               {avgRoi != null && (
                 <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-[11px] text-zinc-400">ROI moyen stratégies</span>
+                  <span className="text-[11px] text-muted-foreground">ROI moyen stratégies</span>
                   <span className="ml-auto text-sm font-bold text-emerald-400 tabular-nums">
                     {avgRoi > 0 ? "+" : ""}{avgRoi.toFixed(1)}%
                   </span>
