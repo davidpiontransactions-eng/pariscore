@@ -178,35 +178,11 @@ function eloWinProb(elo1: number, elo2: number): number {
   return e1 * 100;
 }
 
-/** Modèle Forme : WinPct pondéré + décideurs */
-function formWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
-  const w1 = p1.winPct ?? 50;
-  const w2 = p2.winPct ?? 50;
-  const d1 = p1.deciderWinPct ?? 50;
-  const d2 = p2.deciderWinPct ?? 50;
-  const s1 = w1 * 0.7 + d1 * 0.3;
-  const s2 = w2 * 0.7 + d2 * 0.3;
-  return s1 / (s1 + s2) * 100;
-}
-
-/** Modèle Scoring : century rate + max break (plage 40-147, neutre si absent) */
-function scoringWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
-  const c1 = normalize(p1.centuryRate ?? 0, 0, 30);
-  const c2 = normalize(p2.centuryRate ?? 0, 0, 30);
-  const b1 = p1.avgBreak != null ? normalize(p1.avgBreak, 40, 147) : 50;
-  const b2 = p2.avgBreak != null ? normalize(p2.avgBreak, 40, 147) : 50;
-  const s1 = c1 * 0.55 + b1 * 0.45;
-  const s2 = c2 * 0.55 + b2 * 0.45;
-  if (s1 + s2 === 0) return 50;
-  return s1 / (s1 + s2) * 100;
-}
-
-/** Modèle Clutch : performance en décideurs */
-function clutchWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
-  const d1 = p1.deciderWinPct ?? 50;
-  const d2 = p2.deciderWinPct ?? 50;
-  return d1 / (d1 + d2) * 100;
-}
+// `formWinProb`, `scoringWinProb` et `clutchWinProb` ont été SUPPRIMÉS : leurs
+// composantes (`winPct`, `centuryRate`, `avgBreak`, `deciderWinPct`) ne sont
+// plus pondérées, et la validation a mesuré que leur contribution dégradait la
+// prédiction. `avgBreak` en particulier est le `max_break` CueTracker, à 147
+// pour 9 joueurs du top sur 10 — donc sans variance. Voir `MODEL_WEIGHTS`.
 
 /** Modèle Cotes : probabilité implicite déviggée (marché 2-way snooker) */
 function oddsWinProb(odds1: number, odds2: number): number {
@@ -511,11 +487,43 @@ function resolvePlayers(
 
 // Poids explicites du composite "vainqueur du match".
 // Les cotes ne sont qu'une ancre minoritaire (10 %) : le modèle doit expliquer
-// le marché, pas le recopier — sinon l'edge mesuré contre ces mêmes cotes
-// s'effondre (circularité modèle ↔ marché).
-const MODEL_WEIGHTS = { elo: 0.35, form: 0.25, scoring: 0.2, clutch: 0.1, odds: 0.1 };
+/**
+ * Poids des composantes de `computeCompositeProb`.
+ *
+ * ⚠️ ÉLO SEUL, ET C'EST MESURÉ.
+ *
+ * Ce composant affichait jusqu'ici un composite pondéré
+ * `elo .35 / form .25 / scoring .20 / clutch .10 / odds .10`. La validation
+ * walk-forward (`src/lib/snooker/snooker-power-score-validate.ts`, 17 345
+ * matchs de TEST 2020+) a mesuré ce type de composite à **58,6-59,8 %
+ * d'accuracy contre 61,55 % pour l'Élo seul**, et moins bon sur le Brier
+ * (0,2444 vs 0,2328) comme sur le logLoss (0,6821 vs 0,6626).
+ *
+ * Un second essai de fit par régression logistique L2 au niveau frame
+ * (λ par gridsearch en walk-forward) a convergé vers une solution quasi plate :
+ * les 6 composantes non-Élo n'apportent aucune information supplémentaire une
+ * fois standardisées. Deux d'entre elles sont mesurées comme quasi binaires
+ * sur données réelles (`decider` absente de 37 % des fenêtres, `resilience`
+ * à p50 = p75 = 100 %).
+ *
+ * Keeping `odds` comme composante est par ailleurs contradictoire : la
+ * fonction compare le modèle AU MARCHÉ, donc l'y inclure rend l'edge mesuré
+ * circulaire (c'est ce que dit le commentaire de la fonction, ligne 514).
+ *
+ * On garde donc la structure `parts` et la renormalisation — elles restent
+ * justes — mais **une seule composante** : l'Élo. Voir
+ * `docs/snooker/PLAFFOND-PREDICTIF.md`.
+ */
+const MODEL_WEIGHTS = { elo: 1 } as const;
 
-/** Score composite multi-modèle (pondéré) → probabilité finale % */
+/**
+ * Probabilité de victoire du match → probabilité finale % .
+ *
+ * ÉLO SEUL (voir `MODEL_WEIGHTS`). On conserve la forme `parts` + la
+ * renormalisation : si un jour une composante est réintroduite, le mécanisme
+ * de repli sur les poids disponibles reste correct, et l'appel `null` quand
+ * aucune donnée n'est exploitable reste le même.
+ */
 function computeCompositeProb(
   m: ApiMatch,
   players: ApiPlayer[],
@@ -524,35 +532,16 @@ function computeCompositeProb(
   _strategy?: string,
 ): { prob1: number; prob2: number } | null {
   const [p1, p2] = resolvePlayers(m, players, playerIndex, allPlayerLikes);
-  const noDb = p1.id === "" && p2.id === "";
 
   // [proba, poids] — seuls les modèles disposant de données participent,
   // les poids sont renormalisés sur les modèles disponibles.
   const parts: Array<[number, number]> = [];
 
-  // 1. Modèle Elo (si ratings > defaults)
+  // Élo — seule composante validée (61,55 % d'accuracy sur 17 345 matchs).
+  // `noDb` retiré : il ne servait qu'à court-circuiter les modèles Career
+  // CueTracker, qui n'existent plus.
   if (p1.eloRating !== 1500 || p2.eloRating !== 1500) {
     parts.push([eloWinProb(p1.eloRating, p2.eloRating), MODEL_WEIGHTS.elo]);
-  }
-
-  // 2. Modèle Forme
-  if (p1.winPct !== 50 || p2.winPct !== 50) {
-    parts.push([formWinProb(p1, p2), MODEL_WEIGHTS.form]);
-  }
-
-  // 3. Modèle Scoring
-  if ((p1.centuryRate ?? 0) > 0 || (p2.centuryRate ?? 0) > 0) {
-    parts.push([scoringWinProb(p1, p2), MODEL_WEIGHTS.scoring]);
-  }
-
-  // 4. Modèle Clutch
-  if (p1.deciderWinPct !== 50 || p2.deciderWinPct !== 50) {
-    parts.push([clutchWinProb(p1, p2), MODEL_WEIGHTS.clutch]);
-  }
-
-  // 5. Modèle Cotes (ancre minoritaire, seulement si cotes réelles)
-  if (m.odds && m.odds.player1 > 0 && m.odds.player2 > 0) {
-    parts.push([oddsWinProb(m.odds.player1, m.odds.player2), MODEL_WEIGHTS.odds]);
   }
 
   if (parts.length === 0) return null;
@@ -626,6 +615,20 @@ const FILTER_LABELS: { key: CalendarFilter; label: string }[] = [
   { key: "scheduled", label: "SCHEDULED" },
 ];
 
+/** Date courte fr-FR (`02/10 13:30`) pour le tableau Résultats. */
+const resultDate = (iso: string | null): string => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  }).format(d);
+};
+
 export function SnookerTabContent() {
   const router = useRouter();
   const [activeMarket, setActiveMarket] = useState<MarketKey>("matchWinner");
@@ -678,6 +681,26 @@ export function SnookerTabContent() {
   const matches = useMemo(() => matchesRes.data?.matches ?? [], [matchesRes.data]);
   const players = useMemo(() => playersRes.data?.players ?? [], [playersRes.data]);
   const liveMatches = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
+
+  /**
+   * Résultats des 7 derniers jours (onglet « Résultats »).
+   *
+   * Fenêtre glissante de 7×24 h sur `scheduled_at`, du plus récent au plus
+   * ancien. Volontairement large : le snooker joue 3-8 matchs par jour, donc
+   * 7 jours représente ~30 matchs — de quoi remplir un tableau sans être
+   *trimé. On exclut `live` (pas encore de résultat) et `scheduled` (pas joué).
+   */
+  const recentResults = useMemo(() => {
+    const since = Date.now() - 7 * 24 * 3600 * 1000;
+    return matches
+      .filter((m) => m.status === "finished")
+      .filter((m) => {
+        if (!m.scheduled_at) return false;
+        const t = Date.parse(m.scheduled_at);
+        return !Number.isNaN(t) && t >= since;
+      })
+      .sort((a, b) => Date.parse(b.scheduled_at ?? "") - Date.parse(a.scheduled_at ?? ""));
+  }, [matches]);
 
   // Index joueur pour matching fuzzy (FlashScore → CueTracker)
   const playerIndex = useMemo(() => {
@@ -1306,7 +1329,15 @@ export function SnookerTabContent() {
         <>
           {/* Backtest historique (SnookerDB — walk-forward Elo) */}
           <SnookerBacktestHistory />
+        </>
+      )}
 
+      {/* Top 10 par marché + définitions — extraits de l'onglet backtesting le
+          2026-10-02 : c'est une surface de décision (quels paris, quelle
+          proba, quel edge), pas un outil d'analyse. L'utilisateur l'a
+          demandée comme sous-onglet distinct. */}
+      {subView === "top10" && (
+        <>
       {/* ======== TOP 10 PAR MARCHÉ DE PARI — 1xBet ======== */}
       <section
         aria-label="Top 10 paris sportifs"
@@ -1631,6 +1662,101 @@ export function SnookerTabContent() {
         </>
       )}
 
+      {/* ======== RÉSULTATS — 7 DERNIERS JOURS ======== */}
+      {subView === "resultats" && (
+        <>
+          <section className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "#000000" }}>
+                Résultats — 7 derniers jours
+              </h3>
+              <span className="font-mono text-[11px]" style={{ color: "#717171" }}>
+                {recentResults.length} match{recentResults.length > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-11 animate-pulse rounded bg-gray-100" />
+                ))}
+              </div>
+            ) : recentResults.length === 0 ? (
+              <div
+                className="rounded-xl px-4 py-8 text-center text-[12px]"
+                style={{ background: "#ffffff", border: "1px solid #f0f0f0", color: "#717171" }}
+              >
+                Aucun match terminé sur les 7 derniers jours.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl" style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}>
+                <table className="w-full border-collapse text-[12px]">
+                  <caption className="sr-only">
+                    Résultats des matchs de snooker terminés sur les 7 derniers jours
+                  </caption>
+                  <thead>
+                    <tr style={{ background: "#fafafa", borderBottom: "1px solid #f0f0f0" }}>
+                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                        Date
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                        Tournoi
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-right font-semibold" style={{ color: "#717171" }}>
+                        Joueur 1
+                      </th>
+                      <th scope="col" className="px-2 py-2 text-center font-semibold" style={{ color: "#717171" }}>
+                        Score
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-left font-semibold" style={{ color: "#717171" }}>
+                        Joueur 2
+                      </th>
+                      <th scope="col" className="px-3 py-2 text-center font-semibold" style={{ color: "#717171" }}>
+                        Format
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentResults.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="cursor-pointer border-b border-gray-50 transition-colors last:border-b-0 hover:bg-gray-50"
+                        onClick={() => router.push(`/snooker/h2h/${m.id}`)}
+                      >
+                        <td className="whitespace-nowrap px-3 py-2 font-mono text-[11px]" style={{ color: "#717171" }}>
+                          {resultDate(m.scheduled_at)}
+                        </td>
+                        <td className="max-w-[160px] truncate px-3 py-2" style={{ color: "#717171" }}>
+                          {m.tournament || "—"}
+                        </td>
+                        <td
+                          className="max-w-[150px] truncate px-3 py-2 text-right font-medium"
+                          style={{ color: m.scoreA > m.scoreB ? "#00985f" : "#222" }}
+                        >
+                          {m.player1}
+                        </td>
+                        <td className="whitespace-nowrap px-2 py-2 text-center font-mono font-bold" style={{ color: "#000" }}>
+                          {m.scoreA} - {m.scoreB}
+                        </td>
+                        <td
+                          className="max-w-[150px] truncate px-3 py-2 font-medium"
+                          style={{ color: m.scoreB > m.scoreA ? "#2563eb" : "#222" }}
+                        >
+                          {m.player2}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-2 text-center font-mono text-[11px]" style={{ color: "#717171" }}>
+                          Bo{m.bestOf}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
       {subView === "live" && (
         <>
       {/* ======== PARIS ======== */}
@@ -1702,21 +1828,19 @@ export function SnookerTabContent() {
           </h3>
           <div className="space-y-4">
             {liveMatches.map((m) => {
-              const frames: Array<{ frameNumber: number; winner: "A" | "B"; scoreA: number; scoreB: number }> = [];
-              let fa = 0;
-              let fb = 0;
-              for (let i = 0; i < m.scoreA; i++) {
-                fa++;
-                frames.push({ frameNumber: frames.length + 1, winner: "A", scoreA: fa, scoreB: fb });
-              }
-              for (let i = 0; i < m.scoreB; i++) {
-                fb++;
-                frames.push({ frameNumber: frames.length + 1, winner: "B", scoreA: fa, scoreB: fb });
-              }
+              // ⚠️ Pas de reconstruction d'ordre des frames. FlashScore ne
+              // fournit que `scoreHome`/`scoreAway` agrégés. La version
+              // précédente empilait toutes les frames de A puis toutes celles
+              // de B : le composant affichait un « frame par frame » qui
+              // n'était pas le match. On passe le score réel et on déclare
+              // l'ordre inconnu.
               return (
                 <div key={m.id} className="rounded-xl border border-gray-200 bg-white p-4">
                   <SnookerLiveTracker
-                    frames={frames}
+                    frames={[]}
+                    scoreA={m.scoreA}
+                    scoreB={m.scoreB}
+                    framesKnown={false}
                     bestOf={m.bestOf}
                     playerAName={m.player1}
                     playerBName={m.player2}
