@@ -5,6 +5,7 @@
 // better-sqlite3 en repli (node uniquement). Base absente/illisible → retour
 // vide : l'API répond indisponible et l'UI dégrade proprement.
 
+import { statSync } from "node:fs";
 import path from "node:path";
 
 /** Ligne de backtest normalisée (types NATIFS — les colonnes SQLite sont TEXT). */
@@ -34,9 +35,39 @@ type BSD = {
   close: () => void;
 };
 
-const SQLITE_FILE =
-  process.env.SNOOKER_HISTORY_DB ||
-  path.join(process.env.DATA_DIR || path.join(process.cwd(), "data"), "snooker_history.db");
+/**
+ * Chemin de la base, avec repli sur le premier candidat qui a du contenu.
+ *
+ * Sur le VPS, `DATA_DIR=/opt/pariscorebis/data` ne contient PAS la base (elle
+ * vit dans `~/pariscore/data`) : l'ouverture dans un chemin inexistant FAIT
+ * APPARAÎTRE un fichier de 0 octet, que SQLite ouvre sans erreur et qui rend
+ * ensuite backtest ET résultats vides en prod (`nMatches: 0`, `total: 0`),
+ * constaté le 2026-10-02 à 21:46Z. Le simple `existsSync` ne suffit pas :
+ * le fichier existe, il est juste vide. On exige donc `size > 0`.
+ *
+ * Candidats, dans l'ordre : `SNOOKER_HISTORY_DB` (override explicite),
+ * `DATA_DIR`, puis `cwd/data`. Si aucun n'est non vide, on retombe sur
+ * `DATA_DIR` — `openSqlite` échoue alors proprement et le module renvoie [].
+ */
+/** Résolution du chemin DB — partagée avec `snooker-history-l10.ts`. */
+export function resolveHistoryDb(): string {
+  const candidates = [
+    process.env.SNOOKER_HISTORY_DB,
+    process.env.DATA_DIR ? path.join(process.env.DATA_DIR, "snooker_history.db") : undefined,
+    path.join(process.cwd(), "data", "snooker_history.db"),
+  ].filter((p): p is string => !!p);
+
+  for (const p of candidates) {
+    try {
+      if (statSync(p).size > 0) return p;
+    } catch {
+      // fichier absent — on passe au suivant
+    }
+  }
+  return candidates[1] ?? candidates[0];
+}
+
+const SQLITE_FILE = resolveHistoryDb();
 
 /** Ouvre un fichier sqlite readonly — bun:sqlite d'abord, better-sqlite3 en repli node. */
 function openSqlite(file: string): BSD {

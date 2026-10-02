@@ -25,8 +25,8 @@
  */
 
 import { existsSync } from "fs";
-import { join } from "path";
 import { parseFrameScores, type FrameScore } from "./parse-frame-scores";
+import { resolveHistoryDb } from "./snooker-history-db";
 import type { SnookerMatchRow } from "./elo-walkforward";
 
 /**
@@ -51,17 +51,20 @@ type Driver = {
 };
 
 function openDb(): Driver | null {
-  const path = process.env.SNOOKER_HISTORY_DB || join(process.env.DATA_DIR || join(process.cwd(), "data"), "snooker_history.db");
-  if (!existsSync(path)) return null;
+  // Voir `resolveHistoryDb` : `DATA_DIR` ne contient pas toujours la base, et
+  // `existsSync` ne suffit pas — le chemin inexistant fabrique un fichier de
+  // 0 octet que SQLite ouvre sans erreur. On exige un contenu non vide.
+  const file = resolveHistoryDb();
+  if (!existsSync(file)) return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Database } = require("bun:sqlite") as { Database: new (p: string, o: unknown) => Driver };
-    return new Database(path, { readonly: true, create: false });
+    return new Database(file, { readonly: true, create: false });
   } catch {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const BetterSqlite3 = require("better-sqlite3") as new (p: string, o: unknown) => Driver;
-      return new BetterSqlite3(path, { readonly: true, fileMustExist: true });
+      return new BetterSqlite3(file, { readonly: true, fileMustExist: true });
     } catch {
       return null;
     }
