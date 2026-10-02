@@ -160,6 +160,10 @@ règle que la collection `.agents/design-md/` (inspiration, pas copie).
 - [ ] Formats : viser **1 Carrousel 4:5 mobile + 1 bannière 16:9** par sujet, pas 6
       formats — moins de génération, donc moins de coût (voir plus bas)
 
+⏸️ **NON COMMENCÉ, et non commencable avant la vague 3** (design) : ces visuels
+servent à habiller une page qui doit d'abord afficher ses données. Today la page
+n'affiche rien (cf. VAGUE 0 ci-dessus), donc aucun budget ne doit être engagé ici.
+
 ⚠️ **Le vrai problème de ce chantier n'est pas la génération, c'est le coût et le
 contrôle du contenu.** Une image générée par IA sur un sujet sportif est une source
 d'erreur factuelle : une main de Ronnie qui tient 3 billards, un Crucible vide alors
@@ -721,6 +725,80 @@ Distribution réelle mesurée sur la base historique (2015+) :
 - [ ] Ou scraper `best_of` depuis FlashScore si le champ existe dans la réponse
 - [ ] À défaut : au minimum **documenter que la valeur est un fallback**, et
       ne plus afficher `Bo{n}` comme s'il était fiable dans l'UI
+
+---
+
+## 🔴 SNOOKER — La page n'affiche AUCUN match, en PROD comme en local (VAGUE 0)
+
+> **Découvert le 2026-10-02** en vérifiant le redesign. C'est LA cause du
+> « le rendu des datas me déplaît » : il n'y a rien à regarder, en production.
+> Spec complète : `docs/superpowers/specs/2026-10-02-snooker-datas-markets-design.md`
+
+**Mesuré sur PROD :**
+
+- `https://pariscore.fr/snooker` → `0 matchs analysés · 0 avec cotes · 0 en live`
+- `https://pariscore.fr/api/v1/snooker/matches?limit=5` → **HTTP 200, 4 matchs**
+  (Robertson 5-3 Wakelin · Trump 5-0 Selby · Murphy 4-5 Wu)
+
+L'API a les données, la page n'affiche rien. **Ce n'est pas un problème de dev.**
+
+**Cause identifiée sous Playwright** : le client **n'émet aucune requête** vers
+`/api/v1/snooker/matches`. Seules requêtes observées : `/logo-header.svg`, la page,
+`/sports-athlete-header.svg`. Le squelette de chargement ne se résout jamais.
+
+- [ ] **Root cause** : pourquoi le hook SWR ne part pas sur `/snooker` en accès
+      direct ? Suspicion : conditionné à `useSportsSidebarStore` qui n'est pas armé
+      sur cette route — cohérent avec la nav sport qui reste sur « Football »
+- [ ] Le skeleton doit avoir un **timeout + état d'erreur** : aujourd'hui il reste
+      bloqué indéfiniment, ce qui masque complètement la panne (un HTTP 500 ou une
+      réponse vide serait au moins visibles)
+- [ ] Vérifier prod après fix : les matchs de l'API s'affichent, nav Snooker active,
+      0 squelette bloqué
+
+### Le pipeline ne produit rien d'exploitable (à traiter dans la même vague)
+
+Les 4 matchs retournés sont **tous `finished`**, **tous du jour**, et **aucun ne
+porte de cote**. Donc même la page corrigée afficherait « live » vide et « Top 10 »
+vide. Il faut viser des matchs **à venir** dans une fenêtre glissante, avec les
+cotes — sinon les marchés ne sont pas constructibles et la vague 2A n'a rien à
+évaluer.
+
+---
+
+## 🎱 SNOOKER — Backtesting par marché : accuracy (A) puis ROI (B)
+
+> **Arbitré par David le 2026-10-02 : A d'abord, B ensuite.**
+> Rappel `backtest-history.ts:7` : « Il n'y a PAS de cotes historiques gratuites
+> pour le snooker → pas de ROI ». Donc (A) est mesurable immédiatement, (B) exige
+> un nouveau scraping.
+
+### Vague 2A — accuracy par marché, sans cote (à faire en premier)
+
+État actuel : le backtest mesure l'accuracy par **segment de confiance**
+(Elo/PS/edge), **jamais par marché de pari**. Le « Top 10 » est une liste de paris
+prospectifs filtrable par marché, pas un historique de réussite. **Il n'existe
+aucun règlement de pari** : rien ne dit si un pick recommandé a réellement gagné.
+
+- [ ] Pour chaque marché jouable (Gagnant, 1er à N frames, Over/Under frames
+      totales, Handicap P1/P2, joueur le + de frames) et par stratégie :
+      **n, proba moyenne prédite, accuracy, Brier, log-loss**, vs baseline
+      « favori au classement »
+- [ ] Rejouer en **walk-forward** comme le backtest existant (Elo chronologique,
+      init 1500, K=24) — pas de lookahead
+- [ ] ⚠️ **Honnêteté produit obligatoire dans l'UI** : c'est la **qualité de la
+      probabilité**, pas un taux de gain. Un tableau titré « % de réussite »
+      sans cette mention serait un surclaim — exactement le défaut SEO déjà
+      corrigé une fois (`docs/snooker/PLAFFOND-PREDICTIF.md`)
+- [ ] Signaler explicitement les marchés avec **échantillon insuffisant** (comme
+      les cartes « bloquées »gray du backtest football, qui est le précédent)
+
+### Vague 2B — ROI par marché, avec les vraies cotes (après 2A)
+
+- [ ] Nouveau scraper : historique des cotes 1xbet sur snooker
+- [ ] ⚠️ Risques assumés : le snooker est **peu couvert** → données lacunaires et
+      n faible par stratégie. Si le n est insuffisant pour être significatif, le
+      dire plutôt que d'afficher un ROI sur 12 paris
+- [ ] Ne construire l'UI ROI que si le n le justifie
 
 ---
 
