@@ -126,34 +126,73 @@ marché, on ne retient que les 2 meilleures, et **seulement celles-là** sont an
 - [ ] Le mouvement ne doit **jamais** porter une information unique. Un joueur ne doit
       pas être identifiable uniquement parce que la vidéo s'anime
 
-#### Placement
+#### Placement — TRANCHÉ le 2026-10-02 : plein écran desktop, adapté mobile
 
-⚠️ Cohérence avec les 2 TODO anteriores : un bandeau animé **plein écran en haut de
-l'onglet snooker** ferait passer la page de « interface dense » à « page vitrine ».
-Or la TODO minimalisme demande explicitement moins de bruit.
+**Décision de David : plein écran en desktop, avec une version adaptée sur mobile.**
+⚠️ On accepte donc l'effet vitrine. Conséquence assumée : la TODO minimalisme
+s'applique **ailleurs** (dense, backtesting, résultats), pas sur le hero snooker.
 
-- [ ] **Position à trancher avec David** — 3 options par ordre de cohérence avec le
-      reste du chantier :
-      - **(a) RECOMMANDÉ** : hero **compact** (≈ 40 vh, pas 100 vh), une seule
-        animation, sous le header du site. Présente le sport, ne mange pas l'écran.
-      - (b) fond d'écran du hero, très basse opacité — ambiance sans appel à l'action
-      - (c) plein écran 100 vh, boucle 3 s — l'effet « vitrine », **en conflit
-        direct** avec la TODO minimalisme et avec les 5 sous-onglets qui doivent
-        rester accessibles au-dessus du pli
-- [ ] La video ne doit **pas** démarrer automatiquement sur mobile si l'on est déjà
-      au-dessus du budget de données — `prefers-reduced-data` quand c'est supporté,
-      et à défaut ne pas charger la vidéo sous connexion lente
+- [ ] **Desktop ≥ 1024px : `100vh` plein écran.** La vidéo est le hero. `object-fit:
+      cover` + `object-position` centré sur la table (pas sur le joueur — sinon le
+      cadrage casse selon le format)
+- [ ] **Le contenu reste accessible au-dessus du pli** — c'est la contrainte dure
+      d'un 100vh : le titre, la recherche (cf. TODO recherche vocale) et au minimum
+      les **5 sous-onglets** doivent rester visibles sans scroll. Si les sous-onglets
+      tombent sous le pli, le hero est trop haut → descendre à `85vh` plutôt que
+      déplacer la navigation
+- [ ] **Mobile : ne pas déclencher un `100vh` plein** — un hero 100vh sur mobile
+      mange l'écran entier et repousse tout le contenu. Cible **≈ 55-60vh** sur
+      mobile, avec `100dvh` (et non `vh`) pour éviter le saut quand la barre d'adresse
+      disparaît au scroll — c'est le bug d'UI le plus courant sur iOS
+- [ ] **Mobile : réduire le poids, pas seulement la hauteur.** Un seul clip court
+      (≤ 3 s, ≤ 200 Ko), 720p maximum. Sur mobile, **le poster statique seul est
+      acceptable** si la connexion est lente — ne pas forcer la vidéo à tout prix
+- [ ] `prefers-reduced-motion` et `prefers-reduced-data` : sur mobile, si l'un des
+      deux est actif, **afficher le poster** sans vidéo (cf. plus haut)
+- [ ] Le hero ne doit **pas** compter dans le score Core Web Vitals : il est
+      below-the-fold au sens LCP si le contenu textuel arrive avant — vérifier, et
+      exclure la vidéo du chemin critique (pas de `preload`)
 
 ### Choix du modèle / moteur
 
 - [ ] Vérifier ce que `@google/genai` expose **réellement** en génération d'image
       (`GEMINI_API_KEY` est déjà dans `.env`) — ne pas supposer un nom de modèle,
       le lire dans la lib installée
-- [ ] ⚠️ **Alternative bien moins risquée** : les photos des joueurs existent déjà
-      (CueTracker, résolu par `playerPhotoUrl` dans le calendrier snooker). Un
-      « top joueurs » affiché avec les **vraies photos** est plus professionnel
-      qu'une image IA. **À trancher avec David : IA ou photos réelles ?**
-      Recommandation : photos réelles pour les joueurs, IA uniquement pour l'ambiance.
+
+#### Top joueurs — TRANCHÉ le 2026-10-02 : vraies photos, style 3D cartoon
+
+**Décision de David : les vrais joueurs, mais en rendu 3D cartoon.**
+
+🔴 **Cette demande contient une contradiction technique qu'il faut résoudre avant
+de coder.** On ne peut pas avoir simultanément :
+- un **visage réel** (donc une photo, photoréaliste), **et**
+- un **style 3D cartoon** (donc une image *générée*, dont le visage est *faux*).
+
+Un personnage 3D cartoon **n'est pas** Ronnie O'Sullivan : c'est quelqu'un qui lui
+ressemble. Les deux propriétés demandées sont incompatibles en génération
+image→image directe. Il y a **trois façons de trancher réellement** :
+
+- [ ] **Option A — RECOMMANDÉE : portrait cartoon + photo réelle en surimpression.**
+      Générer un personnage cartoon **stylisé** (sans prétendre être un joueur
+      nommé) et afficher à côté la **vraie photo** du joueur, prise sur CueTracker
+      et déjà résolue par `playerPhotoUrl` dans le calendrier snooker. On obtient
+      l'esthétique cartoon **et** l'identité réelle du joueur, sans usurper un
+      visage. C'est ce que font les sites pro.
+- [ ] **Option B — caricature de la vraie photo (image-to-image).** Passer la photo
+      réelle du joueur dans un modèle de stylisation pour obtenir sa caricature 3D.
+      Techniquement faisable, mais ⚠️ **ça modifie l'apparence d'une personne réelle
+      identifiable** → question du droit à l'image, même pour un usage éditorial et
+      même pour un joueur sous contrat. **À valider avant de coder, pas après.**
+- [ ] **Option C — la vraie photo, sans cartoon.** Abandonner le style pour les
+      joueurs, le garder pour l'ambiance/table. Honnête et sans risque juridique,
+      mais on perd l'unité visuelle demandée.
+
+- [ ] ⚠️ **Point de droits à trancher explicitement avec David** : PariScore est un
+      site de **pronostics et de bets**. Utiliser le visage d'un joueur réel pour
+      rendre un produit de paris, même éditorialement, est une zone grise
+      juridique (droit à l'image + règles publicitaires/sportives FR, qui imposent
+      des restrictions sur l'usage commercial d'images de sportifs). **Ne pas
+      partir sur l'option B sans validation écrite.**
 
 ### Garde-fous de contenu (obligatoires)
 
