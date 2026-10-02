@@ -9,7 +9,7 @@ const SITE_URL =
 export const metadata: Metadata = {
   title: "PariScore Snooker — Prédictions, statistiques et paris",
   description:
-    "Prédictions snooker : modèle Elo × stats CueTracker, probabilités pre-match et live, top picks 65%+, century rate, décider win rate, frames tracker. Crucible, Masters, UK Championship.",
+    "Prédictions snooker : modèle Elo validé à 61,5 % de précision, probabilités pre-match et live, century rate, décider win rate, frames tracker. Crucible, Masters, UK Championship.",
   keywords: [
     "snooker",
     "prédiction snooker",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "PariScore Snooker — Prédictions & statistiques live",
     description:
-      "Top picks 65%+, Elo ratings, century rate, décider win rate et tracker frames live.",
+      "Modèle Elo validé à 61,5 % de précision, century rate, décider win rate et tracker frames live.",
     url: `${SITE_URL}/snooker`,
     siteName: "PariScore",
     locale: "fr_FR",
