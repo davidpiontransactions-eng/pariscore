@@ -2,6 +2,118 @@
 
 ---
 
+## 🛠 OUTILLAGE — Chromium/Playwright ne démarre pas sous Bun (RÉSOLU le 2026-10-02)
+
+> **Demandé par David le 2026-10-02.** « Identifies le problème de pourquoi tu ne peux
+> pas utiliser Chromium dans cet environnement, trouves une solution fiable à 100 %
+> et corriges ça. » → **Diagnostiqué et corrigé. Solution 100 % fiable ci-dessous.**
+
+### Symptôme
+
+`chromium.launch()` expire systématiquement au bout de 180 s :
+
+```
+launch: Timeout 180000ms exceeded.
+  - <launched> pid=17184
+```
+
+Le processus Chromium **est bien lancé** (pid attribué) mais Playwright attend
+ indéfiniment la ligne `DevTools listening on ws://…` que le navigateur écrit au
+démarrage. Le blocage est donc dans le **handshake**, pas dans le binaire.
+
+### Diagnostic — le binaire est sain, c'est le runtime qui est fautif
+
+| Test | Résultat |
+|---|---|
+| `chrome-headless-shell.exe --headless --dump-dom about:blank` lancé **à la main** | **exit 0 en 3 s**, stdout `<html><head></head><body></body></html>`, stderr vide |
+| `chromium.launch()` sous **Bun** | **timeout 180 s** |
+| `chromium.launch()` sous **Node v26.5.0** | **OK en 5 s**, Chromium 153.0.8010.12 ✅ |
+
+**Cause racine : Playwright n'est pas supporté sous Bun.** Playwright passe à
+Chromium les descripteurs de fichier supplémentaires (fd 3 et 4) pour
+`--remote-debugging-pipe` et attend la handshake sur stderr. La couche spawn de
+Bun ne transmet pas ces fd à Chromium sur Windows : le pipe reste ouvert, la
+ligne de handshake n'arrive jamais, et l'attente expire. C'est la **même couche
+spawn que le tool `bash` natif**, documentée dans `AGENTS.md` (`docs/bash-tool-windows.md`).
+
+### ✅ Solution fiable à 100 % : **lancer les scripts Playwright avec `node`, jamais `bun`**
+
+Trois tentatives ont échoué avant que celle-ci fonctionne — les documenter pour
+ne pas les réessayer :
+
+| Tentative | Résultat |
+|---|---|
+| `channel: "chromium"` (build complet au lieu du headless shell) | timeout 45 s |
+| `args: ["--remote-debugging-port=0"]` | timeout 45 s |
+| `executablePath: chromium-1243/chrome-win/chrome.exe` | chemin inexistant (`chrome-win64/`, pas `chrome-win/`) |
+| **`node script.cjs`** | **OK 5 s** ✅ |
+
+- [x] Diagnostic posé (binaire sain, runtime fautif)
+- [x] Solution trouvée et **vérifiée** : `node` au lieu de `bun`
+- [x] Utiliser l'extension **`.cjs`** (ou `.mjs`) pour les scripts Playwright —
+      sous Bun l'import de `playwright` passe, c'est `launch()` qui pend, donc
+      l'erreur est trompeuse : elle ne dit rien du runtime
+- [ ] **Ajouter une garde** dans les scripts Playwright du repo : si le runtime
+      n'est pas `node`, échouer **vite** avec un message clair
+      (`process.versions.bun` → error) au lieu d'attendre 180 s
+- [ ] Vérifier les scripts Playwright existants qui Tournent peut-être sous Bun
+      (`tests/*.spec.ts`, `scripts/mobile-qa.ps1` Tier 2) et basculer ceux qui
+      sont lancés via `bun`
+- [ ] Noter la contrainte dans `AGENTS.md` à côté de la section tool `bash` :
+      **« ne jamais lancer Playwright avec Bun, utiliser node »**
+
+### Alternative écartée : `bsk` (browser-skill)
+
+`bsk` est le skill navigateur réel du projet, mais son daemon doit démarrer dans
+un **terminal persistant de l'utilisateur** (`Start-Process … daemon start
+--foreground`) : le shell agent tue ses enfants en fin d'appel, donc bsk n'est pas
+pilotable depuis une session agent. À réserver au QA manuel de David.
+
+---
+
+## 🔴 SNOOKER — La page `/snooker` locale est un shell vide : QA visuel impossible
+
+> **Découvert le 2026-10-02** en cherchant à vérifier le design. Bloquant pour tout
+> contrôle visuel du redesign snooker — c'est la vraie raison du « je ne vois pas
+> d'amélioration ».
+
+Constats mesurés sous Node + Playwright sur `http://localhost:3000/snooker` :
+
+- **0 requête API émise par le client.** Les seules requêtes réseau sont
+  `/logo-header.svg`, `/snooker`, `/sports-athlete-header.svg`. Le composant
+  n'appelle **jamais** `/api/v1/snooker/matches` — donc le squelette de chargement
+  (barres orange) ne se résout jamais, et la page affiche « 0 matchs analysés »,
+  « 0 avec cotes », « MATCHES — 0 », « 0 matches affichés » **en permanence**.
+- **0 `<table>`, 0 `<thead>`, 0 `<th>` dans le DOM.** Aucune surface de tableau
+  n'existe dans le rendu, donc aucune en-tête à restyler.
+- **La headbar de sous-onglets ne se rend pas** : `Calendrier / Stratégie Top 10 /
+  Live / Backtesting / Résultats` sont introuvables dans le DOM. Seuls les filtres
+  calendrier (`ALL / LIVE / ODDS / FINISHED / SCHEDULED`) apparaissent.
+- **La nav sport affiche « Football » actif**, pas Snooker.
+- **Thème incohérent avec la charte** : `background` du body = `rgb(14, 18, 23)`
+  (`#0e1217`, navy sombre) alors que la charte impose le shell **lavande**
+  `--bg-deep` `#F0ECF8`, `--primary` `#7B3FA0`. Les squelettes sont **orange vif**,
+  couleur absente de la charte.
+- À noter : l'API répond correctement quand appelée directement —
+  `GET /api/v1/snooker/matches?limit=3` → **HTTP 200**, 3 matchs avec joueurs,
+  photos, `scheduled_at`, `status`, `scoreA/scoreB`, `bestOf`. **Le problème est
+  donc côté client, pas côté données.**
+
+- [ ] Trouver pourquoi le fetch client n'est jamais émis : le hook SWR est-il
+      conditionné à un état du store (`useSportsSidebarStore`) qui n'est pas armé
+      sur `/snooker` direct ? Vérifier la même condition que la nav sport, qui
+      reste sur « Football »
+- [ ] Vérifier pourquoi la headbar de sous-onglets ne se rend pas
+      (`sportSubTabs.snooker` est bien alimenté dans `sport-sub-tabs.tsx`, donc
+      c'est le rendu qui manque, pas la config)
+- [ ] Corriger le fond `rgb(14, 18, 23)` → lavande, et les squelettes orange →
+      couleurs de la charte
+- [ ] **Conséquence à assumer** : tant que ce point n'est pas résolu, aucun QA
+      visuel snooker n'est fiable. Vérifier le redesign sur `https://pariscore.fr`
+      (prod) plutôt qu'en local, ou corriger d'abord ce shell
+
+---
+
 ## 🎱 SNOOKER — Sous-onglet « Visuels » : images générées automatiquement (IA)
 
 > **Demandé par David le 2026-10-02.** « Personnalise l'onglet Snooker, quel que soit
