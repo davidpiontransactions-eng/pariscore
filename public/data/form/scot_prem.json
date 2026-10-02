@@ -4,7 +4,7 @@
     "leagueId": "scot_prem",
     "leagueName": "Scotland",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-10-01T11:07:06.664763Z",
+    "lastUpdated": "2026-10-02T10:39:09.467923Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 13,
     "window": 8,
@@ -13,6 +13,24 @@
   },
   "home": [
     {
+      "teamName": "Falkirk",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 7,
+      "ga": 10
+    },
+    {
+      "teamName": "Rangers",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 9,
+      "ga": 5
+    },
+    {
       "teamName": "Hibernian",
       "gp": 5,
       "w": 0,
@@ -20,24 +38,6 @@
       "l": 3,
       "gf": 4,
       "ga": 8
-    },
-    {
-      "teamName": "Celtic",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 3
-    },
-    {
-      "teamName": "St. Johnstone",
-      "gp": 4,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 7,
-      "ga": 6
     },
     {
       "teamName": "Hearts",
@@ -49,49 +49,13 @@
       "ga": 3
     },
     {
-      "teamName": "Motherwell",
+      "teamName": "Celtic",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 6
-    },
-    {
-      "teamName": "Falkirk",
-      "gp": 5,
-      "w": 2,
+      "w": 4,
       "d": 0,
-      "l": 3,
-      "gf": 7,
-      "ga": 10
-    },
-    {
-      "teamName": "St. Mirren",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 5,
-      "ga": 10
-    },
-    {
-      "teamName": "Aberdeen",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 4
-    },
-    {
-      "teamName": "Dundee Utd",
-      "gp": 5,
-      "w": 1,
-      "d": 3,
       "l": 1,
-      "gf": 5,
-      "ga": 6
+      "gf": 8,
+      "ga": 3
     },
     {
       "teamName": "Dundee Fc",
@@ -103,6 +67,42 @@
       "ga": 6
     },
     {
+      "teamName": "Dundee Utd",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 1,
+      "gf": 5,
+      "ga": 6
+    },
+    {
+      "teamName": "St. Johnstone",
+      "gp": 4,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 7,
+      "ga": 6
+    },
+    {
+      "teamName": "Motherwell",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 6
+    },
+    {
+      "teamName": "St. Mirren",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 5,
+      "ga": 10
+    },
+    {
       "teamName": "Kilmarnock",
       "gp": 5,
       "w": 1,
@@ -112,13 +112,13 @@
       "ga": 12
     },
     {
-      "teamName": "Rangers",
+      "teamName": "Aberdeen",
       "gp": 5,
-      "w": 3,
-      "d": 0,
+      "w": 2,
+      "d": 1,
       "l": 2,
-      "gf": 9,
-      "ga": 5
+      "gf": 6,
+      "ga": 4
     },
     {
       "teamName": "Livingston",
@@ -141,40 +141,13 @@
       "ga": 7
     },
     {
-      "teamName": "Celtic",
+      "teamName": "Rangers",
       "gp": 5,
-      "w": 4,
-      "d": 0,
+      "w": 3,
+      "d": 1,
       "l": 0,
-      "gf": 12,
-      "ga": 5
-    },
-    {
-      "teamName": "St. Johnstone",
-      "gp": 3,
-      "w": 0,
-      "d": 1,
-      "l": 2,
-      "gf": 2,
-      "ga": 4
-    },
-    {
-      "teamName": "Hearts",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
       "gf": 7,
-      "ga": 8
-    },
-    {
-      "teamName": "Motherwell",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 8
+      "ga": 4
     },
     {
       "teamName": "Falkirk",
@@ -186,31 +159,22 @@
       "ga": 6
     },
     {
-      "teamName": "St. Mirren",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 5,
-      "ga": 4
-    },
-    {
-      "teamName": "Aberdeen",
+      "teamName": "Hearts",
       "gp": 5,
       "w": 1,
       "d": 1,
-      "l": 3,
-      "gf": 6,
+      "l": 2,
+      "gf": 7,
       "ga": 8
     },
     {
-      "teamName": "Dundee Utd",
+      "teamName": "Celtic",
       "gp": 5,
-      "w": 2,
+      "w": 4,
       "d": 0,
-      "l": 3,
-      "gf": 8,
-      "ga": 9
+      "l": 0,
+      "gf": 12,
+      "ga": 5
     },
     {
       "teamName": "Dundee Fc",
@@ -222,6 +186,42 @@
       "ga": 7
     },
     {
+      "teamName": "Dundee Utd",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 8,
+      "ga": 9
+    },
+    {
+      "teamName": "St. Johnstone",
+      "gp": 3,
+      "w": 0,
+      "d": 1,
+      "l": 2,
+      "gf": 2,
+      "ga": 4
+    },
+    {
+      "teamName": "Motherwell",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
+      "ga": 8
+    },
+    {
+      "teamName": "St. Mirren",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 5,
+      "ga": 4
+    },
+    {
       "teamName": "Kilmarnock",
       "gp": 5,
       "w": 2,
@@ -231,13 +231,13 @@
       "ga": 9
     },
     {
-      "teamName": "Rangers",
+      "teamName": "Aberdeen",
       "gp": 5,
-      "w": 3,
+      "w": 1,
       "d": 1,
-      "l": 0,
-      "gf": 7,
-      "ga": 4
+      "l": 3,
+      "gf": 6,
+      "ga": 8
     },
     {
       "teamName": "Livingston",
