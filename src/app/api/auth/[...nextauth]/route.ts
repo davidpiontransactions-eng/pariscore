@@ -2,11 +2,16 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
+import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
 
 /**
  * Configuration NextAuth v4 — ParisCore.
- * Providers : Credentials (email/mdp) + Google + GitHub (optionnels).
- * Session : JWT (pas de DB adapter pour l'instant).
+ *
+ * ⚠️ Avant ce correctif, `authorize()` acceptait **n'importe quel** email avec un
+ * mot de passe de 4 caractères et renvoyait `role: "freemium"` en dur : la
+ * connexion ne vérifiait rien. Maintenant le profil est lu en base et le mot de
+ * passe comparé au hash scrypt. Cf. bead `ParisScorebis-2tpn`.
  *
  * Variables d'environnement requises :
  * - NEXTAUTH_SECRET (obligatoire)
@@ -19,7 +24,7 @@ import GithubProvider from "next-auth/providers/github";
 
 export const authOptions: NextAuthOptions = {
   providers: [
-    // Toujours présent : login par email/mdp (mode démo)
+    // Email + mot de passe : profil réel, hash scrypt vérifié en base.
     CredentialsProvider({
       name: "Email",
       credentials: {
@@ -27,16 +32,22 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Mot de passe", type: "password" },
       },
       async authorize(credentials) {
-        // Mode démo : accepter tout email non vide avec password >= 4 chars
-        // TODO: remplacer par vraie validation DB (Prisma + bcrypt)
-        if (!credentials?.email || !credentials.password) return null;
-        if (credentials.password.length < 4) return null;
+        const email = credentials?.email?.trim().toLowerCase();
+        const password = credentials?.password;
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        // Compte absent, ou compte OAuth sans mot de passe : échec.
+        if (!user?.passwordHash) return null;
+        if (!verifyPassword(password, user.passwordHash)) return null;
 
         return {
-          id: credentials.email,
-          email: credentials.email,
-          name: credentials.email.split("@")[0],
-          role: "freemium",
+          id: user.id,
+          email: user.email,
+          name: user.username ?? user.name ?? user.email.split("@")[0],
+          // Le rôle vient de la base — plus jamais d'une constante en dur.
+          role: user.role,
+          username: user.username,
         };
       },
     }),
@@ -73,16 +84,56 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    /**
+     * Création de profil obligatoire : un compte qui se connecte via Google ou
+     * GitHub n'existe pas forcément en base. Plutôt que de refuser (l'utilisateur
+     * perdrait son accès OAuth), on crée son profil au premier passage — sans
+     * mot de passe, donc non connectable par email/mdp.
+     *
+     * Le login est dérivé de l'email et suffixé si déjà pris : deux personnes
+     * peuvent partager un même domaine sans que l'une écrase l'autre.
+     */
+    async signIn({ user, account, profile }) {
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+      if (account?.provider === "credentials") return true;
+
+      const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+      if (existing) return true;
+
+      const base = (email.split("@")[0] ?? "profil").replace(/[^a-z0-9._-]/g, "").slice(0, 20) || "profil";
+      let username = base;
+      for (let i = 2; i < 50; i++) {
+        const taken = await prisma.user.findUnique({ where: { username }, select: { id: true } });
+        if (!taken) break;
+        username = `${base}${i}`;
+      }
+
+      await prisma.user.create({
+        data: {
+          email,
+          username,
+          name: (profile?.name as string | undefined) ?? user.name ?? base,
+          passwordHash: null,
+          role: "freemium",
+        },
+      });
+      return true;
+    },
+
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role ?? "freemium";
+        const typed = user as { role?: string; username?: string | null };
+        if (typed.role) token.role = typed.role;
+        if (typed.username) token.username = typed.username;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role =
-          (token.role as string) ?? "freemium";
+        const target = session.user as { role?: string; username?: string };
+        target.role = (token.role as string) ?? "freemium";
+        if (token.username as string | undefined) target.username = token.username as string;
       }
       return session;
     },

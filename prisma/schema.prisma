@@ -13,13 +13,22 @@ datasource db {
 // ─── Auth & Users ───────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  bets      UserBet[]
-  follows   Follow[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  // Login choisi par l'utilisateur (minuscules, unique). Nullable : les comptes
+  // créés via OAuth n'en ont pas besoin, ils sont identifiés par l'email.
+  username     String?  @unique
+  // scrypt (node:crypto), jamais le mot de passe en clair. Nullable = compte
+  // OAuth-only, qui ne peut pas se connecter par email/mot de passe.
+  passwordHash String?
+  // "freemium" | "admin". Lu en base à chaque connexion (avant c'était "freemium"
+  // en dur dans le hook, donc le rôle n'existait pas).
+  role         String   @default("freemium")
+  name         String?
+  bets         UserBet[]
+  follows      Follow[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // ─── User Follows (players, teams, leagues, matches) ─────────────────────────
