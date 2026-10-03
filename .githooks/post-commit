@@ -4,8 +4,19 @@
 # PATH .bun/bin sous git-bash, bun en dernier recours).
 # Toute defaillance est silencieuse : exit 0, un commit n'est jamais bloque.
 # Bead : ParisScorebis-43ai — Installation par machine : git config core.hooksPath .githooks
+#
+# Pas de `dirname` : quand ce hook tourne, le PATH est reduit aux shims
+# .bun/bin (bug PATH du tool bash) et `dirname` n'est plus resolvable.
+# `$DIR` restait alors vide, d'ou « Cannot find module '<root git>/post-commit.cjs' »
+# et une trace node qui polluait chaque commit. Expansion POSIX pure, sans
+# binaire externe.
 
-DIR=$(dirname "$0")
+case "$0" in
+  */*) DIR=${0%/*} ;;
+  *)   DIR=. ;;
+esac
+DIR=$(CDPATH= cd -- "$DIR" && pwd)
+
 if command -v node >/dev/null 2>&1; then
   exec node "$DIR/post-commit.cjs"
 elif command -v node.cmd >/dev/null 2>&1; then
