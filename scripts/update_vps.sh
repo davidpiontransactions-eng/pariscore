@@ -96,6 +96,15 @@ fi
 
 BUILD_RAN=0
 if [ "$NEED_BUILD" = "1" ]; then
+  # Prisma AVANT le build (corrigé 2026-10-03, bead ParisScorebis-2tpn).
+  # Le sync était après `bun run build` : tout changement de schema partait
+  # donc dans un build avec un client Prisma PERIMÉ, et `tsc` échouait sur les
+  # nouveaux champs — « error TS2339: Property 'passwordHash' does not exist »
+  # — deploy aborté, .next/standalone jamais produit, pm2 en 502.
+  echo "[4a] Prisma schema sync (db push + generate)..."
+  npx prisma db push --skip-generate 2>&1 || { echo "ERR: prisma db push"; exit 1; }
+  npx prisma generate 2>&1 || { echo "ERR: prisma generate"; exit 1; }
+
   echo "[4/6] Next.js build... (start $(date -u +%H:%M:%S))"
   bun run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
   # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
@@ -107,10 +116,6 @@ if [ "$NEED_BUILD" = "1" ]; then
   fi
   BUILD_RAN=1
   echo "  build done ($(date -u +%H:%M:%S))"
-  # Sync Prisma schema to the local SQLite DB (idempotent; no-op si inchangé).
-  echo "[4b] Prisma schema sync (db push)..."
-  npx prisma db push --skip-generate 2>&1 || { echo "ERR: prisma db push"; exit 1; }
-  npx prisma generate 2>&1 || { echo "ERR: prisma generate"; exit 1; }
   # Sync .env → standalone (.env vars lues au runtime par Next.js standalone ;
   # les vars ajoutées après le build ne seraient pas copiées sans ce step).
   cp -f .env .next/standalone/.env 2>/dev/null || true
