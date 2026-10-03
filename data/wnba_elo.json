@@ -1,24 +1,24 @@
 {
-  "generated": "2026-10-02T17:31:57.694Z",
+  "generated": "2026-10-03T15:46:31.207Z",
   "source": "espn-scoreboard",
   "season_start": "2026-05-01",
-  "games_count": 347,
+  "games_count": 348,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 347,
-    "brier": 0.2089,
+    "n": 348,
+    "brier": 0.2086,
     "baseline_brier": 0.25,
-    "accuracy": 65.4
+    "accuracy": 65.5
   },
   "ratings": {
     "3": {
       "name": "Dallas Wings",
-      "elo": 1620,
-      "gp": 47,
-      "form_l10_winpct": 80,
-      "form_l10_margin": 9.2,
-      "last_game": "2026-10-01T01:00Z"
+      "elo": 1610,
+      "gp": 48,
+      "form_l10_winpct": 70,
+      "form_l10_margin": 8.2,
+      "last_game": "2026-10-03T01:00Z"
     },
     "5": {
       "name": "Indiana Fever",
@@ -118,11 +118,11 @@
     },
     "129689": {
       "name": "Golden State Valkyries",
-      "elo": 1698,
-      "gp": 46,
+      "elo": 1708,
+      "gp": 47,
       "form_l10_winpct": 80,
-      "form_l10_margin": 11.3,
-      "last_game": "2026-10-01T01:00Z"
+      "form_l10_margin": 10.3,
+      "last_game": "2026-10-03T01:00Z"
     },
     "131935": {
       "name": "Toronto Tempo",
