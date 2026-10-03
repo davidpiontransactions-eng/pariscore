@@ -12,13 +12,11 @@ import type { NewsItem, NewsResult } from "@/lib/football-news";
  * focus, pas de cascade de state local. Le composant reste affichable sans
  * donnée (squelette + message), ce qui évite une page vide au premier fetch.
  *
- * Les photos sont servies par les **flux eux-mêmes** (media:thumbnail,
- * enclosure ou balise <img> de la description) : on hotlinke l'URL du flux
- * plutôt que de la copier. Un flux qui n'en fournit pas n'affiche pas de
- * photo — on ne remplace jamais par une image générique tirée d'ailleurs.
- * Conséquence assumée : certains éditeurs interdisent le hotlinking, l'image
- * peut alors ne pas s'afficher. Le `onError` masque l'image au lieu de laisser
- * un cadre cassé.
+ * **Pas de photo** (décision du 2026-10-03, risque assumé par le
+ * propriétaire) : les URL d'images étaient simplement les liens des CDN des
+ * éditeurs, en *hotlink*. Beaucoup d'éditeurs l'interdisent, la photo pouvait
+ * ne pas s'afficher, et une carte à photo fantôme est pire qu'une carte sans
+ * photo. Titre + source + heure suffisent à une accroche.
  */
 
 const fetcher = (url: string) => fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))));
@@ -47,18 +45,6 @@ function NewsCard({ item }: { item: NewsItem }) {
         "bg-white/[0.02] transition-colors hover:border-emerald-500/30",
       )}
     >
-      {item.image && (
-        // eslint-disable-next-line @next/next/no-img-element -- URL distante fournie par un flux tiers : next/image exige de declarer chaque host dans remotePatterns, ici les hotes varient d'un editeur a l'autre.
-        <img
-          src={item.image}
-          alt=""
-          loading="lazy"
-          className="h-36 w-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-        />
-      )}
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em]">

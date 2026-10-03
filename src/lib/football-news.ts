@@ -54,7 +54,13 @@ export type NewsItem = {
   sourceId: string;
   lang: FeedLang;
   publishedAt: string | null;
-  image: string | null;
+  /**
+   * Pas d'image : les photos sont retirées des sources (2026-10-03). Les URL
+   * de flux sont heatées et nombre d'éditeurs interdisent le hotlinking ; une
+   * liste « visuellement vide » vaut mieux qu'une promesse de photos qui ne
+   * s'affichent pas. Le titre + la source suffisent à une accroche.
+   */
+  image?: never;
 };
 
 /** Nombre d'items conservés par flux. */
@@ -94,29 +100,6 @@ function linkOf(block: string): string {
   return /^https?:\/\//i.test(text) ? text : "";
 }
 
-/**
- * Image de l'item : on essaie les balises média, puis une balise <img> dans la
- * description (beaucoup de flux FR n'utilisent pas media:thumbnail). On valide
- * que c'est bien http(s) — un `data:` ou un lien relatif casserait le <img>.
- */
-function imageOf(block: string, description: string): string | null {
-  const candidates = [
-    /<media:thumbnail[^>]*url=["']([^"']+)["']/i.exec(block)?.[1],
-    /<media:content[^>]*url=["']([^"']+)["'](?![^>]*type=["'](?!image))/i.exec(block)?.[1],
-    /<media:content[^>]*url=["']([^"']+)["'][^>]*type=["']image/i.exec(block)?.[1],
-    /<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']image/i.exec(block)?.[1],
-    /<enclosure[^>]*type=["']image[^>]*url=["']([^"']+)["']/i.exec(block)?.[1],
-    /<thumbnail[^>]*url=["']([^"']+)["']/i.exec(block)?.[1],
-    /<img[^>]*src=["']([^"']+)["']/i.exec(description)?.[1],
-  ];
-  for (const url of candidates) {
-    if (!url) continue;
-    const clean = unwrap(url.trim());
-    if (/^https?:\/\//i.test(clean)) return clean;
-  }
-  return null;
-}
-
 function toIso(raw: string): string | null {
   if (!raw) return null;
   const d = new Date(raw);
@@ -144,7 +127,6 @@ export function parseFeed(xml: string, feed: FeedSource, limit = ITEMS_PER_FEED)
     const link = linkOf(block);
     if (!title || !link) continue;
 
-    const description = tagText(block, "description") || tagText(block, "summary");
     const publishedAt = toIso(
       tagText(block, "pubDate") || tagText(block, "published") || tagText(block, "updated"),
     );
@@ -157,7 +139,6 @@ export function parseFeed(xml: string, feed: FeedSource, limit = ITEMS_PER_FEED)
       sourceId: feed.id,
       lang: feed.lang,
       publishedAt,
-      image: imageOf(block, description),
     });
   }
 

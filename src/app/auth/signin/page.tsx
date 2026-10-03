@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { Label } from "@/components/ui/label";
  * page au lieu de repartir sur `/auth/error`.
  */
 export default function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,9 @@ export default function SignInPage() {
         setError("E-mail ou mot de passe incorrect.");
         return;
       }
-      window.location.href = "/";
+      // `redirect: false` : NextAuth ne navigue pas, on gère l'après-connexion.
+      router.push("/");
+      router.refresh();
     } catch {
       setError("Connexion impossible pour le moment. Réessaie dans un instant.");
     } finally {

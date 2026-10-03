@@ -55,18 +55,6 @@ describe("parseFeed — RSS", () => {
     expect(items[0].lang).toBe("fr");
   });
 
-  test("lit media:thumbnail", () => {
-    expect(parseFeed(RSS, feed)[0].image).toBe("https://cdn.exemple.test/a.jpg");
-  });
-
-  test("retrouve une image dans une description HTML", () => {
-    expect(parseFeed(RSS, feed)[1].image).toBe("https://cdn.exemple.test/b.jpg");
-  });
-
-  test("lit une enclosure image", () => {
-    expect(parseFeed(RSS, feed)[2].image).toBe("https://cdn.exemple.test/c.jpg");
-  });
-
   test("convertit pubDate en ISO", () => {
     expect(parseFeed(RSS, feed)[0].publishedAt).toBe("2026-10-03T08:00:00.000Z");
   });
@@ -100,14 +88,6 @@ describe("parseFeed — Atom et robustesse", () => {
     const items = parseFeed(broken, feed);
     expect(items).toHaveLength(1);
     expect(items[0].link).toBe("https://exemple.test/ok");
-  });
-
-  test("refuse une image non http (data:, relative)", () => {
-    const dataUri = `<rss><channel><item>
-      <title>T</title><link>https://e.test/1</link>
-      <media:thumbnail url="data:image/png;base64,AAA" />
-    </item></channel></rss>`;
-    expect(parseFeed(dataUri, feed)[0].image).toBeNull();
   });
 
   test("date illisible → publishedAt null, pas d'exception", () => {
