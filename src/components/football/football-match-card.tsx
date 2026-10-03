@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import useSWR from "swr";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Clock, BarChart3, TrendingUp, Star, ChevronDown, ChevronUp,
@@ -125,6 +126,18 @@ export function FootballMatchCard({
   const metrics = p.metricStats;
   const [showRankings, setShowRankings] = useState(false);
   const [showMarkets, setShowMarkets] = useState(false);
+
+  // Classements de la ligue : chargés **à la demande**, seulement quand
+  // l'onglet « Classements » est ouvert. Ils étaient dans le payload de la
+  // liste, ce qui le gonflait de 19,5 Mo (18,3 Mo de `metricRankings`, la même
+  // table répétée 2 à 16 fois par ligue). `null` = pas encore demandé.
+  const leagueId = match.league?.id;
+  const { data: rankingsData, isLoading: rankingsLoading } = useSWR<{
+    rankings: NonNullable<Prediction["metricRankings"]>;
+  }>(
+    showRankings && leagueId ? `/api/football/metric-rankings?league=${encodeURIComponent(leagueId)}` : null,
+  );
+  const rankings = rankingsData?.rankings;
 
   // Historique odds pour sparkline (collecté côté client via localStorage)
   const oddsHistory = useOddsHistory(
@@ -919,14 +932,17 @@ export function FootballMatchCard({
               partial={metrics.partial}
               onRankingsTab={() => setShowRankings(true)}
             />
-            {showRankings && p.metricRankings && (
+            {showRankings && rankings && (
               <MetricLeaderboardTable
-                rankings={p.metricRankings}
+                rankings={rankings}
                 homeTeamName={match.home.name}
                 awayTeamName={match.away.name}
               />
             )}
-            {showRankings && !p.metricRankings && (
+            {showRankings && rankingsLoading && (
+              <Skeleton className="mt-2 h-32 w-full" />
+            )}
+            {showRankings && !rankingsLoading && !rankings && (
               <div className="mt-2 rounded-lg border border-border/40 p-2 text-center text-xs text-muted-foreground">
                 Classements indisponibles pour cette ligue.
               </div>
