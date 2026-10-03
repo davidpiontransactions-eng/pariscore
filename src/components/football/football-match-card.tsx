@@ -123,21 +123,10 @@ export function FootballMatchCard({
   const confidence = (p as Prediction & { confidence?: number }).confidence ?? (0.5 + (maxProb / 100) * 0.3);
 
   // Métriques par catégorie (Général / Buts / Tirs / Attaques / Corners) — sub-tab panel.
-  const metrics = p.metricStats;
+  // `metricStats` n'est plus dans la liste : chargé à la demande avec les
+  // classements quand le Radar est déplié (voir SWR plus bas).
   const [showRankings, setShowRankings] = useState(false);
   const [showMarkets, setShowMarkets] = useState(false);
-
-  // Classements de la ligue : chargés **à la demande**, seulement quand
-  // l'onglet « Classements » est ouvert. Ils étaient dans le payload de la
-  // liste, ce qui le gonflait de 19,5 Mo (18,3 Mo de `metricRankings`, la même
-  // table répétée 2 à 16 fois par ligue). `null` = pas encore demandé.
-  const leagueId = match.league?.id;
-  const { data: rankingsData, isLoading: rankingsLoading } = useSWR<{
-    rankings: NonNullable<Prediction["metricRankings"]>;
-  }>(
-    showRankings && leagueId ? `/api/football/metric-rankings?league=${encodeURIComponent(leagueId)}` : null,
-  );
-  const rankings = rankingsData?.rankings;
 
   // Historique odds pour sparkline (collecté côté client via localStorage)
   const oddsHistory = useOddsHistory(
@@ -209,6 +198,24 @@ export function FootballMatchCard({
 
   // Radar accordion state
   const [radarOpen, setRadarOpen] = useState(false);
+
+  // Champs lourds de la prédiction (metricStats + classements) : ils vivaient
+  // dans le payload de liste, qui pesait 19,5 Mo — 18,3 Mo de classements
+  // (la même table répétée 2 à 16 fois par ligue) puis 644 Ko de metricStats.
+  // Les deux ne s'affichent qu'au dépliage du Radar, donc on les charge ici,
+  // une fois, à l'ouverture. Déclaré APRÈS `radarOpen` : l'utiliser dans la clé
+  // SWR avant sa déclaration tombe dans la TDZ.
+  const leagueId = match.league?.id;
+  const { data: detail, isLoading: detailLoading } = useSWR<{
+    metricStats: Prediction["metricStats"] | null;
+    metricRankings: Prediction["metricRankings"] | null;
+  }>(
+    radarOpen
+      ? `/api/football/match-detail?match=${encodeURIComponent(String(match.id))}&league=${encodeURIComponent(leagueId ?? "")}`
+      : null,
+  );
+  const metrics = detail?.metricStats ?? undefined;
+  const rankings = detail?.metricRankings ?? undefined;
 
   // Build radar items from prediction + live data
   const radarItems = useMemo(() => {
@@ -939,10 +946,10 @@ export function FootballMatchCard({
                 awayTeamName={match.away.name}
               />
             )}
-            {showRankings && rankingsLoading && (
+            {showRankings && detailLoading && !rankings && (
               <Skeleton className="mt-2 h-32 w-full" />
             )}
-            {showRankings && !rankingsLoading && !rankings && (
+            {showRankings && !detailLoading && !rankings && (
               <div className="mt-2 rounded-lg border border-border/40 p-2 text-center text-xs text-muted-foreground">
                 Classements indisponibles pour cette ligue.
               </div>

@@ -4,25 +4,29 @@ import { getFootballMatches } from "@/lib/football-shared-fetcher";
 /**
  * GET /api/football/matches
  *
- * ⚠️ `prediction.metricRankings` est RETIRÉ de la réponse — mesuré le
- * 2026-10-03 : la route renvoyait **19,5 Mo pour 408 matchs**, dont **18,3 Mo
- * (94 %) de `metricRankings`**.
+ * ⚠️ `prediction.metricRankings` ET `prediction.metricStats` sont RETIRÉS de la
+ * réponse — mesuré le 2026-10-03 :
  *
- * Le champ contient le classement complet de la ligue pour chaque métrique, et
- * il est **le même pour tous les matchs d'une ligue** (48 valeurs distinctes
- * pour 295 matchs concernés, donc 2 à 16 copies de la même table). Sur les
- * « Club Friendlies » il pèse 1,7 Mo *à chaque match*.
+ * - avant : **19,46 Mo pour 408 matchs**, dont 18,29 Mo (94 %) de
+ *   `metricRankings`. Le champ contient le classement complet de la ligue pour
+ *   chaque métrique, **identique pour tous les matchs d'une ligue** (48 valeurs
+ *   distinctes pour 295 matchs, donc 2 à 16 copies). 1,7 Mo par match sur les
+ *   « Club Friendlies ». Le match complet ne fait que 2 Ko sans lui.
+ * - après retrait : **1,16 Mo**, dont 644 Ko (56 %) de `metricStats`.
  *
- * Le match complet ne fait que 2 Ko sans ce champ : la donnée est fausse, pas
- * le calcul.
+ * Or ces deux champs ne s'affichent qu'au dépliage du « Micro-Analysis Radar »
+ * d'un match (`radarOpen` vaut `false` au montage) : on les expédiait pour rien
+ * à chaque ouverture d'onglet.
  *
- * Conséquence avant correctif : à l'ouverture de l'onglet Football, le
- * navigateur télécharge 19,5 Mo, `res.json()` rame ou échoue, et l'onglet
- *_muet_ (le `catch` vide la liste) — sans aucune erreur visible.
+ * Conséquence avant correctif : le navigateur téléchargeait 19,5 Mo, `res.json()`
+ * ramait puis échouait, et l'onglet restait **muet** — le `catch` vide la liste,
+ * sans la moindre erreur console.
  *
- * Le classement est chargé **à la demande** quand l'utilisateur ouvre l'onglet
- * « Classements » d'un match : `GET /api/football/metric-rankings?league=<id>`.
+ * Chargement à la demande : `GET /api/football/match-detail?match=<id>&league=<id>`.
  * Même traitement déjà appliqué à `/api/football/calendar`.
+ *
+ * ⚠️ Deux consommateurs : `useFootballMatches` (onglet) et `use-sports-tree`
+ * (rangée de l'accueil) lisent cette route.
  */
 export async function GET() {
   try {
@@ -30,8 +34,8 @@ export async function GET() {
 
     const matches = (entry.data.matches as Record<string, unknown>[]).map((m) => {
       const prediction = m?.prediction as Record<string, unknown> | undefined;
-      if (!prediction?.metricRankings) return m;
-      const { metricRankings: _drop, ...rest } = prediction;
+      if (!prediction?.metricRankings && !prediction?.metricStats) return m;
+      const { metricRankings: _dropRanks, metricStats: _dropStats, ...rest } = prediction;
       return { ...m, prediction: rest };
     });
 
