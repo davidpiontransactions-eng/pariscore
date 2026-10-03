@@ -31,6 +31,30 @@ export async function GET(request: Request) {
       return m.live?.status === statusParam;
     });
 
+    // ⚠️ On retire `prediction.metricRankings` de la réponse calendrier.
+    //
+    // Mesuré le 2026-10-03 : pour `date=2026-10-03` la route renvoyait
+    // 93,6 Mo pour 175 matchs (548 Ko/match), alors que la médiane est de
+    // 18 Ko. Le calcul est bon, la donnée ne l'est pas : sur les « Club
+    // Friendlies », `prediction.metricRankings` pèse 1 711 Ko À CHAQUE match
+    // — c'est lui qui gonfle la réponse, pas les autres champs (le match
+    // complet ne fait que 2 Ko sans lui).
+    //
+    // Conséquence : `fetchCal` reçoit un corps de 93 Mo, `res.json()` est trop
+    // long/lourd côté navigateur, l'exception est attrapée par le `catch` de
+    // top-multi-sport.tsx qui fait `setCalMatches([])` — et le calendrier
+    // FotMob s'affiche vide, sans une seule erreur dans la console.
+    //
+    // Ce champ n'est utile qu'à `football-match-card.tsx` (dans `showRankings`),
+    // qui n'est PAS le `MatchRow` du calendrier. `prediction` reste donc
+    // entièrement fourni — seule cette clé de 1,7 Mo part.
+    matches = matches.map((m: any) => {
+      const p = m?.prediction;
+      if (!p || !p.metricRankings) return m;
+      const { metricRankings: _drop, ...rest } = p;
+      return { ...m, prediction: rest };
+    });
+
     return NextResponse.json({
       matches,
       source: entry.data.source,
