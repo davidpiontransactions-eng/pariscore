@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Trophy, TrendingUp, Target, Zap, Flame, BarChart3, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,9 @@ const STRATEGY_LABELS: Record<string, string> = {
   over65Corners: "Over 6.5 corners",
   dnb: "Draw No Bet",
 };
+
+/** Visuels « cartoon 3D » du carrousel du hero (voir `public/images/football/`). */
+const HERO_SLIDES: string[] = ["/images/football/hero-cartoon3d.png"];
 
 /** Mapping nom de ligue → code ISO pays pour le drapeau. */
 const LEAGUE_COUNTRY: Record<string, string> = {
@@ -195,6 +199,17 @@ function CountryFlagImg({ countryCode, size = 16 }: { countryCode: string; size?
 export function FootballHeroHeader() {
   const { summary } = useTop5Backtest("football");
   const reduceMotion = useReducedMotion();
+
+  // Carrousel : rotation auto, suspendue au survol et si l'utilisateur demande
+  // moins d'animations. Sans interval quand un seul visuel est présent — sinon on
+  // tournerait dans le vide. Les points restent cliquables pour un choix manuel.
+  const [slide, setSlide] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+  useEffect(() => {
+    if (carouselPaused || reduceMotion || HERO_SLIDES.length < 2) return;
+    const id = setInterval(() => setSlide((s) => (s + 1) % HERO_SLIDES.length), 6000);
+    return () => clearInterval(id);
+  }, [carouselPaused, reduceMotion]);
 
   const strategies = summary?.strategies ?? {};
 
@@ -481,6 +496,57 @@ export function FootballHeroHeader() {
               )}
             </motion.div>
           </div>
+        </div>
+
+        {/* Carrousel « cartoon 3D » — purement décoratif (alt vide + aria-hidden).
+            Chaque image est déjà recadrée à la source pour supprimer le watermark du
+            générateur. Pour ajouter un visuel : déposer le .png dans
+            `public/images/football/` puis l'ajouter au tableau SLIDES. */}
+        <div
+          className="relative h-28 overflow-hidden border-t border-white/[0.06] sm:h-40 lg:h-48"
+          onMouseEnter={() => setCarouselPaused(true)}
+          onMouseLeave={() => setCarouselPaused(false)}
+        >
+          {HERO_SLIDES.map((src, i) => (
+            <motion.div
+              key={src}
+              className="absolute inset-0"
+              initial={false}
+              animate={{ opacity: i === slide ? 1 : 0 }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+            >
+              <Image
+                src={src}
+                alt=""
+                fill
+                aria-hidden
+                sizes="100vw"
+                className="object-cover object-[center_18%] opacity-80"
+              />
+            </motion.div>
+          ))}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/20 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#0c1220]/90 to-transparent" />
+
+          {/* Points de navigation — seule zone interactive du carrousel (cliquable
+              au clavier). Masqués quand il n'y a rien à faire défiler. */}
+          {HERO_SLIDES.length > 1 && (
+            <div className="absolute bottom-2 right-3 flex items-center gap-1.5">
+              {HERO_SLIDES.map((src, i) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setSlide(i)}
+                  aria-label={`Visuel ${i + 1} sur ${HERO_SLIDES.length}`}
+                  aria-current={i === slide}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === slide ? "w-4 bg-emerald-400" : "w-1.5 bg-white/30 hover:bg-white/50",
+                  )}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </motion.div>
     </section>
