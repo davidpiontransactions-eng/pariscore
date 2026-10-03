@@ -49,7 +49,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 $VPS_HOST = "ubuntu@51.75.21.239"
-$SSH_OPTS = "-o","BatchMode=yes","-o","ConnectTimeout=20"
+# `ConnectTimeout` ne couvre QUE la connexion TCP. Si le VPS accepte la
+# connexion puis ne repond plus (il sature pendant `next build`), `ssh` peut
+# rester bloque indefiniment : la boucle de polling s'arrete, plus aucune ligne
+# n'est ecrite dans le log — exactement le symptome qu'on essayait de supprimer.
+# `ServerAliveInterval` + `ServerAliveCountMax` font tomber la connexion au bout
+# de ~30 s sans reponse, et le poll reprend.
+$SSH_OPTS = "-o","BatchMode=yes","-o","ConnectTimeout=20","-o","ServerAliveInterval=15","-o","ServerAliveCountMax=2"
 $REMOTE_RAW = "/tmp/pariscore-deploy-raw.sh"
 $REMOTE_SH  = "/tmp/pariscore-deploy.sh"
 $REMOTE_LOG = "/tmp/pariscore-deploy.log"
