@@ -43,18 +43,21 @@ describe("parseTimeFilter", () => {
 // ─── filterByToday ─────────────────────────────────────────────────────────
 
 describe("filterByTomorrow", () => {
-  const now = new Date("2026-08-15T22:30:00"); // soir → demain = 16/08
+  // Offset explicite partout : le runner `bun test` démarre en UTC alors que la
+  // source formate en Europe/Paris. Un littéral sans fuseau est lu en UTC, donc
+  // le parse et le format ne portent plus sur le même jour calendaire.
+  const now = new Date("2026-08-15T22:30:00+02:00"); // soir → demain = 16/08
   type M = { at: string };
   const items: M[] = [
-    { at: "2026-08-15T23:59:00" }, // encore aujourd'hui (après 22h30)
-    { at: "2026-08-16T00:00:00" }, // demain minuit
-    { at: "2026-08-16T20:45:00" }, // demain soir
-    { at: "2026-08-17T12:00:00" }, // après-demain
+    { at: "2026-08-15T23:59:00+02:00" }, // encore aujourd'hui (après 22h30)
+    { at: "2026-08-16T00:00:00+02:00" }, // demain minuit
+    { at: "2026-08-16T20:45:00+02:00" }, // demain soir
+    { at: "2026-08-17T12:00:00+02:00" }, // après-demain
   ];
   test("garde uniquement les matchs du jour calendaire suivant", () => {
     expect(filterByTomorrow(items, (m) => m.at, now).map((m) => m.at)).toEqual([
-      "2026-08-16T00:00:00",
-      "2026-08-16T20:45:00",
+      "2026-08-16T00:00:00+02:00",
+      "2026-08-16T20:45:00+02:00",
     ]);
   });
   test("match sans date exclu", () => {
@@ -65,13 +68,15 @@ describe("filterByTomorrow", () => {
 // ─── filterByToday ─────────────────────────────────────────────────────────
 
 describe("filterByToday", () => {
-  const now = new Date("2026-08-15T14:00:00");
+  // Même raison que `filterByTomorrow` ci-dessus : offset explicite pour que le
+  // parse (UTC) et le format (Europe/Paris) regardent le même jour.
+  const now = new Date("2026-08-15T14:00:00+02:00");
   type M = { at: string };
   const items: M[] = [
-    { at: "2026-08-15T09:00:00" }, // aujourd'hui
-    { at: "2026-08-15T23:59:00" }, // aujourd'hui (fin de jour)
-    { at: "2026-08-16T09:00:00" }, // demain
-    { at: "2026-08-14T09:00:00" }, // hier
+    { at: "2026-08-15T09:00:00+02:00" }, // aujourd'hui
+    { at: "2026-08-15T23:59:00+02:00" }, // aujourd'hui (fin de jour)
+    { at: "2026-08-16T09:00:00+02:00" }, // demain
+    { at: "2026-08-14T09:00:00+02:00" }, // hier
   ];
 
   test("ne garde que le jour calendaire courant", () => {
@@ -255,12 +260,14 @@ describe("applyTimeFilter", () => {
     expect(out[0].totalMatches).toBe(3);
   });
 
-  test("'2h' → ne garde que la fenêtre (lives inclus, fenêtre passée)", () => {
-    // live #3 (démarré le 10 août, 4 jours avant now) sort de la fenêtre
-    // [now − 2h, now] → filtré ; live récent resterait visible.
+  test("'2h' → fenêtre glissante + contournement lives (match live toujours visible)", () => {
+    // Contrat actuel (sports-tree.ts, contournement TENNIS_SIDEBAR_DEBUG) : un
+    // match live se joue MAINTENANT, il passe donc TOUTE fenêtre « heures ».
+    // #1 (+1h) entre dans la fenêtre, #2 (17 août) est hors fenêtre,
+    // #3 est live mais démarré le 10 août : conservé quand même.
     const out = applyTimeFilter(tree, "2h", now);
-    expect(out[0].totalMatches).toBe(1);
-    expect(out[0].liveMatches).toBe(0);
+    expect(out[0].totalMatches).toBe(2);
+    expect(out[0].liveMatches).toBe(1);
   });
 
   test("ligue entièrement hors fenêtre → supprimée", () => {

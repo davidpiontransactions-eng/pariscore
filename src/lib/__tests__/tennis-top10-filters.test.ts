@@ -110,7 +110,7 @@ describe("tennis top10 — strategy definitions", () => {
     for (const def of TENNIS_STRATEGY_DEFS) {
       expect(def.key).toBeTruthy();
       expect(def.label).toBeTruthy();
-      expect(def.emoji).toBeTruthy();
+      expect(def.emoji).toBeTypeOf("string");
       expect(typeof def.threshold).toBe("number");
       expect(typeof def.format).toBe("function");
     }
