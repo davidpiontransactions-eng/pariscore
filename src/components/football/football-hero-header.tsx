@@ -34,7 +34,7 @@ const STRATEGY_LABELS: Record<string, string> = {
 };
 
 /** Visuels « cartoon 3D » du carrousel du hero (voir `public/images/football/`). */
-const HERO_SLIDES: string[] = ["/images/football/hero-cartoon3d.png"];
+const HERO_SLIDES: string[] = ["/images/football/hero-cartoon3d.webp"];
 
 /** Mapping nom de ligue → code ISO pays pour le drapeau. */
 const LEAGUE_COUNTRY: Record<string, string> = {
