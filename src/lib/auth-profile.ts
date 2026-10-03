@@ -43,6 +43,26 @@ export function normalizeEmail(email: string): string {
 }
 
 /**
+ * Règles de mot de passe — partagées par l'inscription et le changement.
+ *
+ * Lettre + chiffre : « aaaaaaaaaaaa » est refusé. 8 minimum : en dessous, un
+ * mot de passe n'est qu'un nom d'utilisateur deviné.
+ */
+export function validatePassword(password: string): { ok: true } | { ok: false; error: string } {
+  if (!password) return { ok: false, error: "Mot de passe obligatoire." };
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return { ok: false, error: `Mot de passe : ${MIN_PASSWORD_LENGTH} caractères minimum.` };
+  }
+  if (password.length > 200) {
+    return { ok: false, error: "Mot de passe : 200 caractères maximum." };
+  }
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+    return { ok: false, error: "Mot de passe : il faut au moins une lettre et un chiffre." };
+  }
+  return { ok: true };
+}
+
+/**
  * Valide une demande d'inscription.
  *
  * `confirmPassword` est exigé : sans confirmation, une faute de frappe crée un
@@ -77,16 +97,8 @@ export function validateRegistration(input: unknown): ValidationResult {
   }
 
   if (!password) return { ok: false, error: "Mot de passe obligatoire." };
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return { ok: false, error: `Mot de passe : ${MIN_PASSWORD_LENGTH} caractères minimum.` };
-  }
-  if (password.length > 200) {
-    return { ok: false, error: "Mot de passe : 200 caractères maximum." };
-  }
-  // Lettre + chiffre : interdit "aaaaaaaaaaaa" comme mot de passe valide.
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-    return { ok: false, error: "Mot de passe : il faut au moins une lettre et un chiffre." };
-  }
+  const pwd = validatePassword(password);
+  if (!pwd.ok) return pwd;
 
   if (password !== confirmPassword) {
     return { ok: false, error: "Les deux mots de passe ne correspondent pas." };

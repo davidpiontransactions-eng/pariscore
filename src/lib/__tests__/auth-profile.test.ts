@@ -4,6 +4,7 @@ import {
   MIN_PASSWORD_LENGTH,
   MIN_USERNAME_LENGTH,
   normalizeEmail,
+  validatePassword,
   validateRegistration,
 } from "@/lib/auth-profile";
 
@@ -76,5 +77,16 @@ describe("validateRegistration", () => {
 describe("normalizeEmail", () => {
   test("trim + minuscules", () => {
     expect(normalizeEmail("  A@B.FR ")).toBe("a@b.fr");
+  });
+});
+
+describe("validatePassword (changement de mot de passe)", () => {
+  test("applique exactement les memes regles que l'inscription", () => {
+    expect(validatePassword("pariScore2026").ok).toBe(true);
+    expect(validatePassword("").ok).toBe(false);
+    expect(validatePassword("a".repeat(MIN_PASSWORD_LENGTH - 1)).ok).toBe(false);
+    expect(validatePassword("aaaaaaaaaaaa").ok).toBe(false);
+    expect(validatePassword("123456789012").ok).toBe(false);
+    expect(validatePassword("a1".repeat(120)).ok).toBe(false);
   });
 });

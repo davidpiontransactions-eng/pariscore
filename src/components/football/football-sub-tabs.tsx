@@ -1,9 +1,9 @@
 "use client";
 
-import { CalendarDays, Target, FlaskConical, ListChecks } from "lucide-react";
+import { CalendarDays, Target, FlaskConical, ListChecks, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type FootballSubTab = "calendrier" | "top-strategies" | "backtesting" | "results";
+export type FootballSubTab = "calendrier" | "top-strategies" | "backtesting" | "results" | "actus";
 
 type TabMeta = {
   id: FootballSubTab;
@@ -14,7 +14,7 @@ type TabMeta = {
 };
 
 /**
- * Définitions des 4 sous-onglets football : libellés + icônes + texte de repli.
+ * Définitions des 5 sous-onglets football : libellés + icônes + texte de repli.
  *
  * ⚠️ Les `id` doivent rester synchronisés avec `SPORT_SUB_TABS.football`
  * (`src/components/layout/sport-sub-tabs.tsx`) — la rangée Flashscore du header
@@ -46,6 +46,12 @@ export const FOOTBALL_SUB_TABS: TabMeta[] = [
     icon: ListChecks,
     hint: "Résultats des matchs terminés sur les 7 derniers jours, avec verdict des stratégies.",
   },
+  {
+    id: "actus",
+    label: "Actus",
+    icon: Newspaper,
+    hint: "Fil d'actu des sources football, trié du plus récent au plus ancien.",
+  },
 ];
 
 export const DEFAULT_FOOTBALL_SUB_TAB: FootballSubTab = "calendrier";
@@ -64,8 +70,8 @@ type Props = {
 };
 
 /**
- * FootballSubTabs — rangée interne des 4 sous-onglets de l'onglet football
- * (Calendrier / Top stratégies / Back Testing / Résultats).
+ * FootballSubTabs — rangée interne des 5 sous-onglets de l'onglet football
+ * (Calendrier / Top stratégies / Back Testing / Résultats / Actus).
  *
  * Doublon volontaire de la rangée Flashscore `SportSubTabs` du header :
  * les deux lisent/écrivent la MÊME clé `sportSubTabs.football` du store, donc

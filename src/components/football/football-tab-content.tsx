@@ -55,6 +55,7 @@ import {
 } from "./football-sub-tabs";
 import { FootballBacktestingView } from "./football-backtesting-view";
 import { FootballResultsView } from "./football-results-view";
+import { FootballNewsFeed } from "./football-news-feed";
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import {
   filterByStartWindow,
@@ -452,6 +453,10 @@ export function FootballTabContent() {
       ) : footballSub === "results" ? (
         <FootballSubTabPanel sub="results">
           <FootballResultsView />
+        </FootballSubTabPanel>
+      ) : footballSub === "actus" ? (
+        <FootballSubTabPanel sub="actus">
+          <FootballNewsFeed />
         </FootballSubTabPanel>
       ) : footballSub !== "calendrier" ? (
         <FootballSubTabPanel sub={footballSub} />
