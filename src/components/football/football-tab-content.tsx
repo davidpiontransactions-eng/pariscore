@@ -12,6 +12,8 @@ import {
   TrendingUp,
   X,
   ChevronRight,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
@@ -45,6 +47,15 @@ import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { FootballRankingsEnhanced } from "./football-rankings-enhanced";
+import {
+  FootballSubTabs,
+  FootballSubTabPanel,
+  parseFootballSubTab,
+  type FootballSubTab,
+} from "./football-sub-tabs";
+import { FootballBacktestingView } from "./football-backtesting-view";
+import { FootballResultsView } from "./football-results-view";
+import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import {
   filterByStartWindow,
   filterByToday,
@@ -92,7 +103,13 @@ export function FootballTabContent() {
     [],
   );
   const [filter, setFilter] = useState<StrategyFilter>("all");
-  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  // « list » = liste FlashScore (ce que David avait avant) ; « cards » = table
+  // FotMob. Le sélecteur avait été retiré par 08dba25f (2026-09-05) alors que
+  // `setViewMode` n'était plus appelé nulle part : la liste FlashScore restait
+  // dans le code (branche `viewMode === "list"`) mais devenait inatteignable,
+  // l'onglet Calendrier affichant toujours FotMob. Défaut « list » pour
+  // rétablir l'état antérieur + sélecteur ré-ajouté.
+  const [viewMode, setViewMode] = useState<"cards" | "list">("list");
   const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
   const tabsId = useId();
 
@@ -105,6 +122,20 @@ export function FootballTabContent() {
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
   const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
+
+  // Sous-onglets football (Calendrier / Top stratégies / Back Testing /
+  // Résultats) — même clé store que la rangée Flashscore du header, ce qui
+  // aligne les deux rangées sans state parallèle.
+  const footballSub = useSportsSidebarStore((s) =>
+    parseFootballSubTab(s.sportSubTabs.football),
+  );
+  const setFootballSub = useCallback(
+    (tab: FootballSubTab) => useSportsSidebarStore.getState().setSubTab("football", tab),
+    [],
+  );
+  // Mode global Prematch / Live du header : pilote le timeframe du calendrier
+  // (TopMultiSport). Avant la Vague 1, c'était page.tsx qui le lui passait.
+  const headerMode = useSportsSidebarStore((s) => s.headerMode);
 
   // Suite AI Pricing — filtres NL, combiné, backtest/fiabilité.
   const { presets: aiPresets, addPreset: addAIPreset, removePreset: removeAIPreset } = useFootballAIFilters();
@@ -343,16 +374,88 @@ export function FootballTabContent() {
           </p>
         </div>
       )}
-      <MatchViewTabs
-        idBase={tabsId}
-        active={mode}
-        onChange={setMode}
-        liveCount={liveMatches.length}
-        prematchCount={prematchMatches.length}
+      {/* Rangée interne des 4 sous-onglets football — miroir de la rangée
+          Flashscore du header (mêmes ids, même clé store sportSubTabs.football). */}
+      <FootballSubTabs
+        activeSubTab={footballSub}
+        onSubTabChange={setFootballSub}
         className="mb-4"
       />
+      {/* Calendrier FotMob (le tableau de l'onglet) — rendu TOUJOURS sur
+          l'onglet Calendrier, quel que soit le mode ci-dessous : `modes.football`
+          étant persistant, un utilisateur revenant sur « Classements » ne doit
+          pas ouvrir l'onglet Calendrier sans voir le calendrier. */}
+      {footballSub === "calendrier" && (
+        <TopMultiSport activeSport="football" mode={headerMode} />
+      )}
+      {/* Live | Pre-match | Classements : filtres internes du Calendrier.
+          Masqués sur les autres sous-onglets — ils ne piloteraient rien. */}
+      {footballSub === "calendrier" && (
+        <MatchViewTabs
+          idBase={tabsId}
+          active={mode}
+          onChange={setMode}
+          liveCount={liveMatches.length}
+          prematchCount={prematchMatches.length}
+          className="mb-4"
+        />
+      )}
+      {/* Sélecteur de vue ré-ajouté : sans lui `viewMode` restait bloqué sur
+          "cards" et la liste FlashScore (branche plus bas) était inatteignable. */}
+      {footballSub === "calendrier" && (
+        <div className="mb-4 flex justify-end">
+          <div className="flex rounded-lg border border-border/60 bg-muted/30 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              aria-pressed={viewMode === "list"}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                viewMode === "list"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <List className="h-3.5 w-3.5" aria-hidden="true" />
+              Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("cards")}
+              aria-pressed={viewMode === "cards"}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                viewMode === "cards"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
+              Cartes
+            </button>
+          </div>
+        </div>
+      )}
 
-      {viewMode === "list" ? (
+      {footballSub === "top-strategies" ? (
+        <FootballSubTabPanel sub="top-strategies">
+          {!isLoading && prematchMatches.length > 0 ? (
+            <FootballTop10Widget matches={prematchMatches} />
+          ) : null}
+        </FootballSubTabPanel>
+      ) : footballSub === "backtesting" ? (
+        <FootballSubTabPanel sub="backtesting">
+          <FootballBacktestingView />
+        </FootballSubTabPanel>
+      ) : footballSub === "results" ? (
+        <FootballSubTabPanel sub="results">
+          <FootballResultsView />
+        </FootballSubTabPanel>
+      ) : footballSub !== "calendrier" ? (
+        <FootballSubTabPanel sub={footballSub} />
+      ) : viewMode === "list" ? (
         <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
           {mode === "prematch" && (
             <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mb-4" />
@@ -455,10 +558,9 @@ export function FootballTabContent() {
               aria-labelledby={`${tabsId}-prematch`}
               className="w-full md:col-span-4"
             >
-              {/* Top 10 par stratégie — global ou par championnat (remplace le Top5 sidebar) */}
-              {!isLoading && prematchMatches.length > 0 && (
-                <FootballTop10Widget matches={prematchMatches} />
-              )}
+              {/* Top 10 par stratégie : déplacé dans le sous-onglet
+                  « Top stratégies » (Vague 1) — il était rendu ICI et sur la
+                  home, soit 2 points de rendu. */}
 
               {/* Banker du week-end — pick éditorial + top 3 (respecte la ligue/no filtres) */}
               {!isLoading && prematchMatches.length > 0 && (
