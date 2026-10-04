@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { generateText, LlmError } from "@/lib/llm";
 
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+// L'ancien code appelait en dur
+//   generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+// Modele retire => Google repond 404, la route relayeait le statut tel quel et
+// l'UI affichait « Gemini 404 » sur les 43 cartes. On passe par le transport
+// partage : llmConfig().geminiModel vaut `gemini-3.6-flash` (surchargeable par
+// GEMINI_MODEL), et surtout on recupere la cascade de providers + le fallback
+// que la route dupliquee perdait. Le meme modele retire est code en dur dans
+// ~15 endroits de server.js (lignes 8020, 14020, 23619, 49220...) : a traiter
+// dans un bead dedie, sinon le meme 404 revient par un autre angle.
 
 function buildPrompt(
   fa: string,
@@ -46,14 +54,6 @@ Français. Max 300 mots. Zéro disclaimer.`;
 }
 
 export async function GET(req: NextRequest) {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    return NextResponse.json(
-      { error: "GEMINI_API_KEY manquante" },
-      { status: 503 },
-    );
-  }
-
   const { searchParams } = new URL(req.url);
   const fa = searchParams.get("fa") || "";
   const fb = searchParams.get("fb") || "";
@@ -65,42 +65,38 @@ export async function GET(req: NextRequest) {
   for (const [k, v] of searchParams.entries()) params[k] = v;
 
   try {
-    const res = await fetch(GEMINI_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": key,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: buildPrompt(fa, fb, params) }] }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 900 },
-      }),
-      signal: AbortSignal.timeout(15000),
+    const out = await generateText({
+      prompt: buildPrompt(fa, fb, params),
+      temperature: 0.6,
+      maxOutputTokens: 900,
+      timeoutMs: 15_000,
     });
 
-    if (!res.ok) {
+    if (!out.text) {
       return NextResponse.json(
-        { error: `Gemini ${res.status}` },
-        { status: res.status >= 500 ? 502 : res.status },
-      );
-    }
-
-    const json = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
-    };
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    if (!text) {
-      return NextResponse.json(
-        { error: "Réponse Gemini vide" },
+        { error: "Réponse vide du modèle" },
         { status: 502 },
       );
     }
 
-    return NextResponse.json({ text, provider: "gemini-2.0-flash" });
+    return NextResponse.json({
+      text: out.text,
+      provider: out.provider,
+      model: out.model,
+      latencyMs: out.latencyMs,
+    });
   } catch (err) {
-    const msg = (err as Error).message;
-    if (msg.includes("timeout")) {
-      return NextResponse.json({ error: "Analyse timeout" }, { status: 504 });
+    // LlmError porte un message et un code deja penses pour le client ; on ne
+    // laisse pas fuiter le detail upstream (le transport le logue cote serveur).
+    if (err instanceof LlmError) {
+      const status = err.status >= 500 ? 502 : err.status;
+      const message =
+        err.code === "GEMINI_NOT_CONFIGURED" || err.code === "LLM_ALL_PROVIDERS_FAILED"
+          ? "Analyse indisponible (aucun fournisseur IA configuré)"
+          : err.status === 429
+            ? "Analyse indisponible temporairement (quota IA atteint)"
+            : "Analyse indisponible";
+      return NextResponse.json({ error: message, code: err.code }, { status });
     }
     return NextResponse.json(
       { error: "Analyse indisponible" },
