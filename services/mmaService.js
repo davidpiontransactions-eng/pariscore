@@ -16,6 +16,11 @@ const https = require('https');
 let FIGHTER_PHOTOS = {};
 try { FIGHTER_PHOTOS = require('./mma_fighter_photos.json') || {}; } catch (_) { FIGHTER_PHOTOS = {}; }
 
+// Optional local 3D portraits (slug -> "/img/mma-3d/<slug>.webp").
+// Same defensive require: a missing file just disables the 3D layer.
+let FIGHTER_3D = {};
+try { FIGHTER_3D = require('./mma_fighter_3d.json') || {}; } catch (_) { FIGHTER_3D = {}; }
+
 // Own logistic win model (offline-trained by tools/build_mma_model.js, KTH method).
 // All defensive — a missing artifact just disables the model signal, never crashes.
 let MMA_MODEL = null, MMA_FEATS = {}, _logit = null;
@@ -506,6 +511,17 @@ async function getMMAFights(apiKey) {
   } finally {
     _isFetching = false;
   }
+}
+
+// ─── Fighter 3D portrait (local, optionnel) ─────────────────────────────────
+// Meme clavage que les photos (fighterSlug) mais la source est un fichier local
+// sous /public/img/mma-3d/ : pas de requete reseau, pas de remotePatterns.
+// Retourne null si le combattant n'a pas de portrait 3D -> l'UI garde sa photo.
+function getFighter3d(rawName) {
+  const slug = fighterSlug(rawName);
+  if (!slug) return null;
+  const p = FIGHTER_3D[slug];
+  return typeof p === 'string' && p ? p : null;
 }
 
 // ─── Fighter photo resolution ────────────────────────────────────────────────
@@ -1067,4 +1083,4 @@ function getOdds1xBet() {
   } catch (_) {}
   return null;
 }
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance, getOdds1xBet };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, getFighter3d, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance, getOdds1xBet };

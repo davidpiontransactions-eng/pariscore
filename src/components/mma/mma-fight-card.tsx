@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Scale, Crown, TrendingUp, BarChart3 } from "lucide-react";
-import { format, parseISO } from "date-fns";
 import { ProbabilityRing } from "@/components/tennis/probability-ring";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { cn } from "@/lib/utils";
+import { formatFightTime } from "@/lib/mma-time";
 import { WatchButton } from "@/components/shared/watch-button";
 import { MmaAnalysisButton } from "./mma-analysis-button";
 import { MmaOddsDisplay } from "./mma-odds-display";
@@ -27,6 +27,9 @@ export type MmaFight = {
   event_name?: string;
   photo_a?: string;
   photo_b?: string;
+  /** Portrait 3D local : prioritaire sur photo_a. Absent = le combattant garde sa photo. */
+  photo3d_a?: string | null;
+  photo3d_b?: string | null;
   form_a?: ("W" | "L" | "D")[];
   form_b?: ("W" | "L" | "D")[];
   confidence_a?: number;
@@ -41,6 +44,9 @@ export type MmaFight = {
   draw_odds?: number;
   /** Proba X devigée (marché) [0..1]. */
   prob_x?: number;
+  /** DRatings (dratings.com) — signal du 2ᵉWeights de l'ensemble ps_prob. */
+  dr_prob_a?: number;
+  dr_prob_b?: number;
   /** AI computed fair odds (1/prob). */
   ai_odds_a?: number;
   ai_odds_b?: number;
@@ -77,28 +83,24 @@ const WEIGHT_CLASS_COLORS: Record<string, string> = {
 };
 
 function formatCommenceTime(iso: string): string {
-  try {
-    const d = parseISO(iso);
-    return format(d, "MMM d, yyyy · HH:mm");
-  } catch {
-    return iso;
-  }
+  return formatFightTime(iso);
 }
 
 function timeUntil(iso: string): string | null {
-  try {
-    const target = parseISO(iso).getTime();
-    const diff = target - Date.now();
-    if (diff <= 0) return null;
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}min`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h${mins % 60 > 0 ? ` ${mins % 60}m` : ""}`;
-    const days = Math.floor(hours / 24);
-    return `${days}j${hours % 24 > 0 ? ` ${hours % 24}h` : ""}`;
-  } catch {
-    return null;
-  }
+  // Compte a rebours = une duree, donc insensible au fuseau : pas d'Intl ici,
+  // seulement `new Date` (parseISO n'apporte rien de plus). Le garde NaN est
+  // explicite parce que `NaN <= 0` vaut false : sans lui on afficherait
+  // « NaNmin » au lieu de masquer le compteur.
+  const target = new Date(iso).getTime();
+  if (Number.isNaN(target)) return null;
+  const diff = target - Date.now();
+  if (diff <= 0) return null;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h${mins % 60 > 0 ? ` ${mins % 60}m` : ""}`;
+  const days = Math.floor(hours / 24);
+  return `${days}j${hours % 24 > 0 ? ` ${hours % 24}h` : ""}`;
 }
 
 export function MmaFightCard({ fight, index = 0 }: Props) {
@@ -191,7 +193,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             >
               <PlayerAvatar
                 name={fight.fighter_a}
-                photoUrl={fight.photo_a}
+                photoUrl={fight.photo3d_a ?? fight.photo_a}
                 size="lg"
                 sport="mma"
               />
@@ -259,7 +261,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             >
               <PlayerAvatar
                 name={fight.fighter_b}
-                photoUrl={fight.photo_b}
+                photoUrl={fight.photo3d_b ?? fight.photo_b}
                 size="lg"
                 sport="mma"
               />
@@ -376,16 +378,16 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
       <MmaFighterProfileDialog
         fighter={
           profileFighter === "a"
-            ? { name: fight.fighter_a, photo: fight.photo_a, form: fight.form_a, stats: fight.stats_a }
+            ? { name: fight.fighter_a, photo: fight.photo3d_a ?? fight.photo_a, form: fight.form_a, stats: fight.stats_a }
             : profileFighter === "b"
-            ? { name: fight.fighter_b, photo: fight.photo_b, form: fight.form_b, stats: fight.stats_b }
+            ? { name: fight.fighter_b, photo: fight.photo3d_b ?? fight.photo_b, form: fight.form_b, stats: fight.stats_b }
             : null
         }
         opponent={
           profileFighter === "a"
-            ? { name: fight.fighter_b, photo: fight.photo_b, stats: fight.stats_b }
+            ? { name: fight.fighter_b, photo: fight.photo3d_b ?? fight.photo_b, stats: fight.stats_b }
             : profileFighter === "b"
-            ? { name: fight.fighter_a, photo: fight.photo_a, stats: fight.stats_a }
+            ? { name: fight.fighter_a, photo: fight.photo3d_a ?? fight.photo_a, stats: fight.stats_a }
             : undefined
         }
         open={profileFighter !== null}

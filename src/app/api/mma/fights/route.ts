@@ -138,8 +138,12 @@ export async function GET(req: NextRequest) {
 async function fetchAndEnrich(now: number): Promise<CacheEntry> {
   let fights: MmaEventRaw[];
   let getPhoto: ((name: string) => Promise<string | null>) | null = null;
+  // Portraits 3D locaux : disponibles même quand le service de photos est
+  // injoignable (pas de réseau), donc résolus indépendamment.
+  let get3d: ((name: string) => string | null) | null = null;
   try {
     const s = svc();
+    get3d = (name: string) => s.getFighter3d(name);
     const result = await s.getMMAFights(process.env.ODDS_API_KEY);
     if (result && result.length > 0) {
       fights = result;
@@ -162,7 +166,14 @@ async function fetchAndEnrich(now: number): Promise<CacheEntry> {
                 getPhoto(f.fighter_b).catch(() => null),
               ])
             : [null, null];
-          return { ...f, photo_a: photoA, photo_b: photoB };
+          return {
+            ...f,
+            photo_a: photoA,
+            photo_b: photoB,
+            // null = le combattant n'a pas de portrait 3D, l'UI garde sa photo.
+            photo3d_a: get3d ? get3d(f.fighter_a) : null,
+            photo3d_b: get3d ? get3d(f.fighter_b) : null,
+          };
         }),
       );
       return { ...ev, fights: enrichedFights };

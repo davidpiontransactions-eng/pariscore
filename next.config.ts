@@ -126,6 +126,23 @@ const nextConfig: NextConfig = {
       // MLB — logos équipes + photos lanceurs (CDN public gratuit sans clé)
       { protocol: "https", hostname: "www.mlbstatic.com" },
       { protocol: "https", hostname: "midfield.mlbstatic.com" },
+      // ─── MMA / UFC : photos des combattants (services/mmaService.js) ──────
+      // Sans ces 4 entrées, next/image renvoie une erreur d'optimisation et
+      // PlayerAvatar bascule sur ses initiales : le combattant affiche "VV" au
+      // lieu de son visage. Les hotnames sont ceux réellement servis par la
+      // cascade getFighterPhoto(), mesurés sur les réponses en direct :
+      //   assets.agentmma.com  — <slug>.png, source principale (service :593)
+      //   a.espncdn.com        — /headshots/mma/, CDN licencié (service :607)
+      //   www.ufc.com          — og:image de la page athlete (service :714)
+      //   assets.oktagonmma.com — roster régional, mesuré sur le HTML servi
+      // Wikipedia (upload/thumb.wikimedia.org) est déjà autorisé plus haut.
+      { protocol: "https", hostname: "assets.agentmma.com" },
+      { protocol: "https", hostname: "a.espncdn.com" },
+      { protocol: "https", hostname: "www.ufc.com" },
+      { protocol: "https", hostname: "assets.oktagonmma.com" },
+      // BBC — vignettes du fil d'actu MMA (mesurées 200 en hotlink le
+      // 2026-10-03 : 32 items sur 32 ont une image, `ichef.bbci.co.uk`).
+      { protocol: "https", hostname: "ichef.bbci.co.uk" },
     ],
     // Formats modernes pour PWA légère
     formats: ["image/avif", "image/webp"],

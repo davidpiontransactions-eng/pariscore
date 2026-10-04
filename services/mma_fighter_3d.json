@@ -1,0 +1,6 @@
+{
+  "_doc": "Portraits 3D stylisés par combattant. Clé = fighterSlug(name) (mmaService.js:528). Valeur = chemin webp sous /public/img/mma-3d/. Un combattant absent de ce fichier garde sa photo (pas de 3D) : le repli est automatique, aucune entrée n'est obligatoire.",
+  "_exemple": "benoit-saint-denis",
+  "_fichier_attendu": "public/img/mma-3d/benoit-saint-denis.webp",
+  "benoit-saint-denis": "/img/mma-3d/benoit-saint-denis.webp"
+}
