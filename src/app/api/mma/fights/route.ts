@@ -3,7 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 // ─── Cache avec stale-while-revalidate ───────────────────────────────────────
 const CACHE_TTL = 5 * 60_000;       // 5 min fresh
 const STALE_TTL = 15 * 60_000;      // 15 min max stale (retry after)
-type CacheEntry = { data: unknown; at: number; empty: boolean };
+/**
+ * Chemin de données réellement utilisé pour CETTE réponse.
+ *
+ * Indispensable : la valeur était antes inconditionnellement `"odds-api+ml"`,
+ * donc l'API annonçait le modèle même en servant du 1xBet brut. Le 2026-10-04,
+ * une ReferenceError dans le mapping de getMMAFights a fait basculer toute la
+ * prod sur le fallback — `prob_a`, photos et radar à 0 — et **rien ne le
+ * disait** : les logs disaient « odds-api+ml ». Toute supervision based sur ce
+ * champ était aveugle.
+ */
+type DataSource = "odds-api+ml" | "1xbet-fallback";
+
+type CacheEntry = { data: unknown; at: number; empty: boolean; source: DataSource };
 let cache: CacheEntry | null = null;
 
 // ─── Lazy CJS require (import alias impossible pour modules legacy) ──────────
@@ -95,17 +107,17 @@ export async function GET(req: NextRequest) {
   // Contrat de réponse : TOUJOURS un objet { fights, source?, ... }.
   // (Régression f3e29968 : retournait un tableau nu → mma-tab-content et
   //  use-sports-tree lisaient data.fights = undefined → onglet vide.)
-  const payload = (events: MmaEventRaw[], extra?: Record<string, unknown>) =>
-    NextResponse.json({ fights: events, source: "odds-api+ml", ...extra });
+  const payload = (events: MmaEventRaw[], source: DataSource, extra?: Record<string, unknown>) =>
+    NextResponse.json({ fights: events, source, ...extra });
 
   // ── Cache hit (fresh) ────────────────────────────────────────────────────
   if (cache && now - cache.at < CACHE_TTL) {
-    return payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), { cache: "fresh" });
+    return payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), cache.source, { cache: "fresh" });
   }
 
   // ── Cache stale → servir + revalidate en background ──────────────────────
   if (cache && now - cache.at < STALE_TTL && cache.data) {
-    const response = payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), {
+    const response = payload(applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), cache.source, {
       cache: "stale",
       cacheAge: Math.round((now - cache.at) / 1000),
     });
@@ -119,16 +131,21 @@ export async function GET(req: NextRequest) {
   try {
     const data = await fetchAndEnrich(now);
     cache = data;
-    return payload(applyFilters(data.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), { cache: "miss" });
+    return payload(applyFilters(data.data as MmaEventRaw[], { weightClass, hours, hidePast, now }), data.source, { cache: "miss" });
   } catch (err) {
+    // On ne masque PLUS l'échec : un fallback servi doit le dire, sinon la
+    // panne est invisible — c'est exactement ce qui a laissé la chaîne ML
+    // morte en prod le 2026-10-04.
+    console.error("[mma/fights] fetch complet en echec:", (err as Error).message);
     if (cache?.data) {
       return payload(
         applyFilters(cache.data as MmaEventRaw[], { weightClass, hours, hidePast, now }),
+        cache.source,
         { _stale: true },
       );
     }
     return NextResponse.json(
-      { error: "Données MMA indisponibles", details: (err as Error).message, fights: [] },
+      { error: "Données MMA indisponibles", details: (err as Error).message, fights: [], source: "1xbet-fallback" },
       { status: 503 },
     );
   }
@@ -138,6 +155,8 @@ export async function GET(req: NextRequest) {
 async function fetchAndEnrich(now: number): Promise<CacheEntry> {
   let fights: MmaEventRaw[];
   let getPhoto: ((name: string) => Promise<string | null>) | null = null;
+  // Le chemin réellement emprunté, remonté jusqu'à la réponse.
+  let source: DataSource = "1xbet-fallback";
   // Portraits 3D locaux : disponibles même quand le service de photos est
   // injoignable (pas de réseau), donc résolus indépendamment.
   let get3d: ((name: string) => string | null) | null = null;
@@ -148,11 +167,16 @@ async function fetchAndEnrich(now: number): Promise<CacheEntry> {
     if (result && result.length > 0) {
       fights = result;
       getPhoto = (name: string) => s.getFighterPhoto(name);
+      source = "odds-api+ml";
     } else {
       // Service returned empty → fallback direct 1xBet
       fights = read1xBetDirect(now);
     }
-  } catch {
+  } catch (err) {
+    // AVANT, ce `catch` était muet : une exception dans le service (une
+    // ReferenceError le 2026-10-04) faisait basculer toute la prod sur 1xBet
+    // sans laisser la moindre trace. On trace, et `source` dira fallback.
+    console.error("[mma/fights] service indisponible, repli 1xBet:", (err as Error).message);
     fights = read1xBetDirect(now);
   }
 
@@ -181,7 +205,12 @@ async function fetchAndEnrich(now: number): Promise<CacheEntry> {
   );
 
   const hasFights = enriched.some((ev) => ev.fights.length > 0);
-  return { data: enriched, at: now, empty: !hasFights };
+  // Un repli 1xBet qui ne trouve rien n'est pas une panne : c'est un jour sans
+  // combat. On ne le signale que si on TOMBE dessus depuis le chemin modèle.
+  if (source === "1xbet-fallback" && process.env.NODE_ENV !== "test") {
+    console.warn("[mma/fights] service MMA indisponible — données 1xBet brutes servies (sans predictions ML)");
+  }
+  return { data: enriched, at: now, empty: !hasFights, source };
 }
 
 // ─── Background revalidation ────────────────────────────────────────────────
