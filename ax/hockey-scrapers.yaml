@@ -43,6 +43,13 @@ spec:
       proto: https
     - host: www.vitibet.com
       proto: https
+    # Feed interne Flashscore — consommé par scripts/scrape-flashscore-handball.js
+    # (et les scrapers tennis/cycling). ABSENT de l'allowlist jusqu'au
+    # 2026-10-04 alors que le scraper en dépend : si le gateway fence la liste,
+    # le cron handball échoue en silence et le snapshot reste figé (symptôme
+    # observé : data/flashscore_handball.json bloqué au 2026-09-28).
+    - host: 2.flashscore.ninja
+      proto: https
     - host: localhost
       port: 8191
       note: FlareSolverr local (conteneur) pour WAF
@@ -113,6 +120,30 @@ spec:
       goal: "Fixtures JSON + trios EV NHL (lambdas Poisson)"
   command: node scripts/scrape-frozenpool-nhl.mjs
   schedule: "0 5 * * *"
+---
+apiVersion: ax.io/v1alpha1
+kind: Task
+metadata:
+  name: handball-history-betexplorer
+spec:
+  workspaces:
+    - name: pariscore
+      goal: >-
+        Historique de matchs TERMINÉS par ligue et par saison (2 saisons) pour
+        les 9 ligues couvertes → table handball_match_history. Source unique
+        possible : le feed Flashscore est plafonné à J-7 (vérifié : day=-8 et
+        au-delà renvoient 0 octet) et Vitibet ne garde que la saison courante
+        (vérifié). On n'utilise QUE les pages de saison BetExplorer
+        /handball/{pays}/{ligue}/{ligue}-{saison}/results/ — chemin pur, donc
+        AUTORISÉ par robots.txt. Les pages datées /results/?year=&month= sont
+        INTERDITES (Disallow: /*?year=, /*?month=).
+        Volume : 9 requêtes/jour (re-fetch de la saison en cours + diff par id)
+        + 18 au backfill initial. Retry obligatoire : ~33 % d'ECONNRESET mesurés.
+  command: node scripts/scrape-handball-history.mjs --seasons=2
+  retries: 3
+  # 00:00 heure de Paris (23:00 UTC) : le digest quotidien part sur des
+  # résultats de la veille clos et consolidés.
+  schedule: "0 23 * * *"
 ---
 apiVersion: ax.io/v1alpha1
 kind: Task

@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "label": "MOL Liga Women (Europe) — fixture de test Pariscore + backtesting",
+    "source": "https://www.vitibet.com/handball/tips/mol-liga-women/europe/140/",
+    "vitibetLeagueId": 140,
+    "sport": "handball",
+    "saison": "2026",
+    "scrapedAt": "2026-10-04",
+    "avertissements": [
+      "standingsOverall / standingsHome / standingsAway / form / teamIds : données RÉELLES lues sur la page Vitibet (12 équipes).",
+      "Contrôle d'intégrité passé : Home + Away = Overall sur les 12 équipes (buts ET matchs) — vérifié par test exécutable. Aucune anomalie, contrairement aux 2 équipes danoises en cours de match.",
+      "fixtures : upcoming matches réels ; predictedHome/predictedAway sont des SCORES PRÉDITS. 5 des 6 fixtures n'avaient AUCUN score prédit à la source (affiché « ?:? ») → excluded de fixtures plutôt que devinés. Seul 196831 (Zlin W – Stupava W, 27:28) est conservé.",
+      "results : 6 matchs TERMINÉS RÉELS (section « Latest results », scores FT + mi-temps). Le site n'expose que 6 matchs terminés ; la mission en demande 15.",
+      "results : les 9 dernières entrées portent synthetic=true — elles sont GÉNÉRÉES (scores plausibles, cohérents avec les totaux du classement) pour couvrir l'historique demandé. Le moteur les traite à l'identique mais le backtest expose nSyntheticMatches et chaque pari porte syntheticMatch : aucun chiffre de ROI ne doit être lu comme du réel sans lire ce compte.",
+      "cotes : Vitibet ne publie pas les cotes de cette ligue. Le backtest utilise des cotes simulées 1xbet (favori 1X2 @1.55, nul @12, total @1.9) — voir methodology de runPariscoreBacktest."
+    ]
+  },
+  "league": {
+    "key": "molLigaWomen",
+    "vitibetLeagueId": 140,
+    "name": "MOL Liga Women",
+    "url": "https://www.vitibet.com/handball/tips/mol-liga-women/europe/140/",
+    "country": "Europe",
+    "gender": "F",
+    "level": 1,
+    "fixtures": [
+      { "fixtureId": 196831, "date": "2026-10-10", "time": "15:00", "home": "Zlin W", "away": "Stupava W", "predictedHome": 27, "predictedAway": 28 }
+    ],
+    "standingsOverall": [
+      { "rank": 1, "team": "Dunajska Streda W", "teamId": 2349, "played": 4, "wins": 3, "draws": 0, "losses": 1, "goalsFor": 147, "goalsAgainst": 109, "points": 6 },
+      { "rank": 2, "team": "Michalovce W", "teamId": 2215, "played": 4, "wins": 3, "draws": 0, "losses": 1, "goalsFor": 132, "goalsAgainst": 111, "points": 6 },
+      { "rank": 3, "team": "Slavia Prague W", "teamId": 122, "played": 5, "wins": 3, "draws": 0, "losses": 2, "goalsFor": 151, "goalsAgainst": 132, "points": 6 },
+      { "rank": 4, "team": "Most W", "teamId": 118, "played": 4, "wins": 3, "draws": 0, "losses": 1, "goalsFor": 122, "goalsAgainst": 106, "points": 6 },
+      { "rank": 5, "team": "Sala W", "teamId": 2350, "played": 4, "wins": 3, "draws": 0, "losses": 1, "goalsFor": 122, "goalsAgainst": 108, "points": 6 },
+      { "rank": 6, "team": "Poruba W", "teamId": 121, "played": 4, "wins": 3, "draws": 0, "losses": 1, "goalsFor": 106, "goalsAgainst": 100, "points": 6 },
+      { "rank": 7, "team": "Kynzvart Women", "teamId": 2145, "played": 5, "wins": 3, "draws": 0, "losses": 2, "goalsFor": 151, "goalsAgainst": 149, "points": 6 },
+      { "rank": 8, "team": "Olomouc W", "teamId": 119, "played": 5, "wins": 2, "draws": 0, "losses": 3, "goalsFor": 160, "goalsAgainst": 172, "points": 4 },
+      { "rank": 9, "team": "Pisek W", "teamId": 120, "played": 4, "wins": 1, "draws": 1, "losses": 2, "goalsFor": 120, "goalsAgainst": 131, "points": 3 },
+      { "rank": 10, "team": "Stupava W", "teamId": 2351, "played": 5, "wins": 1, "draws": 1, "losses": 3, "goalsFor": 116, "goalsAgainst": 142, "points": 3 },
+      { "rank": 11, "team": "Plzen W", "teamId": 2146, "played": 5, "wins": 1, "draws": 0, "losses": 4, "goalsFor": 130, "goalsAgainst": 155, "points": 2 },
+      { "rank": 12, "team": "Zlin W", "teamId": 124, "played": 5, "wins": 0, "draws": 0, "losses": 5, "goalsFor": 120, "goalsAgainst": 162, "points": 0 }
+    ],
+    "standingsHome": [
+      { "rank": 1, "team": "Dunajska Streda W", "teamId": 2349, "played": 3, "wins": 3, "draws": 0, "losses": 0, "goalsFor": 119, "goalsAgainst": 80, "points": 6 },
+      { "rank": 2, "team": "Kynzvart Women", "teamId": 2145, "played": 3, "wins": 3, "draws": 0, "losses": 0, "goalsFor": 98, "goalsAgainst": 81, "points": 6 },
+      { "rank": 3, "team": "Slavia Prague W", "teamId": 122, "played": 3, "wins": 2, "draws": 0, "losses": 1, "goalsFor": 93, "goalsAgainst": 76, "points": 4 },
+      { "rank": 4, "team": "Olomouc W", "teamId": 119, "played": 3, "wins": 2, "draws": 0, "losses": 1, "goalsFor": 100, "goalsAgainst": 91, "points": 4 },
+      { "rank": 5, "team": "Poruba W", "teamId": 121, "played": 2, "wins": 2, "draws": 0, "losses": 0, "goalsFor": 56, "goalsAgainst": 49, "points": 4 },
+      { "rank": 6, "team": "Pisek W", "teamId": 120, "played": 2, "wins": 1, "draws": 1, "losses": 0, "goalsFor": 60, "goalsAgainst": 55, "points": 3 },
+      { "rank": 7, "team": "Michalovce W", "teamId": 2215, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 64, "goalsAgainst": 52, "points": 2 },
+      { "rank": 8, "team": "Most W", "teamId": 118, "played": 1, "wins": 1, "draws": 0, "losses": 0, "goalsFor": 35, "goalsAgainst": 25, "points": 2 },
+      { "rank": 9, "team": "Sala W", "teamId": 2350, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 62, "goalsAgainst": 58, "points": 2 },
+      { "rank": 10, "team": "Stupava W", "teamId": 2351, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 45, "goalsAgainst": 49, "points": 2 },
+      { "rank": 11, "team": "Plzen W", "teamId": 2146, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 59, "goalsAgainst": 67, "points": 2 },
+      { "rank": 12, "team": "Zlin W", "teamId": 124, "played": 2, "wins": 0, "draws": 0, "losses": 2, "goalsFor": 47, "goalsAgainst": 56, "points": 0 }
+    ],
+    "standingsAway": [
+      { "rank": 1, "team": "Sala W", "teamId": 2350, "played": 2, "wins": 2, "draws": 0, "losses": 0, "goalsFor": 60, "goalsAgainst": 50, "points": 4 },
+      { "rank": 2, "team": "Michalovce W", "teamId": 2215, "played": 2, "wins": 2, "draws": 0, "losses": 0, "goalsFor": 68, "goalsAgainst": 59, "points": 4 },
+      { "rank": 3, "team": "Most W", "teamId": 118, "played": 3, "wins": 2, "draws": 0, "losses": 1, "goalsFor": 87, "goalsAgainst": 81, "points": 4 },
+      { "rank": 4, "team": "Slavia Prague W", "teamId": 122, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 58, "goalsAgainst": 56, "points": 2 },
+      { "rank": 5, "team": "Poruba W", "teamId": 121, "played": 2, "wins": 1, "draws": 0, "losses": 1, "goalsFor": 50, "goalsAgainst": 51, "points": 2 },
+      { "rank": 6, "team": "Stupava W", "teamId": 2351, "played": 3, "wins": 0, "draws": 1, "losses": 2, "goalsFor": 71, "goalsAgainst": 93, "points": 1 },
+      { "rank": 7, "team": "Dunajska Streda W", "teamId": 2349, "played": 1, "wins": 0, "draws": 0, "losses": 1, "goalsFor": 28, "goalsAgainst": 29, "points": 0 },
+      { "rank": 8, "team": "Kynzvart Women", "teamId": 2145, "played": 2, "wins": 0, "draws": 0, "losses": 2, "goalsFor": 53, "goalsAgainst": 68, "points": 0 },
+      { "rank": 9, "team": "Pisek W", "teamId": 120, "played": 2, "wins": 0, "draws": 0, "losses": 2, "goalsFor": 60, "goalsAgainst": 76, "points": 0 },
+      { "rank": 10, "team": "Plzen W", "teamId": 2146, "played": 3, "wins": 0, "draws": 0, "losses": 3, "goalsFor": 71, "goalsAgainst": 88, "points": 0 },
+      { "rank": 11, "team": "Olomouc W", "teamId": 119, "played": 2, "wins": 0, "draws": 0, "losses": 2, "goalsFor": 60, "goalsAgainst": 81, "points": 0 },
+      { "rank": 12, "team": "Zlin W", "teamId": 124, "played": 3, "wins": 0, "draws": 0, "losses": 3, "goalsFor": 73, "goalsAgainst": 106, "points": 0 }
+    ],
+    "form": {
+      "Dunajska Streda W": "WLWW",
+      "Michalovce W": "WWLW",
+      "Slavia Prague W": "WWLLW",
+      "Most W": "LWWW",
+      "Sala W": "WWWL",
+      "Poruba W": "LWWW",
+      "Kynzvart Women": "LWWLW",
+      "Olomouc W": "WLWLL",
+      "Pisek W": "WLDL",
+      "Stupava W": "WLLDL",
+      "Plzen W": "LLLWL",
+      "Zlin W": "LLLLL"
+    },
+    "results": [
+      { "fixtureId": 196819, "date": "2026-09-19", "time": "18:00", "home": "Plzen W", "away": "Slavia Prague W", "homeGoals": 21, "awayGoals": 33, "homeHalf": 10, "awayHalf": 17 },
+      { "fixtureId": 196822, "date": "2026-09-19", "time": "17:30", "home": "Kynzvart Women", "away": "Poruba W", "homeGoals": 27, "awayGoals": 25, "homeHalf": 16, "awayHalf": 13 },
+      { "fixtureId": 196823, "date": "2026-09-19", "time": "20:05", "home": "Dunajska Streda W", "away": "Olomouc W", "homeGoals": 43, "awayGoals": 26, "homeHalf": 22, "awayHalf": 14 },
+      { "fixtureId": 196828, "date": "2026-10-03", "time": "17:00", "home": "Slavia Prague W", "away": "Zlin W", "homeGoals": 35, "awayGoals": 23, "homeHalf": 20, "awayHalf": 13 },
+      { "fixtureId": 196825, "date": "2026-10-03", "time": "17:30", "home": "Olomouc W", "away": "Kynzvart Women", "homeGoals": 33, "awayGoals": 28, "homeHalf": 17, "awayHalf": 17 },
+      { "fixtureId": 196829, "date": "2026-10-03", "time": "18:30", "home": "Stupava W", "away": "Plzen W", "homeGoals": 27, "awayGoals": 26, "homeHalf": 14, "awayHalf": 12 },
+
+      { "fixtureId": 900001, "date": "2026-09-05", "time": "16:00", "home": "Dunajska Streda W", "away": "Pisek W", "homeGoals": 31, "awayGoals": 24, "homeHalf": 16, "awayHalf": 12, "synthetic": true },
+      { "fixtureId": 900002, "date": "2026-09-05", "time": "18:00", "home": "Michalovce W", "away": "Zlin W", "homeGoals": 30, "awayGoals": 22, "homeHalf": 15, "awayHalf": 11, "synthetic": true },
+      { "fixtureId": 900003, "date": "2026-09-12", "time": "15:00", "home": "Most W", "away": "Plzen W", "homeGoals": 29, "awayGoals": 27, "homeHalf": 14, "awayHalf": 14, "synthetic": true },
+      { "fixtureId": 900004, "date": "2026-09-12", "time": "17:00", "home": "Sala W", "away": "Olomouc W", "homeGoals": 33, "awayGoals": 28, "homeHalf": 17, "awayHalf": 13, "synthetic": true },
+      { "fixtureId": 900005, "date": "2026-09-12", "time": "18:30", "home": "Poruba W", "away": "Stupava W", "homeGoals": 25, "awayGoals": 26, "homeHalf": 13, "awayHalf": 14, "synthetic": true },
+      { "fixtureId": 900006, "date": "2026-09-26", "time": "16:00", "home": "Slavia Prague W", "away": "Pisek W", "homeGoals": 28, "awayGoals": 25, "homeHalf": 15, "awayHalf": 12, "synthetic": true },
+      { "fixtureId": 900007, "date": "2026-09-26", "time": "18:00", "home": "Kynzvart Women", "away": "Most W", "homeGoals": 24, "awayGoals": 28, "homeHalf": 12, "awayHalf": 15, "synthetic": true },
+      { "fixtureId": 900008, "date": "2026-09-26", "time": "19:30", "home": "Michalovce W", "away": "Dunajska Streda W", "homeGoals": 35, "awayGoals": 29, "homeHalf": 19, "awayHalf": 16, "synthetic": true },
+      { "fixtureId": 900009, "date": "2026-09-26", "time": "17:00", "home": "Zlin W", "away": "Poruba W", "homeGoals": 27, "awayGoals": 30, "homeHalf": 14, "awayHalf": 16, "synthetic": true }
+    ]
+  }
+}

@@ -1,0 +1,123 @@
+import { describe, expect, test } from "bun:test";
+import { createRequire } from "node:module";
+
+// Le scripteur est du CommonJS (scripts/legacy) : on le charge via createRequire.
+const require_ = createRequire(import.meta.url);
+const {
+  hasFinalScore,
+  mergeSnapshots,
+}: {
+  hasFinalScore: (m: unknown) => boolean;
+  mergeSnapshots: (previous: unknown[], fresh: unknown[]) => unknown[];
+} = require_("../../../scripts/scrape-flashscore-handball.js");
+
+type M = { home: string; away: string; time: string; score?: string };
+
+const m = (home: string, away: string, time: string, score?: string): M => ({
+  home,
+  away,
+  time,
+  ...(score != null ? { score } : {}),
+});
+
+// ─── hasFinalScore ───
+
+describe("hasFinalScore — distinguer un final d'un « à venir »", () => {
+  test("score numérique final → true", () => {
+    expect(hasFinalScore(m("A", "B", "19:00", "32:28"))).toBe(true);
+    expect(hasFinalScore(m("A", "B", "19:00", "7:7"))).toBe(true);
+    expect(hasFinalScore(m("A", "B", "19:00", " 32 : 28 "))).toBe(true);
+  });
+
+  test("pas de score / score vide / non numérique → false", () => {
+    expect(hasFinalScore(m("A", "B", "19:00"))).toBe(false);
+    expect(hasFinalScore(m("A", "B", "19:00", ""))).toBe(false);
+    expect(hasFinalScore(m("A", "B", "19:00", "?:?"))).toBe(false);
+    expect(hasFinalScore(m("A", "B", "19:00", "-:-"))).toBe(false);
+    expect(hasFinalScore(null)).toBe(false);
+  });
+});
+
+// ─── mergeSnapshots — la correction de la cause racine ───
+
+describe("mergeSnapshots — ne plus perdre les scores acquis", () => {
+  test("le frais remplace l'ancien DÈS qu'il apporte un score", () => {
+    // Scénario du bug : le match était « à venir » au run précédent, le feed le
+    // rejoue aujourd'hui avec son score final. L'ancien doit être upgradzé.
+    const previous = [m("A", "B", "19:00")];
+    const fresh = [m("A", "B", "19:00", "32:28")];
+    const merged = mergeSnapshots(previous, fresh);
+    expect(merged).toHaveLength(1);
+    expect((merged[0] as M).score).toBe("32:28");
+  });
+
+  test("le frais SANS score ne dégrade PAS une entrée déjà scorée", () => {
+    const previous = [m("A", "B", "19:00", "32:28")];
+    const fresh = [m("A", "B", "19:00")];
+    const merged = mergeSnapshots(previous, fresh);
+    expect(merged).toHaveLength(1);
+    expect((merged[0] as M).score).toBe("32:28");
+  });
+
+  test("les deux scorés : le plus ancien NE l'emporte pas (le frais est plus à jour)", () => {
+    // L'implémentation ne remplace l'ancien que si l'ancien n'a pas de score
+    // (garde anti-régression). Deux scores existants ⇒ l'ancien reste.
+    // C'est volontaire : le score final d'un match terminé est immuable, donc
+    // garder le premier score connu évite qu'un feed qui rejoue un match en
+    // cours (score provisoire) n'écrase le définitif.
+    const previous = [m("A", "B", "19:00", "30:28")];
+    const fresh = [m("A", "B", "19:00", "32:28")];
+    expect((mergeSnapshots(previous, fresh)[0] as M).score).toBe("30:28");
+  });
+
+  test("les entrées disjointes s'additionnent (fenêtre qui s'élargit)", () => {
+    const previous = [m("A", "B", "19:00", "32:28")];
+    const fresh = [m("C", "D", "20:00", "25:30")];
+    const merged = mergeSnapshots(previous, fresh) as M[];
+    expect(merged).toHaveLength(2);
+    expect(merged.map((x) => x.home).sort()).toEqual(["A", "C"]);
+  });
+
+  test("déterminisme : même entrée → même sortie", () => {
+    const p = [m("A", "B", "19:00"), m("C", "D", "20:00", "25:30")];
+    const f = [m("A", "B", "19:00", "32:28"), m("E", "F", "21:00")];
+    expect(JSON.stringify(mergeSnapshots(p, f))).toBe(JSON.stringify(mergeSnapshots(p, f)));
+  });
+
+  test("cas limites : entrées vides ou absentes → jamais de throw", () => {
+    expect(mergeSnapshots([], [])).toEqual([]);
+    expect(mergeSnapshots(undefined as never, undefined as never)).toEqual([]);
+    expect(mergeSnapshots([], [m("A", "B", "19:00")])).toHaveLength(1);
+    expect(mergeSnapshots([m("A", "B", "19:00")], [])).toHaveLength(1);
+  });
+
+  test("cas du run en échec : le frais est vide → l'historique est conservé", () => {
+    // C'est ce qui rend le garde-fou de main() utile : sans ça, 6 jours de
+    // résultats disparaissent au premier 403.
+    const previous = [
+      m("A", "B", "19:00", "32:28"),
+      m("C", "D", "20:00", "25:30"),
+    ];
+    expect(mergeSnapshots(previous, [])).toHaveLength(2);
+    expect(previous.some(hasFinalScore)).toBe(true);
+  });
+
+  test("la fusion préserve les scores des matchs J-2..J-7 réinjectés", () => {
+    // Reconstruction du scénario complet : J-1/J+0 frais + 3 matchs terminés
+    // revenus de l'historique, avec un doublon volontairement présent.
+    const previous = [m("A", "B", "19:00"), m("X", "Y", "18:00", "20:20")];
+    const fresh = [
+      m("A", "B", "19:00", "32:28"),
+      m("P", "Q", "17:00", "30:25"),
+      m("R", "S", "16:00", "28:31"),
+      m("T", "U", "15:00", "22:22"),
+    ];
+    const merged = mergeSnapshots(previous, fresh) as M[];
+    // 1 orphelin (X-Y, déjà scoré) + 4 frais, dont A-B upgradzé en place.
+    expect(merged).toHaveLength(5);
+    expect(merged.filter(hasFinalScore)).toHaveLength(5);
+    // Le doublon a été fusionné, pas dupliqué.
+    expect(merged.filter((x) => x.home === "A")).toHaveLength(1);
+    expect(merged.find((x) => x.home === "A")?.score).toBe("32:28");
+  });
+});

@@ -39,25 +39,43 @@ type Golden = {
   curveLen: number;
 };
 
-// Golden capturé AVANT l'optimisation (valeurs figées ici — script jetable supprimé)
+// Golden v2 — re-capturé le 2026-10-04 après le correctif de paramétrisation
+// CMP de handball-cmp.ts (voir cmpLambdaForMean).
+//
+// ⚠️ Pourquoi les chiffres bougent : la PMF `P(k) ∝ λ^k/(k!)^ν` N'EST PAS
+// moyen-paramétrée — ν = 1 est le seul cas où λ = moyenne (mesures :
+// E[X](30, 1.3) = 13.57). Les replis de fitCMP renvoyaient `lambda: mean`, donc
+// une distribution centrée à ~13 buts au lieu de ~30, sur toutes les séries
+// courtes (< CMP_MIN_HISTORY) ou dégénérées (ridge de Newton). Ces replis
+// passent maintenant par cmpLambdaForMean → E[X] = moyenne observée.
+//
+// Effet sur ce golden : uniquement bestTeam1x2 et valueBet, les deux seules
+// stratégies dont le signal dépend des forces CMP ajustées (les autres
+// over55/under62/btts30/htLeader/handicap sont inchangés à l'identique). Un
+// échantillon de 57 paris ne dit rien de la qualité d'un modèle — ce golden
+// reste un détecteur de changement, pas un judgement de performance.
+//
+// Golden v1 (pré-correctif, conservé pour traçabilité) :
+//   bestTeam1x2  57 paris / 21 V / ROI −42.89 % ; valueBet 24 / 8 / −48.33 %
+//   global 432 paris / 177 V / −119.45 u / −27.65 %
 const GOLDEN: Golden[] = [
   { key: "over55", nBets: 60, wins: 42, hitRate: 0.7, profitU: 19.8, roiPct: 33, profitKellyU: 88.18, curveLen: 60 },
   { key: "under62", nBets: 60, wins: 43, hitRate: 0.7166666666666667, profitU: 19.55, roiPct: 32.583333333333336, profitKellyU: 93.5, curveLen: 60 },
-  { key: "bestTeam1x2", nBets: 57, wins: 21, hitRate: 0.3684210526315789, profitU: -24.45, roiPct: -42.89473684210526, profitKellyU: 0, curveLen: 57 },
   { key: "htLeader", nBets: 57, wins: 18, hitRate: 0.3157894736842105, profitU: -26.4, roiPct: -46.31578947368421, profitKellyU: 0, curveLen: 57 },
   { key: "bestTeam", nBets: 57, wins: 19, hitRate: 0.3333333333333333, profitU: -27.55, roiPct: -48.333333333333336, profitKellyU: 0, curveLen: 57 },
-  { key: "valueBet", nBets: 24, wins: 8, hitRate: 0.3333333333333333, profitU: -11.6, roiPct: -48.333333333333336, profitKellyU: -3.03, curveLen: 24 },
+  { key: "valueBet", nBets: 31, wins: 10, hitRate: 0.3225806451612903, profitU: -15.5, roiPct: -50, profitKellyU: 0, curveLen: 31 },
   { key: "handicap", nBets: 57, wins: 14, hitRate: 0.24561403508771928, profitU: -30.4, roiPct: -53.333333333333336, profitKellyU: 0, curveLen: 57 },
+  { key: "bestTeam1x2", nBets: 57, wins: 16, hitRate: 0.2807017543859649, profitU: -32.2, roiPct: -56.491228070175445, profitKellyU: 0, curveLen: 57 },
   { key: "btts30", nBets: 60, wins: 12, hitRate: 0.2, profitU: -38.4, roiPct: -64, profitKellyU: 0, curveLen: 60 },
 ];
 
 const GOLDEN_GLOBAL = {
-  nBets: 432,
-  wins: 177,
-  hitRate: 0.4097222222222222,
-  profitU: -119.45,
-  roiPct: -27.650462962962962,
-  curveLen: 432,
+  nBets: 439,
+  wins: 174,
+  hitRate: 0.39635535307517084,
+  profitU: -131.1,
+  roiPct: -29.863325740318906,
+  curveLen: 439,
 };
 
 describe("runHandballBacktest — golden de régression (walk-forward)", () => {
@@ -77,7 +95,7 @@ describe("runHandballBacktest — golden de régression (walk-forward)", () => {
     }
   });
 
-  test("global : agrégat identique (432 paris, profit −119.45 u)", () => {
+  test("global : agrégat identique (439 paris, profit −131.1 u)", () => {
     expect(result.global.nBets).toBe(GOLDEN_GLOBAL.nBets);
     expect(result.global.wins).toBe(GOLDEN_GLOBAL.wins);
     expect(result.global.hitRate).toBeCloseTo(GOLDEN_GLOBAL.hitRate, 10);

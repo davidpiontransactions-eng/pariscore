@@ -1,0 +1,212 @@
+{
+  "_meta": {
+    "label": "Handball Top 10 — jeu de données mocké (LIVRABLE mission TOP 10)",
+    "genereLe": "2026-10-04",
+    "source": "Matchs réels Vitibet (ligues 23 / 25 / 16 / 140 / 43) + seuils recalibrés",
+    "avertissements": [
+      "dateTime : horodatages ISO COMPLETS (avec offset Europe/Paris) issus des pages Vitibet. Le formatage « JJ/MM | HH:MM » / « Aujourd'hui » est fait à l'affichage, jamais stocké.",
+      "homeStats / awayStats : buts marqués / encaissés par match, dérivés des agrégats réels du classement de chaque ligue (voir src/lib/fixtures/*.json).",
+      "odds : COTES SIMULÉES (moyennes 1xbet) — Vitibet ne publie pas les cotes de ces ligues. Elles servent à valider le chemin « cote ≥ 1.15 » du filtrage.",
+      "totalOdds : absent ici volontairement. Sans cotes de total, le seuil est proposé avec odds: null et qualifies: true si P ≥ 65 % — la règle de cote ne peut pas être opposée. Ajouter totalOdds pour tester le refus à cote trop basse.",
+      "Les lignes dont aucune stratégie n'atteint les deux contraintes sont ABSENTES : buildTop10() les écarte. Le champ expectedLine ci-dessous documente le seuil qu'on aurait obtenu sans la contrainte de cote, pour illustrer l'écart."
+    ]
+  },
+  "matches": [
+    {
+      "matchId": "195576",
+      "home": "Skjern",
+      "away": "Bjerringbro/Silkeborg",
+      "dateTime": "2026-10-10T16:00:00+02:00",
+      "leagueName": "Herre Handbold Ligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 33.8, "concededAvg": 31.0 },
+      "awayStats": { "scoredAvg": 31.5, "concededAvg": 31.6 },
+      "odds": { "home": 1.75, "draw": 12, "away": 2.05 },
+      "predictedHome": 34,
+      "predictedAway": 29
+    },
+    {
+      "matchId": "195263",
+      "home": "Elbflorenz",
+      "away": "Huttenberg",
+      "dateTime": "2026-10-04T17:00:00+02:00",
+      "leagueName": "Herre Handbold Ligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 39.0, "concededAvg": 30.6 },
+      "awayStats": { "scoredAvg": 29.0, "concededAvg": 33.0 },
+      "odds": { "home": 1.35, "draw": 14, "away": 3.2 },
+      "predictedHome": 37,
+      "predictedAway": 31
+    },
+    {
+      "matchId": "195259",
+      "home": "Minden",
+      "away": "Dessauer",
+      "dateTime": "2026-10-04T17:00:00+02:00",
+      "leagueName": "Herre Handbold Ligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 28.5, "concededAvg": 30.5 },
+      "awayStats": { "scoredAvg": 26.0, "concededAvg": 30.0 },
+      "odds": { "home": 1.9, "draw": 11, "away": 1.95 },
+      "predictedHome": 32,
+      "predictedAway": 28
+    },
+    {
+      "matchId": "195260",
+      "home": "Lubeck-Schwartau",
+      "away": "Hamm-Westfalen",
+      "dateTime": "2026-10-04T17:00:00+02:00",
+      "leagueName": "Herre Handbold Ligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 34.4, "concededAvg": 28.8 },
+      "awayStats": { "scoredAvg": 25.0, "concededAvg": 32.0 },
+      "odds": { "home": 1.45, "draw": 13, "away": 2.6 },
+      "predictedHome": 37,
+      "predictedAway": 23
+    },
+    {
+      "matchId": "194184",
+      "home": "Esbjerg W",
+      "away": "Horsens W",
+      "dateTime": "2026-10-07T18:30:00+02:00",
+      "leagueName": "Bambusa Kvindeligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 33.0, "concededAvg": 25.4 },
+      "awayStats": { "scoredAvg": 26.2, "concededAvg": 28.2 },
+      "odds": { "home": 1.2, "draw": 16, "away": 4.1 },
+      "predictedHome": 34,
+      "predictedAway": 22
+    },
+    {
+      "matchId": "194186",
+      "home": "Holstebro W",
+      "away": "Odense W",
+      "dateTime": "2026-10-07T19:00:00+02:00",
+      "leagueName": "Bambusa Kvindeligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 26.2, "concededAvg": 28.6 },
+      "awayStats": { "scoredAvg": 32.8, "concededAvg": 24.8 },
+      "odds": { "home": 2.6, "draw": 15, "away": 1.45 },
+      "predictedHome": 24,
+      "predictedAway": 33
+    },
+    {
+      "matchId": "194183",
+      "home": "EH Aalborg W",
+      "away": "Silkeborg-Voel W",
+      "dateTime": "2026-10-09T19:00:00+02:00",
+      "leagueName": "Bambusa Kvindeligaen",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 24.0, "concededAvg": 33.2 },
+      "awayStats": { "scoredAvg": 28.8, "concededAvg": 29.6 },
+      "odds": { "home": 2.2, "draw": 14, "away": 1.7 },
+      "predictedHome": 26,
+      "predictedAway": 32
+    },
+    {
+      "matchId": "193330",
+      "home": "Sondermarkens W",
+      "away": "Hadsten W",
+      "dateTime": "2026-10-17T14:00:00+02:00",
+      "leagueName": "1. Division Women",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 24.0, "concededAvg": 23.2 },
+      "awayStats": { "scoredAvg": 24.0, "concededAvg": 24.2 },
+      "odds": { "home": 1.85, "draw": 12, "away": 1.95 },
+      "predictedHome": 25,
+      "predictedAway": 22
+    },
+    {
+      "matchId": "193325",
+      "home": "Aarhus Handbold W",
+      "away": "Bjerringbro W",
+      "dateTime": "2026-10-27T19:00:00+01:00",
+      "leagueName": "1. Division Women",
+      "countryCode": "DK",
+      "homeStats": { "scoredAvg": 26.2, "concededAvg": 25.6 },
+      "awayStats": { "scoredAvg": 26.4, "concededAvg": 29.2 },
+      "odds": { "home": 1.8, "draw": 13, "away": 2.0 },
+      "predictedHome": 29,
+      "predictedAway": 25
+    },
+    {
+      "matchId": "196831",
+      "home": "Zlin W",
+      "away": "Stupava W",
+      "dateTime": "2026-10-10T15:00:00+02:00",
+      "leagueName": "MOL Liga Women",
+      "countryCode": "SK",
+      "homeStats": { "scoredAvg": 24.0, "concededAvg": 32.4 },
+      "awayStats": { "scoredAvg": 23.2, "concededAvg": 28.4 },
+      "odds": { "home": 2.3, "draw": 13, "away": 1.65 },
+      "predictedHome": 27,
+      "predictedAway": 28
+    },
+    {
+      "matchId": "195287",
+      "home": "Hagen",
+      "away": "Grosswallstadt",
+      "dateTime": "2026-10-26T19:30:00+02:00",
+      "leagueName": "2. Bundesliga",
+      "countryCode": "DE",
+      "homeStats": { "scoredAvg": 34.0, "concededAvg": 27.3 },
+      "awayStats": { "scoredAvg": 28.0, "concededAvg": 31.0 },
+      "odds": { "home": 1.3, "draw": 15, "away": 3.4 },
+      "predictedHome": 35,
+      "predictedAway": 26
+    },
+    {
+      "matchId": "195303",
+      "home": "Ludwigshafen",
+      "away": "Essen",
+      "dateTime": "2026-11-14T18:00:00+01:00",
+      "leagueName": "2. Bundesliga",
+      "countryCode": "DE",
+      "homeStats": { "scoredAvg": 28.0, "concededAvg": 32.0 },
+      "awayStats": { "scoredAvg": 29.5, "concededAvg": 31.5 },
+      "odds": { "home": 2.05, "draw": 12, "away": 1.85 },
+      "predictedHome": 32,
+      "predictedAway": 27
+    }
+  ],
+  "casLimites": {
+    "_comment": "Entrées qui doivent être ÉCARTÉES ou rendues sans planter — testées par handbal-top10.test.ts",
+    "horodatageIllisible": {
+      "matchId": "bad-date",
+      "home": "Club A",
+      "away": "Club B",
+      "dateTime": "pas-une-date",
+      "leagueName": "Ligue Test",
+      "countryCode": "XX",
+      "homeStats": { "scoredAvg": 30, "concededAvg": 26 },
+      "awayStats": { "scoredAvg": 28, "concededAvg": 29 },
+      "odds": { "home": 1.5, "draw": 12, "away": 2.5 },
+      "commentaire": "Le composant affiche « — » pour la date ; la ligne reste cliquable."
+    },
+    "drapeauInvalide": {
+      "matchId": "bad-flag",
+      "home": "Club C",
+      "away": "Club D",
+      "dateTime": "2026-10-05T18:00:00+02:00",
+      "leagueName": "Ligue Sans Drapeau",
+      "countryCode": null,
+      "homeStats": { "scoredAvg": 31, "concededAvg": 25 },
+      "awayStats": { "scoredAvg": 25, "concededAvg": 31 },
+      "odds": { "home": 1.4, "draw": 14, "away": 2.8 },
+      "commentaire": "countryCode null → pastille «··» au lieu du drapeau."
+    },
+    "coteTropBasse": {
+      "matchId": "bad-odds",
+      "home": "Club E",
+      "away": "Club F",
+      "dateTime": "2026-10-05T20:00:00+02:00",
+      "leagueName": "Ligue Cotes",
+      "countryCode": "FR",
+      "homeStats": { "scoredAvg": 32, "concededAvg": 26 },
+      "awayStats": { "scoredAvg": 26, "concededAvg": 32 },
+      "totalOdds": { "52.5": { "over": 1.02, "under": 1.02 } },
+      "odds": { "home": 1.02, "draw": 30, "away": 30 },
+      "commentaire": "Toutes les cotes < 1.15 → la ligne doit être ÉCARTÉE du Top 10 (qualifies: false puis filtrée)."
+    }
+  }
+}

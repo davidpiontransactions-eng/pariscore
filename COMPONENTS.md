@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 218 components total (football: 14, handball: 12, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
+> extract pass. 227 components total (football: 14, handball: 21, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.). Comptages par sport rectifiés le 2026-10-04 (missions handball) : handball 16 → 25 lignes (9 nouveaux composants : score-banner, prediction-cards, team-stats-table, backtesting-view, danish-stats, pariscore-backtest, sync-badge, top10-table) + 9 libs (handball-pariscore, handball-cmp corrigé, handball-vitibet-league, handball-danish, handball-mol-liga, handball-backtest-pariscore, handball-goals-calibration, handball-optimal-thresholds, handball-top10).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -69,15 +69,12 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
 | live-score-matrix | live-score-matrix.tsx | Matrix Betfair Tennis Trader — cotes justes par état de points du jeu live (prédit dérive 1xBet) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
-| match-card | match-card.tsx | Carte de match (principale) |
-| match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) |
+| match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) — SEULE carte tennis montée en grille |
 | match-card-skeleton | match-card-skeleton.tsx | Skeleton de carte de match (chargement grille) |
 | live-decision-badges | live-decision-badges.tsx | Badges d'alerte live : DR, 2nd sv, fatigue, BP (R10) |
 | live-decisions-drawer | live-decisions-drawer.tsx | Drawer « Décisions Live » — DR, DPI, signaux, alertes (R10) |
 | live-odds-panel | live-odds-panel.tsx | Cotes live P1/P2 (1xBet, repli BSD) : chips + flèches direction + Kelly |
-| match-card-detail | match-card-detail.tsx | Détail interne extrait de MatchCard |
-| match-card-footer | match-card-footer.tsx | Pied de carte de match |
-| match-card-header | match-card-header.tsx | En-tête de carte de match |
+| match-card-detail | match-card-detail.tsx | Détail interne de carte (utilisé par match-card-broadcast) |
 | match-detail-dialog | match-detail-dialog.tsx | Dialogue d'analyse détaillée d'un match |
 | match-pip-widget | match-pip-widget.tsx | Conteneur du widget Document PiP (multi-matchs favoris live) |
 | momentum-dr | momentum-dr.tsx | Momentum (dynamic, best-of-5 aware) |
@@ -127,7 +124,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tennis-market-filters | tennis-market-filters.tsx | Filtres marchés tennis (catégorie, probabilité min, live/prematch) |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 28 components
+## Football (`src/components/football/`) — 30 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -142,6 +139,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-league-rankings-widget | football-league-rankings-widget.tsx | Widget sidebar « Classements championnat » (buts/m, PPM, O1.5/U3.5, BTTS, corners O6.5/O7.5, xG/xGA × global/dom/ext × saison) |
 | FootballPressReviewWidget | FootballPressReviewWidget.tsx | Widget « Revue de Presse & Pronostics Médias » (3+ sources, consensus 1X2/Over/BTTS) |
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
+| football-sub-tabs | football-sub-tabs.tsx | Sous-onglets football Calendrier/Top stratégies/Back Testing/Résultats (miroir de la rangée header, `?sub=`, panneau `FootballSubTabPanel`) |
+| football-results-view | football-results-view.tsx | Onglet Résultats : scores 7 jours + verdict vert/rouge par stratégie + cotes + P&L 1u (route `/api/football/results/settled`) |
 | fotmob-calendar-table | fotmob-calendar-table.tsx | Tableau calendrier réplique FotMob clair (ligues, lignes, follow) |
 | fotmob-filter-bar | fotmob-filter-bar.tsx | Barre filtre FotMob clair (datepicker, En direct, Par heure, recherche) |
 | besoccer-score-matrix | besoccer-score-matrix.tsx | Heatmap scores exacts Poisson + marges, style BeSoccer |
@@ -164,7 +163,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 | projected-standings-card | projected-standings-card.tsx | Carte « Classement projeté fin de saison » (ExtraTrees offline, JSON rank-projector, papier JISTA 2026) |
 
-## Handball (`src/components/handball/`) — 16 components
+## Handball (`src/components/handball/`) — 27 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -190,7 +189,25 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-team-logo | handball-team-logo.tsx | Badge équipe local + fallback initiales (miroir hockey-team-logo) |
 | handball-vitibet-top10 | handball-vitibet-top10.tsx | Section « Top 10 par INDEX » Vitibet (pronostics J→J+3 triés \|INDEX\| décroissant, tip + score prédit, mini-banner, masquée si table absente) |
 | handball-vitibet-backtest | handball-vitibet-backtest.tsx | Section « Backtest Vitibet » : taux de réussite des tips (résultat FT vs prédit), répartition 1/X/2, période couverte, compte des finished sans tip, état vide explicite 0/0 |
-| handball-cmp | handball-cmp.ts (lib) | Moteur CMP totaux : fitCMP (MLE Newton-Raphson), cmpPmf, teamStrength (s_a/s_d Felice SEL), overUnderProb (grille adaptative) |
+| handball-score-banner | handball-score-banner.tsx | Banner « **Score Prédit** » tête du popup Calendrier — fond `bg-[#0A2E5C]` `rounded-2xl`, en-tête date/heure Europe/Paris (`Intl.DateTimeFormat`, « 04.10.2026 \| 15:00 »), layout 3 colonnes : logo + nom + **5 pastilles** de forme (V/N/D) + Power/Forme \| score géant + badge jaune `TIP` + Index Pariscore signé \| symétrique à droite. Rendu AVANT les onglets du dialog. Badge TIP = `useVitibetTips().tipFor` (même clé SWR que la carte calendrier → 0 requête) |
+| handball-prediction-cards | handball-prediction-cards.tsx | Cartes Prédiction IA — **Winrate 1N2** : barre tri-couleur (emerald/amber/sky), probs % + cotes, badge « Pari Favori » si P ≥ 65 % ET cote ≥ 1.15 ; **Total Over Goals** : seuil optimal du modèle ou motif explicite de refus (aucune ligne ≥ 65 %, ou cote < 1.15 → `qualifies: false` sans badge) |
+| handball-team-stats-table | handball-team-stats-table.tsx | Tableau Statistiques d'équipe, 2 onglets `role=tablist`/`tabpanel` (accessibilité complète : `aria-selected`, `aria-controls`, `aria-labelledby`) : « Statistiques de l'équipe » (actif) et « Tableau des scores » (fusion des 2 historiques, tri anti-chronologique). **3 lignes Pariscore surlignées en tête** (bandeau `#0A2E5C` + badge `Pariscore`) : Forme Calculée, Team Power, Index Pariscore ; puis stats classiques + moyennes dérivées des mêmes fenêtres que le modèle |
+| handball-backtesting-view | handball-backtesting-view.tsx | Vue du sous-onglet **Backtesting** (mission 2) : synthèse (taux de réussite, ROI, volume, tips TIP), ROI par stratégie walk-forward, tips Vitibet par type 1/X/2, historique des prédictions réglées (20 récents, ✅/❌/⏹ + profit en u). 3 sources déjà en production, **0 route nouvelle** : /api/handball/backtest + /api/handball/backtest-today + /api/v1/vitibet?backtest=1 |
+| handball-pariscore | handball-pariscore.ts (lib) | Métriques Pariscore : `computeFormPctWeighted` (points/match pondérés récence × **lieu** × **écart de buts**, crédit borné [0,2] → 100 % = tous les points possibles ; série 100 % à l'extérieur plafonne à 92 %), `computePower` (**base de ligue** en écarts ABSOLUS vs moyenne : 50 = niveau moyen, +8 buts sature le bonus ; une forme à rapports log2 serait mathématiquement INSENSIBLE à la base), `computePariscoreIndex` (signé domicile, avantage terrain **+1.2**), `pickTotalThreshold` (bande **65 % ≤ P ≤ 95 %**, ligne la plus proche du total attendu → `null` sinon), `computePariscorePrediction` (score + winrate + seuil O/U, même `formStore` que les 3 paris) |
+| handball-vitibet-league | handball-vitibet-league.ts (lib) | Couche **générique** de conversion Vitibet → Pariscore, partagée par toutes les ligues couvertes : types (`VitibetStandingRow`/`VitibetFixtureRow`/`VitibetResultRow`/`TeamSeasonStats`), `parseVitibetScore` (« 272:233 +39 »), `parseVitibetForm` (accepte « W W D » **et** « \*W\*\*W\*\*D\* »), `toPariscoreTeamStats` (null si W+D+L ≠ P), `deriveLeagueBaseline` / `deriveGoalsPerMatch`, `buildLeagueFromFixture`, lookups (`findTeamStats`/`findFixture`/`findCoveredLeague`/`coveredLeagueBaseline`) |
+| handball-danish | handball-danish.ts (lib) | Binding **3 ligues danoises** (Herre Handbold Ligaen 23 / Bambusa Kvindeligaen 25 / 1. Division Women 16) → `getDanishLeagues()`, `findDanishLeague()`, `danishLeagueBaseline()`. Bases dérivées : **31.8 / 28.5 / 25.6** buts par équipe (63.6 / 57.0 / 51.2 par match) |
+| handball-mol-liga | handball-mol-liga.ts (lib) | Binding **MOL Liga Women** (Europe, leagueId 140) → `getMolLiga()`, `molLigaBaseline()` (**29.2** buts/équipe = 58.4/match), `molLigaBacktestMatches()`, `getMolLigaBacktest()` |
+| handball-backtest-pariscore | handball-backtest-pariscore.ts (lib) | Moteur de backtesting **walk-forward strict** (forme reconstruite sur les matchs strictement antérieurs, 1 clé de store par équipe — scinder par côté ferait retomber tout sur le prior neutre) : KPI taux de réussite, ROI flat 1u, profit net en unités, **par marché** (1N2 vs Total), **progression par journée** avec profit cumulé, `nFormMatches` (combien de matchs ont utilisé le modèle ajusté — sur un échantillon mince ce peut être 0, et les KPI mesurent alors le prior). Seuils 65 % ≤ P ≤ 95 % et cote ≥ 1.15. Cotes simulées 1xbet assumées |
+| handball-danish-stats | handball-danish-stats.tsx | Bloc **splits Domicile / Extérieur** + forme 6 matchs + score prédit Vitibet pour les ligues couvertes. Distingue explicitement « équipe absente du classement » (message) de « ligue non couverte » (ne rend rien). N'affiche jamais une ligne de « — » là où la donnée existe |
+| handball-pariscore-backtest | handball-pariscore-backtest.tsx | Sous-onglet Backtesting — **cartes KPI** (taux de réussite, ROI, volume, matchs), **barres de progression par journée** (échelle commune sur le profit cumulé), **comparaison 1N2 vs Total**, et **historique détaillé** (score prédit vs réel, cote, statut Gagné/Perdu/Annulé, profit en u) filtrable par marché. Les matchs synthétiques sont marqués `syn.` + ligne atténuée, et un bandeau rappelle le compte |
+| handball-sync-badge | handball-sync-badge.tsx | Badge « Dernière mise à jour » partagé par **Résultats** et **Backtesting** : vert < 6 h, ambre < 24 h, rouge + « cron possiblement arrêté » au-delà. `scrapedAt` null → état neutre explicite, **jamais** « à l'heure ». Expose `handballSyncAgeHours()` (calcul d'âge en heures, testable) |
+| handball-top10-table | handball-top10-table.tsx | **TOP 10 des paris sécurisés** — 6 colonnes : Rang · Date/Heure (`JJ/MM \| HH:MM`, ou « Aujourd'hui » / « Demain ») · Match & Ligue (drapeau + championnat + logos) · Stratégie (`Over 54.5` / `Victoire Dom`) · Probabilité · Cote + badge « ✓ Sécurisé ». Responsive : cartes empilées sur mobile (date/heure sous la ligue, pas de colonne qui écrase la largeur), tableau `md:` sur desktop. Icône horloge inline. Exporte `LeagueFlag` (emoji ISO + repli pastille code) |
+| handball-3d-art | handball-3d-art.tsx | **Illustrations 3D cartoon** (branding PariScore). 3 exports : `HandballHeroBanner` (bandeau d'onglet : image **pleine largeur** `absolute inset-0 object-cover` + dégradé `from-slate-900 via-slate-900/80 to-transparent` — **le dégradé est indispensable**, le texte blanc se poserait sinon sur un public photo non contrôlé), `MatchCard3D` (carte de prédiction, illustration masquée en radial via `mask-image` car le fond est opaque : une image opaque ne peut pas « flotter », hover scaling + glow néon sous `motion-safe:`), `HandballArtEmpty` (état d'attente Live, `role="status"` + `aria-live="polite"`). Illustrations toujours `aria-hidden` + `pointer-events-none`. `onError` masque le nœud si l'asset manque (bannière sans joueur > icône cassée). **Aucun recadrage** : le ratio source est préservé, `object-position` cadre |
+| handball-art | handball-art.ts (lib) | Manifeste des illustrations — **source unique des chemins**, aucun composant ne référence un fichier en dur. `HandballArt` (slug / alt décrivant le **sujet** / ratio 16:9 / point de cadrage), `HANDBALL_ART_{RED,BLUE}`, `handballArtSrc(art, size)` (banner 1600 / card 800 / badge 256). Pas de `srcSet` ici : `next/image` le construit depuis `sizes` |
+| handball-goals-calibration | handball-goals-calibration.ts (lib) | **Calibration de ν sur données réelles** : 35 matchs VITIBET RÉELS (5 ligues) + σ observées. `CALIBRATED_NU = 1.0` (σ empirique 7.25 vs 4.53 au ν=1.3 historique → ν=1.3 **écarté**). `observedPooledSigma()` moyenne les **variances** intra-ligue (moyennes de ligue différentes : confondrait dispersion inter/intra). `totalProbabilityOver()` délègue à `overUnderProb` |
+| handball-optimal-thresholds | handball-optimal-thresholds.ts (lib) | `calculateOptimalOverGoals()` / `calculateOptimalUnderGoals(home, away, minProb=0.65)` : seuil trouvé par **optimisation**, pas en dur — on part du total attendu et on remonte (Over) / monte (Under) demi-ligne par demi-ligne jusqu'à P ≥ minProb, première ligne trouvée = la plus prudente. Utilise l'attaque ET la défense des 2 équipes + ν calibré. Plafond 95 % (quasi-certitude = défaut de ligne). Cote < 1.15 → `qualifies: false` + motif. `pickOptimalTotalGoal()` arbitre Over/Under avec repli d'un côté à l'autre |
+| handball-top10 | handball-top10.ts (lib) | Type `TopMatchStrategy` (**`dateTime` en ISO COMPLET** — le formatage dépend de la locale, il ne doit jamais être figé dans la donnée) · `countryFlag()` (code ISO → emoji régional, null si invalide) · `formatTop10DateTime()` (« Aujourd'hui » / « Demain » / `JJ/MM \| HH:MM`, null si illisible) · `buildTopMatchStrategy()` (Over → Under → repli 1N2, jamais de pari forcé) · `buildTop10()` (rangs 1..n triés par proba, écarte les lignes sans stratégie) |
+| handball-cmp | handball-cmp.ts (lib) | Moteur CMP totaux : fitCMP (MLE Newton-Raphson), cmpPmf, teamStrength (s_a/s_d Felice SEL), overUnderProb (grille adaptative), **cmpLambdaForMean** (inversion taux→moyenne : la PMF `P(k) ∝ λ^k/(k!)^ν` n'est PAS moyen-paramétrée, ν=1 seul cas où λ=moyenne ; sans elle les replis de fitCMP centraient la distribution à ~13 buts au lieu de ~30 et tous les Over/Under sortaient à 0.0 %) |
 | vitibet-over | vitibet/over.ts (lib) | Pill « Over XX pts conseillé » Top 10 Vitibet : loi normale (erf A&S 7.1.26) sur total prédit ± σ empirique des erreurs (db scoreErrorSigma, n ≥ 30) — ligne x.5 la plus haute avec P ≥ 65 %, sinon null (jamais de pill fabriquée) — test `__tests__/vitibet-over.test.ts` |
 | handball-skellam | handball-skellam.ts (lib) | Moteur Skellam handicap : skellamPmf (Bessel I_k), handicapProb, skellamMatchProbs 1X2 |
 | handball-clv | handball-clv.ts (lib) | Devig proportionnel + Shin optionnel, CLV (p_model−p_implied)/p_implied, seuils edge 1,5 % / n≥30 |
@@ -312,7 +329,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | site-header | site-header.tsx | Orchestrateur principal headbar 2 niveaux (logo + search + actions + sport tabs) |
 | auto-hide-header | auto-hide-header.tsx | Header sticky + auto-hide au scroll descendant (framer-motion) |
 | sport-tabs | sport-tabs.tsx | Niveau 2 — 12 onglets sport + badges live temps réel |
-| sport-sub-tabs | sport-sub-tabs.tsx | Niveau 2.5 — sous-onglets du sport actif (basketball : Matchs/Calendrier/H2H/FIBA), charte Flashscore, état store `sportSubTabs` ; null si sport sans config |
+| sport-sub-tabs | sport-sub-tabs.tsx | Niveau 2.5 — sous-onglets du sport actif (football : Calendrier/Top stratégies/Back Testing/Résultats ; basketball : Matchs/Calendrier/H2H/FIBA), charte Flashscore, état store `sportSubTabs` ; null si sport sans config |
 | search-modal | search-modal.tsx | Modale recherche Ctrl+K (API /api/v1/search, autocomplete, keyboard nav) |
 | notifications-dropdown | notifications-dropdown.tsx | Dropdown notifications (push, email, value bets, digest) |
 | user-menu | user-menu.tsx | Menu utilisateur popover (NextAuth session, thème, langue, login/logout) |
@@ -372,7 +389,7 @@ shadcn component is missing, add it via `bunx shadcn@latest add <name>`.
 
 ---
 
-## Bet Manager (`src/components/bet-manager/`) — 9 components
+## Bet Manager (`src/components/bet-manager/`) — 10 components
 
 Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, données Prisma `Bankroll`/`Bet`/`BetLeg`).
 
@@ -387,6 +404,7 @@ Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, don
 | bankroll-form | bankroll-form.tsx | Formulaire de création de bankroll (dialog) |
 | csv-import | csv-import.tsx | Import CSV de paris (fichier ou copier-coller, aperçu avant import) |
 | calculators-grid | calculators-grid.tsx | Grille des 17 calculateurs (Kelly, EV, arbitrage, Monte Carlo, plan de mise…) |
+| montante-table | montante-table.tsx | Montante palier par palier : mise, cote requise, gain visé par pari, table d'arbitrage risque/gain, badges de faisabilité + courbe SVG du total |
 
 ---
 

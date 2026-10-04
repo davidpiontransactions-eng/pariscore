@@ -76,6 +76,14 @@ type TeamForm = {
   losses: number;
   htLeads: number;
   htTrails: number;
+  /**
+   * Lieu du iᵉ match : true = à DOMICILE, false = à l'extérieur.
+   * Aligné index pour index avec `gf`/`ga` (mêmes longueur et ordre).
+   * Consommé par la Forme Calculée pondérée (handball-pariscore) : une
+   * victoire à l'extérieur vaut moins qu'à domicile. Ajout 2026-10-04 —
+   * champ additif, aucun consommateur existant n'est impacté.
+   */
+  atHome: boolean[];
 };
 
 type FormStore = Map<string, TeamForm>;
@@ -93,11 +101,22 @@ export type HandballTeamForm = TeamForm;
  */
 export function applyMatchToFormStore(store: FormStore, m: HandballMatch): void {
   if (!m.score) return;
-  const upsert = (id: string, gf: number, ga: number, htGf?: number, htGa?: number) => {
-    if (!store.has(id)) store.set(id, { gf: [], ga: [], wins: 0, draws: 0, losses: 0, htLeads: 0, htTrails: 0 });
+  const upsert = (
+    id: string,
+    gf: number,
+    ga: number,
+    htGf?: number,
+    htGa?: number,
+    atHome?: boolean,
+  ) => {
+    if (!store.has(id)) {
+      store.set(id, { gf: [], ga: [], wins: 0, draws: 0, losses: 0, htLeads: 0, htTrails: 0, atHome: [] });
+    }
     const f = store.get(id)!;
     f.gf.push(gf);
     f.ga.push(ga);
+    // Lieu inconnu (séries SQLite) → pas de pondération terrain (neutre 1.0).
+    if (atHome != null) f.atHome.push(atHome);
     if (gf > ga) f.wins++;
     else if (gf === ga) f.draws++;
     else f.losses++;
@@ -106,8 +125,8 @@ export function applyMatchToFormStore(store: FormStore, m: HandballMatch): void 
       else if (htGf < htGa) f.htTrails++;
     }
   };
-  upsert(String(m.home.id), m.score.home, m.score.away, m.score.homeHalf, m.score.awayHalf);
-  upsert(String(m.away.id), m.score.away, m.score.home, m.score.awayHalf, m.score.homeHalf);
+  upsert(String(m.home.id), m.score.home, m.score.away, m.score.homeHalf, m.score.awayHalf, true);
+  upsert(String(m.away.id), m.score.away, m.score.home, m.score.awayHalf, m.score.homeHalf, false);
 }
 
 /** Construit le store de forme depuis les matchs terminés */
@@ -124,6 +143,8 @@ export function buildFormStore(finished: HandballMatch[]): FormStore {
  * (8 jours) : clubs de coupe ou hors championnat, aucun match terminé dans
  * `finished` → forme/moyennes/lambdas CMP alimentés par SQLite à la place.
  * htLeads/htTrails = 0 (pas de données mi-temps dans les séries brutes).
+ * atHome = [] (lieu inconnu → la Forme Calculée n'applique pas la pondération
+ * terrain, cf. computeFormPctWeighted).
  */
 export function teamFormFromSeries(gf: number[], ga: number[]): HandballTeamForm | null {
   const n = Math.min(gf.length, ga.length);
@@ -138,7 +159,7 @@ export function teamFormFromSeries(gf: number[], ga: number[]): HandballTeamForm
     else if (goalsFor[i] === goalsAgainst[i]) draws++;
     else losses++;
   }
-  return { gf: goalsFor, ga: goalsAgainst, wins, draws, losses, htLeads: 0, htTrails: 0 };
+  return { gf: goalsFor, ga: goalsAgainst, wins, draws, losses, htLeads: 0, htTrails: 0, atHome: [] };
 }
 
 /** Moyenne des N dernières valeurs */

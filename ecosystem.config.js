@@ -17,10 +17,11 @@
  *   12. `pariscore-cron-top5-backtest`: settle + snapshot quotidien du backtest Top 5 foot (05:15 UTC)
  *   13. `pariscore-cron-hbl-players` : snapshot joueurs HBL handball (05:10 UTC)
  *   14. `pariscore-cron-lnh`         : snapshot LNH StarLigue (calendrier + stats, 21:30 UTC)
- *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (lundi 04:20 UTC)
+ *   15. `pariscore-cron-handball-history`: historique handball → pariscore.db (quotidien 23:00 UTC = 00:00 Paris)
  *   16. `pariscore-cron-handball-photos`: photos joueurs handball (Wikipedia) (lundi 04:45 UTC)
  *   17. `pariscore-cron-handball-matrix`: matrice backtest 8 marchés × ligues (lundi 04:40 UTC)
  *   18. `pariscore-cron-hbl-stats`   : stats équipes + classement Bundesliga 1 & 2 (lundi + jeudi 05:00 UTC)
+ *   19. `pariscore-cron-handball-hero-photo`: photo hero = meilleur buteur StarLigue (lundi 06:30 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -398,7 +399,13 @@ module.exports = {
       name: 'pariscore-cron-flashscore-handball',
       script: 'scripts/scrape-flashscore-handball.js',
       cwd: '/home/ubuntu/pariscore',
-      cron_restart: '0 23 * * *', // quotidien 00:00 heure de Paris (23:00 UTC = 00:00 CET hiver, 01:00 CEST été)
+      // Fix 2026-10-04 : quotidien → toutes les 4 h. Le sous-onglet « Résultats »
+      // (fenêtre glissante 7 j) et le « Backtesting » en dépendent : un run
+      // quotidien laisse des matchs terminés invisibles jusqu'au lendemain, et
+      // le rythme Handball (matchs du soir 19h-20h) rend un passage en cours de
+      // journée nécessaire. `0 */4 * * *` = 00h / 04h / 08h / 12h / 16h / 20h UTC
+      // (soit 02h / 06h / 10h / 14h / 18h / 22h heure de Paris).
+      cron_restart: '0 */4 * * *',
       autorestart: false,         // cron-only, meurt après exécution
       instances: 1,
       exec_mode: 'fork',
@@ -462,6 +469,30 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron photo HERO handball (meilleur buteur StarLigue de la semaine) ===
+      // scripts/refresh-handball-hero-photo.mjs : lit data/lnh_players.json
+      // (top buteur StarLigue) → cherche une photo LIBRE (snapshot Wikipedia
+      // déjà curaté → Commons joueur → Commons CLUB en dernier repli) →
+      // public/images/handball/hero-top-scorer.jpg + manifest (licence +
+      // attribution). Repli garanti : rien de libre → image conservée.
+      // Cadence hebdo demandée : lundi 06:30 UTC (décalé des crons 04:2x).
+      name: 'pariscore-cron-handball-hero-photo',
+      script: 'scripts/refresh-handball-hero-photo.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 6 * * 1', // lundi 06:30 UTC — hebdomadaire
+      autorestart: false,          // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-handball-hero-photo.err.log',
+      out_file: 'logs/cron-handball-hero-photo.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job snapshot LNH (StarLigue — calendrier + stats) ===
       // Scrape lnh.fr via POST /ajaxpost1 (4 surfaces : stats joueurs +
       // gardiens, calendrier, classement, stats clubs) → data/lnh_players.json,
@@ -495,14 +526,21 @@ module.exports = {
       // dom/ext, PPG, 2 meilleurs buteurs avec P(≥2/3/4/5)).
       // Sources : BetExplorer results (archives illimitées, toutes ligues) +
       // feeds Flashscore (fenêtre 8 j) + snapshots locaux.
-      // CADENCE HEBDO MINIMALE : les archives results sont illimitées (aucun
-      // run perdu), mais les feeds Flashscore ne gardent que 8 jours — une
-      // cadence plus espacée que 7 j perdrait la couverture flashscore.
+      // CADENCE QUOTIDIENNE (fix 2026-10-04) : le but est qu'un résultat de la
+      // veille soit en base dès 00:00, pour l'onglet Résultats ET pour le seuil
+      // de total du Top 10 (qui exige ≥ 3 matchs terminés par équipe). La
+      // cadence hebdomadaire laissait un trou de 6 jours — même cause que le
+      // blocage du 28/09.
+      //
+      // SOURCE : pages de SAISON BetExplorer (`/{ligue}-{saison}/results/`),
+      // seul mode d'accès autorisé — robots.txt interdit `?year=` / `?month=`
+      // (vérifié 2026-10-04). `--seasons=2` = 2 saisons par ligue (~27 requêtes).
+      // Backfill initial : `--seasons=2` une fois, puis le cron quotidien.
       name: 'pariscore-cron-handball-history',
       script: '/home/ubuntu/.bun/bin/bun',
-      args: 'scripts/scrape-handball-history.mjs --days=10',
+      args: 'scripts/scrape-handball-history.mjs --seasons=2',
       cwd: '/home/ubuntu/pariscore',
-      cron_restart: '20 4 * * 1', // lundi 04:20 UTC — hebdomadaire
+      cron_restart: '0 23 * * *', // 23:00 UTC = 00:00/01:00 heure de Paris
       autorestart: false,         // cron-only, meurt après exécution
       instances: 1,
       exec_mode: 'fork',

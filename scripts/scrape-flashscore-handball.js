@@ -21,11 +21,11 @@
  *   score = "visiteur-visiteur" (A-A) et MT = "local-local".
  *
  * Usage :
- *   node scripts/scrape-flashscore-handball.js              # J+0..J+7
- *   node scripts/scrape-flashscore-handball.js --days=3     # J+0..J+3
+ *   node scripts/scrape-flashscore-handball.js              # J-7..J+7
+ *   node scripts/scrape-flashscore-handball.js --days=3     # J-7..J+3
  *   node scripts/scrape-flashscore-handball.js --dry-run    # parse sans écrire
  *
- * Cron VPS : pm2 `pariscore-cron-flashscore-handball`, quotidien 06:30 UTC.
+ * Cron VPS : pm2 `pariscore-cron-flashscore-handball`, toutes les 4 h.
  */
 
 const fs = require('fs');
@@ -40,9 +40,76 @@ const XSIGN = process.env.FLASH_XFSIGN || 'SW9D1eZo';
 const HTTP_TIMEOUT_MS = 25000;
 const DELAY_MS = 800;
 const MAX_DAYS = 7;
+/**
+ * Profondeur d'historique récupérée EN PLUS de la fenêtre à venir.
+ *
+ * ⚠️ Fix 2026-10-04 — cause racine de l'onglet « Résultats » figé : le script ne
+ * récupérait que J-1 et J+0..J+N, puis ÉCRASSAIT le fichier. Un match
+ * « à venir » au run de J-2 était donc SUPPRIMÉ au run de J-1 avant d'avoir
+ * jamais reçu son score final : le snapshot ne pouvait structurellement
+ * contenir des scores que pour J-1 et J+0. La fenêtre glissante de 7 jours ne
+ * pouvait donc jamais être remplie par ce fichier, et son unique source de
+ * profondeur (handball_match_history, cron HEBDOMADAIRE) laissait un trou de
+ * 6 jours. Deux changements : on remonte jusqu'à J-7, et on fusionne au lieu
+ * d'écraser (voir mergeSnapshots).
+ */
+const HISTORY_DAYS = 7;
 const RETRIES = 2;
 
 const SCRIPT_DIR = path.dirname(__filename);
+
+/**
+ * Vrai si le match porte un SCORE FINAL exploitable (« 32:28 »).
+ * Un match « à venir » a `score` vide ou non numérique → false.
+ */
+function hasFinalScore(m) {
+  return typeof m?.score === 'string' && /^\d{1,3}\s*:\s*\d{1,3}$/.test(m.score.trim());
+}
+
+/**
+ * Fusionne un snapshot précédent avec le snapshot frais.
+ *
+ * Règle : à clé identique (`home|away|time`), on PRÉFÈRE l'entrée qui porte un
+ * score final. C'est ce qui empêche la perte d'un score déjà acquis quand le
+ * feed rejoue un jour en « à venir », et ce qui rend la fenêtre de 7 jours
+ * réellement remplissable.
+ *
+ * L'ordre de sortie est : entrées fraîches (dans leur ordre), puis entrées
+ * previous orphelines (absentes du frais). Stable et déterministe.
+ */
+function mergeSnapshots(previous, fresh) {
+  const keyOf = (m) => `${m.home}|${m.away}|${m.time}`;
+  const out = [];
+  const index = new Map();
+  for (const m of previous || []) {
+    const k = keyOf(m);
+    index.set(k, out.length);
+    out.push(m);
+  }
+  for (const m of fresh || []) {
+    const k = keyOf(m);
+    const at = index.get(k);
+    if (at === undefined) {
+      index.set(k, out.length);
+      out.push(m);
+      continue;
+    }
+    // Remplace seulement si le frais apporte un score et l'ancien n'en a pas.
+    if (hasFinalScore(m) && !hasFinalScore(out[at])) out[at] = m;
+  }
+  return out;
+}
+
+/** Lit le snapshot précédent sans le faire tomber (fichier absent/corrompu → []). */
+function readPrevious(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return [];
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    return Array.isArray(raw?.matches) ? raw.matches : [];
+  } catch {
+    return [];
+  }
+}
 const REPO_DIR = path.dirname(SCRIPT_DIR);
 const DEFAULT_OUT = path.join(REPO_DIR, 'data', 'flashscore_handball.json');
 
@@ -310,6 +377,31 @@ async function main() {
     }
   }
 
+  // Historique J-7..J-2 : ALORS SEULEMENT les matchs qui ont un score final.
+  // Filtre sur le score, sinon on réintroduirait des « à venir » déjà couverts
+  // par la boucle J+0..J+N et on gonflerait le fichier sans gain.
+  for (let back = 2; back <= HISTORY_DAYS; back++) {
+    await sleep(DELAY_MS);
+    let body = '';
+    try {
+      body = await fetchFeed(`${FEED_BASE}/f_${SPORT_HANDBALL}_-${back}_1_en_1`);
+    } catch (err) {
+      console.error(`[flashscore-handball] J-${back} KO: ${err.message}`);
+      continue;
+    }
+    const parsed = parseDay(body);
+    let added = 0;
+    for (const m of parsed) {
+      if (!hasFinalScore(m)) continue;
+      const key = `${m.home}|${m.away}|${m.time}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      all.push(m);
+      added += 1;
+    }
+    console.log(`[flashscore-handball] J-${back}: ${parsed.length} matchs (${added} termines ajoutes)`);
+  }
+
   console.log(`[flashscore-handball] total: ${all.length} matchs`);
 
   if (dryRun) {
@@ -317,18 +409,43 @@ async function main() {
     return;
   }
 
+  // ── Fusion avec l'existant (ne JAMAIS ecraser un historique valide) ──
+  const previous = readPrevious(outPath);
+  const merged = mergeSnapshots(previous, all);
+  console.log(
+    `[flashscore-handball] fusion: ${previous.length} precedent(s) + ${all.length} frais -> ${merged.length}`,
+  );
+
+  const freshFinished = all.filter(hasFinalScore).length;
+  const mergedFinished = merged.filter(hasFinalScore).length;
+  // Garde-fou : si le run frais n'a rapporte AUCUN score final (WAF, 403,
+  // coupure reseau) alors que le fichier precedent en contenait, on ne remplace
+  // pas un historique valide par un quasi-vide. Sans ce garde, un run en echec
+  // effacait 6 jours de resultats — le mode de panne observe le 28/09.
+  if (previous.length > 0 && freshFinished === 0 && previous.some(hasFinalScore)) {
+    console.error(
+      `[flashscore-handball] ARRET : run sans aucun score final (0/${all.length}) alors que le ` +
+        `fichier precedent en contient — ecriture ANNULEE, historique conserve`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+  console.log(
+    `[flashscore-handball] scores finaux : ${freshFinished} frais, ${mergedFinished} apres fusion`,
+  );
+
   const output = {
     scraped_at: new Date().toISOString(),
     source: 'flashscore',
     sport: 'handball',
     live_only: false,
-    total: all.length,
-    matches: all,
+    total: merged.length,
+    matches: merged,
   };
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(output, null, 2), 'utf-8');
-  console.log(`[flashscore-handball] \u2705 ${output.total} matchs -> ${outPath}`);
+  console.log(`[flashscore-handball] ✅ ${output.total} matchs -> ${outPath}`);
 }
 
 if (require.main === module) {
@@ -338,4 +455,10 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseDay, fetchFeed };
+module.exports = {
+  parseDay,
+  fetchFeed,
+  hasFinalScore,
+  mergeSnapshots,
+  readPrevious,
+};

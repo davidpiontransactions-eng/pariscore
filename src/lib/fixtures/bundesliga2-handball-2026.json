@@ -1,0 +1,239 @@
+{
+  "_meta": {
+    "label": "Handball 2. Bundesliga (Allemagne) — fixture de test Pariscore",
+    "source": "https://www.vitibet.com/handball/tips/2-bundesliga/germany/43/",
+    "vitibetLeagueId": 43,
+    "sport": "handball",
+    "saison": "2026",
+    "scrapedAt": "2026-10-04",
+    "avertissements": [
+      "standings et fixtures : données REELLES lues sur la page Vitibet (leagueId 43).",
+      "formSeries : SÉRIES RECONSTITUÉES à partir des agrégats réels GF:GA du classement, pour exercer les 3 métriques Pariscore sur une fenêtre L10. Ce ne sont PAS les 10 derniers matchs réels de chaque club.",
+      "scoresVitisport : scores PRÉDITS par Vitibet (colonne « 32:28 » de la page), pas des résultats réels."
+    ]
+  },
+  "standings": [
+    {
+      "rank": 1,
+      "team": "Hagen",
+      "apiSportsId": 340,
+      "played": 6,
+      "wins": 5,
+      "draws": 0,
+      "losses": 1,
+      "goalsFor": 204,
+      "goalsAgainst": 164,
+      "points": 10
+    },
+    {
+      "rank": 2,
+      "team": "Potsdam",
+      "apiSportsId": 347,
+      "played": 5,
+      "wins": 5,
+      "draws": 0,
+      "losses": 0,
+      "goalsFor": 150,
+      "goalsAgainst": 137,
+      "points": 10
+    },
+    {
+      "rank": 3,
+      "team": "Leipzig",
+      "apiSportsId": 322,
+      "played": 6,
+      "wins": 5,
+      "draws": 0,
+      "losses": 1,
+      "goalsFor": 188,
+      "goalsAgainst": 177,
+      "points": 10
+    },
+    {
+      "rank": 4,
+      "team": "Elbflorenz",
+      "apiSportsId": 336,
+      "played": 5,
+      "wins": 4,
+      "draws": 0,
+      "losses": 1,
+      "goalsFor": 195,
+      "goalsAgainst": 153,
+      "points": 8
+    },
+    {
+      "rank": 5,
+      "team": "Lubeck-Schwartau",
+      "apiSportsId": 343,
+      "played": 5,
+      "wins": 4,
+      "draws": 0,
+      "losses": 1,
+      "goalsFor": 172,
+      "goalsAgainst": 144,
+      "points": 8
+    },
+    {
+      "rank": 6,
+      "team": "Nordhorn-Lingen",
+      "apiSportsId": 371,
+      "played": 6,
+      "wins": 3,
+      "draws": 1,
+      "losses": 2,
+      "goalsFor": 184,
+      "goalsAgainst": 177,
+      "points": 7
+    },
+    {
+      "rank": 7,
+      "team": "Ferndorf",
+      "apiSportsId": 337,
+      "played": 5,
+      "wins": 3,
+      "draws": 0,
+      "losses": 2,
+      "goalsFor": 156,
+      "goalsAgainst": 142,
+      "points": 6
+    }
+  ],
+  "fixtures": [
+    {
+      "fixtureId": 195259,
+      "date": "2026-10-04",
+      "time": "17:00",
+      "home": "Minden",
+      "away": "Dessauer",
+      "homeId": 325,
+      "awayId": 367,
+      "vitibetPredictedHome": 32,
+      "vitibetPredictedAway": 28
+    },
+    {
+      "fixtureId": 195260,
+      "date": "2026-10-04",
+      "time": "17:00",
+      "home": "Lubeck-Schwartau",
+      "away": "Hamm-Westfalen",
+      "homeId": 343,
+      "awayId": 341,
+      "vitibetPredictedHome": 37,
+      "vitibetPredictedAway": 23
+    },
+    {
+      "fixtureId": 195263,
+      "date": "2026-10-04",
+      "time": "17:00",
+      "home": "Elbflorenz",
+      "away": "Huttenberg",
+      "homeId": 336,
+      "awayId": 342,
+      "vitibetPredictedHome": 37,
+      "vitibetPredictedAway": 31
+    },
+    {
+      "fixtureId": 195256,
+      "date": "2026-10-05",
+      "time": "19:30",
+      "home": "Potsdam",
+      "away": "Ferndorf",
+      "homeId": 347,
+      "awayId": 337,
+      "vitibetPredictedHome": 30,
+      "vitibetPredictedAway": 29
+    },
+    {
+      "fixtureId": 195266,
+      "date": "2026-10-08",
+      "time": "19:30",
+      "home": "Leipzig",
+      "away": "N-Lubbecke",
+      "homeId": 322,
+      "awayId": 326,
+      "vitibetPredictedHome": 33,
+      "vitibetPredictedAway": 27
+    },
+    {
+      "fixtureId": 195271,
+      "date": "2026-10-10",
+      "time": "19:30",
+      "home": "Emsdetten",
+      "away": "Nordhorn-Lingen",
+      "homeId": 368,
+      "awayId": 371,
+      "vitibetPredictedHome": 32,
+      "vitibetPredictedAway": 30
+    },
+    {
+      "fixtureId": 195274,
+      "date": "2026-10-17",
+      "time": "19:30",
+      "home": "Dormagen",
+      "away": "Coburg 2000",
+      "homeId": 334,
+      "awayId": 366,
+      "vitibetPredictedHome": 30,
+      "vitibetPredictedAway": 30
+    },
+    {
+      "fixtureId": 195287,
+      "date": "2026-10-26",
+      "time": "19:30",
+      "home": "Hagen",
+      "away": "Grosswallstadt",
+      "homeId": 340,
+      "awayId": 338,
+      "vitibetPredictedHome": 35,
+      "vitibetPredictedAway": 26
+    },
+    {
+      "fixtureId": 195303,
+      "date": "2026-11-14",
+      "time": "18:00",
+      "home": "Ludwigshafen",
+      "away": "Essen",
+      "homeId": 370,
+      "awayId": 369,
+      "vitibetPredictedHome": 32,
+      "vitibetPredictedAway": 27
+    }
+  ],
+  "formSeries": {
+    "_comment": "Séries L5 reconstituées (voir _meta.avertissements). gf = buts marqués, ga = buts encaissés, du plus ancien au plus récent.",
+    "Hagen": {
+      "gf": [31, 34, 30, 36, 39, 34],
+      "ga": [28, 27, 31, 24, 26, 28]
+    },
+    "Potsdam": {
+      "gf": [31, 28, 32, 30, 29],
+      "ga": [26, 29, 27, 28, 27]
+    },
+    "Leipzig": {
+      "gf": [30, 29, 33, 31, 32, 33],
+      "ga": [31, 30, 28, 29, 30, 29]
+    },
+    "Elbflorenz": {
+      "gf": [40, 38, 42, 36, 39],
+      "ga": [29, 31, 30, 33, 30]
+    },
+    "Lubeck-Schwartau": {
+      "gf": [35, 33, 36, 32, 36],
+      "ga": [27, 30, 28, 31, 28]
+    },
+    "Nordhorn-Lingen": {
+      "gf": [32, 30, 28, 33, 31, 30],
+      "ga": [30, 29, 32, 28, 31, 27]
+    },
+    "Ferndorf": {
+      "gf": [33, 30, 29, 32, 32],
+      "ga": [29, 31, 30, 27, 25]
+    }
+  },
+  "oddsSimulees": {
+    "_comment": "Cotes 1xbet moyennes utilisées par le backtest projet (handball-backtest.ts). Aucune cote réelle 2. Bundesliga n'est stockée : ces valeurs servent UNIQUEMENT à valider le chemin « cote ≥ 1.15 » du seuil de total.",
+    "over55": 1.9,
+    "under62": 1.85,
+    "homeWin": 1.55
+  }
+}

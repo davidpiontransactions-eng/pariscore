@@ -7,7 +7,15 @@
 // Grille adaptative (plancher 17, cf. plan 17×17) : les lignes handball
 // (55.5/62.5) exigent i,j jusqu'à ~63 — grille fixe 17×17 inutilisable.
 
-/** λ neutre (buts/équipe/match handball ~57/2) quand l'historique manque. */
+/**
+ * λ neutre quand l'historique manque : **une MOYENNE** de buts par équipe et
+ * par match (28.5 = 57 / 2), pas un taux CMP.
+ *
+ * Contrat established : les appelants du prior neutre DOIVENT l'utiliser avec
+ * ν = 1, seul cas où λ = moyenne (cf. resolveLambdas de
+ * handball-predictive-bets.ts, qui pose nuH/nuE = 1). Si ton chemin calcule
+ * avec ν ≠ 1, convertis d'abord : cmpLambdaForMean(CMP_NEUTRAL_LAMBDA, ν).
+ */
 export const CMP_NEUTRAL_LAMBDA = 28.5;
 /** ν par défaut (sous-dispersion handball, miroir CMP_NU stratégie-top8). */
 export const CMP_DEFAULT_NU = 1.3;
@@ -111,6 +119,46 @@ export function cmpMean(lambda: number, nu: number): number {
 }
 
 /**
+ * λ tel que E[X](λ, ν) = `mean` (inversion numérique, bisection 30 pas).
+ *
+ * ⚠️ Pourquoi cette fonction existe — la PMF ci-dessus est
+ * `P(k) ∝ λ^k / (k!)^ν`, qui N'EST PAS moyen-paramétrée : λ n'est pas la
+ * moyenne. Mesures relevées (cmpMean) :
+ *   ν=1.0  → E[X](28.0, ν) = 28.00   (Poisson, λ = moyenne)
+ *   ν=1.3  → E[X](30.0, ν) = 13.57   (−55 % !)
+ *   ν=1.3  → E[X](28.0, ν) = 12.86
+ * ν=1 est le SEUL cas où λ se lit comme une moyenne.
+ *
+ * Conséquence : tout chemin qui veut *une moyenne* doit passer par cette
+ * inversion, pas par `lambda: mean`. C'était le bug des replis de `fitCMP`
+ * (n < CMP_MIN_HISTORY, poids nuls, NaN) : ils renvoyaient λ = moyenne, d'où
+ * une distribution centrée à ~13 au lieu de ~30, et des probabilités
+ * Over/Under qui s'effondraient à 0 % sur toutes les lignes de ligue.
+ */
+const LAMBDA_FOR_MEAN_CACHE = new Map<string, number>();
+
+export function cmpLambdaForMean(mean: number, nu = CMP_DEFAULT_NU): number {
+  const target = Math.max(mean, 1e-6);
+  if (nu === 1) return target;
+  const key = `${target.toPrecision(12)}|${nu.toPrecision(12)}`;
+  const hit = LAMBDA_FOR_MEAN_CACHE.get(key);
+  if (hit !== undefined) return hit;
+  // E[X](·, ν) est strictement croissante en λ : on encadre par doublement
+  // (indépendant de la paramétrisation), puis bisection.
+  let lo = 1e-6;
+  let hi = Math.max(2 * target, 10);
+  for (let i = 0; i < 40 && cmpMean(hi, nu) < target; i++) hi *= 2;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (cmpMean(mid, nu) < target) lo = mid;
+    else hi = mid;
+  }
+  const out = (lo + hi) / 2;
+  if (LAMBDA_FOR_MEAN_CACHE.size < 100_000) LAMBDA_FOR_MEAN_CACHE.set(key, out);
+  return out;
+}
+
+/**
  * Fit CMP par MLE (Newton-Raphson maison sur les équations de score) :
  *   E_θ[X] = moyenne pondérée, E_θ[ln(X!)] = moyenne pondérée des ln(x!).
  * Espace (ln λ, ln ν) = positivité garantie. Repli moyenne/ν=1.3 si échec.
@@ -130,7 +178,15 @@ export function fitCMP(goals: number[], weights?: number[]): CmpFit {
     if (hit) return hit;
   }
   const n = xs.length;
-  if (n === 0) return { lambda: CMP_NEUTRAL_LAMBDA, nu: CMP_DEFAULT_NU, n: 0, converged: false };
+  // Repli « aucune donnée » : ν = CMP_DEFAULT_NU impose de passer par
+  // cmpLambdaForMean, sinon E[X] = 12.9 au lieu des 28.5 buts attendus.
+  const NEUTRAL_FIT = (): CmpFit => ({
+    lambda: cmpLambdaForMean(CMP_NEUTRAL_LAMBDA, CMP_DEFAULT_NU),
+    nu: CMP_DEFAULT_NU,
+    n: 0,
+    converged: false,
+  });
+  if (n === 0) return { ...NEUTRAL_FIT(), n: 0 };
   const w = weights && weights.length === n ? weights : defaultWeights(n);
   let wSum = 0;
   let mean = 0;
@@ -140,14 +196,23 @@ export function fitCMP(goals: number[], weights?: number[]): CmpFit {
     mean += w[i] * xs[i];
     meanLf += w[i] * logFact(Math.round(xs[i]));
   }
-  if (wSum <= 0) return { lambda: CMP_NEUTRAL_LAMBDA, nu: CMP_DEFAULT_NU, n, converged: false };
+  if (wSum <= 0) return { ...NEUTRAL_FIT(), n };
   mean /= wSum;
   meanLf /= wSum;
   if (n < CMP_MIN_HISTORY || mean <= 0) {
-    return { lambda: Math.max(mean, 0.05), nu: CMP_DEFAULT_NU, n, converged: false };
+    // Repli moyenne pondérée : λ doit passer par cmpLambdaForMean, sinon la
+    // distribution est centrée à ρ(ν)·moyenne ≈ 0.86 × moyenne (ν = 1.3).
+    return {
+      lambda: cmpLambdaForMean(Math.max(mean, 0.05), CMP_DEFAULT_NU),
+      nu: CMP_DEFAULT_NU,
+      n,
+      converged: false,
+    };
   }
 
-  // Newton 2D en (a=lnλ, b=lnν)
+  // Newton 2D en (a=lnλ, b=lnν). Le système (E[X], E[ln X!]) se résout pour
+  // (λ, ν) tels que E[X] = moyenne observée : c'est pourquoi λ sort ~1.2× la
+  // moyenne quand ν > 1 (cf. cmpLambdaForMean) — c'est correct, pas une dérive.
   // ν borné [0.5, 3] : le système (moyenne, E[ln X!]) est en ridge pour
   // grands λ — sans borne, le bruit d'échantillonnage (5–10 matchs en prod)
   // projette ν vers des extrêmes ; λ suit la moyenne (moment 1 robuste).
@@ -202,8 +267,16 @@ export function fitCMP(goals: number[], weights?: number[]): CmpFit {
   }
   const lambda = Math.exp(a);
   const nu = Math.exp(b);
-  if (!Number.isFinite(lambda) || !Number.isFinite(nu)) {
-    return { lambda: Math.max(mean, 0.05), nu: CMP_DEFAULT_NU, n, converged: false };
+  // Newton non convergé : le λ final peut être loin de la solution. On repart
+  // sur l'estimateur de moment 1 mean-correcté (voir cmpLambdaForMean) — c'est
+  // le seul garantie de E[X] = moyenne, donc de λs downstream cohérents.
+  if (!converged || !Number.isFinite(lambda) || !Number.isFinite(nu)) {
+    return {
+      lambda: cmpLambdaForMean(Math.max(mean, 0.05), CMP_DEFAULT_NU),
+      nu: CMP_DEFAULT_NU,
+      n,
+      converged: false,
+    };
   }
   const fit: CmpFit = { lambda, nu, n, converged };
   if (cacheKey && FIT_CACHE.size < 100_000) FIT_CACHE.set(cacheKey, fit);

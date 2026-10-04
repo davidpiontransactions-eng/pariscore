@@ -26,6 +26,14 @@ import {
 } from "@/lib/handball-bonus-markets";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
+import { HandballScoreBanner } from "./handball-score-banner";
+import { HandballPredictionCards } from "./handball-prediction-cards";
+import { HandballTeamStatsTable, type HandballClassicStats } from "./handball-team-stats-table";
+import { HandballDanishStats } from "./handball-danish-stats";
+import { computePariscorePrediction } from "@/lib/handball-pariscore";
+import { danishLeagueBaseline, findDanishLeague, findTeamStats } from "@/lib/handball-danish";
+import { molLigaBaseline, findMolLigaLeague, findTeamStats as findMolTeamStats } from "@/lib/handball-mol-liga";
+import { useVitibetTips } from "@/hooks/use-vitibet-tips";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 // Type-only : le module handball-players lit fs.readFileSync (server-only) —
 // le snapshot joueurs est servi par la route /api/handball/players.
@@ -1286,6 +1294,87 @@ export function HandballMatchDetailDialog({
   // Section bonus repliée par défaut (16 chips : pas de surcharge au premier coup d'œil).
   const [bonusOpen, setBonusOpen] = useState(false);
 
+  // Prédiction Pariscore (Index / Forme / Power / score / winrate / seuil de
+  // total) — MÊME form-store que les 3 paris : les λs ne peuvent pas diverger
+  // entre le banner et l'onglet Bets.
+  //
+  // Base de buts de la ligue : les ligues couvertes par Vitibet (3 danoises +
+  // MOL Liga Women) ont des bases très étalées (25.6 → 31.8 buts/équipe).
+  // Comparer une D2 féminine au 28.5 « tous championnats » décalerait tout le
+  // Team Power → on interroge les 2 games de ligues, sinon défaut du modèle.
+  const leagueMean = useMemo(
+    () =>
+      danishLeagueBaseline(match?.league.name ?? "") ??
+      molLigaBaseline(match?.league.name ?? "") ??
+      undefined,
+    [match?.league.name],
+  );
+  const pariscore = useMemo(
+    () =>
+      match
+        ? computePariscorePrediction(match, {
+            formStore: formStore ?? undefined,
+            leagueMean,
+          })
+        : null,
+    [match, formStore, leagueMean],
+  );
+
+  // Stats classiques de saison pour le tableau de l'onglet Analyse. Pour une
+  // ligue couverte (danoise ou MOL Liga) on les tire du classement Vitibet (avec
+  // splits dom./ext.) ; pour les autres ligues on garde l'historique DB
+  // (SplitTable existant).
+  const danishSeasonStats = useMemo(() => {
+    if (!match) return { home: null, away: null };
+    const league = findDanishLeague(match.league.name);
+    if (!league) return { home: null, away: null };
+    return {
+      home: findTeamStats(league, match.home.name),
+      away: findTeamStats(league, match.away.name),
+    };
+  }, [match]);
+
+  const molSeasonStats = useMemo(() => {
+    if (!match) return { home: null, away: null };
+    const league = findMolLigaLeague(match.league.name);
+    if (!league) return { home: null, away: null };
+    return {
+      home: findMolTeamStats(league, match.home.name),
+      away: findMolTeamStats(league, match.away.name),
+    };
+  }, [match]);
+
+  const classicStats = useMemo(() => {
+    const toClassic = (
+      s: NonNullable<typeof danishSeasonStats.home>,
+    ): HandballClassicStats => ({
+      played: s.played,
+      wins: s.wins,
+      draws: s.draws,
+      losses: s.losses,
+      goalsFor: s.goalsFor,
+      goalsAgainst: s.goalsAgainst,
+      points: s.points,
+      home: s.home,
+      away: s.away,
+      scoredAvg: s.scoredAvg,
+      concededAvg: s.concededAvg,
+    });
+    return {
+      home: (danishSeasonStats.home ?? molSeasonStats.home)
+        ? toClassic(danishSeasonStats.home ?? molSeasonStats.home!)
+        : null,
+      away: (danishSeasonStats.away ?? molSeasonStats.away)
+        ? toClassic(danishSeasonStats.away ?? molSeasonStats.away!)
+        : null,
+    };
+  }, [danishSeasonStats, molSeasonStats]);
+
+  // Tip Vitibet du match (badge « TIP » du banner). Même clé SWR que la carte du
+  // calendrier → 0 requête supplémentaire, simple lecture du cache.
+  const { tipFor } = useVitibetTips();
+  const hasTip = useMemo(() => (match ? tipFor(match) != null : false), [match, tipFor]);
+
   // Forme L5 + moyennes de buts des deux équipes (skip propre si absentes).
   const forms = useMemo(() => {
     if (!match || !formStore) return null;
@@ -1499,6 +1588,20 @@ export function HandballMatchDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {/* ══ Score Prédit (banner marine) — AVANT les onglets : première
+            réponse à « quel score ? », disponible même sans tip Vitibet. ══ */}
+        {pariscore && match && (
+          <HandballScoreBanner
+            kickoff={match.kickoff}
+            homeName={match.home.name}
+            awayName={match.away.name}
+            homeShort={match.home.shortName}
+            awayShort={match.away.shortName}
+            prediction={pariscore}
+            hasTip={hasTip}
+          />
+        )}
+
         {/* Score / Équipes (logos + score si joué) */}
         <div className="flex items-center justify-between py-3">
           <div className="text-center flex-1">
@@ -1589,6 +1692,43 @@ export function HandballMatchDetailDialog({
 
           {/* ── Onglet 1 : Analyse (forme, cotes, verdict modèle) ── */}
           <TabsContent value="analyse" className="space-y-3">
+            {/* Cards Prédiction IA — winrate 1N2 + seuil de total.Alimentent
+                les pastilles même quand le tip Vitibet est absent. */}
+            {pariscore && (
+              <HandballPredictionCards
+                prediction={pariscore}
+                odds={match.odds}
+                homeName={match.home.name}
+                awayName={match.away.name}
+              />
+            )}
+
+            {/* Tableau Statistiques d'équipe — lignes Pariscore surlignées
+                en tête, puis stats classiques (splits dom./ext. inclus dès
+                qu'une ligue est couverte par un classement Vitibet). */}
+            {pariscore && (
+              <HandballTeamStatsTable
+                prediction={pariscore}
+                homeName={match.home.name}
+                awayName={match.away.name}
+                homeStats={classicStats.home}
+                awayStats={classicStats.away}
+              />
+            )}
+
+            {/* Bloc saison des ligues danoises : splits D/E par équipe,
+                forme 6 matchs, score prédit Vitibet. Ne rend rien hors
+               usation danoise (pas de doublon avec le tableau ci-dessus). */}
+            {match && (
+              <HandballDanishStats
+                leagueName={match.league.name}
+                homeTeamName={match.home.name}
+                awayTeamName={match.away.name}
+                homeTeamId={match.home.id}
+                awayTeamId={match.away.id}
+              />
+            )}
+
             {hasFormRow && (
               <section className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">

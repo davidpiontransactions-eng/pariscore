@@ -42,6 +42,18 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
     { id: "backtesting", label: "Backtesting" },
     { id: "resultats", label: "Résultats" },
   ],
+  // ⚠️ Les ids doivent rester synchronisés avec le type `HandballMode` de
+  // src/components/handball/handball-tab-content.tsx, qui est le SEUL lecteur
+  // de cette rangée (`useSportsSidebarStore.sportSubTabs.handball`). Sans cette
+  // entrée, `SportSubTabs` sortait en early-return (ligne 63) : le sous-onglet
+  // handball « Backtesting » n'existait nulle part dans la navigation.
+  handball: [
+    { id: "calendrier", label: "Calendrier" },
+    { id: "live", label: "Live" },
+    { id: "backtesting", label: "Backtesting" },
+    { id: "resultats", label: "Résultats" },
+    { id: "top10", label: "Top 10" },
+  ],
 };
 
 /**

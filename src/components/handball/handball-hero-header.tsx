@@ -106,16 +106,20 @@ function CourtLines() {
 
 const SILHOUETTE_SRC = "/images/handball/silhouette-couple.svg";
 const FALLBACK_SRC = "/images/handball/hero-action.jpg";
-/** Photo d'action (match réel) — encart épuré mobile (bead ParisScorebis-q8rl). */
-const MOBILE_PHOTO_SRC = "/images/handball/hero-action.jpg";
-const MOBILE_PHOTO_FALLBACK = SILHOUETTE_SRC;
+/** Photo du MEILLEUR BUTEUR StarLigue de la semaine — cron hebdo
+ *  scripts/refresh-handball-hero-photo.mjs (bead ParisScorebis-8sja) : écrite
+ *  dans public/, licence + attribution portées par images/handball/manifest.json. */
+const TOP_SCORER_SRC = "/images/handball/hero-top-scorer.jpg";
+/** Chaîne de repli : photo de la semaine → photo d'action → silhouette SVG. */
+const photoFallback = (src: string): string =>
+  src === TOP_SCORER_SRC ? FALLBACK_SRC : SILHOUETTE_SRC;
 
 export function HandballHeroHeader({ className }: { className?: string }) {
   const reduceMotion = useReducedMotion() ?? false;
-  // Visuel combo : silhouette SVG en premier, photo hero en repli si erreur
-  const [visualSrc, setVisualSrc] = useState<string>(SILHOUETTE_SRC);
-  // Encart mobile épuré : photo d'action en premier, silhouette en repli
-  const [mobileSrc, setMobileSrc] = useState<string>(MOBILE_PHOTO_SRC);
+  // Visuel desktop : photo du meilleur buteur en premier, replis en cascade
+  const [visualSrc, setVisualSrc] = useState<string>(TOP_SCORER_SRC);
+  // Encart mobile épuré : même photo, replis en cascade
+  const [mobileSrc, setMobileSrc] = useState<string>(TOP_SCORER_SRC);
 
   const containerVariants = useMemo(
     () => ({
@@ -195,8 +199,8 @@ export function HandballHeroHeader({ className }: { className?: string }) {
                 alt="Action de handball — visuel hero"
                 className="h-44 w-full object-cover sm:h-56"
                 onError={() => {
-                  // Repli si la photo est indisponible (évite la boucle onError)
-                  if (mobileSrc !== MOBILE_PHOTO_FALLBACK) setMobileSrc(MOBILE_PHOTO_FALLBACK);
+                  // Repli en cascade (photo semaine → action → silhouette)
+                  if (mobileSrc !== SILHOUETTE_SRC) setMobileSrc(photoFallback(mobileSrc));
                 }}
               />
               <span
@@ -265,15 +269,18 @@ export function HandballHeroHeader({ className }: { className?: string }) {
                   boxShadow: "0 0 48px rgba(0,230,118,0.35), 0 8px 24px rgba(2,136,209,0.2)",
                 }}
               >
-                {/* Balise img locale voulue (asset public statique) */}
+                {/* Balise img locale : photo de la semaine, replis en cascade */}
                 <img
                   src={visualSrc}
-                  alt="Silhouette de joueurs de handball — visuel hero"
-                  className="h-36 w-full object-contain p-3 text-[#00e676] [&_path]:fill-current"
-                  style={{ color: CTA }}
+                  alt="Meilleur buteur StarLigue de la semaine — visuel hero"
+                  className={
+                    visualSrc === SILHOUETTE_SRC
+                      ? "h-36 w-full object-contain p-3 text-[#00e676] [&_path]:fill-current"
+                      : "h-36 w-full object-cover sm:h-44"
+                  }
+                  style={visualSrc === SILHOUETTE_SRC ? { color: CTA } : undefined}
                   onError={() => {
-                    // Repli photo si le SVG est indisponible (évite la boucle)
-                    if (visualSrc !== FALLBACK_SRC) setVisualSrc(FALLBACK_SRC);
+                    if (visualSrc !== SILHOUETTE_SRC) setVisualSrc(photoFallback(visualSrc));
                   }}
                 />
                 <span

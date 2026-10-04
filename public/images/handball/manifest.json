@@ -82,5 +82,23 @@
       "alt_fr": "Illustration flat d'un joueur de handball qui tire",
       "http_verifie": "ok"
     }
+  ],
+  "assets": [
+    {
+      "file": "hero-top-scorer.jpg",
+      "label": "Chambery Savoie — club de ZAMMIT Elio (meilleur buteur StarLigue)",
+      "url_source": "https://commons.wikimedia.org/wiki/File:Chambery_Savoie_Handball_01.JPG",
+      "licence": "CC BY-SA 3.0",
+      "attribution_requise": true,
+      "attribution_texte": "© Kuebi = Armin Kübelbeck (In case of questions regarding usage of my work, please see here — after you have read the license below.), CC BY-SA 3.0, via Wikimedia Commons",
+      "width": 1600,
+      "size": 172485,
+      "player": "ZAMMIT Elio",
+      "team": "Chambery Savoie",
+      "goals": 25,
+      "season": "2026 / 2027",
+      "updated_at": "2026-09-27T19:10:14.183Z",
+      "ok": true
+    }
   ]
 }

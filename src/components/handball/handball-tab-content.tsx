@@ -17,14 +17,50 @@ import { HandballVitibetBacktest } from "./handball-vitibet-backtest";
 import { HandballBacktestWidget } from "./handball-backtest-widget";
 import { HandballBacktestMatrix } from "./handball-backtest-matrix";
 import { HandballBanker } from "./handball-banker";
+import { HandballBacktestingView } from "./handball-backtesting-view";
+import { HandballPariscoreBacktest } from "./handball-pariscore-backtest";
+import { HandballSyncBadge } from "./handball-sync-badge";
+import { HandballTop10Table } from "./handball-top10-table";
+import { buildTop10, type Top10InputMatch } from "@/lib/handball-top10";
+import { useHandballHistorySeries } from "@/hooks/use-handball-history-series";
 import { HandballCalendar } from "./handball-calendar";
 import { HandballLeagueBadge } from "./handball-league-badge";
 import { HandballTeamLogo } from "./handball-team-logo";
 import { HandballNews } from "./handball-news";
 import { HandballTableCaption } from "./handball-table-caption";
 import { HandballErrorBoundary } from "./handball-error-boundary";
+import { HandballHeroBanner } from "./handball-3d-art";
 import type { HandballStrategyKey } from "@/lib/handball-strategy-top8";
 import type { VitibetTip } from "@/lib/vitibet/types";
+// Store global : source de vérité du sous-onglet actif (rangée headbar
+// SportSubTabs ↔ pilules internes du calendrier). Les deux écrivent la MÊME
+// clé — sinon la rangée et le contenu divergent.
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+
+/**
+ * Vues du calendrier handball. Les ids correspondent EXACTEMENT aux `id` de
+ * la branche `handball` de SPORT_SUB_TABS (src/components/layout/
+ * sport-sub-tabs.tsx) — un id divergent = un onglet cliquable qui n'affiche
+ * rien, le défaut qui a fait disparaître « Backtesting ».
+ */
+export type HandballMode = "live" | "prematch" | "results" | "top10" | "backtesting";
+
+/** Ids de sous-onglets → vue interne (« calendrier » est l'id de `prematch`). */
+const SUBTAB_TO_MODE: Record<string, HandballMode> = {
+  calendrier: "prematch",
+  live: "live",
+  resultats: "results",
+  top10: "top10",
+  backtesting: "backtesting",
+};
+/** Vue interne → id de sous-onglet (pour garder les deux rangées alignées). */
+const MODE_TO_SUBTAB: Record<HandballMode, string> = {
+  prematch: "calendrier",
+  live: "live",
+  results: "resultats",
+  top10: "top10",
+  backtesting: "backtesting",
+};
 // Type-only : effacé à la compilation, le moteur de backtest reste côté serveur.
 import type { DailyStrategyBacktest } from "@/lib/handball-backtest-today";
 import type { HandballMatch } from "@/lib/handball-data";
@@ -315,6 +351,9 @@ function HandballResultsToday({
       <section className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2">
           <h3 className="text-sm font-semibold text-[#222222]">📆 Résultats — 7 derniers jours</h3>
+          {/* Fraîcheur de la source (cron 4 h) : sans ce rappel, une fenêtre
+              figée est indiscernable d'une fenêtre à jour. */}
+          <HandballSyncBadge scrapedAt={results?.scrapedAt} />
           {results && (
             <span className="text-xs text-[#717171]">
               {dayMatches.length} match(s) terminé(s)
@@ -501,7 +540,15 @@ export function HandballTabContent() {
   // Pronostics Vitibet (J→J+3) : rapprochement par (jour, équipes) pour les cartes.
   const { tipFor } = useVitibetTips();
   // Fix debug : useHandballLive retiré (fetch 15s jamais consommé)
-  const [mode, setMode] = useState<"live" | "prematch" | "results" | "top10">("prematch");
+  // Vue active = sous-onglet du store (partagé avec la rangée headbar
+  // SportSubTabs). Id inconnu → repli sur le calendrier, jamais un écran vide.
+  const subTab = useSportsSidebarStore((s) => s.sportSubTabs.handball);  const setSubTab = useSportsSidebarStore((s) => s.setSubTab);
+  const [localMode, setLocalMode] = useState<HandballMode>("prematch");
+  const mode = SUBTAB_TO_MODE[subTab ?? ""] ?? localMode;
+  const setMode = (next: HandballMode) => {
+    setLocalMode(next);
+    setSubTab("handball", MODE_TO_SUBTAB[next]);
+  };
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
   // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
@@ -552,6 +599,49 @@ export function HandballTabContent() {
     [allMatches],
   );
 
+  // Lignes du « Top 10 des paris sécurisés ».
+  //
+  // Historique lu dans `handball_match_history` (table nourrie par le cron
+  // quotidien, 2 saisons) via /api/handball/history-series. AVANT on lisait le
+  // form-store du SNAPSHOT courant, qui est vide dès que l'ingestion décroche —
+  // c'était la cause du tableau vide alors que la base contenait 8 000+ matchs.
+  //
+  // On exige ≥ 3 matchs terminés pour CHACUNE des deux équipes : sans cet
+  // historique le seuil serait calculé sur le prior neutre (28.5 buts/équipe),
+  // donc la ligne recommandée n'aurait aucun rapport avec les équipes réelles.
+  const upcomingTeams = useMemo(
+    () => [...new Set(prematch.flatMap((m) => [m.home.name, m.away.name]))],
+    [prematch],
+  );
+  const { series: historySeries } = useHandballHistorySeries(upcomingTeams, 10);
+
+  const top10Rows = useMemo(() => {
+    const now = Date.now();
+    const horizon = now + 14 * 86_400_000;
+    const avg = (xs: number[]) => xs.reduce((x, y) => x + y, 0) / xs.length;
+    const candidates: Top10InputMatch[] = [];
+    for (const m of prematch) {
+      const t = Date.parse(m.kickoff);
+      if (!Number.isFinite(t) || t <= now || t > horizon) continue;
+      const h = historySeries[m.home.name];
+      const a = historySeries[m.away.name];
+      if (!h || !a || h.gf.length < 3 || a.gf.length < 3) continue;
+      // L5 pour la moyenne de buts : c'est la fenêtre dont dispose le modèle.
+      candidates.push({
+        matchId: String(m.id),
+        home: m.home.name,
+        away: m.away.name,
+        dateTime: m.kickoff,
+        leagueName: m.league.name,
+        countryCode: m.league.countryCode ?? null,
+        homeStats: { scoredAvg: avg(h.gf.slice(-5)), concededAvg: avg(h.ga.slice(-5)) },
+        awayStats: { scoredAvg: avg(a.gf.slice(-5)), concededAvg: avg(a.ga.slice(-5)) },
+        odds: m.odds,
+      });
+    }
+    return buildTop10(candidates, 10);
+  }, [prematch, historySeries]);
+
   // Chips « Top stratégies ≥60 % » par ligne de calendrier — même payload SWR
   // que le Top8 widget / Banker (clé partagée → 0 requête supplémentaire).
   const { data: strategyPayload } = useHandballTop8();
@@ -571,6 +661,26 @@ export function HandballTabContent() {
   return (
     <HandballErrorBoundary>
     <div className="space-y-6">
+      {/* ══ Bannière de marque : illustration 3D détourée à droite, dégradé
+          d'estompage par-dessus pour garder le texte contrasté sur n'importe
+          quel rendu. Décorative (`aria-hidden` sur l'image). Les assets sont
+          produits par scripts/gen-handball-art.mjs — voir
+          docs/handball-art/prompts.md. Tant qu'ils manquent, le composant masque
+          l'image au lieu d'afficher une icône cassée. ══ */}
+      <HandballHeroBanner
+        subtitle={
+          mode === "backtesting"
+            ? "Backtesting Pariscore sur 2 saisons · ROI par marché"
+            : mode === "top10"
+              ? "Top 10 des stratégies · seuils de confiance"
+              : mode === "results"
+                ? `${resultsToday.length} résultat(s) aujourd'hui · historique 2 saisons`
+                : mode === "live"
+                  ? `${live.length} match(s) en direct`
+                  : `${filtered.length} match(s) à venir · prédictions IA`
+        }
+      />
+
       {/* ══ Calendrier en 1er en haut (demande user) — carte FotMob avec onglets
           internes : Live / Calendrier / Résultats du jour + filtres ligue,
           horaires et date dans le même tableau. ══ */}
@@ -578,13 +688,15 @@ export function HandballTabContent() {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold text-[#222222]">📅 Calendrier handball</h3>
           <span className="text-xs text-[#717171]">
-            {mode === "results"
-              ? `${resultsToday.length} résultat(s) aujourd'hui — panneau sur 7 j`
-              : mode === "live"
-                ? `${live.length} match(s) en direct`
-                : mode === "top10"
-                  ? "Stratégies & Top 10"
-                  : `${filtered.length} match(s) à venir`}
+            {mode === "backtesting"
+              ? "Historique des prédictions · ROI · taux de réussite"
+              : mode === "results"
+                ? `${resultsToday.length} résultat(s) aujourd'hui — panneau sur 7 j`
+                : mode === "live"
+                  ? `${live.length} match(s) en direct`
+                  : mode === "top10"
+                    ? "Stratégies & Top 10"
+                    : `${filtered.length} match(s) à venir`}
           </span>
         </div>
 
@@ -619,6 +731,15 @@ export function HandballTabContent() {
           >
             <span className="md:hidden">Résultats ({resultsToday.length})</span>
             <span className="hidden md:inline">Résultats 7 j ({resultsToday.length} auj.)</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "backtesting"}
+            onClick={() => setMode("backtesting")}
+            className={pillClass(mode === "backtesting")}
+          >
+            Backtesting
           </button>
           <button
             type="button"
@@ -668,13 +789,27 @@ export function HandballTabContent() {
         )}
 
         {/* Contenu de l'onglet actif */}
-        {mode === "results" ? (
+        {mode === "backtesting" ? (
+          /* 📉 Backtesting : historique des prédictions, taux de réussite, ROI.
+              Ne dépend pas de `filtered` : c'est un audit, pas une liste de
+              matchs — les filtres calendrier ne s'y appliquent pas. */
+          <HandballBacktestingView />
+        ) : mode === "results" ? (
           <HandballResultsToday onOpenMatch={setDetailMatch} chipsByMatch={chipsByMatch} />
         ) : mode === "top10" ? (
           /* 🏆 Top 10 par stratégie — déplacé depuis les widgets du bas */
           <div className="space-y-3">
             <HandballStrategyBar active={strategy} onChange={setStrategy} />
             <HandballTop8Widget strategy={strategy} />
+            {/* Top 10 « conseils » : seuil de total recalibré (ν mesuré) +
+                date/heure + drapeau par ligne. Alimenté par les matchs réels
+                du calendrier (aucune donnée inventée). */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#222222] dark:text-white">
+                🏆 Top 10 des paris sécurisés
+              </h3>
+              <HandballTop10Table rows={top10Rows} />
+            </section>
           </div>
         ) : isLoading ? (
           <div className="text-center py-8 text-[#717171]" aria-live="polite">
