@@ -1,13 +1,13 @@
 {
-  "generated": "2026-10-03T15:46:07.389Z",
+  "generated": "2026-10-04T16:30:15.446Z",
   "source": "espn-scoreboard",
   "season_start": "2025-10-21",
-  "games_count": 1326,
+  "games_count": 1327,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 1326,
-    "brier": 0.209,
+    "n": 1327,
+    "brier": 0.2091,
     "baseline_brier": 0.25,
     "accuracy": 66.7
   },
@@ -118,11 +118,11 @@
     },
     "14": {
       "name": "Miami Heat",
-      "elo": 1521,
-      "gp": 83,
-      "form_l10_winpct": 40,
-      "form_l10_margin": -2.2,
-      "last_game": "2026-04-14T23:30Z"
+      "elo": 1561,
+      "gp": 84,
+      "form_l10_winpct": 50,
+      "form_l10_margin": 2.3,
+      "last_game": "2026-10-03T23:00Z"
     },
     "15": {
       "name": "Milwaukee Bucks",
@@ -230,11 +230,11 @@
     },
     "28": {
       "name": "Toronto Raptors",
-      "elo": 1551,
-      "gp": 89,
-      "form_l10_winpct": 50,
-      "form_l10_margin": 2,
-      "last_game": "2026-05-03T23:30Z"
+      "elo": 1510,
+      "gp": 90,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -1.8,
+      "last_game": "2026-10-03T23:00Z"
     },
     "29": {
       "name": "Memphis Grizzlies",
