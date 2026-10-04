@@ -24,6 +24,8 @@
 
 export type LlmProviderMode =
   | "gemini"
+  /** Gemini en primaire, NVIDIA NIM en repli (les deux clés présentes en prod). */
+  | "gemini+nvidia"
   | "local"
   | "orcarouter"
   | "orcarouter+gemini"
@@ -95,7 +97,7 @@ export interface LlmConfig {
 
 const VALID_MODES: LlmProviderMode[] = [
   "local", "auto", "orcarouter", "orcarouter+gemini",
-  "openrouter", "nvidia", "groq", "gemini",
+  "openrouter", "nvidia", "groq", "gemini", "gemini+nvidia",
 ];
 
 export function llmConfig(): LlmConfig {
@@ -108,7 +110,11 @@ export function llmConfig(): LlmConfig {
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
     localBaseUrl: baseUrl,
     localModel: process.env.LOCAL_LLM_MODEL ?? "llama-3.1-8b-instruct",
-    localConfigured: Boolean(baseUrl),
+    // AVANT : Boolean(baseUrl) — toujours vrai, car baseUrl a une valeur par
+    // défaut. Un « local » sans serveur se croyait donc configuré, et le
+    // repli gaspillait un round-trip sur un ECONNREFUSED au lieu de passer
+    // au provider suivant (mesuré le 2026-10-03 : 3 ms, « Unable to connect »).
+    localConfigured: Boolean(process.env.LOCAL_LLM_BASE_URL),
     orcaModelFree: process.env.ORCA_MODEL_FREE ?? "orcarouter/free",
     orcaModel: process.env.ORCA_MODEL ?? "orcarouter/auto",
     orcaConfigured: Boolean(process.env.ORCA_API_KEY),
@@ -399,6 +405,14 @@ function primaryOf(mode: LlmProviderMode, fallbackEnabled: boolean): {
   if (mode === "nvidia") return { primary: "nvidia", secondary: "openrouter", tertiary: "gemini", allowFallback: fallbackEnabled };
   if (mode === "groq") return { primary: "groq", secondary: "openrouter", tertiary: "gemini", allowFallback: fallbackEnabled };
   if (mode === "auto") return { primary: "gemini", secondary: "openrouter", tertiary: "local", allowFallback: true };
+  // Mesuré le 2026-10-03 : en prod, GEMINI est intermittent (503 sur 1 appel sur
+  // 5) et OPENROUTER_API_KEY est absente, donc l'ancien repli du mode `gemini`
+  // (openrouter puis local) ne pouvait jamais rien rattraper — `local` est en
+  // plus déclaré configuré alors qu'aucun serveur n'écoute (voir
+  // `localConfigured` plus bas), donc le repli perdait un round-trip sur un
+  // ECONNREFUSED. NVIDIA NIM est le seul repli mesuré comme fonctionnel
+  // (679 ms, clé NIM_API_KEY présente) : c'est lui qu'on vise.
+  if (mode === "gemini+nvidia") return { primary: "gemini", secondary: "nvidia", tertiary: "openrouter", allowFallback: true };
   return { primary: "gemini", secondary: "openrouter", tertiary: "local", allowFallback: fallbackEnabled };
 }
 
