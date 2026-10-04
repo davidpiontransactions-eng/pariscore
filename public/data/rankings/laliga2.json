@@ -4,7 +4,7 @@
     "leagueId": "laliga2",
     "leagueName": "Spain2",
     "season": "2026-27",
-    "lastUpdated": "2026-10-03T09:47:06.939787Z",
+    "lastUpdated": "2026-10-04T08:18:10.682766Z",
     "source": "soccerstats.com",
     "teamCount": 22,
     "partial": false
@@ -16,7 +16,7 @@
         "teamId": "",
         "teamName": "Almeria",
         "value": 3.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 1,
@@ -112,6 +112,13 @@
       {
         "rank": 15,
         "teamId": "",
+        "teamName": "Cadiz",
+        "value": 1.0,
+        "played": 5
+      },
+      {
+        "rank": 15,
+        "teamId": "",
         "teamName": "Ceuta",
         "value": 1.0,
         "played": 4
@@ -138,17 +145,10 @@
         "played": 3
       },
       {
-        "rank": 19,
+        "rank": 20,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 0.75,
-        "played": 4
-      },
-      {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Cadiz",
-        "value": 0.5,
         "played": 4
       },
       {
@@ -163,40 +163,40 @@
         "teamId": "",
         "teamName": "Albacete",
         "value": 0.0,
-        "played": 3
+        "played": 4
       }
     ],
     "pts": [
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Burgos",
-        "value": 10.0,
+        "teamName": "Almeria",
+        "value": 12.0,
         "played": 4
       },
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Almeria",
-        "value": 9.0,
-        "played": 3
+        "teamName": "Burgos",
+        "value": 10.0,
+        "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Mallorca",
         "value": 9.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 9.0,
         "played": 3
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Eibar",
         "value": 9.0,
@@ -247,65 +247,65 @@
       {
         "rank": 11,
         "teamId": "",
+        "teamName": "Cadiz",
+        "value": 5.0,
+        "played": 5
+      },
+      {
+        "rank": 11,
+        "teamId": "",
         "teamName": "Real Oviedo",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Granada",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Ceuta",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 19,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 18,
+        "rank": 19,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 3.0,
         "played": 3
-      },
-      {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Cadiz",
-        "value": 2.0,
-        "played": 4
       },
       {
         "rank": 21,
@@ -319,33 +319,33 @@
         "teamId": "",
         "teamName": "Albacete",
         "value": 0.0,
-        "played": 3
+        "played": 4
       }
     ],
     "gf": [
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Almeria",
+        "value": 10.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Burgos",
         "value": 9.0,
         "played": 4
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Girona",
         "value": 9.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Almeria",
-        "value": 8.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Eibar",
         "value": 8.0,
@@ -389,79 +389,79 @@
       {
         "rank": 10,
         "teamId": "",
+        "teamName": "Cadiz",
+        "value": 6.0,
+        "played": 5
+      },
+      {
+        "rank": 10,
+        "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 12,
         "teamId": "",
         "teamName": "Granada",
         "value": 5.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Tenerife",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Leganes",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Ceuta",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 18,
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Albacete",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
         "teamId": "",
         "teamName": "Real Oviedo",
         "value": 2.0,
         "played": 4
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Cadiz",
-        "value": 2.0,
-        "played": 4
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Albacete",
-        "value": 2.0,
-        "played": 3
       },
       {
         "rank": 21,
@@ -503,40 +503,40 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Almeria",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
-        "teamId": "",
         "teamName": "Tenerife",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Almeria",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 3.0,
@@ -559,16 +559,16 @@
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Granada",
+        "teamName": "Cadiz",
         "value": 4.0,
-        "played": 3
+        "played": 5
       },
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Cadiz",
+        "teamName": "Granada",
         "value": 4.0,
-        "played": 4
+        "played": 3
       },
       {
         "rank": 14,
@@ -599,30 +599,30 @@
         "played": 4
       },
       {
-        "rank": 14,
-        "teamId": "",
-        "teamName": "Albacete",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Ceuta",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 21,
+        "rank": 20,
         "teamId": "",
         "teamName": "Fc Andorra",
+        "value": 8.0,
+        "played": 4
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Albacete",
         "value": 8.0,
         "played": 4
       },
@@ -638,19 +638,19 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Almeria",
+        "value": 7.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Castellon",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Almeria",
-        "value": 6.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Mallorca",
         "value": 6.0,
@@ -699,70 +699,70 @@
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Cadiz",
+        "value": 2.0,
+        "played": 5
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Real Oviedo",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Granada",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Leganes",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": -1.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Ceuta",
         "value": -2.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Sporting Gijon",
         "value": -2.0,
         "played": 4
       },
       {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Cadiz",
-        "value": -2.0,
-        "played": 4
-      },
-      {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": -2.0,
@@ -783,44 +783,44 @@
         "played": 3
       },
       {
-        "rank": 20,
+        "rank": 22,
         "teamId": "",
         "teamName": "Albacete",
-        "value": -3.0,
-        "played": 3
+        "value": -5.0,
+        "played": 4
       }
     ],
     "w": [
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Almeria",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Burgos",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Almeria",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Mallorca",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Eibar",
         "value": 3.0,
@@ -871,6 +871,13 @@
       {
         "rank": 11,
         "teamId": "",
+        "teamName": "Cadiz",
+        "value": 1.0,
+        "played": 5
+      },
+      {
+        "rank": 11,
+        "teamId": "",
         "teamName": "Real Oviedo",
         "value": 1.0,
         "played": 4
@@ -925,25 +932,18 @@
         "played": 3
       },
       {
-        "rank": 20,
-        "teamId": "",
-        "teamName": "Cadiz",
-        "value": 0.0,
-        "played": 4
-      },
-      {
-        "rank": 20,
+        "rank": 21,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 20,
+        "rank": 21,
         "teamId": "",
         "teamName": "Albacete",
         "value": 0.0,
-        "played": 3
+        "played": 4
       }
     ],
     "d": [
@@ -957,14 +957,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Real Oviedo",
+        "teamName": "Cadiz",
         "value": 2.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Cadiz",
+        "teamName": "Real Oviedo",
         "value": 2.0,
         "played": 4
       },
@@ -1043,7 +1043,7 @@
         "teamId": "",
         "teamName": "Almeria",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 14,
@@ -1099,23 +1099,23 @@
         "teamId": "",
         "teamName": "Albacete",
         "value": 0.0,
-        "played": 3
+        "played": 4
       }
     ],
     "l": [
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Burgos",
+        "teamName": "Almeria",
         "value": 0.0,
         "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Almeria",
+        "teamName": "Burgos",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 1,
@@ -1204,6 +1204,13 @@
       {
         "rank": 15,
         "teamId": "",
+        "teamName": "Cadiz",
+        "value": 2.0,
+        "played": 5
+      },
+      {
+        "rank": 15,
+        "teamId": "",
         "teamName": "Ceuta",
         "value": 2.0,
         "played": 4
@@ -1232,13 +1239,6 @@
       {
         "rank": 15,
         "teamId": "",
-        "teamName": "Cadiz",
-        "value": 2.0,
-        "played": 4
-      },
-      {
-        "rank": 15,
-        "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 2.0,
         "played": 3
@@ -1251,11 +1251,11 @@
         "played": 4
       },
       {
-        "rank": 21,
+        "rank": 22,
         "teamId": "",
         "teamName": "Albacete",
-        "value": 3.0,
-        "played": 3
+        "value": 4.0,
+        "played": 4
       }
     ]
   },
@@ -1264,16 +1264,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Castellon",
+        "teamName": "Eibar",
         "value": 3.0,
         "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Eibar",
+        "teamName": "Castellon",
         "value": 3.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 3,
@@ -1320,13 +1320,6 @@
       {
         "rank": 9,
         "teamId": "",
-        "teamName": "Burgos",
-        "value": 1.33,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 1.33,
         "played": 3
@@ -1346,21 +1339,28 @@
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Leganes",
-        "value": 1.25,
+        "value": 1.0,
+        "played": 5
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Burgos",
+        "value": 1.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "Granada",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 12,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 1.0,
@@ -1420,16 +1420,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Castellon",
+        "teamName": "Eibar",
         "value": 12.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
-        "teamName": "Eibar",
-        "value": 9.0,
-        "played": 3
+        "teamName": "Castellon",
+        "value": 12.0,
+        "played": 4
       },
       {
         "rank": 3,
@@ -1478,14 +1478,7 @@
         "teamId": "",
         "teamName": "Leganes",
         "value": 5.0,
-        "played": 4
-      },
-      {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Burgos",
-        "value": 4.0,
-        "played": 3
+        "played": 5
       },
       {
         "rank": 10,
@@ -1493,6 +1486,13 @@
         "teamName": "Celta Vigo B",
         "value": 4.0,
         "played": 3
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Burgos",
+        "value": 4.0,
+        "played": 4
       },
       {
         "rank": 10,
@@ -1576,33 +1576,33 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Eibar",
+        "value": 10.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 8.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Castellon",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Eibar",
-        "value": 7.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 7.0,
@@ -1665,42 +1665,42 @@
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
-        "teamName": "Leganes",
-        "value": 2.0,
+        "teamName": "Burgos",
+        "value": 3.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
-        "teamName": "Burgos",
+        "teamName": "Leganes",
         "value": 2.0,
-        "played": 3
+        "played": 5
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Albacete",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 15,
         "teamId": "",
         "teamName": "Ceuta",
         "value": 2.0,
@@ -1733,130 +1733,130 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Eibar",
-        "value": 1.0,
-        "played": 3
+        "value": 2.0,
+        "played": 4
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
         "teamName": "Castellon",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
         "teamName": "Almeria",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Burgos",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
         "teamName": "Mallorca",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Girona",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Leganes",
-        "value": 3.0,
-        "played": 4
-      },
-      {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Burgos",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Eldense",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 11,
+        "rank": 10,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Cadiz",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Real Oviedo",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Leganes",
+        "value": 7.0,
+        "played": 5
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Granada",
         "value": 7.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Tenerife",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Albacete",
         "value": 7.0,
@@ -1889,8 +1889,8 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Eibar",
-        "value": 6.0,
-        "played": 3
+        "value": 8.0,
+        "played": 4
       },
       {
         "rank": 2,
@@ -1930,103 +1930,103 @@
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Burgos",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 7,
-        "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": -1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Real Oviedo",
         "value": -1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Leganes",
+        "teamName": "Burgos",
         "value": -1.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Mallorca",
         "value": -1.0,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Cadiz",
         "value": -1.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Granada",
         "value": -2.0,
         "played": 4
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": -2.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Sabadell",
         "value": -2.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Tenerife",
         "value": -3.0,
         "played": 3
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Cordoba",
         "value": -3.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Valladolid",
         "value": -3.0,
         "played": 4
       },
       {
-        "rank": 20,
+        "rank": 19,
         "teamId": "",
         "teamName": "Eldense",
         "value": -4.0,
         "played": 4
       },
       {
-        "rank": 21,
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Leganes",
+        "value": -5.0,
+        "played": 5
+      },
+      {
+        "rank": 20,
         "teamId": "",
         "teamName": "Albacete",
         "value": -5.0,
@@ -2044,16 +2044,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Castellon",
+        "teamName": "Eibar",
         "value": 4.0,
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
-        "teamName": "Eibar",
-        "value": 3.0,
-        "played": 3
+        "teamName": "Castellon",
+        "value": 4.0,
+        "played": 4
       },
       {
         "rank": 3,
@@ -2102,14 +2102,7 @@
         "teamId": "",
         "teamName": "Leganes",
         "value": 1.0,
-        "played": 4
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Burgos",
-        "value": 1.0,
-        "played": 3
+        "played": 5
       },
       {
         "rank": 9,
@@ -2117,6 +2110,13 @@
         "teamName": "Celta Vigo B",
         "value": 1.0,
         "played": 3
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Burgos",
+        "value": 1.0,
+        "played": 4
       },
       {
         "rank": 9,
@@ -2209,7 +2209,7 @@
         "teamId": "",
         "teamName": "Leganes",
         "value": 2.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 2,
@@ -2235,16 +2235,16 @@
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Burgos",
+        "teamName": "Celta Vigo B",
         "value": 1.0,
         "played": 3
       },
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Celta Vigo B",
+        "teamName": "Burgos",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 5,
@@ -2277,16 +2277,16 @@
       {
         "rank": 12,
         "teamId": "",
-        "teamName": "Castellon",
+        "teamName": "Eibar",
         "value": 0.0,
         "played": 4
       },
       {
         "rank": 12,
         "teamId": "",
-        "teamName": "Eibar",
+        "teamName": "Castellon",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 12,
@@ -2356,16 +2356,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Castellon",
+        "teamName": "Eibar",
         "value": 0.0,
         "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Eibar",
+        "teamName": "Castellon",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 3,
@@ -2385,20 +2385,6 @@
         "rank": 3,
         "teamId": "",
         "teamName": "Sporting Gijon",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Leganes",
-        "value": 1.0,
-        "played": 4
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Burgos",
         "value": 1.0,
         "played": 3
       },
@@ -2438,42 +2424,56 @@
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 11,
         "teamId": "",
         "teamName": "Almeria",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 11,
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 11,
         "teamId": "",
         "teamName": "Real Oviedo",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Leganes",
+        "value": 2.0,
+        "played": 5
+      },
+      {
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Burgos",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Granada",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 13,
+        "rank": 11,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 11,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 2.0,
