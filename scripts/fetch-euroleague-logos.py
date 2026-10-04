@@ -20,6 +20,8 @@ Respectueux : 0.4 s entre chaque requête, User-Agent identifié (exigence Wikim
 
 import argparse
 import json
+import re
+import struct
 import sys
 import time
 import urllib.parse
@@ -90,6 +92,24 @@ TEAMS = [
     ("ULM", "RATIOPHARM ULM", [("en", "Ratiopharm Ulm"), ("de", "Ratiopharm ulm")]),
     ("VNC", "UMANA REYER VENICE", [("en", "Reyer Venezia Mestre"), ("it", "Reyer Venezia Mestre")]),
     ("WRO", "SLASK WROCLAW", [("en", "Śląsk Wrocław basketball"), ("pl", "Śląsk Wrocław (koszykówka)")]),
+    # ── Clubs EuroCup visibles en oct. 2026 — codes réels = home/away.code du
+    # bridge (vérifiés le 2026-10-05 contre /api/v1/euroleague/matches?season=2026,
+    # liste « 2026-27 EuroCup Basketball » sur Wikipédia pour les identités) ──
+    ("BLK", "BALKAN BOTEVGRAD", [("en", "BC Balkan Botevgrad"), ("bg", "Балкан (Ботевград)")]),
+    ("TRT", "BAGLIETTO DERTHONA TORTONA", [("en", "Derthona Basket"), ("it", "Derthona Basket")]),
+    ("LEM", "LE MANS SARTHE BASKET", [("fr", "Le Mans Sarthe Basket"), ("en", "MSB")]),
+    ("BGS", "RECOLETAS SALUD SAN PABLO BURGOS", [("en", "CB San Pablo Burgos"), ("es", "Club Baloncesto San Pablo Burgos")]),
+    ("BCR", "ROMA BASKETBALL", [("en", "BC Roma"), ("it", "BC Roma")]),
+    ("MRO", "MAXIMA ROMA", [("en", "Maxima Roma"), ("it", "Maxima Roma")]),
+    ("NAP", "NAPOLI BASKETBALL", [("en", "GeVi Napoli"), ("en", "Napoli Basket (2016)")]),
+    ("PAO", "PAOK THESSALONIKI", [("en", "PAOK BC"), ("el", "Π.Α.Ο.Κ.")]),
+    ("BUR", "TOFAS BURSA", [("en", "Tofaş S.K."), ("tr", "Tofaş SK")]),
+    ("BOS", "BOSNA BH TELECOM SARAJEVO", [("en", "KK Bosna"), ("bs", "KK Bosna")]),
+    ("RTK", "ROSTOCK SEAWOLVES", [("de", "Rostock Seawolves"), ("en", "Rostock Seawolves")]),
+    ("RIG", "RIGA ZELLI", [("en", "Rīgas Zeļļi"), ("en", "Riga Zelli")]),
+    ("SIA", "SIAULIAI BASKETBALL", [("en", "BC Šiauliai"), ("lt", "BC Šiauliai")]),
+    ("FRA", "SKYLINERS FRANKFURT", [("en", "Skyliners Frankfurt"), ("de", "Frankfurt Skyliners")]),
+    ("TNF", "LA LAGUNA TENERIFE", [("en", "Iberostar Tenerife"), ("es", "CB Canarias")]),
 ]
 
 
@@ -253,6 +273,29 @@ def sniff_ext(data: bytes, url: str) -> str | None:
     return None
 
 
+def png_size(data: bytes) -> tuple[int, int] | None:
+    """(largeur, hauteur) d'un PNG, ou None si ce n'est pas un PNG valide."""
+    if data[:8] != b"\x89PNG\r\n\x1a\n" or len(data) < 24:
+        return None
+    w, h = struct.unpack(">II", data[16:24])
+    return w, h
+
+
+# Largeurs de thumb réellement acceptées par Wikimedia (HTTP 400 « Use thumbnail
+# sizes listed on… » sinon) — constat 2026-10-05 : 250/330/500 OK, 300/640 refusés.
+THUMB_WIDTHS = (330, 500, 250)
+
+
+def bigger_thumbs(url: str) -> list[str]:
+    """Thumb réduit (ex. 20px, constaté sur San Pablo Burgos.svg) : l'URL thumb
+    porte sa largeur (…/thumb/e/ee/Nom.svg/20px-Nom.svg.png) — on propose des
+    largeurs autorisées pour éviter un logo illisible en 22px à l'écran."""
+    m = re.search(r"/(\d+)px-", url)
+    if not m or int(m.group(1)) >= THUMB_SIZE:
+        return []
+    return [url[: m.start()] + f"/{w}px-" + url[m.end() :] for w in THUMB_WIDTHS]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="API seulement, aucun téléchargement")
@@ -294,6 +337,20 @@ def main() -> int:
             continue
 
         ext = sniff_ext(data, thumb_url)
+        # Rendu trop petit (thumb 20px) : retenter en 300px avant le rejet.
+        if ext == "png":
+            dim = png_size(data)
+            if dim and min(dim) < 100:
+                for big_url in bigger_thumbs(thumb_url):
+                    try:
+                        big = http_get(big_url)
+                    except Exception:
+                        continue
+                    big_dim = png_size(big) if sniff_ext(big, big_url) == "png" else None
+                    if big_dim and min(big_dim) >= 100:
+                        data, thumb_url = big, big_url
+                        ext = "png"
+                        break
         if not ext or len(data) < 800:
             print(f"{prefix} REJET (format/size: {len(data)}B, ext={ext})")
             skipped.append(code)

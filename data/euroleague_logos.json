@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-01",
+  "updatedAt": "2026-10-05",
   "source": "API Wikipedia (prop=pageimages, thumbnail 300px) — logos officiels des clubs",
   "note_licence": "Logos de clubs (marques déposées) référencés via Wikipédia : usage illustratif référentiel (scores/résultats). À faire valider juridiquement pour tout autre usage.",
   "skipped": [],
@@ -323,6 +323,126 @@
       "wiki_title": "Śląsk Wrocław (basketball)",
       "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/a/a8/%C5%9Al%C4%85sk_Wroc%C5%82aw_%28basketball%29_logo.svg/330px-%C5%9Al%C4%85sk_Wroc%C5%82aw_%28basketball%29_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
       "poids_ko": 74.5,
+      "http_verifie": "ok"
+    },
+    "BLK": {
+      "file": "images/basketball/euroleague/BLK.png",
+      "name": "BALKAN BOTEVGRAD",
+      "wiki_title": "BC Balkan Botevgrad",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/b/ba/BC_Balkan_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 34.0,
+      "http_verifie": "ok"
+    },
+    "TRT": {
+      "file": "images/basketball/euroleague/TRT.png",
+      "name": "BAGLIETTO DERTHONA TORTONA",
+      "wiki_title": "Derthona Basket",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/e/e6/Derthona_Basket_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 115.2,
+      "http_verifie": "ok"
+    },
+    "LEM": {
+      "file": "images/basketball/euroleague/LEM.png",
+      "name": "LE MANS SARTHE BASKET",
+      "wiki_title": "Le Mans Sarthe Basket",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/fr/thumb/5/5e/Logo_Le_Mans_Sarthe_Basket_-_2025.svg/langfr-960px-Logo_Le_Mans_Sarthe_Basket_-_2025.svg.png?utm_source=fr.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 118.1,
+      "http_verifie": "ok"
+    },
+    "BGS": {
+      "file": "images/basketball/euroleague/BGS.png",
+      "name": "RECOLETAS SALUD SAN PABLO BURGOS",
+      "wiki_title": "CB San Pablo Burgos",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/e/ee/San_Pablo_Burgos.svg/330px-San_Pablo_Burgos.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 40.6,
+      "http_verifie": "ok"
+    },
+    "BCR": {
+      "file": "images/basketball/euroleague/BCR.png",
+      "name": "ROMA BASKETBALL",
+      "wiki_title": "BC Roma",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/2/2c/BC_Roma_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 122.0,
+      "http_verifie": "ok"
+    },
+    "MRO": {
+      "file": "images/basketball/euroleague/MRO.png",
+      "name": "MAXIMA ROMA",
+      "wiki_title": "Maxima Roma",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/b/b0/Maxima_Roma_Logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 26.0,
+      "http_verifie": "ok"
+    },
+    "NAP": {
+      "file": "images/basketball/euroleague/NAP.png",
+      "name": "NAPOLI BASKETBALL",
+      "wiki_title": "Napoli Basket (2016)",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/1/16/Napoli_Basket_2026.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 122.6,
+      "http_verifie": "ok"
+    },
+    "PAO": {
+      "file": "images/basketball/euroleague/PAO.png",
+      "name": "PAOK THESSALONIKI",
+      "wiki_title": "PAOK BC",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/8/86/P.A.O.K._B.C._logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 53.3,
+      "http_verifie": "ok"
+    },
+    "BUR": {
+      "file": "images/basketball/euroleague/BUR.png",
+      "name": "TOFAS BURSA",
+      "wiki_title": "Tofaş S.K.",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/1/16/Tofas_2016_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 94.8,
+      "http_verifie": "ok"
+    },
+    "BOS": {
+      "file": "images/basketball/euroleague/BOS.png",
+      "name": "BOSNA BH TELECOM SARAJEVO",
+      "wiki_title": "KK Bosna Royal",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/4/4b/KK_Bosna_Royal_logo.svg/250px-KK_Bosna_Royal_logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 31.1,
+      "http_verifie": "ok"
+    },
+    "RTK": {
+      "file": "images/basketball/euroleague/RTK.png",
+      "name": "ROSTOCK SEAWOLVES",
+      "wiki_title": "Rostock Seawolves",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/b/b2/Rostock_Seawolves.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 7.4,
+      "http_verifie": "ok"
+    },
+    "RIG": {
+      "file": "images/basketball/euroleague/RIG.png",
+      "name": "RIGA ZELLI",
+      "wiki_title": "Rīgas Zeļļi",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/c/cf/RigasZelli.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 3.8,
+      "http_verifie": "ok"
+    },
+    "SIA": {
+      "file": "images/basketball/euroleague/SIA.png",
+      "name": "SIAULIAI BASKETBALL",
+      "wiki_title": "BC Šiauliai",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/d/dd/Siauliai20.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 81.0,
+      "http_verifie": "ok"
+    },
+    "FRA": {
+      "file": "images/basketball/euroleague/FRA.png",
+      "name": "SKYLINERS FRANKFURT",
+      "wiki_title": "Skyliners Frankfurt",
+      "url_directe": "https://upload.wikimedia.org/wikipedia/en/d/d5/Fraport_Skyliners_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+      "poids_ko": 99.2,
+      "http_verifie": "ok"
+    },
+    "TNF": {
+      "file": "images/basketball/euroleague/TNF.png",
+      "name": "LA LAGUNA TENERIFE",
+      "wiki_title": "CB Canarias",
+      "url_directe": "https://thumb.wikimedia.org/wikipedia/en/thumb/c/c0/La_Laguna_Tenerife.svg/500px-La_Laguna_Tenerife.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+      "poids_ko": 100.8,
       "http_verifie": "ok"
     }
   }
