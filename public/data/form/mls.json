@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-10-02T10:39:31.996325Z",
+    "lastUpdated": "2026-10-04T10:43:02.420521Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,22 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Cincinnati",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 25,
-      "ga": 17
-    },
-    {
-      "teamName": "St. Louis City",
+      "teamName": "Philadelphia",
       "gp": 8,
       "w": 6,
       "d": 2,
       "l": 0,
-      "gf": 20,
-      "ga": 10
+      "gf": 21,
+      "ga": 8
     },
     {
       "teamName": "Nashville Sc",
@@ -40,6 +31,15 @@
       "ga": 4
     },
     {
+      "teamName": "Cincinnati",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 25,
+      "ga": 17
+    },
+    {
       "teamName": "Colorado Rapids",
       "gp": 8,
       "w": 6,
@@ -49,25 +49,16 @@
       "ga": 5
     },
     {
-      "teamName": "Philadelphia",
+      "teamName": "St. Louis City",
       "gp": 8,
       "w": 6,
       "d": 2,
       "l": 0,
-      "gf": 21,
-      "ga": 8
+      "gf": 20,
+      "ga": 10
     }
   ],
   "away": [
-    {
-      "teamName": "St. Louis City",
-      "gp": 8,
-      "w": 5,
-      "d": 3,
-      "l": 0,
-      "gf": 17,
-      "ga": 7
-    },
     {
       "teamName": "Vancouver",
       "gp": 8,
@@ -76,6 +67,15 @@
       "l": 2,
       "gf": 18,
       "ga": 9
+    },
+    {
+      "teamName": "Philadelphia",
+      "gp": 8,
+      "w": 4,
+      "d": 1,
+      "l": 3,
+      "gf": 24,
+      "ga": 19
     },
     {
       "teamName": "Charlotte",
@@ -87,6 +87,15 @@
       "ga": 11
     },
     {
+      "teamName": "St. Louis City",
+      "gp": 8,
+      "w": 5,
+      "d": 3,
+      "l": 0,
+      "gf": 17,
+      "ga": 7
+    },
+    {
       "teamName": "Inter Miami",
       "gp": 8,
       "w": 4,
@@ -94,15 +103,6 @@
       "l": 2,
       "gf": 17,
       "ga": 14
-    },
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 4,
-      "d": 1,
-      "l": 3,
-      "gf": 24,
-      "ga": 19
     }
   ]
 }
