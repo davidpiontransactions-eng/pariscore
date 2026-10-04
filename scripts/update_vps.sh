@@ -137,6 +137,27 @@ else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
 fi
 
+# [4b] Build sauté mais des fichiers public/ ont bougé : le serving nginx alias
+# /images/ → .next/standalone/public/, dossier PRODUIT UNIQUEMENT par un build
+# Next. Sans cette synchro, les nouveaux assets (logos, sw.js…) restent en 404
+# malgré un deploy OK. Constat 2026-10-05 : 15 logos EuroCup en 404 après un
+# deploy « legacy-only » (build_ran: 0) alors que le git checkout était bon.
+# ET Next fige l'inventaire de public/ au démarrage : sans pm2 restart, les
+# fichiers fraichement copiés restent introuvables (constat idem 2026-10-05).
+if [ "$BUILD_RAN" = "0" ] && printf '%s\n' "$CHANGED" | grep -q '^public/'; then
+  echo "[4b] Sync public/ -> standalone (no build)..."
+  for _sp in "$PWD/.next/standalone/public" "/opt/pariscorebis/.next/standalone/public"; do
+    if [ -d "$_sp" ]; then
+      cp -rf public/. "$_sp/" || { echo "  warn: synchro $_sp"; continue; }
+      echo "  sync OK -> $_sp"
+    else
+      echo "  $_sp absent — skip"
+    fi
+  done
+  echo "  restart pariscore-next (inventaire public/ figé au boot)..."
+  pm2 restart pariscore-next --update-env 2>&1 | tail -2 || echo "  warn: restart pariscore-next"
+fi
+
 echo "[4c] Sync code -> /opt/pariscorebis (dir prod pariscore-next)..."
 OPT_DIR="${OPT_DIR:-/opt/pariscorebis}"
 if [ -d "$OPT_DIR/.git" ]; then
