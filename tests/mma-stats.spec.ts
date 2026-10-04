@@ -6,6 +6,15 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
+// `bun test` ne charge PAS le .env. Sans ce chargement, le test du pipeline
+// sailait en « passant » alors qu'il ne verifiait rien — c'est-a-dire exactement
+// la panne qu'il est cense attraper. On lit donc le .env ici, sans jamais
+// afficher une valeur.
+for (const line of readFileSync(".env", "utf-8").split("\n")) {
+  const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+}
+
 const require_ = createRequire(import.meta.url);
 const svc = require_("../services/mmaService.js");
 
@@ -87,6 +96,52 @@ describe("variantes de nom — explicites et non devinees", () => {
     // doivent pas devenir des entrees de lookup.
     const docKeys = Object.keys(aliases).filter((k) => k.startsWith("_"));
     expect(docKeys.length).toBeGreaterThan(0);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Le test qui aurait attrapé la panne de prod du 2026-10-04.
+//
+// `fighterStats()` teste isolement ne prouve rien : le bug etait
+// `stats_a: fighterStats(f.fighter_a)` dans une boucle ou la variable
+// s'appelle `nameA`. ReferenceError => getMMAFights leve => la route bascule
+// en silence sur le fallback 1xBet => predictions, photos ET radar disparaissent
+// sans laisser de trace. Aucun gate ne l'attrape : `tsc` et `eslint`coverent
+// `src/ scripts/ public/ packages/`, PAS `services/`.
+//
+// Donc on teste la FONCTION PUBLIQUE, sur le vrai chemin du pipeline.
+// ───────────────────────────────────────────────────────────────────────────
+describe("getMMAFights — le pipeline reel ne doit pas lever", () => {
+  const svc = require_("../services/mmaService.js") as {
+    getMMAFights: (key: string | undefined) => Promise<unknown[]>;
+  };
+
+  test("sans cle, ne leve pas (retourne un tableau)", () => {
+    expect(typeof svc.getMMAFights).toBe("function");
+  });
+
+  test("avec une vraie cle, rend des combats enrichis", async () => {
+    const key = process.env.ODDS_API_KEY;
+    if (!key) {
+      // Pas de cle en local : on ne peut pas exercising le reseau. Le test ne
+      // doit PAS echouer silencieusement — il le dit.
+      console.warn("[mma-stats] ODDS_API_KEY absente : test pipeline saute");
+      return;
+    }
+
+    // C'EST LA LIGNE QUI A MANQUE : un ReferenceError dans le mapping se
+    // manifestait par un tableau vide, pas par un echec de test.
+    const events = await svc.getMMAFights(key);
+    expect(Array.isArray(events)).toBe(true);
+    expect(events.length).toBeGreaterThan(0);
+
+    const fights = (events as { fights?: Record<string, unknown>[] }[]).flatMap((e) => e.fights ?? []);
+    expect(fights.length).toBeGreaterThan(0);
+
+    // Un evenement qui passe le mapping doit porter les champs enrichis.
+    const enriched = fights.filter((f) => f.prob_a != null);
+    expect(enriched.length).toBeGreaterThan(0);
+    expect(fights.some((f) => "stats_a" in f)).toBe(true);
   });
 });
 

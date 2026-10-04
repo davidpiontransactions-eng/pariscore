@@ -504,8 +504,15 @@ async function getMMAFights(apiKey) {
         is_title:       false,
         // Radar : 4 axes issues des features EWMA reelles, null si le
         // combattant est absent du dataset (le bouton stats reste masque).
-        stats_a:        fighterStats(f.fighter_a),
-        stats_b:        fighterStats(f.fighter_b),
+        //
+        // ATTENTION : les noms viennent de `nameA` / `nameB` (lignes 444-445),
+        // PAS d'un objet `f` — il n'existe pas dans cette portee. Ecrire `f.…`
+        // leve une ReferenceError qui remonte jusqu'a la route, qui bascule
+        // alors en silence sur le fallback 1xBet : toute la chaine ML (probs,
+        // photos, radar) disparait sans laisser de trace. C'est exactement ce
+        // qui est arrive en prod le 2026-10-04.
+        stats_a:        fighterStats(nameA),
+        stats_b:        fighterStats(nameB),
       });
     }
 
