@@ -29,12 +29,16 @@ const COLOR_A = "#7B3FA0";
 const COLOR_B = "#4DABF7";
 
 export interface MmaRadarData {
+  /** Fréquence de frappes significativesEWMA, ramenée au p95 de la population. */
   striking: number;
+  /** Takedowns EWMA, ramené au p95. */
   takedowns: number;
-  tdDefense: number;
+  /** Temps de contrôle EWMA, ramené au p95 — c'est ce qui mesure le jeu au sol. */
   ground: number;
-  submissions: number;
-  finishes: number;
+  /** Dégâts infligés EWMA, ramené au p95. */
+  damage: number;
+  /** Nombre de combats dans le dataset (traçabilité de la valeur). */
+  fights?: number | null;
 }
 
 type Props = {
@@ -65,13 +69,20 @@ function initials(name: string): string {
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }
 
+/**
+ * Axes du radar — 4, pas 6.
+ *
+ * `tdDefense` et `submissions` ont été retirés : aucune feature du dataset
+ * (`services/mma_fighter_features.json`) ne les porte. Les laisser à 0
+ * afficherait « 0 soumission », c'est-à-dire une donnée inventée — pire
+ * qu'un axe absent. Si un jour le dataset expose ces features, on les
+ * réintroduit ici avec leur source.
+ */
 const AXES = [
   { key: "striking", label: "Striking", max: 100 },
   { key: "takedowns", label: "Takedowns", max: 100 },
-  { key: "tdDefense", label: "TD Defense", max: 100 },
-  { key: "ground", label: "Ground", max: 5 },
-  { key: "submissions", label: "Submissions", max: 3 },
-  { key: "finishes", label: "Finishes", max: 100 },
+  { key: "ground", label: "Ground", max: 100 },
+  { key: "damage", label: "Damage", max: 100 },
 ] as const;
 
 export function MmaRadarChart({

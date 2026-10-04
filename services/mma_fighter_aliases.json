@@ -1,0 +1,10 @@
+{
+  "_doc": "Variantes de nom entre la source de cotes et mma_fighter_features.json. Le slug est calculé mecaniquement (fighterSlug), donc un combatant dont le nom de la source differe de celui du dataset n'est pas retrouve. Seules les variantes SANS ambiguite sont listees ici : une correspondance par nom de famille unique ne suffit pas (4 'Harris' dans le dataset, dont aucun certain).",
+  "_ajout": "Ne jamais ajouter une variante devinee. Verifier qu'un seul slug du dataset correspond au nom de famille, et qu'il s'agit bien du meme combattant.",
+  "alex-volkanovski": "alexander-volkanovski",
+  "sergey-pavlovich": "sergei-pavlovich",
+  "joseph-pyfer": "joe-pyfer",
+  "leon-shahbazyan": "edmen-shahbazyan",
+  "lupita-godinez": "loopy-godinez",
+  "paulo-henrique-costa": "paulo-costa"
+}

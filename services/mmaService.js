@@ -21,6 +21,16 @@ try { FIGHTER_PHOTOS = require('./mma_fighter_photos.json') || {}; } catch (_) {
 let FIGHTER_3D = {};
 try { FIGHTER_3D = require('./mma_fighter_3d.json') || {}; } catch (_) { FIGHTER_3D = {}; }
 
+// EWMA fighter features (slug -> { strk, ctrl, td, kd, damage, reach, n }).
+// Same defensive require.
+let FIGHTER_FEATURES = {};
+try { FIGHTER_FEATURES = require('./mma_fighter_features.json') || {}; } catch (_) { FIGHTER_FEATURES = {}; }
+
+// Variantes de nom explicites (slug source -> slug dataset). Voir le _doc du
+// fichier : uniquement des variantes sans ambiguite.
+let FIGHTER_ALIASES = {};
+try { FIGHTER_ALIASES = require('./mma_fighter_aliases.json') || {}; } catch (_) { FIGHTER_ALIASES = {}; }
+
 // Own logistic win model (offline-trained by tools/build_mma_model.js, KTH method).
 // All defensive — a missing artifact just disables the model signal, never crashes.
 let MMA_MODEL = null, MMA_FEATS = {}, _logit = null;
@@ -492,8 +502,10 @@ async function getMMAFights(apiKey) {
         vegas_books:    d ? d.books : 0,
         weight_class:   '',
         is_title:       false,
-        stats_a:        null,
-        stats_b:        null,
+        // Radar : 4 axes issues des features EWMA reelles, null si le
+        // combattant est absent du dataset (le bouton stats reste masque).
+        stats_a:        fighterStats(f.fighter_a),
+        stats_b:        fighterStats(f.fighter_b),
       });
     }
 
@@ -522,6 +534,57 @@ function getFighter3d(rawName) {
   if (!slug) return null;
   const p = FIGHTER_3D[slug];
   return typeof p === 'string' && p ? p : null;
+}
+
+// ─── Fighter stats (radar) ───────────────────────────────────────────────────
+// Le radar affichait 6 axes mais stats_a/stats_b etaient ecrits `null` en dur :
+// le bouton « Comparer les stats » (mma-fight-card.tsx, conditionne a
+// stats_a || stats_b) n'a donc jamais ete rendu.
+//
+// La source est mma_fighter_features.json (1 835 combattants, features EWMA).
+// Mesure sur la carte du 2026-10-03 : 45 des 58 combattants avaient une entree
+// apres correction des variantes de nom (78 %).
+
+// Plafonds de normalisation = p95 de la population mesuree. Un 100 sur le
+// radar signifie donc « dans le haut 5 % de sa population », pas «-record ».
+const STATS_CEILINGS = { strk: 0.0609, td: 0.0048, ctrl: 0.4477, damage: 3.2112 };
+
+function resolveFighterKey(rawName) {
+  const slug = fighterSlug(rawName);
+  if (!slug) return null;
+  if (FIGHTER_FEATURES[slug]) return slug;
+  const alias = FIGHTER_ALIASES[slug];
+  if (typeof alias === 'string' && FIGHTER_FEATURES[alias]) return alias;
+  return null;
+}
+
+function statPct(value, ceiling) {
+  if (!Number.isFinite(value) || !(ceiling > 0)) return 0;
+  return Math.max(0, Math.min(100, (value / ceiling) * 100));
+}
+
+/**
+ * Statistiques normalisées 0-100 pour le radar, ou null si le combattant
+ * n'est pas dans le dataset.
+ *
+ * Les axes servies correspondent EXACTEMENT aux features disponibles :
+ * striking←strk, takedowns←td, ground←ctrl, damage←damage. Les deux anciens
+ * axes (`tdDefense`, `submissions`) ont ete RETIRES du graphique : aucune
+ * feature du dataset ne les porte, et dessiner 0 en disant « ce combattant ne
+ * submissionne pas » serait une invention, pas une donnee manquante.
+ */
+function fighterStats(rawName) {
+  const key = resolveFighterKey(rawName);
+  if (!key) return null;
+  const f = FIGHTER_FEATURES[key];
+  if (!f) return null;
+  return {
+    striking:   Math.round(statPct(f.strk, STATS_CEILINGS.strk)),
+    takedowns:  Math.round(statPct(f.td, STATS_CEILINGS.td)),
+    ground:     Math.round(statPct(f.ctrl, STATS_CEILINGS.ctrl)),
+    damage:     Math.round(statPct(f.damage, STATS_CEILINGS.damage)),
+    fights:     Number.isFinite(f.n) ? f.n : null,
+  };
 }
 
 // ─── Fighter photo resolution ────────────────────────────────────────────────
@@ -1083,4 +1146,4 @@ function getOdds1xBet() {
   } catch (_) {}
   return null;
 }
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, getFighter3d, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance, getOdds1xBet };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, getFighter3d, fighterStats, resolveFighterKey, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance, getOdds1xBet };

@@ -71,6 +71,18 @@ type Props = {
   index?: number;
 };
 
+/**
+ * Valeurs neutres quand un combattant n'a pas de features. `dataA` ne peut pas
+ * être null (le bouton n'apparaît que si l'un des deux existe) : zéro sur un
+ * axe absent se lit « pas de donnée », pas « il ne fait rien ».
+ */
+const MISSING_AXES: MmaRadarData = {
+  striking: 0,
+  takedowns: 0,
+  ground: 0,
+  damage: 0,
+};
+
 const WEIGHT_CLASS_COLORS: Record<string, string> = {
   heavyweight: "#FF6B6B",
   light_heavyweight: "#FFA94D",
@@ -312,7 +324,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             </button>
             {showStats && (
               <MmaRadarChart
-                dataA={fight.stats_a ?? { striking: 0, takedowns: 0, tdDefense: 0, ground: 0, submissions: 0, finishes: 0 }}
+                dataA={fight.stats_a ?? MISSING_AXES}
                 dataB={fight.stats_b}
                 fighterA={fight.fighter_a}
                 fighterB={fight.fighter_b}
