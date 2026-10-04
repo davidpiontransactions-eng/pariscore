@@ -85,6 +85,18 @@ const AXES = [
   { key: "damage", label: "Damage", max: 100 },
 ] as const;
 
+/**
+ * En dessous de ce nombre de combats dans le dataset, l'EWMA est trop bruité
+ * pour être présenté comme une statistique. Mesuré sur le dataset : p5 = 3
+ * combats, p50 = 7 — c'est-à-dire qu'un sizeable de l'effectif est dans ce cas.
+ */
+const THIN_SAMPLE = 5;
+
+function fightsOf(d: MmaRadarData | null | undefined): number | null {
+  const n = d?.fights;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+}
+
 export function MmaRadarChart({
   dataA,
   dataB,
@@ -95,6 +107,18 @@ export function MmaRadarChart({
   className,
 }: Props) {
   const hasB = dataB != null;
+
+  // Sous le seuil de confiance, l'EWMA est du bruit : deux combattants ayant
+  // chacun 3 combats dans le dataset ne sont pas comparables sur la même échelle.
+  const smallSampleA = fightsOf(dataA);
+  const smallSampleB = fightsOf(dataB);
+  const thinData =
+    (smallSampleA !== null && smallSampleA < THIN_SAMPLE) ||
+    (hasB && smallSampleB !== null && smallSampleB < THIN_SAMPLE);
+
+  const label = hasB
+    ? `Radar comparant ${fighterA} et ${fighterB}, base 100 = haut 5 % de la population`
+    : `Radar des stats de ${fighterA}, base 100 = haut 5 % de la population`;
 
   const data = useMemo<RadarDatum[]>(
     () =>
@@ -112,11 +136,9 @@ export function MmaRadarChart({
     <div
       className={cn("flex w-full flex-col items-center gap-2", className)}
       role="img"
-      aria-label={`Radar comparant ${fighterA} et ${fighterB}`}
+      aria-label={label}
     >
-      <span className="sr-only">
-        Radar comparant les stats de {fighterA} et {fighterB}
-      </span>
+      <span className="sr-only">{label}</span>
 
       <ResponsiveContainer width="100%" height={220} minHeight={200}>
         <RadarChart
@@ -194,15 +216,31 @@ export function MmaRadarChart({
         </RadarChart>
       </ResponsiveContainer>
 
+      {thinData && (
+        <p className="text-center text-[10px] text-amber-600/90 dark:text-amber-400/80">
+          Échantillon faible : certains combattants n'ont que quelques combats
+          au dataset, leurs valeurs sont indicatives.
+        </p>
+      )}
+
       <div className="flex w-full items-center justify-center gap-4 text-xs" role="list">
-        <LegendItem color={colorA} name={fighterA} />
-        {hasB && <LegendItem color={colorB} name={fighterB} />}
+        <LegendItem color={colorA} name={fighterA} fights={smallSampleA} />
+        {hasB && <LegendItem color={colorB} name={fighterB} fights={smallSampleB} />}
       </div>
     </div>
   );
 }
 
-function LegendItem({ color, name }: { color: string; name: string }) {
+function LegendItem({
+  color,
+  name,
+  fights,
+}: {
+  color: string;
+  name: string;
+  fights: number | null;
+}) {
+  const thin = fights !== null && fights < THIN_SAMPLE;
   return (
     <div role="listitem" className="flex items-center gap-1.5 min-w-0">
       <span
@@ -214,6 +252,19 @@ function LegendItem({ color, name }: { color: string; name: string }) {
         {initials(name)}
       </span>
       <span className="truncate text-muted-foreground">{name}</span>
+      {/* Le nombre de combats dans le dataset : sans lui, deux valeurs issues
+          d'échantillons très différents se lisent comme équivalentes. */}
+      {fights !== null && (
+        <span
+          className={cn(
+            "shrink-0 tabular-nums",
+            thin ? "font-semibold text-amber-600 dark:text-amber-400" : "text-muted-foreground/70",
+          )}
+          title={`${fights} combat(s) dans le dataset`}
+        >
+          {thin ? `⚠ ${fights} c.` : `${fights} c.`}
+        </span>
+      )}
     </div>
   );
 }
@@ -237,6 +288,10 @@ function MmaTooltip({ active, payload }: TooltipProps<number, string>) {
           </span>
         </div>
       ))}
+      {/* Sans cette ligne, « Striking 72 » se lit « 72 % ». C'est un percentile. */}
+      <div className="mt-0.5 text-[10px] text-muted-foreground/80">
+        100 = haut 5 % de la population
+      </div>
     </div>
   );
 }
