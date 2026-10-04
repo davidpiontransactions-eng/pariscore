@@ -11,6 +11,7 @@
 import { useMemo } from "react";
 import { TrendingUp, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatGridTime } from "@/lib/mma-time";
 import {
   devigMoneyline,
   modelEdge,
@@ -40,14 +41,7 @@ type GridRow = {
 const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
 
 function formatHour(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatGridTime(iso);
 }
 
 export function Mma1xBetGrid({ fights, className }: Props) {

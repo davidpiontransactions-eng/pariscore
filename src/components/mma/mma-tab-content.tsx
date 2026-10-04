@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useState, useCallback, useEffect, useId, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useId, useMemo } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
@@ -15,12 +16,13 @@ import { MmaFilters } from "./mma-filters";
 import { MmaFightCard, type MmaFight } from "./mma-fight-card";
 import { MmaTopValueWidget } from "./mma-top-value-widget";
 import { Mma1xBetGrid } from "./mma-1xbet-grid";
+import { MmaNewsFeed } from "./mma-news-feed";
 import { CagePattern } from "./cage-pattern";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
-import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode, type StrategyFilter } from "@/lib/match-view";
+import { splitLivePrematch, filterByStartWindow, filterByToday, filterByTomorrow, parseTimeFilter, type MatchViewMode, type StrategyFilter } from "@/lib/match-view";
 import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
@@ -164,7 +166,51 @@ function EventSection({
   );
 }
 
+/**
+ * Enveloppe l'onglet pour qu'un throw ne remonte pas au `PageErrorBoundary`
+ * global, qui remplacerait tout le dashboard. Basketball et Handball ont le
+ * même filet ; le MMA était le seul sport sans filet.
+ */
+class MmaErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[mma] onglet en erreur:", error);
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            Onglet MMA momentanément indisponible
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Les autres sports restent accessibles. Rechargez pour réessayer.
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function MmaTabContent() {
+  return (
+    <MmaErrorBoundary>
+      <MmaTabContentInner />
+    </MmaErrorBoundary>
+  );
+}
+
+function MmaTabContentInner() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -183,7 +229,13 @@ export function MmaTabContent() {
   );
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
-  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+  // `tomorrow` était ignoré : la pastille « Demain » s'affichait mais ne
+  // filtrait rien (hours=null, today=false => aucun filtre appliqué).
+  const {
+    hours: timeRange,
+    today: timeToday,
+    tomorrow: timeTomorrow,
+  } = parseTimeFilter(timeKey);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -237,9 +289,11 @@ export function MmaTabContent() {
         return favorites.has(id);
       });
     }
-    const scoped = timeToday ? filterByToday(list, (b) => b.fight.commence_time) : list;
-    return filterByStartWindow(scoped, timeRange, (b) => b.fight.commence_time);
-  }, [prematch, weightClass, strategyFilter, timeRange, timeToday, favorites]);
+    const getStart = (b: (typeof list)[number]) => b.fight.commence_time;
+    let scoped = timeToday ? filterByToday(list, getStart) : list;
+    if (timeTomorrow) scoped = filterByTomorrow(scoped, getStart);
+    return filterByStartWindow(scoped, timeRange, getStart);
+  }, [prematch, weightClass, strategyFilter, timeRange, timeToday, timeTomorrow, favorites]);
 
   // Regroupe par événement (ordre de rencontre conservé).
   const filtered = useMemo(() => {
@@ -277,13 +331,36 @@ export function MmaTabContent() {
     <div className="relative space-y-4 p-4">
       <CagePattern />
 
-      {/* Sous-onglets Live | Pre-match */}
+      {/* Bannière 3D — purement décorative : alt vide + aria-hidden, elle
+          n'apporte aucune information que les listes ci-dessous ne donnent pas. */}
+      <div className="relative overflow-hidden rounded-xl border border-border">
+        <Image
+          src="/img/mma-3d/hero-cage.webp"
+          alt=""
+          aria-hidden
+          width={1600}
+          height={560}
+          sizes="100vw"
+          className="h-32 w-full object-cover object-top sm:h-48 lg:h-56"
+          priority
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent"
+        />
+      </div>
+
+      {/* Sous-onglets Live | Pre-match. `hideRankings` : sans lui, MatchViewTabs
+          rendait un onglet « Classements » que le MMA ne sait pas afficher —
+          le clic affichait le contenu Pre-match et `aria-controls` pointait vers
+          un panneau inexistant. */}
       <MatchViewTabs
         idBase={tabsId}
         active={mode}
         onChange={setMode}
         liveCount={0}
         prematchCount={prematch.length}
+        hideRankings
       />
 
       {mode === "live" ? (
@@ -322,7 +399,7 @@ export function MmaTabContent() {
           <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-3" />
 
           {filtered.length === 0 ? (
-            timeRange === null && !timeToday ? (
+            timeRange === null && !timeToday && !timeTomorrow ? (
               <EmptyState />
             ) : (
               <MatchEmptyState mode="prematch" />
@@ -346,6 +423,10 @@ export function MmaTabContent() {
           {data.source.replace("odds-api+ml", "The Odds API + ML")}
         </p>
       )}
+
+      {/* Fil d'actu : indépendant de la liste de combats — un flux mort ne doit
+          pas masquer les combats, donc il est rendu hors du bloc conditionnel. */}
+      <MmaNewsFeed limit={12} />
     </div>
   );
 }
