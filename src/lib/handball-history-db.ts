@@ -251,10 +251,31 @@ export function loadTeamSeries(
   return out;
 }
 
+/**
+ * Les colonnes de cotes existent-elles ?
+ *
+ * Résultat mis en cache : `PRAGMA table_info` ne change pas en cours de process,
+ * et la route est appelée à chaque rendu. `null` = base illisible.
+ */
+let _hasOdds: boolean | null = null;
+function hasOddsColumns(db: { prepare: (s: string) => { all: () => unknown[] } }): boolean {
+  if (_hasOdds !== null) return _hasOdds;
+  try {
+    const cols = db.prepare(`PRAGMA table_info(handball_match_history)`).all() as {
+      name?: string;
+    }[];
+    _hasOdds = cols.some((c) => c.name === "odds_home");
+  } catch {
+    _hasOdds = false;
+  }
+  return _hasOdds;
+}
+
 /** Purge des caches (tests / hot-reload). */
 export function clearHistoryDbCache(): void {
   _db = null;
   _dbUnavailable = false;
+  _hasOdds = null;
 }
 
 // ─── Backtest par ligue (lecture du registre canonique) ──────────────────────
@@ -282,16 +303,29 @@ export type HistoryLeagueStats = {
  * On joint le registre (9 ligues) et non l'inverse : une ligue présente en base
  * mais absente du registre n'a pas d'alias connu, la rattacher par heuristique
  * serait/deviner.
+ *
+ * ⚠️ DÉFAUT CORRIGÉ 2026-10-05 (constaté en prod, pas en local).
+ * Cette requête référençait `odds_home` sans vérifier que la colonne existe.
+ * Or les colonnes de cotes sont ajoutées par la migration `PRAGMA table_info` de
+ * `scrape-handball-history.mjs` : une table créée par une version antérieure ne
+ * les a pas. Le `prepare` levait alors `no such column: odds_home`, le `catch`
+ * renvoyait `[]`, et l'API répondait « 0 ligue » — indiscernable d'une base vide.
+ * Mesuré sur le VPS : table de 8 043 lignes, 16 colonnes, aucune colonne de
+ * cotes, `last_run = 2026-09-28` (donc migration jamais appliquée).
+ *
+ * On teste donc le schéma avant d'écrire le SQL, et `withOdds` vaut 0 quand la
+ * colonne manque — ce qui est VRAI (c'est exactement ce qu'on sait du marché).
  */
 export function listHistoryLeagueStats(): HistoryLeagueStats[] {
   const db = getDb();
   if (!db) return [];
   try {
+    const hasOdds = hasOddsColumns(db);
     const rows = db
       .prepare(
         `SELECT league,
-                COUNT(*)                              AS n,
-                SUM(CASE WHEN odds_home IS NOT NULL THEN 1 ELSE 0 END) AS with_odds,
+                COUNT(*) AS n,
+                ${hasOdds ? "SUM(CASE WHEN odds_home IS NOT NULL THEN 1 ELSE 0 END)" : "0"} AS with_odds,
                 MIN(date)                             AS min_date,
                 MAX(date)                             AS max_date
            FROM handball_match_history
@@ -375,14 +409,20 @@ export function loadLeagueBacktestMatches(
   const limit = Math.max(1, Math.min(20000, opts.limit ?? 4000));
   const withOddsOnly = opts.withOddsOnly !== false;
   const placeholders = variants.map(() => "?").join(",");
-  const oddsClause = withOddsOnly
-    ? "AND odds_home IS NOT NULL AND odds_draw IS NOT NULL AND odds_away IS NOT NULL"
-    : "";
+  // Même garde que `listHistoryLeagueStats` : sans migration appliquée, la table
+  // n'a pas les colonnes de cotes et le `SELECT` lèverait. On sélectionne les
+  // colonnes conditionnellement plutôt que de laisser le `catch` renvoyer [].
+  const hasOdds = hasOddsColumns(db);
+  const oddsCols = hasOdds ? "odds_home, odds_draw, odds_away" : "NULL, NULL, NULL";
+  const oddsClause =
+    withOddsOnly && hasOdds
+      ? "AND odds_home IS NOT NULL AND odds_draw IS NOT NULL AND odds_away IS NOT NULL"
+      : "";
   try {
     const rows = db
       .prepare(
         `SELECT key, date, home, away, home_goals, away_goals, league,
-                odds_home, odds_draw, odds_away
+                ${oddsCols}
            FROM handball_match_history
           WHERE league IN (${placeholders})
             AND home_goals IS NOT NULL AND away_goals IS NOT NULL

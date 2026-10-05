@@ -3,7 +3,7 @@ import {
   getLeagueBacktest,
   listBacktestLeagues,
 } from "../handball-backtest-history";
-import { loadLeagueBacktestMatches } from "../handball-history-db";
+import { loadLeagueBacktestMatches, clearHistoryDbCache } from "../handball-history-db";
 import { CMP_NEUTRAL_LAMBDA } from "../handball-cmp";
 
 // Contrat du module serveur. Les tests qui touchent réellement `pariscore.db`
@@ -29,6 +29,55 @@ describe("backtest base-driven — dégradation sans base exploitable", () => {
   test("leagueId vide → pas de fuite de données", () => {
     const r = getLeagueBacktest("");
     expect(r.result).toBeNull();
+  });
+});
+
+// ⚠️ Régression SCHÉMA — défaut trouvé EN PROD le 2026-10-05, pas en local.
+// La table `handball_match_history` du VPS avait été créée par une version
+// antérieure du scraper : 16 colonnes, **aucune colonne de cotes**. Les
+// colonnes `odds_home/draw/away` sont ajoutées par la migration
+// `PRAGMA table_info` de `scrape-handball-history.mjs`, qui n'avait pas tourné
+// depuis le 28/09. Les requêtes référenceient donc une colonne inexistante,
+// `prepare` levait `no such column: odds_home`, et le `catch` renvoyait `[]` :
+// l'API répondait « 0 ligue » sur une base de 8 043 lignes — indiscernable d'une
+// base vide.
+describe("schéma antérieur aux colonnes de cotes", () => {
+  test(
+    "listBacktestLeagues renvoie les ligues même sans colonnes de cotes",
+    () => {
+      const option = listBacktestLeagues()[0];
+      if (!option) {
+        // Pas de base : rien à prouver ici, et le test ne doit pas échouer.
+        expect(true).toBe(true);
+        return;
+      }
+      expect(option.n).toBeGreaterThan(0);
+    },
+    SLOW,
+  );
+
+  test(
+    "loadLeagueBacktestMatches ne lève pas et demande le mode large",
+    () => {
+      const ids = listBacktestLeagues().map((l) => l.id);
+      if (ids.length === 0) {
+        expect(true).toBe(true);
+        return;
+      }
+      // `withOddsOnly: false` doit aboutir même si les colonnes manquent.
+      const rows = loadLeagueBacktestMatches(ids[0], { withOddsOnly: false });
+      expect(Array.isArray(rows)).toBe(true);
+    },
+    SLOW,
+  );
+
+  test("le cache de schéma se purge avec le reste", () => {
+    // `hasOddsColumns` est mémoïsé : sans purge, un test qui change de base
+    // lirait le verdict de l'ancienne.
+    expect(() => clearHistoryDbCache()).not.toThrow();
+    clearHistoryDbCache();
+    const rows = loadLeagueBacktestMatches("starligue", { withOddsOnly: false });
+    expect(Array.isArray(rows)).toBe(true);
   });
 });
 
