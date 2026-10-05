@@ -10,6 +10,7 @@
 import { describe, test, expect } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveRealTeamStats } from "../hockey/team-stats";
 
 const DATA = join(process.cwd(), "data");
 const standings = JSON.parse(readFileSync(join(DATA, "eliteprospects_hockey_standings.json"), "utf8"));
@@ -78,12 +79,22 @@ describe("Prédiction hockey — plus aucune fabrication de GF/GA", () => {
       predictions: Record<string, { match: { home: string; away: string }; prediction: { lambda: { home: number; away: number } } }>;
     };
 
-    const noms = new Map(khl.map((t) => [t.name.toLowerCase(), t]));
+    // Équipes ayant un classement RÉEL, toutes ligues confondues.
+//
+// Une carte limitée à `khl` laissait les prédictions NHL passer sans
+// vérification : l'invariant devenait creux tout en restant vert. Et une
+// égalité stricte sur le nom en laissait 6 d'entre elles : la route résout en
+// fuzzy (« Detroit » → « Detroit Red Wings »). On appelle donc la MÊME fonction
+// que la route — un second implémentement du matching dans un test finit
+// toujours par diverger de celui qu'il prétend vérifier.
+    const equipesReelles = Object.values(standings.leagues as Record<string, { teams?: TeamStanding[] }>)
+      .flatMap((lg) => lg?.teams ?? [])
+      .filter((t) => t.gf > 0 && t.ga > 0);
     let verifie = 0;
 
     for (const entry of Object.values(body.predictions)) {
-      const h = noms.get(entry.match.home.toLowerCase());
-      const a = noms.get(entry.match.away.toLowerCase());
+      const h = resolveRealTeamStats(entry.match.home, equipesReelles);
+      const a = resolveRealTeamStats(entry.match.away, equipesReelles);
       if (!h || !a) continue;
 
       // λ doit être borné par les ratios d'attaque/défense réels. La vieille
@@ -103,9 +114,11 @@ describe("Prédiction hockey — plus aucune fabrication de GF/GA", () => {
       verifie++;
     }
 
-    // Aucune prédiction n'est actuellement émise (NHL sans classement réel, KHL et
-    // Magnus sans fixtures) : l'invariant ci-dessus est donc vrai mais creux.
-    // On l'assume explicitement pour que le test ne facture pas un vide.
+    // Toute prédiction émise doit avoir été confrontée à un classement réel :
+    // c'est la garantie que la carte ci-dessus couvre bien TOUS les ligues
+    // alimentées. Si une ligue émettait sans classement réel, ce compte
+    // serait inférieur au total et le test échouerait — au lieu de passer
+    // parce qu'on ne vérifiait que la KHL.
     expect(verifie).toBe(Object.keys(body.predictions).length);
   });
 

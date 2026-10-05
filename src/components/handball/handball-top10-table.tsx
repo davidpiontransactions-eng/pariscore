@@ -123,9 +123,9 @@ export function HandballTop10Table({ rows }: { rows: TopMatchStrategy[] }) {
             <div className="mt-1.5">
               <DateTimeCell dateTime={r.dateTime} />
             </div>
-            <div className="mt-1 flex items-center gap-1.5">
+            <div className="mt-1 flex w-full min-w-0 items-center gap-1.5">
               <HandballTeamLogo name={r.home} size={16} />
-              <span className="truncate text-sm font-medium text-[#222222] dark:text-white">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#222222] dark:text-white">
                 {r.home} – {r.away}
               </span>
               <HandballTeamLogo name={r.away} size={16} />
@@ -151,19 +151,28 @@ export function HandballTop10Table({ rows }: { rows: TopMatchStrategy[] }) {
       </ul>
 
       {/* ── Desktop : tableau 6 colonnes ── */}
+      {/* `overflow-x-auto` seul ne sert à rien si le tableau peut rétrécir pour
+          tenir dans la largeur : sans largeur MINIMALE, le navigateur compresse
+          les colonnes au lieu de laisser défiler, et le nom des clubs écrase
+          les colonnes voisines. `min-w` est le seuil qui déclenche réellement le
+          scroll horizontal. */}
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-xs">
+        <table className="w-full min-w-[640px] text-xs">
           <HandballTableCaption>
             Top {rows.length} matchs par stratégie — probabilité ≥ 65 % et cote ≥ 1.15
           </HandballTableCaption>
           <thead>
             <tr className="border-b border-[#f0f0f0] text-left text-[#717171] dark:border-white/10 dark:text-slate-400">
-              <th className="w-8 py-1.5 pr-2 font-medium">#</th>
-              <th className="py-1.5 pr-2 font-medium">Date / Heure</th>
-              <th className="py-1.5 pr-2 font-medium">Match / Ligue</th>
-              <th className="py-1.5 pr-2 font-medium">Stratégie</th>
-              <th className="py-1.5 pr-2 text-right font-medium">Probabilité</th>
-              <th className="py-1.5 text-right font-medium">Cote</th>
+              <th className="w-8 py-2 pr-2 font-medium">#</th>
+              <th className="py-2 pr-2 font-medium">Date / Heure</th>
+              {/* Bornes identiques au <td> : sans elles, c'est l'en-tête qui
+                  dimensionne la colonne et le `truncate` se recomprime. */}
+              <th className="py-2 pr-2 font-medium min-w-[210px] max-w-[320px]">
+                Match / Ligue
+              </th>
+              <th className="py-2 pr-2 font-medium">Stratégie</th>
+              <th className="py-2 pr-2 text-right font-medium">Probabilité</th>
+              <th className="py-2 text-right font-medium">Cote</th>
             </tr>
           </thead>
           <tbody>
@@ -180,11 +189,14 @@ export function HandballTop10Table({ rows }: { rows: TopMatchStrategy[] }) {
                 <td className="py-2 pr-2">
                   <DateTimeCell dateTime={r.dateTime} />
                 </td>
-                <td className="py-2 pr-2">
+                <td className="py-2 pr-2 align-middle min-w-[210px] max-w-[320px]">
                   <LeagueFlag iso={r.countryCode} name={r.leagueName} />
-                  <span className="mt-0.5 flex items-center gap-1.5">
+                  <span className="mt-0.5 flex w-full min-w-0 items-center gap-1.5">
                     <HandballTeamLogo name={r.home} size={14} />
-                    <span className="font-medium text-[#222222] dark:text-white">
+                    {/* `min-w-0 flex-1` : sans base de largeur, le nom le plus
+                        long du tableau ne peut pas réduire et gonfle la colonne
+                        jusqu'à écraser les 5 autres. */}
+                    <span className="min-w-0 flex-1 truncate font-medium text-[#222222] dark:text-white">
                       {r.home} – {r.away}
                     </span>
                     <HandballTeamLogo name={r.away} size={14} />
