@@ -24,7 +24,7 @@
 | 12 | Couche générique Vitibet → Pariscore | `src/lib/handball-vitibet-league.ts` |
 | 13 | Binding 3 ligues danoises (23 / 25 / 16) | `src/lib/handball-danish.ts` |
 | 14 | Fixture JSON 3 ligues danoises (40 équipes réelles) | `src/lib/fixtures/danish-handball-2026.json` |
-| 15 | Bloc splits D/E + forme (ligues couvertes) | `src/components/handball/handball-danish-stats.tsx` |
+| 15 | Bloc splits D/E + forme (ligues couvertes) | `src/components/handball/handball-vitibet-stats.tsx` |
 | 16 | Binding MOL Liga Women (140) | `src/lib/handball-mol-liga.ts` |
 | 17 | Fixture JSON MOL Liga (12 équipes + 15 matchs) | `src/lib/fixtures/mol-liga-women-2026.json` |
 | 18 | Moteur de backtesting walk-forward | `src/lib/handball-backtest-pariscore.ts` |
