@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { loadMergedPrematch } from "@/lib/hockey/prematch-data";
-import { loadKhlSchedule, khlCalendarWindow } from "@/lib/hockey/khl-schedule";
+import { loadKhlSchedule, khlCalendarWindow, loadOfficialHockeySchedule } from "@/lib/hockey/khl-schedule";
 
 const CACHE_TTL = 5 * 60_000;
 
@@ -206,6 +206,50 @@ function fetchKhlMatches(): unknown[] {
   }
 }
 
+/**
+ * Calendrier NHL officiel (ESPN public API, 1344 matchs pour la saison
+ * 2026-2027). C'est la source la plus large du projet hockey : RotoWire
+ * sert les alignements, hockey-reference et quanthockey renvoient 403.
+ *
+ * Le fichier est produit par `scripts/scrape-nhl-schedule.mjs` et porte le
+ * MÊME schéma que `khl_schedule.json`, d'où le lecteur partagé.
+ */
+function fetchNhlMatches(): unknown[] {
+  try {
+    const data = loadOfficialHockeySchedule("nhl");
+    if (!data) return [];
+    const { fenetre, matchs } = khlCalendarWindow(data);
+    return matchs.map((m) => ({
+      id: `nhl-${m.id}`,
+      homeName: m.homeName || "Home",
+      awayName: m.awayName || "Away",
+      scheduledAt: m.scheduledAt,
+      isLive: m.isLive,
+      isFinished: m.isFinished,
+      leagueId: "nhl",
+      leagueName: "NHL",
+      countryName: "USA/Canada",
+      countryCode: "US",
+      oddsH: null,
+      oddsD: null,
+      oddsA: null,
+      homeGoals: m.homeGoals,
+      awayGoals: m.awayGoals,
+      venue: m.venue,
+      homeCode: m.homeCode,
+      awayCode: m.awayCode,
+      predictionsAvailable: m.predictionsAvailable,
+      predictionsUnavailableReason: m.predictionsUnavailableReason,
+      window: fenetre,
+      h2h: null,
+      source: "espn",
+    }));
+  } catch (e) {
+    console.warn("[hockey] NHL schedule load failed:", e);
+    return [];
+  }
+}
+
 export async function GET() {
   const cached = cache.getEntry();
   if (cached?.data && isFresh(cached, CACHE_TTL) && !cached.data.degraded) {
@@ -218,13 +262,14 @@ export async function GET() {
   }
 
   try {
-    const [bsdMatches, prematchMatches, khlMatches] = await Promise.all([
+    const [bsdMatches, prematchMatches, khlMatches, nhlMatches] = await Promise.all([
       fetchBSDHockey(),
       fetchPrematchMatches(),
       Promise.resolve(fetchKhlMatches()),
+      Promise.resolve(fetchNhlMatches()),
     ]);
 
-    const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches];
+    const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches, ...nhlMatches];
     const seen = new Set<string>();
     const norm = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
     const deduped = allMatches.filter((m) => {
@@ -240,15 +285,17 @@ export async function GET() {
     const hasBSD = bsdMatches.length > 0;
     const hasPrematch = prematchMatches.length > 0;
     const hasKhl = khlMatches.length > 0;
-    const degraded = !(hasBSD || hasPrematch || hasKhl);
+    const hasNhl = nhlMatches.length > 0;
+    const degraded = !(hasBSD || hasPrematch || hasKhl || hasNhl);
 
     const sourceParts: string[] = [];
     if (hasBSD) sourceParts.push("bsd");
     if (hasPrematch) sourceParts.push("prematch");
     if (hasKhl) sourceParts.push("hockeytech");
+    if (hasNhl) sourceParts.push("espn");
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
 
-    const counts = { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length };
+    const counts = { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length, espn: nhlMatches.length };
 
     if (!degraded) {
       cache.set({ matches: deduped, source, degraded, counts });

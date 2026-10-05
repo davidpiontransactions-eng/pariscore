@@ -17,7 +17,7 @@
  * reste disponible sans re-scraper.
  */
 
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, statSync } from "fs";
 import { join } from "path";
 
 export type KhlMatch = {
@@ -70,15 +70,64 @@ const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 
 /** `null` si le fichier est absent ou illisible — jamais un tableau vide fabriqué. */
 export function loadKhlSchedule(): KhlSchedule | null {
-  const filePath = join(DATA_DIR, "khl_schedule.json");
-  if (!existsSync(filePath)) return null;
+  return loadOfficialHockeySchedule("khl");
+}
+
+/**
+ * Cache mémoire par fichier, invalidé sur le `mtimeMs`.
+ *
+ * Mesuré le 2026-10-05 : `khl_schedule.json` fait 511 Ko et `nhl_schedule.json`
+ * 518 Ko. Les relire et les reparser à CHAQUE requête coûtait ~8 ms de
+ * `readFileSync` + `JSON.parse` chacun, sur le thread de l'event loop — donc
+ * du temps où la route ne répond à personne d'autre. Deux appels par requête
+ * (KHL + NHL), à chaque clic sur l'onglet.
+ *
+ * `mtimeMs` plutôt qu'un TTL fixe : le cron réécrit ces fichiers une fois par
+ * jour, et le invalidation doit être immédiate après un scrape, pas jusqu'à
+ * l'expiration d'un cache. Le `statSync` coûte ~0,02 ms.
+ */
+type CacheEntree = { mtimeMs: number; data: KhlSchedule | null };
+const cacheMemo = new Map<string, CacheEntree>();
+
+function lireScheduleCache(path: string): KhlSchedule | null {
+  let mtimeMs = 0;
   try {
-    const json = JSON.parse(readFileSync(filePath, "utf8")) as KhlSchedule;
-    if (!json || !Array.isArray(json.matches) || json.matches.length === 0) return null;
-    return json;
+    mtimeMs = statSync(path).mtimeMs;
   } catch {
+    cacheMemo.delete(path);
     return null;
   }
+
+  const entree = cacheMemo.get(path);
+  if (entree && entree.mtimeMs === mtimeMs) return entree.data;
+
+  let data: KhlSchedule | null = null;
+  try {
+    const json = JSON.parse(readFileSync(path, "utf8")) as KhlSchedule;
+    data = json && Array.isArray(json.matches) && json.matches.length > 0 ? json : null;
+  } catch {
+    data = null;
+  }
+  cacheMemo.set(path, { mtimeMs, data });
+  return data;
+}
+
+/**
+ * Lecteur GÉNÉRIQUE des calendriers officiels hockey.
+ *
+ * `khl_schedule.json` (HockeyTech, 748 matchs) et `nhl_schedule.json` (ESPN,
+ * 1344 matchs) partagent le MÊME schéma — c'est délibéré : deux lecteurs
+ * quasi identiques divergeraient, et la fenêtre comme les garde-fous
+ * resteraient à dupliquer. Un nouveau calendrier (Magnus, LEB…) n'a qu'à
+ * respecter le schéma.
+ */
+export function loadOfficialHockeySchedule(league: "khl" | "nhl"): KhlSchedule | null {
+  return lireScheduleCache(join(DATA_DIR, `${league}_schedule.json`));
+}
+
+/** Vide le cache mémoire (tests, et après un scrape dans le même process). */
+export function clearHockeyScheduleCache(): void {
+  cacheMemo.clear();
 }
 
 export type KhlWindow = {
