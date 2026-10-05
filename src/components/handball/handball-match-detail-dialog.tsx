@@ -29,10 +29,15 @@ import { HandballLeagueBadge } from "@/components/handball/handball-league-badge
 import { HandballScoreBanner } from "./handball-score-banner";
 import { HandballPredictionCards } from "./handball-prediction-cards";
 import { HandballTeamStatsTable, type HandballClassicStats } from "./handball-team-stats-table";
-import { HandballDanishStats } from "./handball-danish-stats";
+import { HandballVitibetStats } from "./handball-vitibet-stats";
+import { HandballTeamMatchAnalysis } from "./handball-team-match-analysis";
+import { HandballLeagueOverview } from "./handball-league-overview";
 import { computePariscorePrediction } from "@/lib/handball-pariscore";
-import { danishLeagueBaseline, findDanishLeague, findTeamStats } from "@/lib/handball-danish";
-import { molLigaBaseline, findMolLigaLeague, findTeamStats as findMolTeamStats } from "@/lib/handball-mol-liga";
+import {
+  findTeamStats,
+  findVitibetCoveredLeague,
+  vitibetCoveredBaseline,
+} from "@/lib/handball-vitibet-leagues";
 import { useVitibetTips } from "@/hooks/use-vitibet-tips";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 // Type-only : le module handball-players lit fs.readFileSync (server-only) —
@@ -1294,6 +1299,21 @@ export function HandballMatchDetailDialog({
   // Section bonus repliée par défaut (16 chips : pas de surcharge au premier coup d'œil).
   const [bonusOpen, setBonusOpen] = useState(false);
 
+  // Panneau d'analyse du duel (bead f9p6.3) — ouvert au clic sur un blason ou un
+  // nom de club dans l'en-tête du match. Fermé au changement de match : sinon on
+  // afficherait le duel PRÉCÉDENT sous le titre du nouveau match, un mélange
+  // invisible en test mais franchement trompeur à l'écran.
+  const [duelOpen, setDuelOpen] = useState(false);
+  useEffect(() => {
+    setDuelOpen(false);
+    setLeagueOpen(false);
+  }, [match?.id]);
+
+  // Synthèse du championnat (bead f9p6.2) — ouverte au clic sur le badge de
+  // ligue du titre. Mêmes règles que le panneau de duel : sister's du Dialog,
+  // et refermé au changement de match.
+  const [leagueOpen, setLeagueOpen] = useState(false);
+
   // Prédiction Pariscore (Index / Forme / Power / score / winrate / seuil de
   // total) — MÊME form-store que les 3 paris : les λs ne peuvent pas diverger
   // entre le banner et l'onglet Bets.
@@ -1302,11 +1322,13 @@ export function HandballMatchDetailDialog({
   // MOL Liga Women) ont des bases très étalées (25.6 → 31.8 buts/équipe).
   // Comparer une D2 féminine au 28.5 « tous championnats » décalerait tout le
   // Team Power → on interroge les 2 games de ligues, sinon défaut du modèle.
+  // Base de buts de la ligue : les ligues couvertes par Vitibet (3 danoises,
+  // MOL Liga Women, Superlig TR, Liga NA Women RO) ont des bases très étalées
+  // (25.6 → 33.5 buts/équipe). Comparer une Superlig au 28.5 « tous
+  // championnats » décalerait tout le Team Power de 17 % → on interroge le
+  // résolveur Vitibet, sinon défaut du modèle.
   const leagueMean = useMemo(
-    () =>
-      danishLeagueBaseline(match?.league.name ?? "") ??
-      molLigaBaseline(match?.league.name ?? "") ??
-      undefined,
+    () => vitibetCoveredBaseline(match?.league.name ?? "") ?? undefined,
     [match?.league.name],
   );
   const pariscore = useMemo(
@@ -1324,9 +1346,18 @@ export function HandballMatchDetailDialog({
   // ligue couverte (danoise ou MOL Liga) on les tire du classement Vitibet (avec
   // splits dom./ext.) ; pour les autres ligues on garde l'historique DB
   // (SplitTable existant).
-  const danishSeasonStats = useMemo(() => {
+  // Stats classiques de saison pour le tableau de l'onglet Analyse. Pour une
+  // ligue couverte par Vitibet (danoises, MOL Liga, Superlig TR, Liga NA Women
+  // RO) on les tire du classement Vitibet (avec splits dom./ext.) ; pour les
+  // autres ligues on garde l'historique DB (SplitTable existant).
+  //
+  // Un seul `findVitibetCoveredLeague` remplace les chaînes danoise puis MOL :
+  // les deux appelaient le même `findTeamStats` sur le même type
+  // `CoveredLeague`, donc les deux `useMemo` ne différaient que par le nom de
+  // ligue cherché.
+  const vitibetSeasonStats = useMemo(() => {
     if (!match) return { home: null, away: null };
-    const league = findDanishLeague(match.league.name);
+    const league = findVitibetCoveredLeague(match.league.name);
     if (!league) return { home: null, away: null };
     return {
       home: findTeamStats(league, match.home.name),
@@ -1334,19 +1365,9 @@ export function HandballMatchDetailDialog({
     };
   }, [match]);
 
-  const molSeasonStats = useMemo(() => {
-    if (!match) return { home: null, away: null };
-    const league = findMolLigaLeague(match.league.name);
-    if (!league) return { home: null, away: null };
-    return {
-      home: findMolTeamStats(league, match.home.name),
-      away: findMolTeamStats(league, match.away.name),
-    };
-  }, [match]);
-
   const classicStats = useMemo(() => {
     const toClassic = (
-      s: NonNullable<typeof danishSeasonStats.home>,
+      s: NonNullable<typeof vitibetSeasonStats.home>,
     ): HandballClassicStats => ({
       played: s.played,
       wins: s.wins,
@@ -1361,14 +1382,10 @@ export function HandballMatchDetailDialog({
       concededAvg: s.concededAvg,
     });
     return {
-      home: (danishSeasonStats.home ?? molSeasonStats.home)
-        ? toClassic(danishSeasonStats.home ?? molSeasonStats.home!)
-        : null,
-      away: (danishSeasonStats.away ?? molSeasonStats.away)
-        ? toClassic(danishSeasonStats.away ?? molSeasonStats.away!)
-        : null,
+      home: vitibetSeasonStats.home ? toClassic(vitibetSeasonStats.home) : null,
+      away: vitibetSeasonStats.away ? toClassic(vitibetSeasonStats.away) : null,
     };
-  }, [danishSeasonStats, molSeasonStats]);
+  }, [vitibetSeasonStats]);
 
   // Tip Vitibet du match (badge « TIP » du banner). Même clé SWR que la carte du
   // calendrier → 0 requête supplémentaire, simple lecture du cache.
@@ -1561,7 +1578,8 @@ export function HandballMatchDetailDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Fond du popup = teinte dark FotMob : `--GlobalColorScheme-Background-dialog:
           rgb(29,29,29)` du bloc `.theme-dark` servi par fotmob.com (fond de page
           dark = #000000, cartes = #1D1D1D). Scope au SEUL dialog handball :
@@ -1578,10 +1596,17 @@ export function HandballMatchDetailDialog({
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2">
-            <HandballLeagueBadge
-              leagueName={match.league.name}
-              country={match.league.country}
-            />
+            <button
+              type="button"
+              onClick={() => setLeagueOpen(true)}
+              aria-label={`Ouvrir la synthèse du championnat ${match.league.name}`}
+              className="rounded-lg px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
+            >
+              <HandballLeagueBadge
+                leagueName={match.league.name}
+                country={match.league.country}
+              />
+            </button>
           </DialogTitle>
           <DialogDescription className="text-center sm:text-center">
             {formatDate(match.kickoff)}
@@ -1602,13 +1627,24 @@ export function HandballMatchDetailDialog({
           />
         )}
 
-        {/* Score / Équipes (logos + score si joué) */}
+        {/* Score / Équipes (logos + score si joué). Blason et nom = déclencheur de
+            l'analyse du duel (bead f9p6.3). Le score reste HORS du bouton :
+            l'aire cliquable ne porte que l'identité du club. */}
         <div className="flex items-center justify-between py-3">
           <div className="text-center flex-1">
-            <div className="flex justify-center">
-              <HandballTeamLogo name={match.home.name} size={30} />
-            </div>
-            <div className="mt-1 text-base font-bold leading-tight">{match.home.name}</div>
+            <button
+              type="button"
+              onClick={() => setDuelOpen(true)}
+              aria-label={`Analyser le duel ${match.home.name} contre ${match.away.name}`}
+              className="w-full rounded-lg px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
+            >
+              <span className="flex justify-center">
+                <HandballTeamLogo name={match.home.name} size={30} />
+              </span>
+              <span className="mt-1 block text-base font-bold leading-tight">
+                {match.home.name}
+              </span>
+            </button>
             {match.score && (
               <div className="text-3xl font-bold mt-0.5">{match.score.home}</div>
             )}
@@ -1625,15 +1661,27 @@ export function HandballMatchDetailDialog({
             )}
           </div>
           <div className="text-center flex-1">
-            <div className="flex justify-center">
-              <HandballTeamLogo name={match.away.name} size={30} />
-            </div>
-            <div className="mt-1 text-base font-bold leading-tight">{match.away.name}</div>
+            <button
+              type="button"
+              onClick={() => setDuelOpen(true)}
+              aria-label={`Analyser le duel ${match.away.name} contre ${match.home.name}`}
+              className="w-full rounded-lg px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
+            >
+              <span className="flex justify-center">
+                <HandballTeamLogo name={match.away.name} size={30} />
+              </span>
+              <span className="mt-1 block text-base font-bold leading-tight">
+                {match.away.name}
+              </span>
+            </button>
             {match.score && (
               <div className="text-3xl font-bold mt-0.5">{match.score.away}</div>
             )}
           </div>
         </div>
+        <p className="-mt-1 pb-2 text-center text-[10px] text-[#717171]">
+          Cliquez un club pour l&apos;analyse du duel
+        </p>
 
         {/* Mi-temps */}
         {match.score?.homeHalf != null && (
@@ -1716,11 +1764,12 @@ export function HandballMatchDetailDialog({
               />
             )}
 
-            {/* Bloc saison des ligues danoises : splits D/E par équipe,
-                forme 6 matchs, score prédit Vitibet. Ne rend rien hors
-               usation danoise (pas de doublon avec le tableau ci-dessus). */}
+            {/* Bloc saison des ligues couvertes par Vitibet (danoises, MOL
+                Liga, Superlig TR, Liga NA Women RO) : splits D/E par équipe,
+                forme 6 matchs, score prédit Vitibet. Ne rend rien hors liaison
+                couverte (pas de doublon avec le tableau ci-dessus). */}
             {match && (
-              <HandballDanishStats
+              <HandballVitibetStats
                 leagueName={match.league.name}
                 homeTeamName={match.home.name}
                 awayTeamName={match.away.name}
@@ -2115,5 +2164,27 @@ export function HandballMatchDetailDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+
+      {/* Panneau d'analyse du duel — FRÈRE du dialog, pas imbriqué : deux
+          Dialog Radix imbriqués se disputent le piège de focus et le premier
+         <Escape> ferme le mauvais. Il porte les identifiants du match
+          AFFICHÉ, donc il ne peut pas analyser un autre duel. */}
+      <HandballTeamMatchAnalysis
+        open={duelOpen}
+        onOpenChange={setDuelOpen}
+        leagueName={match.league.name}
+        homeTeamName={match.home.name}
+        awayTeamName={match.away.name}
+        homeTeamId={match.home.id}
+        awayTeamId={match.away.id}
+      />
+
+      {/* Synthèse du championnat — FRÈRE du dialog, comme le panneau de duel. */}
+      <HandballLeagueOverview
+        open={leagueOpen}
+        onOpenChange={setLeagueOpen}
+        leagueName={match.league.name}
+      />
+    </>
   );
 }
