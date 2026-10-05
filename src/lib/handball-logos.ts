@@ -197,6 +197,39 @@ const TEAM_LOGOS: Record<string, string> = {
   // Non couverts par TheSportsDB (sonde 2026-09-27) → fallback initiales assumé :
   // Bietigheim-Metterzimmern, Dessauer, Dormagen, Eisenach, Elbflorenz,
   // Ferndorf, Hagen.
+
+  // ── Superlig Turquie (vitibet 120) + Liga Nationala Women Roumanie (88) ──
+  // 24 clubs, résolus de façon DÉTERMINISTE : le `teamId` API-Sports porté par
+  // data/vitibet-league-*.json EST l'identifiant du blason sur le CDN public
+  // media.api-sports.io/handball/teams/{teamId}.png (clé-zéro). Aucun matching
+  // de nom → aucun risque d'appariement approximatif faux positif.
+  besiktas: "/logos/handball/teams/besiktas.png", // Besiktas
+  // Alias explicre OBLIGATOIRE : « Spor Toto » CONTIENT la chaîne « porto »
+  // (FC Porto, ligne plus haut). Sans cette clé exacte, teamLogoUrl()
+  // tomberait dans son scan `includes` et afficherait le blason de FC Porto.
+  sportoto: "/logos/handball/teams/spor-toto.png", // Spor Toto
+  istanbulgencliksporkulubu: "/logos/handball/teams/istanbul-genclik-spor-kulubu.png", // Istanbul Genclik Spor Kulubu
+  bursaniluferbelediyespor: "/logos/handball/teams/bursa-nilufer-belediyespor.png", // Bursa Nilufer Belediyespor
+  beykozbld: "/logos/handball/teams/beykoz-bld.png", // Beykoz Bld.
+  mihaliccik: "/logos/handball/teams/mihaliccik.png", // Mihaliccik
+  giresunspor: "/logos/handball/teams/giresunspor.png", // Giresunspor
+  trabzon: "/logos/handball/teams/trabzon.png", // Trabzon
+  goztepe: "/logos/handball/teams/goztepe.png", // Goztepe
+  guneysu: "/logos/handball/teams/guneysu.png", // Guneysu
+  csmbucurestiw: "/logos/handball/teams/csm-bucuresti-w.png", // CSM Bucuresti W
+  bistritaw: "/logos/handball/teams/bistrita-w.png", // Bistrita W
+  dunareabrailaw: "/logos/handball/teams/dunarea-braila-w.png", // Dunarea Braila W
+  csmslatinaw: "/logos/handball/teams/csm-slatina-w.png", // CSM Slatina W
+  rapidbucurestiw: "/logos/handball/teams/rapid-bucuresti-w.png", // Rapid Bucuresti W
+  ramnicuvalceaw: "/logos/handball/teams/ramnicu-valcea-w.png", // Ramnicu Valcea W
+  scmcraiovaw: "/logos/handball/teams/scm-craiova-w.png", // SCM Craiova W
+  baiamarew: "/logos/handball/teams/baia-mare-w.png", // Baia Mare W
+  targujiuw: "/logos/handball/teams/targu-jiu-w.png", // Targu Jiu W
+  coronabrasovw: "/logos/handball/teams/corona-brasov-w.png", // Corona Brasov W
+  zalauw: "/logos/handball/teams/zalau-w.png", // Zalau W
+  iasiw: "/logos/handball/teams/iasi-w.png", // Iasi W
+  stiintabucharestw: "/logos/handball/teams/stiinta-bucharest-w.png", // Stiinta Bucharest W
+  targumuresw: "/logos/handball/teams/targu-mures-w.png", // Targu Mures W
 };
 
 /** Chemin du logo d'une équipe, ou null si non couverte (fallback initiales). */

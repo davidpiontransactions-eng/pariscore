@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-27T12:40:12.886Z",
-  "total_bytes": 19349229,
+  "generated_at": "2026-10-05T04:48:37.347Z",
+  "total_bytes": 20920654,
   "assets": [
     {
       "file": "leagues/ehf-champions-league.png",
@@ -102,6 +102,16 @@
       "size": 73877
     },
     {
+      "file": "teams/baia-mare-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/837.png",
+      "label": "Baia Mare W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
+    },
+    {
       "file": "teams/balatonfuredi.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/9brjgx1575294263.png",
       "label": "Balatonfüredi KSE",
@@ -129,6 +139,36 @@
       "size": 185864
     },
     {
+      "file": "teams/besiktas.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1124.png",
+      "label": "Besiktas",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 17858,
+      "format": "jpeg"
+    },
+    {
+      "file": "teams/beykoz-bld.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1125.png",
+      "label": "Beykoz Bld.",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 28453,
+      "format": "jpeg"
+    },
+    {
+      "file": "teams/bistrita-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/838.png",
+      "label": "Bistrita W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
+    },
+    {
       "file": "teams/bjerringbro-silkeborg.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/yqagdp1654962635.png",
       "label": "Bjerringbro-Silkeborg Håndbold",
@@ -154,6 +194,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 44796
+    },
+    {
+      "file": "teams/bursa-nilufer-belediyespor.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1126.png",
+      "label": "Bursa Nilufer Belediyespor",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 24268,
+      "format": "jpeg"
     },
     {
       "file": "teams/caserio-ciudad-real.png",
@@ -255,6 +305,36 @@
       "size": 213288
     },
     {
+      "file": "teams/corona-brasov-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1843.png",
+      "label": "Corona Brasov W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
+    },
+    {
+      "file": "teams/csm-bucuresti-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/840.png",
+      "label": "CSM Bucuresti W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 66345,
+      "format": "png"
+    },
+    {
+      "file": "teams/csm-slatina-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/842.png",
+      "label": "CSM Slatina W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 72345,
+      "format": "png"
+    },
+    {
       "file": "teams/drammen.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/1710us1626461732.png",
       "label": "Drammen HK",
@@ -271,6 +351,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 157994
+    },
+    {
+      "file": "teams/dunarea-braila-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/843.png",
+      "label": "Dunarea Braila W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/dunkerque.png",
@@ -354,6 +444,16 @@
       "size": 116513
     },
     {
+      "file": "teams/giresunspor.png",
+      "url_source": "https://media.api-sports.io/handball/teams/4781.png",
+      "label": "Giresunspor",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
+    },
+    {
       "file": "teams/goeppingen.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/gcp6ko1643117660.png",
       "label": "TPSG Frisch Auf Göppingen",
@@ -379,6 +479,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 129808
+    },
+    {
+      "file": "teams/goztepe.png",
+      "url_source": "https://media.api-sports.io/handball/teams/2031.png",
+      "label": "Goztepe",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/granitas-karys-ltu.png",
@@ -424,6 +534,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 84162
+    },
+    {
+      "file": "teams/guneysu.png",
+      "url_source": "https://media.api-sports.io/handball/teams/4581.png",
+      "label": "Guneysu",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/gwardia-opole.png",
@@ -552,6 +672,16 @@
       "size": 123907
     },
     {
+      "file": "teams/iasi-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/3907.png",
+      "label": "Iasi W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 29416,
+      "format": "png"
+    },
+    {
       "file": "teams/iran.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/t4sx491625163278.png",
       "label": "Iran Handball",
@@ -559,6 +689,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 330862
+    },
+    {
+      "file": "teams/istanbul-genclik-spor-kulubu.png",
+      "url_source": "https://media.api-sports.io/handball/teams/4782.png",
+      "label": "Istanbul Genclik Spor Kulubu",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/japan-w.png",
@@ -757,6 +897,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 94048
+    },
+    {
+      "file": "teams/mihaliccik.png",
+      "url_source": "https://media.api-sports.io/handball/teams/4582.png",
+      "label": "Mihaliccik",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/minden.png",
@@ -966,6 +1116,26 @@
       "size": 158039
     },
     {
+      "file": "teams/ramnicu-valcea-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/846.png",
+      "label": "Ramnicu Valcea W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 75957,
+      "format": "png"
+    },
+    {
+      "file": "teams/rapid-bucuresti-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/847.png",
+      "label": "Rapid Bucuresti W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
+    },
+    {
       "file": "teams/redbergslids.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/fmieer1626492062.png",
       "label": "Redbergslids IK",
@@ -1036,6 +1206,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 189298
+    },
+    {
+      "file": "teams/scm-craiova-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/848.png",
+      "label": "SCM Craiova W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 74757,
+      "format": "png"
     },
     {
       "file": "teams/selestat.png",
@@ -1110,6 +1290,16 @@
       "size": 172358
     },
     {
+      "file": "teams/spor-toto.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1133.png",
+      "label": "Spor Toto",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 26020,
+      "format": "jpeg"
+    },
+    {
       "file": "teams/sporting.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/z4r7fu1626394490.png",
       "label": "Sporting CP Handball",
@@ -1135,6 +1325,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 316446
+    },
+    {
+      "file": "teams/stiinta-bucharest-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/849.png",
+      "label": "Stiinta Bucharest W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 90381,
+      "format": "png"
     },
     {
       "file": "teams/storhamar-w-nor.png",
@@ -1164,6 +1364,26 @@
       "size": 67014
     },
     {
+      "file": "teams/targu-jiu-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1870.png",
+      "label": "Targu Jiu W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 33118,
+      "format": "jpeg"
+    },
+    {
+      "file": "teams/targu-mures-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1871.png",
+      "label": "Targu Mures W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 92781,
+      "format": "png"
+    },
+    {
       "file": "teams/toulouse.png",
       "url_source": "https://r2.thesportsdb.com/images/media/team/badge/e1mzzc1560676930.png",
       "label": "Fenix Toulouse Handball",
@@ -1171,6 +1391,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 254055
+    },
+    {
+      "file": "teams/trabzon.png",
+      "url_source": "https://media.api-sports.io/handball/teams/1135.png",
+      "label": "Trabzon",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 17175,
+      "format": "jpeg"
     },
     {
       "file": "teams/tremblay.png",
@@ -1261,6 +1491,16 @@
       "attribution_requise": false,
       "ok": true,
       "size": 147018
+    },
+    {
+      "file": "teams/zalau-w.png",
+      "url_source": "https://media.api-sports.io/handball/teams/850.png",
+      "label": "Zalau W",
+      "licence": "API-Sports media CDN (clé-zéro), blason officiel de club",
+      "attribution_requise": false,
+      "ok": true,
+      "size": 18741,
+      "format": "jpeg"
     },
     {
       "file": "teams/zurich.png",
