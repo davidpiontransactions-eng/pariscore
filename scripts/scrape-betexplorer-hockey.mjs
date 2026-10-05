@@ -127,7 +127,7 @@ async function main() {
         const results = [];
 
         // Sélectionner les lignes de match dans le tableau
-        const table = document.querySelector("table.table-main");
+        let table = document.querySelector("table.table-main");
         if (!table) {
           console.log("  ⚠️ Tableau introuvable, tentative alternative...");
           const tables = document.querySelectorAll("table");
