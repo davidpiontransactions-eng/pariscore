@@ -131,7 +131,7 @@ function HistoryRow({ bet }: { bet: BacktestSettledBet }) {
         bet.syntheticMatch ? "opacity-70" : ""
       }`}
     >
-      <td className="whitespace-nowrap py-1.5 pr-2 text-[10px] tabular-nums text-[#717171]">
+      <td className="whitespace-nowrap py-2 pr-2 text-[10px] tabular-nums text-[#717171]">
         {bet.date.slice(5)}
         {bet.syntheticMatch && (
           <span
@@ -142,38 +142,45 @@ function HistoryRow({ bet }: { bet: BacktestSettledBet }) {
           </span>
         )}
       </td>
-      <td className="py-1.5 pr-2">
-        <span className="flex min-w-0 items-center gap-1.5">
+      {/* Cellule « Match ».
+          Le `truncate` seul ne suffit pas : sans largeur bornée sur le `td` ni
+          `min-w-0` sur l'élément tronqué, la boîte ellipsis se calcule à ~0 px
+          dans un tableau `overflow-x-auto` — le nom devient invisible et le
+          2e logo part à droite. `w-full` fait réellement consommer la largeur
+          du `td` au conteneur flex, `min-w-0 flex-1` donne à l'élément tronqué
+          une base qu'il peut réduire, et les bornes `min/max` fixent la colonne. */}
+      <td className="py-2 pr-2 align-middle min-w-[210px] max-w-[290px]">
+        <span className="flex w-full min-w-0 items-center gap-1.5">
           <HandballTeamLogo name={bet.home} size={13} />
-          <span className="truncate text-[11px] text-[#222222] dark:text-white">
+          <span className="min-w-0 flex-1 truncate text-xs font-medium text-[#222222] dark:text-white">
             {bet.home} – {bet.away}
           </span>
           <HandballTeamLogo name={bet.away} size={13} />
         </span>
       </td>
-      <td className="whitespace-nowrap py-1.5 pr-2 text-[10px] text-[#717171]">
+      <td className="whitespace-nowrap py-2 pr-2 text-[10px] text-[#717171]">
         {bet.market === "1N2" ? "1N2" : "Total"}
       </td>
-      <td className="py-1.5 pr-2 text-[11px]">
+      <td className="py-2 pr-2 text-[11px]">
         <span className="rounded bg-[#fafafa] px-1.5 py-0.5 dark:bg-white/[0.06]">
           {bet.pick}
         </span>
       </td>
-      <td className="py-1.5 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
+      <td className="py-2 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
         {bet.prob.toFixed(1)}%
       </td>
-      <td className="py-1.5 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
+      <td className="py-2 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
         {bet.odds.toFixed(2)}
       </td>
-      <td className="py-1.5 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
+      <td className="py-2 pr-2 text-right font-mono text-[11px] tabular-nums text-[#717171]">
         {bet.predictedHome}:{bet.predictedAway}
       </td>
-      <td className="py-1.5 text-center" title={bet.result}>
+      <td className="py-2 text-center" title={bet.result}>
         <span className={tone} aria-label={bet.result}>
           {mark}
         </span>
       </td>
-      <td className={`py-1.5 text-right font-mono text-[11px] tabular-nums ${tone}`}>
+      <td className={`py-2 text-right font-mono text-[11px] tabular-nums ${tone}`}>
         {fmtU(bet.profitU)}
       </td>
     </tr>
@@ -448,7 +455,13 @@ export function HandballPariscoreBacktest() {
                 <thead>
                   <tr className="border-b border-[#f0f0f0] text-left text-[#717171] dark:border-white/10">
                     <th className="py-1.5 pr-2 font-medium">Date</th>
-                    <th className="py-1.5 pr-2 font-medium">Match</th>
+                    {/* Mêmes contraintes de largeur que la cellule « Match » : sans elles,
+                        c'est l'en-tête qui dimensionne la colonne et le `truncate`
+                        se recomprime. `py-2` aligne la hauteur d'en-tête sur les
+                        lignes (aération). */}
+                    <th className="py-2 pr-2 font-medium min-w-[210px] max-w-[290px]">
+                      Match
+                    </th>
                     <th className="py-1.5 pr-2 font-medium">Marché</th>
                     <th className="py-1.5 pr-2 font-medium">Pari</th>
                     <th className="py-1.5 pr-2 text-right font-medium">Proba</th>
