@@ -103,6 +103,14 @@ const LEAGUES = [
   { key: 'd2women', name: 'Denmark: 1. Division Women', path: '/handball/denmark/1-division-women/', country: 'Denmark' },
   { key: 'mol', name: 'Europe: MOL Liga Women', path: '/handball/europe/doprastav-liga-women/', country: 'Europe' },
   { key: 'bundesliga2', name: 'Germany: 2. Bundesliga', path: '/handball/germany/2-bundesliga/', country: 'Germany' },
+  // ── 2026-10-05 : Superlig (Turquie) + Liga Nationala Women (Roumanie), pour
+  // le backtest des modules Vitibet. Chemins valides AVANT d'etre codes en dur :
+  // sonde avec `discoverSeasonLinks`, temoin `/handball/france/starligue/` en
+  // controle (26 saisons). Resultat : 15 saisons Turquie, 18 Roumanie.
+  // Rappel : BetExplorer repond HTTP 200 sur un chemin inexistant, donc « 0 saison
+  // trouvee » est le seul signal de chemin faux — pas le code HTTP.
+  { key: 'superlig', name: 'Turkey: Superlig', path: '/handball/turkey/superlig/', country: 'Turkey' },
+  { key: 'ligaNationalaWomen', name: 'Romania: Liga Nationala Women', path: '/handball/romania/liga-nationala-women/', country: 'Romania' },
 ];
 
 // ─── SQLite (bun:sqlite sous bun, better-sqlite3 sous node/pm2) ──────────────

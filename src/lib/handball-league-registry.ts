@@ -42,7 +42,7 @@ export type HandballLeague = {
 };
 
 /**
- * Les 9 ligues du cron `pariscore-cron-handball-history`.
+ * Les 11 ligues du cron `pariscore-cron-handball-history`.
  *
  * `path` est dupliqué depuis `scripts/scrape-handball-history.mjs` : le
  * registre TS ne remplace PAS la liste du scraper (un script node ne peut pas
@@ -118,6 +118,26 @@ export const HAND_BALL_LEAGUES: readonly HandballLeague[] = [
     country: "Germany",
     path: "/handball/germany/2-bundesliga/",
     aliases: ["bundesliga2", "2. Bundesliga"],
+  },
+  // ── Ajout 2026-10-05 : Turkey + Romania, pour le backtest des modules Vitibet.
+  // Chemins VALIDES avant d'etre codes en dur (sonde avec discoverSeasonLinks,
+  // temoin France en controle) : 15 saisons cote Turquie, 18 cote Roumanie.
+  // BetExplorer renvoie HTTP 200 sur un chemin inexistant, donc « 200 + 0 saison »
+  // est le seul signal de chemin faux — c'est ce qui a fait rejeter une premiere
+  // sonde, erronee (majuscule sur /France/ + regex maison au lieu du parseur).
+  {
+    id: "superlig",
+    name: "Turkey: Superlig",
+    country: "Turkey",
+    path: "/handball/turkey/superlig/",
+    aliases: ["superlig", "Superlig", "Turkish Superlig", "Süper Lig"],
+  },
+  {
+    id: "ligaNationalaWomen",
+    name: "Romania: Liga Nationala Women",
+    country: "Romania",
+    path: "/handball/romania/liga-nationala-women/",
+    aliases: ["ligaNationalaWomen", "Liga Nationala Women", "Ligii Nationale Women"],
   },
 ];
 

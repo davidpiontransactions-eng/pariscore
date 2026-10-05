@@ -12,10 +12,23 @@ import {
 // trois lignes pour un championnat et tout agrégat filtré faux.
 
 describe("registre des ligues — cohérence interne", () => {
-  test("9 ligues, ids et noms canoniques uniques", () => {
-    expect(HAND_BALL_LEAGUES).toHaveLength(9);
-    expect(new Set(HAND_BALL_LEAGUES.map((l) => l.id)).size).toBe(9);
-    expect(new Set(HAND_BALL_LEAGUES.map((l) => l.name)).size).toBe(9);
+  test("11 ligues, ids et noms canoniques uniques", () => {
+    expect(HAND_BALL_LEAGUES).toHaveLength(11);
+    expect(new Set(HAND_BALL_LEAGUES.map((l) => l.id)).size).toBe(11);
+    expect(new Set(HAND_BALL_LEAGUES.map((l) => l.name)).size).toBe(11);
+  });
+
+  // Chemins valides AVANT d'être codés en dur (sonde discoverSeasonLinks,
+  // témoin /handball/france/starligue/ en contrôle : 15 saisons Turquie,
+  // 18 Roumanie). BetExplorer répond 200 sur un chemin inexistant, donc c'est
+  // « 0 saison » qui tranche — le test verrouille la valeur, pas le 200.
+  test("Superlig + Liga Nationala Women déclarées avec leur chemin validé", () => {
+    const tr = HAND_BALL_LEAGUES.find((l) => l.id === "superlig");
+    expect(tr?.path).toBe("/handball/turkey/superlig/");
+    expect(tr?.country).toBe("Turkey");
+    const ro = HAND_BALL_LEAGUES.find((l) => l.id === "ligaNationalaWomen");
+    expect(ro?.path).toBe("/handball/romania/liga-nationala-women/");
+    expect(ro?.country).toBe("Romania");
   });
 
   test("toute ligue a un pays, un chemin BetExplorer et au moins un alias", () => {
