@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { loadMergedPrematch } from "@/lib/hockey/prematch-data";
+import { loadKhlSchedule, khlCalendarWindow } from "@/lib/hockey/khl-schedule";
 
 const CACHE_TTL = 5 * 60_000;
 
@@ -133,6 +134,57 @@ async function fetchPrematchMatches(): Promise<unknown[]> {
   }
 }
 
+/**
+ * Calendrier KHL officiel (HockeyTech `view=schedule`, 748 matchs pour la
+ * saison 2026-2027) — la seule source fixtures KHL exploitable aujourd'hui.
+ * `scorebar` est mesurée à 0/6 (tronquée par le proxy), Annabet coupe le TCP
+ * depuis le VPS, et BetExplorer dépend d'un Chromium qui ne démarre pas en
+ * local. Le fichier est donc scrappé une fois par jour et lu ici tel quel.
+ *
+ * Chaque match porte son `predictionsAvailable` : le calendrier fonctionne
+ * même sans classement, et l'UI peut distinguer « pas de match » de « match
+ * sans prédiction » au lieu de deviner.
+ */
+function fetchKhlMatches(): unknown[] {
+  try {
+    const data = loadKhlSchedule();
+    if (!data) return [];
+    const { fenetre, matchs } = khlCalendarWindow(data);
+    return matchs.map((m) => ({
+      id: `khl-${m.id}`,
+      homeName: m.homeName || "Home",
+      awayName: m.awayName || "Away",
+      scheduledAt: m.scheduledAt,
+      isLive: m.isLive,
+      isFinished: m.isFinished,
+      leagueId: "khl",
+      leagueName: "KHL",
+      countryName: "Russie",
+      countryCode: "RU",
+      // Aucune cote sur cette source : `null` explicite, jamais 0 (0 se lit
+      // comme une cote de 1.00 sur un marché fermé).
+      oddsH: null,
+      oddsD: null,
+      oddsA: null,
+      homeGoals: m.homeGoals,
+      awayGoals: m.awayGoals,
+      overtime: m.overtime,
+      shootout: m.shootout,
+      venue: m.venue,
+      homeCode: m.homeCode,
+      awayCode: m.awayCode,
+      predictionsAvailable: m.predictionsAvailable,
+      predictionsUnavailableReason: m.predictionsUnavailableReason,
+      window: fenetre,
+      h2h: null,
+      source: "hockeytech",
+    }));
+  } catch (e) {
+    console.warn("[hockey] KHL schedule load failed:", e);
+    return [];
+  }
+}
+
 export async function GET() {
   const cached = cache.getEntry();
   if (cached?.data && isFresh(cached, CACHE_TTL) && !cached.data.degraded) {
@@ -144,12 +196,13 @@ export async function GET() {
   }
 
   try {
-    const [bsdMatches, prematchMatches] = await Promise.all([
+    const [bsdMatches, prematchMatches, khlMatches] = await Promise.all([
       fetchBSDHockey(),
       fetchPrematchMatches(),
+      Promise.resolve(fetchKhlMatches()),
     ]);
 
-    const allMatches = [...bsdMatches, ...prematchMatches];
+    const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches];
     const seen = new Set<string>();
     const norm = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
     const deduped = allMatches.filter((m) => {
@@ -164,11 +217,13 @@ export async function GET() {
 
     const hasBSD = bsdMatches.length > 0;
     const hasPrematch = prematchMatches.length > 0;
-    const degraded = !(hasBSD || hasPrematch);
+    const hasKhl = khlMatches.length > 0;
+    const degraded = !(hasBSD || hasPrematch || hasKhl);
 
     const sourceParts: string[] = [];
     if (hasBSD) sourceParts.push("bsd");
     if (hasPrematch) sourceParts.push("prematch");
+    if (hasKhl) sourceParts.push("hockeytech");
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
 
     if (!degraded) {
@@ -179,6 +234,9 @@ export async function GET() {
       matches: deduped,
       source,
       degraded,
+      // Volumétrie par source : sans elle, « source: hockeytech » ne dit pas
+      // si l'onglet affiche 5 matchs NHL ou 748 matchs KHL.
+      counts: { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length },
     });
   } catch (err) {
     console.error("[hockey] fetch failed:", (err as Error).message);
