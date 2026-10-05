@@ -52,7 +52,7 @@ $VPS_HOST = "ubuntu@51.75.21.239"
 # `ConnectTimeout` ne couvre QUE la connexion TCP. Si le VPS accepte la
 # connexion puis ne repond plus (il sature pendant `next build`), `ssh` peut
 # rester bloque indefiniment : la boucle de polling s'arrete, plus aucune ligne
-# n'est ecrite dans le log — exactement le symptome qu'on essayait de supprimer.
+# n'est ecrite dans le log, exactement le symptome qu'on essayait de supprimer.
 # `ServerAliveInterval` + `ServerAliveCountMax` font tomber la connexion au bout
 # de ~30 s sans reponse, et le poll reprend.
 $SSH_OPTS = "-o","BatchMode=yes","-o","ConnectTimeout=20","-o","ServerAliveInterval=15","-o","ServerAliveCountMax=2"
@@ -67,13 +67,36 @@ if ($Log -eq "") {
 }
 
 # --- Log immediat : une ligne par ecriture, pas de buffer ---
+# Le rafraichissement du verrou ici est ce qui PERMET la detection d'obsolescence
+# plus bas : sans lui, `LastWriteTime` resterait fige a la creation et le verrou
+# serait declare perime au bout de $LockStaleMin alors que le deploy tourne.
 $script:LogPath = $Log
+$script:LockFile = $LOCK_FILE
 function Log([string]$line) {
   Add-Content -Path $script:LogPath -Value ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss"), $line) -Encoding UTF8
+  if (Test-Path $script:LockFile) {
+    try { (Get-Item $script:LockFile).LastWriteTime = Get-Date } catch {}
+  }
 }
 
-# --- Verrou : un seul deploy a la fois ---
+# --- Verrou : un seul deploy a la fois, mais JAMAIS indefiniment ---
+# Le 2026-10-05, un runner deploy DUSINE VERIFIEE (VPS_DEPLOY_OK cote remote,
+# health check OK) est reste vivant 40 min avec 1,56 s de CPU et son verrou a
+# bloque tout deploy suivant ("un deploy-runner est deja actif"). Cause exacte
+# non etablie (le process fut tue avant inspection). Mais le defaut qui compte
+# est connu : un runner bloque = point de blockage manuel pour l'agent suivant.
+#
+# D'ou la detection par OBSOLESCENCE : le verrou est rafraichi a chaque ecriture
+# de log ; s'il n'a pas bouge depuis $LockStaleMin minutes, il est perime meme si
+# le PID existe encore. On le reprend en le loguant, jamais en silence.
+$LockStaleMin = 20
+
 if (-not (Test-Path "logs")) { New-Item -ItemType Directory -Path "logs" | Out-Null }
+
+# L'ordre EST IMPORTANT : on teste le verrou du precedents AVANT d'ecrire le
+# notre, sinon `LastWriteTime` designe notre propre ecriture et la detection
+# d'obsolescence verrait toujours un verrou neuf, elle ne declencherait donc
+# jamais.
 if (Test-Path $LOCK_FILE) {
   $ownerPid = (Get-Content $LOCK_FILE -ErrorAction SilentlyContinue | Select-Object -First 1)
   $alive = $false
@@ -81,11 +104,16 @@ if (Test-Path $LOCK_FILE) {
     $proc = Get-Process -Id ([int]$ownerPid) -ErrorAction SilentlyContinue
     if ($proc) { $alive = $true }
   }
-  if ($alive) {
-    Log "DEPLOY-FAIL: un deploy-runner est deja actif (PID $ownerPid). Attendre sa fin ou supprimer $LOCK_FILE s'il est mort."
+  $lockAgeMin = [int]((Get-Date) - (Get-Item $LOCK_FILE).LastWriteTime).TotalMinutes
+  if ($alive -and $lockAgeMin -lt $LockStaleMin) {
+    Log "DEPLOY-FAIL: un deploy-runner est deja actif (PID $ownerPid, verrou fraichement pose il y a ${lockAgeMin} min). Attendre sa fin."
     exit 1
   }
-  Log "verrou perime (PID $ownerPid inactif) - je le reprends"
+  if ($alive) {
+    Log "verrou OBSOLETE : PID $ownerPid est vivant mais son verrou n'a pas bouge depuis ${lockAgeMin} min (seuil $LockStaleMin). Je le reprends, le runner precedent est bloque."
+  } else {
+    Log "verrou perime (PID $ownerPid inactif) - je le reprends"
+  }
 }
 Set-Content -Path $LOCK_FILE -Value "$PID" -Encoding ASCII
 
