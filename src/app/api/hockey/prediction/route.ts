@@ -11,6 +11,7 @@ import {
   type HockeyPrediction,
 } from "@/lib/prediction/hockey/poisson";
 import { loadMergedPrematch } from "@/lib/hockey/prematch-data";
+import { resolveRealTeamStats } from "@/lib/hockey/team-stats";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,13 @@ type PredictionPayload = {
     match: { home: string; away: string };
     prediction: HockeyPrediction;
   }>;
+  /**
+   * Matchs écartés faute de données RÉELLES, avec le motif. Alimente le
+   * `predictions_available` par match côté UI : sans cette liste, un match
+   * sans données disparaît du payload et l'UI ne peut pas distinguer
+   * « pas de match » de « match non prédit ».
+   */
+  unavailable: { match: { home: string; away: string }; reason: string }[];
 };
 
 const cache = createTtlCache<PredictionPayload>("__hockeyPrediction");
@@ -71,40 +79,20 @@ function loadJson<T>(filename: string): T | null {
   }
 }
 
-type AnnabetStanding = {
-  rank: number;
-  name: string;
-  gp: number;
-  all?: { w: number; otw: number; otl: number; l: number; pts: number };
-};
-
+/**
+ * Statistiques d'une équipe pour le modèle Poisson.
+ *
+ * ⚠️ La fabrication de buts `w * 2.8 + otw * 2.5` a été SUPPRIMÉE (bug P3.1) :
+ * les standings Annabet ne portent aucun but, la valeur 2.8 était inventée et
+ * produisait jusqu'à `gf = 0`. La résolution — et sa règle « pas de buts réels
+ * → pas de prédiction » — vit désormais dans `@/lib/hockey/team-stats`, testée
+ * dans `src/lib/__tests__/hockey-team-stats.test.ts`.
+ */
 function findTeamStats(
   teamName: string,
-  standings: AnnabetStanding[]
+  teams: TeamStanding[]
 ): TeamStats | null {
-  // Recherche fuzzy par nom
-  const normalised = teamName.toLowerCase().replace(/[^a-z]/g, "");
-  const found = standings.find(
-    (t) =>
-      t.name.toLowerCase().replace(/[^a-z]/g, "").includes(normalised) ||
-      normalised.includes(t.name.toLowerCase().replace(/[^a-z]/g, ""))
-  );
-  if (!found) return null;
-
-  const s = found;
-  // Calculer GF/GA depuis all si disponible
-  const allStats = s.all;
-  const gf = allStats ? Math.round((allStats.w * 2.8 + allStats.otw * 2.5) / Math.max(s.gp, 1) * s.gp) : 0;
-  const ga = allStats ? Math.round((allStats.l * 2.8 + allStats.otl * 2.5) / Math.max(s.gp, 1) * s.gp) : 0;
-
-  return {
-    name: found.name,
-    gp: found.gp,
-    gf,
-    ga,
-    home: undefined,
-    away: undefined,
-  };
+  return resolveRealTeamStats(teamName, teams);
 }
 
 function findPlayers(
@@ -129,6 +117,26 @@ function pickLeaguePlayers(
     leagues[leagueId]?.players ??
     leagues[`ligue-${leagueId}`]?.players ??
     leagues[leagueId.replace(/^ligue-/, "")]?.players ??
+    []
+  );
+}
+
+/**
+ * Classement réel d'une ligue (eliteprospects), alias résolus comme pour les
+ * joueurs : le prematch dit `magnus`, eliteprospects dit `ligue-magnus`.
+ *
+ * `[]` si la ligue n'a pas de classement réel → aucune prédiction, jamais une
+ * prédiction inventée.
+ */
+function pickLeagueStandings(
+  standings: { leagues: Record<string, { teams: TeamStanding[] }> } | null,
+  leagueId: string
+): TeamStanding[] {
+  const leagues = standings?.leagues ?? {};
+  return (
+    leagues[leagueId]?.teams ??
+    leagues[`ligue-${leagueId}`]?.teams ??
+    leagues[leagueId.replace(/^ligue-/, "")]?.teams ??
     []
   );
 }
@@ -159,23 +167,37 @@ export async function GET() {
   }
 
   const predictions: PredictionPayload["predictions"] = {};
+  const unavailable: PredictionPayload["unavailable"] = [];
 
   // Pour chaque ligue avec des matchs prematch
   for (const [leagueId, leagueData] of Object.entries(prematch.leagues)) {
     const leaguePlayers = pickLeaguePlayers(playerStats, leagueId);
+    const leagueTeams = pickLeagueStandings(standings, leagueId);
     const teamLines = (code: string) => {
       const key = Object.keys(frozen?.lines ?? {}).find((k) => code.toUpperCase().includes(k) || k.includes(code.toUpperCase().slice(0, 3)));
       return lineStrengthFactor(key ? frozen?.lines[key]?.ev_forwards ?? [] : []);
     };
 
     for (const match of leagueData.matches) {
-      if (!match.h2h?.standings) continue;
+      // Stats des deux équipes, lues dans le classement RÉEL de la ligue.
+      // `null` si l'une des deux est absente du classement → pas de prédiction
+      // (l'ancien code exigeait `h2h.standings`, qui ne sert plus aux stats et
+      // qui n'existait que pour les lire : garder cette porte aurait interdit
+      // toute prédiction sur une ligue pourtant bien classée).
+      const homeStats = findTeamStats(match.team1Name, leagueTeams);
+      const awayStats = findTeamStats(match.team2Name, leagueTeams);
 
-      // Trouver les stats des deux equipes
-      const homeStats = findTeamStats(match.team1Name, match.h2h.standings);
-      const awayStats = findTeamStats(match.team2Name, match.h2h.standings);
-
-      if (!homeStats || !awayStats) continue;
+      const pair = { home: match.team1Name, away: match.team2Name };
+      if (!homeStats || !awayStats) {
+        // Motif nommé, pas « match ignoré » : l'UI doit pouvoir dire pourquoi il
+        // n'y a pas de prédiction. Premier cas discriminate = la ligue n'a
+        // aucun classement réel du tout.
+        const raison = leagueTeams.length === 0
+          ? `aucun classement réel pour la ligue « ${leagueId} »`
+          : `classement réel sans équipe exploitable (${!homeStats ? match.team1Name : match.team2Name})`;
+        unavailable.push({ match: pair, reason: raison });
+        continue;
+      }
 
       // Joueurs des deux equipes
       const homePlayers = findPlayers(match.team1Name, leaguePlayers);
@@ -215,6 +237,7 @@ export async function GET() {
     updatedAt: new Date().toISOString(),
     source: "hockey-poisson-model",
     predictions,
+    unavailable,
   };
 
   cache.set(result);
