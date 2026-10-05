@@ -24,6 +24,7 @@ import {
   listHistoryLeagueStats,
   loadLeagueBacktestMatches,
   leagueGoalsPerMatch,
+  historyDbError,
   type HistoryLeagueStats,
 } from "./handball-history-db";
 import { HAND_BALL_LEAGUES, getHandballLeague } from "./handball-league-registry";
@@ -102,6 +103,23 @@ export function getLeagueBacktest(
   const updatedAt = new Date().toISOString();
   const option = listBacktestLeagues().find((o) => o.id === leagueId) ?? null;
   if (!option) {
+    // ── Deux causes, deux messages (2026-10-05) ────────────────────────────
+    // Avant, `!option` couvrait « id inconnu » ET « base injoignable » (car
+    // `listBacktestLeagues()` renvoie [] si getDb() est null). Le second cas
+    // affichait « Ligue inconnue du registre », qui désigne le registre alors
+    // qu'il est sain : le vrai coupable etait un `pariscore.db` introuvable.
+    // Un message qui accuse la mauvaise couche se paie cher, donc on nomme la
+    // cause réelle quand la ligue EST au registre.
+    const known = getHandballLeague(leagueId);
+    const dbErr = historyDbError();
+    if (known && dbErr) {
+      return {
+        league: null,
+        result: null,
+        reason: `${dbErr}. La ligue ${known.name} est bien au registre ; c'est l'accès à la base qui échoue.`,
+        updatedAt,
+      };
+    }
     return {
       league: null,
       result: null,

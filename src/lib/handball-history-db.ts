@@ -7,6 +7,7 @@
 // (cron PM2 `pariscore-cron-handball-history`, hebdomadaire lundi 04:20 UTC).
 
 import path from "node:path";
+import { existsSync } from "node:fs";
 import { teamKey, type HistoryMatch } from "./handball-history-stats";
 import { leagueVariants, normalizeHandballLeague } from "./handball-league-registry";
 import type { BacktestMatch } from "./handball-backtest-pariscore";
@@ -23,36 +24,94 @@ const SQLITE_FILE = process.env.DATABASE_PATH || path.join(process.cwd(), "paris
 
 let _db: BSD | null = null;
 let _dbUnavailable = false;
+/** Raison de l'indisponibilité, pour ne pas la redécouvrir à chaque appel. */
+let _dbError: string | null = null;
 
 function getDb(): BSD | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
+  // ── Fichier absent : échec DISTINCT et nommé (2026-10-05) ────────────────
+  // Sans cette explicitation, un fichier introuvable et une ligue inconnue
+  // produisaient le MEME message « Ligue inconnue du registre », qui désigne
+  // le registre alors qu'il est sain : deux cycles de diagnostic perdus sur la
+  // mauvaise couche. On nomme donc la cause réelle.
+  if (!existsSync(SQLITE_FILE)) {
+    _dbUnavailable = true;
+    _dbError = `Base de données introuvable au chemin : ${SQLITE_FILE}`;
+    console.warn(
+      `[handball-history] ${_dbError} ` +
+        `(cwd=${process.cwd()}, DATABASE_PATH=${process.env.DATABASE_PATH ?? "non défini"}). ` +
+        "Définir DATABASE_PATH vers le fichier racine du dépôt. Analyse handball désactivée.",
+    );
+    return null;
+  }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Database } = require("bun:sqlite") as {
-      Database: new (file: string, opts?: object) => BSD;
-    };
-    _db = new Database(SQLITE_FILE, { readonly: true });
+    _db = openNativeSqlite();
     return _db;
-  } catch {
+  } catch (bunErr) {
     try {
+      // Runtime Node : `bun:sqlite` n'existe pas, `better-sqlite3` est le seul
+      // pilote et fonctionne (binding N-API compile pour l'ABI du Node courant).
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Database = require("better-sqlite3") as unknown as {
         new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
       };
       _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
       return _db;
-    } catch (err) {
+    } catch (nodeErr) {
       _dbUnavailable = true;
-      // Toujours loggé (prod compris) : un échec silencieux se traduit par
-      // « meta: null / teams: null » sans aucune trace côté serveur.
+      // Les DEUX erreurs sont journalisées : sans cela, un échec de `bun:sqlite`
+      // dans le bundle standalone pouvait se lire comme « ligue inconnue ».
+      _dbError =
+        `Aucun pilote SQLite n'a pu ouvrir ${SQLITE_FILE} — ` +
+        `bun:sqlite: ${errMessage(bunErr)} · better-sqlite3: ${errMessage(nodeErr)}`;
       console.warn(
-        `[handball-history] ${SQLITE_FILE} non lisible — analyse handball désactivée. ` +
-          `Détail: ${(err as Error).message}`
+        `[handball-history] ${_dbError} ` +
+          `(cwd=${process.cwd()}, DATABASE_PATH=${process.env.DATABASE_PATH ?? "non défini"}). ` +
+          "Analyse handball désactivée.",
       );
       return null;
     }
   }
+}
+
+function errMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  // Les deux pilotes renvoient des messages multi-lignes très verbeux (liste de
+  // tous les chemins de binding candidats) : on garde la première ligne.
+  return m.split("\n")[0].slice(0, 200);
+}
+
+/**
+ * Ouvre la base avec `bun:sqlite`, en contournant l'analyse statique du bundler.
+ *
+ * ── Pourquoi ce détour (2026-10-05, mesuré en prod) ─────────────────────────
+ * Le runtime de prod est Bun (`/home/ubuntu/.bun/bin/bun`). Or :
+ *
+ *   - `bun:sqlite` fonctionne parfaitement hors bundle (9 000 matchs lus) ;
+ *   - `better-sqlite3` est REFUSÉ par Bun : « 'better-sqlite3' is not yet
+ *     supported in Bun » — ce n'est donc pas un conflit d'ABI corrigeable par
+ *     un rebuild, le module est bloqué à la source.
+ *
+ * `getDb()` ne pouvait donc plus s'ouvrir en prod : `require("bun:sqlite")`
+ * était réécrit par le bundler en résolution de module Node (et échouait), puis
+ * le repli `better-sqlite3` était refusé par Bun. Résultat : `getDb()` null,
+ * `listBacktestLeagues()` vide, et l'API annonçait « Ligue inconnue du
+ * registre » — le registre étant parfaitement sain.
+ *
+ * `eval("require")` rend l'appel invisible à l'analyse statique : le bundler
+ * laisse la résolution au runtime, qui sait charger `bun:sqlite` nativement.
+ * C'est le contournement standard pour charger un module runtime dans un bundle.
+ *
+ * Ce n'est pas une optimisation : c'est LE chemin qui fonctionne sous Bun, et
+ * le seul. Le repli `better-sqlite3` reste intact pour le runtime Node.
+ */
+function openNativeSqlite(): BSD {
+  const req = eval("require") as NodeRequire;
+  const { Database } = req("bun:sqlite") as {
+    Database: new (file: string, opts?: object) => BSD;
+  };
+  return new Database(SQLITE_FILE, { readonly: true });
 }
 
 function toMatch(row: Record<string, unknown>): HistoryMatch {
@@ -316,6 +375,14 @@ export type HistoryLeagueStats = {
  * On teste donc le schéma avant d'écrire le SQL, et `withOdds` vaut 0 quand la
  * colonne manque — ce qui est VRAI (c'est exactement ce qu'on sait du marché).
  */
+/**
+ * Raison pour laquelle la base d'historique est inaccessible, ou `null` si elle
+ * a été ouverte. À distinguer de « ligue inconnue » par les appelants (2026-10-05).
+ */
+export function historyDbError(): string | null {
+  return _dbError;
+}
+
 export function listHistoryLeagueStats(): HistoryLeagueStats[] {
   const db = getDb();
   if (!db) return [];
