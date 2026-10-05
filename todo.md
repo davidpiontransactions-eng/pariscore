@@ -814,20 +814,23 @@ aucun règlement de pari** : rien ne dit si un pick recommandé a réellement ga
 matchs joués (le feed `get_schedule` ne porte pas les scores). La table calendrier
 affiche donc des noms sans visuel d'équipe.
 
-- [ ] Rechercher sur le web les logos officiels des clubs EuroLeague + EuroCup (~20 E + ~20 U)
-- [ ] Choisir la source **et vérifier la licence d'usage** :
-  - EB Brand Center (officiel, compte requis) — https://brandcenter.euroleague.net/
-  - CDN du site officiel — https://www.euroleaguebasketball.net/en/euroleague/teams/
-  - Repli Wikimedia Commons (licences variables → attribution obligatoire)
-- [ ] Mapper `code` (VIR, MAD, PAO, OLY…) → URL de logo. Deux options :
-  - [ ] **A. Map locale versionnée `data/euroleague_logos.json`** — zéro réseau, pas de
-        CORS/rate-limit, mise à jour manuelle. **Recommandé.**
-  - [ ] B. CDN direct depuis le composant — dépend de la dispo + `images.remotePatterns`
-- [ ] Exposer le logo côté bridge (`EuroLeagueGame.home/away.logo`) ou le résoudre au rendu via le map
-- [ ] Ajouter le domaine dans `next.config.ts` → `images.remotePatterns` si `next/image`
-- [ ] Rendre le logo dans `src/components/basketball/basketball-calendar.tsx` : `alt` accessible
-      + repli initiales si 404 (même pattern que ESPN/WNBA déjà en place)
-- [ ] Vérif prod : logos visibles EuroLeague **et** EuroCup, **0 404 image** en console
+- [x] Rechercher sur le web les logos officiels des clubs EuroLeague + EuroCup (~20 E + ~20 U)
+- [x] Choisir la source **et vérifier la licence d'usage** : **Wikipédia/Wikimedia retenu**
+      (EB Brand Center = compte requis, CDN officiel = hotlink non garanti) — mention
+      licence conservée dans `data/euroleague_logos.json` (usage illustratif à valider).
+- [x] Mapper `code` (VIR, MAD, PAO, OLY…) → URL de logo : **option A retenue** —
+      `data/euroleague_logos.json` + `src/lib/euroleague-logos.ts` (`euroLeagueLogo(code)`),
+      **55 clubs** (20 EuroLeague + 35 EuroCup dont clubs d'octobre), 0 sans image.
+- [x] Exposer le logo côté bridge : **résolu au rendu** — `euroBbToCal` remplit
+      `home.logo`/`away.logo` depuis `code` (aucun champ ajouté au bridge).
+- [x] `next.config.ts` → `images.remotePatterns` : **sans objet** (fichiers locaux
+      servis en `<img>` direct, pas de `next/image`).
+- [x] Rendu dans la table calendrier (`fotmob-calendar-table.tsx`, `teamLogo()`) :
+      `alt` accessible + repli initiales dicebear si code inconnu/404.
+- [x] **Vérif prod (2026-10-05)** : 132 côtés équipe EuroLeague/EuroCup sur
+      01-15/10 avec **0 logo null**, PNG en HTTP 200. Pipeline : `b2d58b96` (40 logos),
+      `b2751483` (codes réels du bridge corrigés → 55/55), `864cfc86` (fix deploy :
+      `public/` → `.next/standalone/public` + restart pm2 quand le build est sauté).
 
 ### Lot 2 — Popup match EuroLeague : stats + 3 bets prematch (offre 1xbet)
 
