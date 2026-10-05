@@ -3,12 +3,12 @@
 import { useMemo } from "react";
 import { HandballTeamLogo } from "./handball-team-logo";
 import {
-  findDanishLeague,
+  findVitibetCoveredLeague,
   findFixture,
   findTeamStats,
-  type DanishLeague,
-  type TeamSeasonStats,
-} from "@/lib/handball-danish";
+  type CoveredLeague,
+} from "@/lib/handball-vitibet-leagues";
+import type { TeamSeasonStats } from "@/lib/handball-vitibet-league";
 
 // ─── Format ───
 
@@ -141,27 +141,29 @@ type Props = {
 };
 
 /**
- * HandballDanishStats — bloc « Statistiques de saison » pour un match d'une
- * ligue danoise couverte (Herre Handbold Ligaen, Bambusa Kvindeligaen,
- * 1. Division Women).
+ * HandballVitibetStats — bloc « Statistiques de saison » pour un match d'une
+ * ligue couverte par Vitibet : 3 danoises, MOL Liga Women, Superlig Turquie,
+ * Liga Nationala Women Roumanie (résolues par `findVitibetCoveredLeague`).
  *
- * Règle de la mission Danoises : « toutes les métriques s'affichent
- * correctement **sans écran vide ni valeurs non renseignées** ». Deux états
- * sont distingués et jamais confondus :
+ * La résolution de ligue est centralisée dans `handball-vitibet-leagues.ts` :
+ * ce composant ne connaît ni pays ni famille, donc ajouter une ligue n'exige
+ * aucune modification ici.
+ *
+ * Deux états sont distingués et jamais confondus :
  *   • équipe absente du classement → message explicite (« absent du
  *     classement Vitibet »), PAS une ligne de « — » ;
- *   • ligue non danoise → le composant ne rend RIEN et l'appelant garde son
+ *   • ligue non couverte → le composant ne rend RIEN et l'appelant garde son
  *     affichage générique (pas de doublon).
  */
-export function HandballDanishStats({
+export function HandballVitibetStats({
   leagueName,
   homeTeamName,
   awayTeamName,
   homeTeamId,
   awayTeamId,
 }: Props) {
-  const league: DanishLeague | null = useMemo(
-    () => findDanishLeague(leagueName),
+  const league: CoveredLeague | null = useMemo(
+    () => findVitibetCoveredLeague(leagueName),
     [leagueName],
   );
 
