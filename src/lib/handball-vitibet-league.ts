@@ -36,11 +36,36 @@ export type VitibetFixtureRow = {
   time: string;
   home: string;
   away: string;
-  /** Score PRÉDIT par Vitibet (pas un résultat). */
-  predictedHome: number;
-  predictedAway: number;
+  /** Score PRÉDIT par Vitibet (pas un résultat). null quand la source n'en publie pas. */
+  predictedHome: number | null;
+  /** Score prédit côté extérieur. null quand la source n'en publie pas. */
+  predictedAway: number | null;
   /** true = statut temps réel (FT / 1H / 2H) au scrape. */
   live?: boolean;
+  /**
+   * Vitibet publie-t-il une PRÉDICTION pour ce match ?
+   *
+   * Granulaire par match, et non par ligue — c'est ce que la source donne
+   * réellement (mesuré 2026-10-05) : Superlig 10 prédictions sur 19 matchs (les 9
+   * autres sont des matchs terminés, sans prévision à faire), Liga Nationala
+   * Women 0 sur 16. Une ligue peut donc avoir les deux.
+   *
+   * false ⇒ `tip`, `indexValue`, `prob*`, `predictedHome/Away` valent null. On ne
+   * les comble JAMAIS par un calcul maison : une valeur présente sous le nom de
+   * Vitibet qui n'en vient pas de Vitibet est un mensonge de provenance.
+   */
+  predictionsAvailable?: boolean;
+  /** Conseil Vitibet (« 1 », « X », « 2 », …) ou null. */
+  tip?: string | null;
+  /** INDEX Vitisport, ex. 7 pour 61 % de probabilité. null si absent. */
+  indexValue?: number | null;
+  probHome?: number | null;
+  probDraw?: number | null;
+  probAway?: number | null;
+  /** Score RÉEL d'un match terminé — historique, jamais prédiction. */
+  finalHome?: number | null;
+  finalAway?: number | null;
+  hasFinalScore?: boolean;
 };
 
 /** Un match TERMINÉ (section « Latest results ») — base du backtesting. */
