@@ -9,6 +9,12 @@ type CachePayload = {
   matches: unknown[];
   source: string;
   degraded: boolean;
+  /**
+   * Volumétrie par source. Elle fait partie du CACHE, pas seulement de la
+   * réponse fraîche : sinon la branche « cache hit » renvoyait un payload sans
+   * `counts`. Un payload différent selon l'entrée est un bug.
+   */
+  counts: { total: number; bsd: number; prematch: number; hockeytech: number };
 };
 
 const cache = createTtlCache<CachePayload | null>("__hockeyMatchesCache");
@@ -21,32 +27,47 @@ async function fetchBSDHockey(): Promise<unknown[]> {
     const BSD_API_KEY = process.env.BSD_API_KEY || "";
     if (!BSD_API_KEY) return [];
 
+    // La chaîne est RETOURNÉE telle quelle, sans `new Promise` autour.
+    //
+    // Bug qui a gardé cette route morte toute la journée du 2026-10-05
+    // (0 réponse 200 dans les logs nginx, 504 « upstream timed out ») : le
+    // code enveloppait la chaîne dans `new Promise((resolve, reject) => {
+    //   const req = fetch(...).then(...).catch(reject); })`. L'exécuteur
+    //   IGNORE la valeur renvoyée par la chaîne et `resolve` n'était JAMAIS
+    //   appelé — seule l'erreur passait, via `.catch(reject)`. Donc sur
+    //   SUCCÈS la promesse restait en suspens pour l'éternité : `await
+    //   fetchBSD(...)` ne se réglait pas, `Promise.all` non plus, et la route
+    //   ne répondait jamais. Elle ne « fonctionnait » que si l'API BSD
+    //   ÉCHOUAIT, puisque `.catch(() => [])` est alors atteint.
+    //
+    //   Le signal `AbortSignal.timeout(20000)` ne pouvait rien : le fetch était
+    //   déjà terminé, c'est la promesse qui restait en suspens.
+    //
+    //   Attrapé parce qu'un test qui rejoue la même logique en la réécrivant ne
+    //   reproduit pas l'enveloppe : il faut tester la route RÉELLE, pas sa
+    //   réimplémentation.
     const fetchBSD = (endpoint: string): Promise<unknown[]> =>
-      new Promise((resolve, reject) => {
-        const url = `${BSD_BASE_URL}${endpoint}`;
-        const req = fetch(url, {
-          headers: {
-            "Authorization": `Token ${BSD_API_KEY}`,
-            "Accept": "application/json",
-          },
-          signal: AbortSignal.timeout(20000),
+      fetch(`${BSD_BASE_URL}${endpoint}`, {
+        headers: {
+          "Authorization": `Token ${BSD_API_KEY}`,
+          "Accept": "application/json",
+        },
+        signal: AbortSignal.timeout(20000),
+      })
+        .then((res) => {
+          if (res.status === 429 || res.status >= 500) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
         })
-          .then((res) => {
-            if (res.status === 429 || res.status >= 500) {
-              return reject(new Error(`HTTP ${res.status}`));
-            }
-            return res.json();
-          })
-          // BSD v2 renvoie {count, results} (parfois {matches} legacy) — un objet
-          // non-array propageait au spread du caller → throw → catch → [].
-          .then((parsed) => {
-            if (Array.isArray(parsed)) return parsed;
-            if (Array.isArray(parsed?.results)) return parsed.results as unknown[];
-            if (Array.isArray(parsed?.matches)) return parsed.matches as unknown[];
-            return [];
-          })
-          .catch(reject);
-      });
+        // BSD v2 renvoie {count, results} (parfois {matches} legacy) — un objet
+        // non-array propageait au spread du caller → throw → catch → [].
+        .then((parsed) => {
+          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed?.results)) return parsed.results as unknown[];
+          if (Array.isArray(parsed?.matches)) return parsed.matches as unknown[];
+          return [];
+        });
 
     const live = await fetchBSD("/api/v2/matches/live/").catch(() => [] as unknown[]);
     const predictions = await fetchBSD("/api/v2/predictions/").catch(() => [] as unknown[]);
@@ -192,6 +213,7 @@ export async function GET() {
       matches: cached.data.matches,
       source: cached.data.source,
       degraded: cached.data.degraded,
+      counts: cached.data.counts,
     });
   }
 
@@ -226,8 +248,10 @@ export async function GET() {
     if (hasKhl) sourceParts.push("hockeytech");
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
 
+    const counts = { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length };
+
     if (!degraded) {
-      cache.set({ matches: deduped, source, degraded });
+      cache.set({ matches: deduped, source, degraded, counts });
     }
 
     return NextResponse.json({
@@ -236,7 +260,7 @@ export async function GET() {
       degraded,
       // Volumétrie par source : sans elle, « source: hockeytech » ne dit pas
       // si l'onglet affiche 5 matchs NHL ou 748 matchs KHL.
-      counts: { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length },
+      counts,
     });
   } catch (err) {
     console.error("[hockey] fetch failed:", (err as Error).message);
