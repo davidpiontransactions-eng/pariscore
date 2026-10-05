@@ -1,76 +1,91 @@
 {
-  "updatedAt": "2026-10-04T11:00:41.358Z",
+  "updatedAt": "2026-10-05T12:07:53.207Z",
   "source": "annabet.com",
   "leagues": {
     "nhl": {
       "matches": [
         {
-          "team1Id": 129,
-          "team1Name": "Detroit",
-          "team2Id": 1183,
-          "team2Name": "Winnipeg",
+          "team1Id": 149,
+          "team1Name": "Tampa Bay",
+          "team2Id": 142,
+          "team2Name": "Philadelphia",
           "odds1X2": {
-            "home": 2.45,
-            "draw": 4.11,
-            "away": 2.52
+            "home": 1.78,
+            "draw": 4.5,
+            "away": 4.35
           },
           "h2h": {
-            "homeTeam": "Detroit",
-            "awayTeam": "Winnipeg",
-            "date": "04.10.2026",
+            "homeTeam": "Tampa Bay",
+            "awayTeam": "Philadelphia",
+            "date": "05.10.2026",
             "h2hStats": {
-              "oneTwo": {
-                "homeWins": 28,
-                "awayWins": 34,
+              "oneXtwo": {
+                "homeWins": 41,
+                "draws": 18,
+                "awayWins": 70,
                 "pcts": [
-                  50,
-                  50
+                  20,
+                  10,
+                  1.43
                 ],
                 "odds": [
-                  2,
-                  2
+                  5,
+                  10,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 41,
+                "awayWins": 20,
+                "pcts": [
+                  70,
+                  30
+                ],
+                "odds": [
+                  1.43,
+                  3.33
                 ]
               },
               "totalGoals": {
                 "line": 5.5,
-                "underPct": 40,
-                "overPct": 60
+                "underPct": 30,
+                "overPct": 70
               },
               "goalsAgainst": [
                 {
                   "goals": 0,
-                  "pct": 0
+                  "pct": 30
                 },
                 {
                   "goals": 1,
-                  "pct": 30
+                  "pct": 20
                 },
                 {
                   "goals": 2,
-                  "pct": 10
+                  "pct": 20
                 },
                 {
                   "goals": 3,
-                  "pct": 10
+                  "pct": 20
                 },
                 {
                   "goals": 4,
-                  "pct": 10
+                  "pct": 0
                 },
                 {
                   "goals": 5,
-                  "pct": 20
+                  "pct": 0
                 }
               ],
-              "btts": 90,
+              "btts": 70,
               "goalDiff": [
                 {
                   "diff": 2,
-                  "pct": 30
+                  "pct": 10
                 },
                 {
                   "diff": 1,
-                  "pct": 10
+                  "pct": 0
                 },
                 {
                   "diff": -1,
@@ -82,15 +97,1152 @@
                 }
               ],
               "goalAverage": {
-                "home": 2.8,
-                "away": 3.4,
-                "total": 6.2
+                "home": 4.1,
+                "away": 1.8,
+                "total": 5.9
               }
             },
             "summaryHome": {
               "oneXtwo": {
-                "homeWins": 27,
+                "homeWins": 19,
+                "draws": 23,
+                "awayWins": 30,
+                "pcts": [
+                  30,
+                  40,
+                  3.33
+                ],
+                "odds": [
+                  3.33,
+                  2.5,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 21,
+                "awayWins": 24,
+                "pcts": [
+                  50,
+                  50
+                ],
+                "odds": [
+                  2,
+                  2
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 80,
+                "overPct": 20
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 10
+                },
+                {
+                  "goals": 1,
+                  "pct": 20
+                },
+                {
+                  "goals": 2,
+                  "pct": 40
+                },
+                {
+                  "goals": 3,
+                  "pct": 10
+                },
+                {
+                  "goals": 4,
+                  "pct": 0
+                },
+                {
+                  "goals": 5,
+                  "pct": 20
+                }
+              ],
+              "btts": 90,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 10
+                },
+                {
+                  "diff": 1,
+                  "pct": 20
+                },
+                {
+                  "diff": -1,
+                  "pct": 20
+                },
+                {
+                  "diff": -2,
+                  "pct": 10
+                }
+              ],
+              "goalAverage": {
+                "home": 1.9,
+                "away": 2.3,
+                "total": 4.2
+              }
+            },
+            "summaryAway": {
+              "oneXtwo": {
+                "homeWins": 15,
                 "draws": 34,
+                "awayWins": 10,
+                "pcts": [
+                  40,
+                  50,
+                  10
+                ],
+                "odds": [
+                  2.5,
+                  2,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 15,
+                "awayWins": 38,
+                "pcts": [
+                  10,
+                  90
+                ],
+                "odds": [
+                  10,
+                  1.11
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 60,
+                "overPct": 40
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 10
+                },
+                {
+                  "goals": 1,
+                  "pct": 0
+                },
+                {
+                  "goals": 2,
+                  "pct": 40
+                },
+                {
+                  "goals": 3,
+                  "pct": 0
+                },
+                {
+                  "goals": 4,
+                  "pct": 10
+                },
+                {
+                  "goals": 5,
+                  "pct": 30
+                }
+              ],
+              "btts": 80,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 10
+                },
+                {
+                  "diff": 1,
+                  "pct": 0
+                },
+                {
+                  "diff": -1,
+                  "pct": 0
+                },
+                {
+                  "diff": -2,
+                  "pct": 0
+                }
+              ],
+              "goalAverage": {
+                "home": 1.5,
+                "away": 3.4,
+                "total": 4.9
+              }
+            },
+            "standings": [
+              {
+                "rank": 1,
+                "name": "NY Rangers",
+                "gp": 4,
+                "all": {
+                  "w": 3,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 6
+                },
+                "home": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 2,
+                "name": "Edmonton",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 5
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 3,
+                "name": "Colorado",
+                "gp": 2,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 4,
+                "name": "Pittsburgh",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 5,
+                "name": "Seattle Krak",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 6,
+                "name": "Utah Mammoth",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 7,
+                "name": "Minnesota",
+                "gp": 2,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 8,
+                "name": "Vegas Golden",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 9,
+                "name": "San Jose",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 2,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 2,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 10,
+                "name": "Anaheim",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 11,
+                "name": "Vancouver",
+                "gp": 4,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 12,
+                "name": "Boston",
+                "gp": 3,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 13,
+                "name": "Florida",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 14,
+                "name": "Montreal",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 15,
+                "name": "Winnipeg",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 16,
+                "name": "Carolina",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 17,
+                "name": "NY Islanders",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 18,
+                "name": "Washington",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 19,
+                "name": "Ottawa",
+                "gp": 1,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 20,
+                "name": "Columbus",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 21,
+                "name": "Toronto",
+                "gp": 3,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 22,
+                "name": "St. Louis",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 23,
+                "name": "Nashville",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 24,
+                "name": "Buffalo",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 25,
+                "name": "Tampa Bay",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": true
+              },
+              {
+                "rank": 26,
+                "name": "New Jersey",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 27,
+                "name": "Philadelphia",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 2,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 1
+                },
+                "highlighted": true
+              },
+              {
+                "rank": 28,
+                "name": "Los Angeles",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 29,
+                "name": "Detroit",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 30,
+                "name": "Dallas",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 31,
+                "name": "Chicago",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 32,
+                "name": "Calgary",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "highlighted": false
+              }
+            ]
+          },
+          "summary": {
+            "overUnderLines": []
+          }
+        },
+        {
+          "team1Id": 121,
+          "team1Name": "Boston",
+          "team2Id": 141,
+          "team2Name": "Ottawa",
+          "odds1X2": {
+            "home": 2.6,
+            "draw": 4.11,
+            "away": 2.52
+          },
+          "h2h": {
+            "homeTeam": "Boston",
+            "awayTeam": "Ottawa",
+            "date": "05.10.2026",
+            "h2hStats": {
+              "oneXtwo": {
+                "homeWins": 28,
+                "draws": 38,
+                "awayWins": 20,
+                "pcts": [
+                  30,
+                  50,
+                  5
+                ],
+                "odds": [
+                  3.33,
+                  2,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 29,
+                "awayWins": 40,
+                "pcts": [
+                  30,
+                  70
+                ],
+                "odds": [
+                  3.33,
+                  1.43
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 40,
+                "overPct": 60
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 10
+                },
+                {
+                  "goals": 1,
+                  "pct": 0
+                },
+                {
+                  "goals": 2,
+                  "pct": 30
+                },
+                {
+                  "goals": 3,
+                  "pct": 10
+                },
+                {
+                  "goals": 4,
+                  "pct": 0
+                },
+                {
+                  "goals": 5,
+                  "pct": 20
+                }
+              ],
+              "btts": 90,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 10
+                },
+                {
+                  "diff": 1,
+                  "pct": 0
+                },
+                {
+                  "diff": -1,
+                  "pct": 0
+                },
+                {
+                  "diff": -2,
+                  "pct": 20
+                }
+              ],
+              "goalAverage": {
+                "home": 2.8,
+                "away": 3.8,
+                "total": 6.6
+              }
+            },
+            "summaryHome": {
+              "oneXtwo": {
+                "homeWins": 19,
+                "draws": 25,
                 "awayWins": 20,
                 "pcts": [
                   40,
@@ -104,21 +1256,21 @@
                 ]
               },
               "oneTwo": {
-                "homeWins": 28,
-                "awayWins": 37,
+                "homeWins": 22,
+                "awayWins": 26,
                 "pcts": [
-                  30,
-                  70
+                  50,
+                  50
                 ],
                 "odds": [
-                  3.33,
-                  1.43
+                  2,
+                  2
                 ]
               },
               "totalGoals": {
                 "line": 5.5,
-                "underPct": 30,
-                "overPct": 70
+                "underPct": 70,
+                "overPct": 30
               },
               "goalsAgainst": [
                 {
@@ -127,15 +1279,15 @@
                 },
                 {
                   "goals": 1,
-                  "pct": 0
-                },
-                {
-                  "goals": 2,
                   "pct": 20
                 },
                 {
-                  "goals": 3,
+                  "goals": 2,
                   "pct": 30
+                },
+                {
+                  "goals": 3,
+                  "pct": 10
                 },
                 {
                   "goals": 4,
@@ -143,7 +1295,7 @@
                 },
                 {
                   "goals": 5,
-                  "pct": 10
+                  "pct": 0
                 }
               ],
               "btts": 80,
@@ -162,13 +1314,1150 @@
                 },
                 {
                   "diff": -2,
-                  "pct": 30
+                  "pct": 10
                 }
               ],
               "goalAverage": {
-                "home": 2.7,
-                "away": 3.4,
-                "total": 6.1
+                "home": 1.9,
+                "away": 2.5,
+                "total": 4.4
+              }
+            },
+            "summaryAway": {
+              "oneXtwo": {
+                "homeWins": 20,
+                "draws": 26,
+                "awayWins": 20,
+                "pcts": [
+                  30,
+                  50,
+                  5
+                ],
+                "odds": [
+                  3.33,
+                  2,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 20,
+                "awayWins": 29,
+                "pcts": [
+                  20,
+                  80
+                ],
+                "odds": [
+                  5,
+                  1.25
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 60,
+                "overPct": 40
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 0
+                },
+                {
+                  "goals": 1,
+                  "pct": 10
+                },
+                {
+                  "goals": 2,
+                  "pct": 50
+                },
+                {
+                  "goals": 3,
+                  "pct": 10
+                },
+                {
+                  "goals": 4,
+                  "pct": 30
+                },
+                {
+                  "goals": 5,
+                  "pct": 0
+                }
+              ],
+              "btts": 90,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 10
+                },
+                {
+                  "diff": 1,
+                  "pct": 10
+                },
+                {
+                  "diff": -1,
+                  "pct": 10
+                },
+                {
+                  "diff": -2,
+                  "pct": 40
+                }
+              ],
+              "goalAverage": {
+                "home": 2,
+                "away": 2.6,
+                "total": 4.6
+              }
+            },
+            "standings": [
+              {
+                "rank": 1,
+                "name": "NY Rangers",
+                "gp": 4,
+                "all": {
+                  "w": 3,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 6
+                },
+                "home": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 2,
+                "name": "Edmonton",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 5
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 3,
+                "name": "Colorado",
+                "gp": 2,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 4,
+                "name": "Pittsburgh",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 5,
+                "name": "Seattle Krak",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 6,
+                "name": "Utah Mammoth",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 7,
+                "name": "Minnesota",
+                "gp": 2,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 8,
+                "name": "Vegas Golden",
+                "gp": 3,
+                "all": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 9,
+                "name": "San Jose",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 2,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 2,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 10,
+                "name": "Anaheim",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 11,
+                "name": "Vancouver",
+                "gp": 4,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 12,
+                "name": "Boston",
+                "gp": 3,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": true
+              },
+              {
+                "rank": 13,
+                "name": "Florida",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 14,
+                "name": "Montreal",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 15,
+                "name": "Winnipeg",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 16,
+                "name": "Carolina",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 3
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 17,
+                "name": "NY Islanders",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 18,
+                "name": "Washington",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 19,
+                "name": "Ottawa",
+                "gp": 1,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": true
+              },
+              {
+                "rank": 20,
+                "name": "Columbus",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 21,
+                "name": "Toronto",
+                "gp": 3,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 22,
+                "name": "St. Louis",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 23,
+                "name": "Nashville",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 24,
+                "name": "Buffalo",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 25,
+                "name": "Tampa Bay",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 26,
+                "name": "New Jersey",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 27,
+                "name": "Philadelphia",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 2,
+                  "l": 1,
+                  "pts": 2
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 0,
+                  "pts": 1
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 28,
+                "name": "Los Angeles",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 1,
+                  "l": 1,
+                  "pts": 1
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 29,
+                "name": "Detroit",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 30,
+                "name": "Dallas",
+                "gp": 2,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 31,
+                "name": "Chicago",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 32,
+                "name": "Calgary",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 3,
+                  "pts": 0
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 0
+                },
+                "highlighted": false
+              }
+            ]
+          },
+          "summary": {
+            "overUnderLines": []
+          }
+        },
+        {
+          "team1Id": 144,
+          "team1Name": "Pittsburgh",
+          "team2Id": 1183,
+          "team2Name": "Winnipeg",
+          "odds1X2": {
+            "home": 1.97,
+            "draw": 4.5,
+            "away": 3.4
+          },
+          "h2h": {
+            "homeTeam": "Pittsburgh",
+            "awayTeam": "Winnipeg",
+            "date": "05.10.2026",
+            "h2hStats": {
+              "oneXtwo": {
+                "homeWins": 23,
+                "draws": 28,
+                "awayWins": 30,
+                "pcts": [
+                  20,
+                  50,
+                  3.33
+                ],
+                "odds": [
+                  5,
+                  2,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 25,
+                "awayWins": 28,
+                "pcts": [
+                  50,
+                  50
+                ],
+                "odds": [
+                  2,
+                  2
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 70,
+                "overPct": 30
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 20
+                },
+                {
+                  "goals": 1,
+                  "pct": 10
+                },
+                {
+                  "goals": 2,
+                  "pct": 20
+                },
+                {
+                  "goals": 3,
+                  "pct": 0
+                },
+                {
+                  "goals": 4,
+                  "pct": 30
+                },
+                {
+                  "goals": 5,
+                  "pct": 10
+                }
+              ],
+              "btts": 80,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 10
+                },
+                {
+                  "diff": 1,
+                  "pct": 0
+                },
+                {
+                  "diff": -1,
+                  "pct": 10
+                },
+                {
+                  "diff": -2,
+                  "pct": 0
+                }
+              ],
+              "goalAverage": {
+                "home": 2.3,
+                "away": 2.8,
+                "total": 5.1
+              }
+            },
+            "summaryHome": {
+              "oneXtwo": {
+                "homeWins": 32,
+                "draws": 27,
+                "awayWins": 50,
+                "pcts": [
+                  20,
+                  30,
+                  2
+                ],
+                "odds": [
+                  5,
+                  3.33,
+                  null
+                ]
+              },
+              "oneTwo": {
+                "homeWins": 33,
+                "awayWins": 28,
+                "pcts": [
+                  60,
+                  40
+                ],
+                "odds": [
+                  1.67,
+                  2.5
+                ]
+              },
+              "totalGoals": {
+                "line": 5.5,
+                "underPct": 50,
+                "overPct": 50
+              },
+              "goalsAgainst": [
+                {
+                  "goals": 0,
+                  "pct": 20
+                },
+                {
+                  "goals": 1,
+                  "pct": 20
+                },
+                {
+                  "goals": 2,
+                  "pct": 20
+                },
+                {
+                  "goals": 3,
+                  "pct": 0
+                },
+                {
+                  "goals": 4,
+                  "pct": 10
+                },
+                {
+                  "goals": 5,
+                  "pct": 20
+                }
+              ],
+              "btts": 70,
+              "goalDiff": [
+                {
+                  "diff": 2,
+                  "pct": 20
+                },
+                {
+                  "diff": 1,
+                  "pct": 10
+                },
+                {
+                  "diff": -1,
+                  "pct": 0
+                },
+                {
+                  "diff": -2,
+                  "pct": 0
+                }
+              ],
+              "goalAverage": {
+                "home": 3.2,
+                "away": 2.7,
+                "total": 5.9
               }
             },
             "summaryAway": {
@@ -258,6 +2547,33 @@
             "standings": [
               {
                 "rank": 1,
+                "name": "NY Rangers",
+                "gp": 4,
+                "all": {
+                  "w": 3,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 6
+                },
+                "home": {
+                  "w": 2,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 1,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 2,
                 "name": "Edmonton",
                 "gp": 3,
                 "all": {
@@ -284,7 +2600,7 @@
                 "highlighted": false
               },
               {
-                "rank": 2,
+                "rank": 3,
                 "name": "Colorado",
                 "gp": 2,
                 "all": {
@@ -307,33 +2623,6 @@
                   "otl": 0,
                   "l": 0,
                   "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 3,
-                "name": "Utah Mammoth",
-                "gp": 2,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
                 },
                 "highlighted": false
               },
@@ -362,17 +2651,17 @@
                   "l": 0,
                   "pts": 2
                 },
-                "highlighted": false
+                "highlighted": true
               },
               {
                 "rank": 5,
-                "name": "Minnesota",
-                "gp": 2,
+                "name": "Seattle Krak",
+                "gp": 3,
                 "all": {
                   "w": 2,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 4
                 },
                 "home": {
@@ -386,1076 +2675,20 @@
                   "w": 1,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 2
                 },
                 "highlighted": false
               },
               {
                 "rank": 6,
-                "name": "NY Rangers",
-                "gp": 3,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 7,
-                "name": "Vancouver",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 8,
-                "name": "San Jose",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 2,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 2,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 9,
-                "name": "Boston",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 10,
-                "name": "Montreal",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 11,
-                "name": "Florida",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 12,
-                "name": "Carolina",
-                "gp": 3,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 13,
-                "name": "NY Islanders",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 14,
-                "name": "Seattle Krak",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 15,
-                "name": "Vegas Golden",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 16,
-                "name": "Washington",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 17,
-                "name": "Anaheim",
-                "gp": 1,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 18,
-                "name": "Ottawa",
-                "gp": 1,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 19,
-                "name": "Columbus",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 20,
-                "name": "Toronto",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 21,
-                "name": "St. Louis",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 22,
-                "name": "Nashville",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 23,
-                "name": "Buffalo",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 24,
-                "name": "Tampa Bay",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 25,
-                "name": "New Jersey",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 26,
-                "name": "Philadelphia",
-                "gp": 3,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 2,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 27,
-                "name": "Winnipeg",
-                "gp": 1,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 28,
-                "name": "Los Angeles",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 29,
-                "name": "Detroit",
-                "gp": 1,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 30,
-                "name": "Dallas",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 31,
-                "name": "Calgary",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 32,
-                "name": "Chicago",
-                "gp": 3,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 3,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 3,
-                  "pts": 0
-                },
-                "highlighted": false
-              }
-            ]
-          },
-          "summary": {
-            "overUnderLines": []
-          }
-        },
-        {
-          "team1Id": 140,
-          "team1Name": "NY Rangers",
-          "team2Id": 1895,
-          "team2Name": "Utah Mammoth",
-          "odds1X2": {
-            "home": 2.28,
-            "draw": 4.11,
-            "away": 2.75
-          },
-          "h2h": {
-            "homeTeam": "NY Rangers",
-            "awayTeam": "Utah Mammoth",
-            "date": "04.10.2026",
-            "h2hStats": {
-              "oneXtwo": {
-                "homeWins": 14,
-                "draws": 13,
-                "awayWins": 25,
-                "pcts": [
-                  50,
-                  25,
-                  4
-                ],
-                "odds": [
-                  2,
-                  4,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 14,
-                "awayWins": 15,
-                "pcts": [
-                  25,
-                  75
-                ],
-                "odds": [
-                  4,
-                  1.33
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 50,
-                "overPct": 50
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 0
-                },
-                {
-                  "goals": 1,
-                  "pct": 0
-                },
-                {
-                  "goals": 2,
-                  "pct": 25
-                },
-                {
-                  "goals": 3,
-                  "pct": 50
-                },
-                {
-                  "goals": 4,
-                  "pct": 0
-                },
-                {
-                  "goals": 5,
-                  "pct": 25
-                }
-              ],
-              "btts": 100,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 25
-                },
-                {
-                  "diff": 1,
-                  "pct": 0
-                },
-                {
-                  "diff": -1,
-                  "pct": 25
-                },
-                {
-                  "diff": -2,
-                  "pct": 0
-                }
-              ],
-              "goalAverage": {
-                "home": 3.5,
-                "away": 3.25,
-                "total": 6.75
-              }
-            },
-            "summaryHome": {
-              "oneXtwo": {
-                "homeWins": 27,
-                "draws": 22,
-                "awayWins": 40,
-                "pcts": [
-                  10,
-                  50,
-                  2.5
-                ],
-                "odds": [
-                  10,
-                  2,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 28,
-                "awayWins": 22,
-                "pcts": [
-                  50,
-                  50
-                ],
-                "odds": [
-                  2,
-                  2
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 50,
-                "overPct": 50
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 10
-                },
-                {
-                  "goals": 1,
-                  "pct": 20
-                },
-                {
-                  "goals": 2,
-                  "pct": 20
-                },
-                {
-                  "goals": 3,
-                  "pct": 40
-                },
-                {
-                  "goals": 4,
-                  "pct": 10
-                },
-                {
-                  "goals": 5,
-                  "pct": 0
-                }
-              ],
-              "btts": 70,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 20
-                },
-                {
-                  "diff": 1,
-                  "pct": 0
-                },
-                {
-                  "diff": -1,
-                  "pct": 30
-                },
-                {
-                  "diff": -2,
-                  "pct": 10
-                }
-              ],
-              "goalAverage": {
-                "home": 2.7,
-                "away": 2.2,
-                "total": 4.9
-              }
-            },
-            "summaryAway": {
-              "oneXtwo": {
-                "homeWins": 36,
-                "draws": 27,
-                "awayWins": 50,
-                "pcts": [
-                  30,
-                  20,
-                  2
-                ],
-                "odds": [
-                  3.33,
-                  5,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 36,
-                "awayWins": 30,
-                "pcts": [
-                  50,
-                  50
-                ],
-                "odds": [
-                  2,
-                  2
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 30,
-                "overPct": 70
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 20
-                },
-                {
-                  "goals": 1,
-                  "pct": 10
-                },
-                {
-                  "goals": 2,
-                  "pct": 10
-                },
-                {
-                  "goals": 3,
-                  "pct": 10
-                },
-                {
-                  "goals": 4,
-                  "pct": 40
-                },
-                {
-                  "goals": 5,
-                  "pct": 10
-                }
-              ],
-              "btts": 80,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 20
-                },
-                {
-                  "diff": 1,
-                  "pct": 0
-                },
-                {
-                  "diff": -1,
-                  "pct": 0
-                },
-                {
-                  "diff": -2,
-                  "pct": 0
-                }
-              ],
-              "goalAverage": {
-                "home": 3.6,
-                "away": 2.7,
-                "total": 6.3
-              }
-            },
-            "standings": [
-              {
-                "rank": 1,
-                "name": "Edmonton",
-                "gp": 3,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 5
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 2,
-                "name": "Colorado",
-                "gp": 2,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 3,
                 "name": "Utah Mammoth",
-                "gp": 2,
+                "gp": 3,
                 "all": {
                   "w": 2,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 4
                 },
                 "home": {
@@ -1469,40 +2702,13 @@
                   "w": 1,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 4,
-                "name": "Pittsburgh",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 2
                 },
                 "highlighted": false
               },
               {
-                "rank": 5,
+                "rank": 7,
                 "name": "Minnesota",
                 "gp": 2,
                 "all": {
@@ -1529,8 +2735,8 @@
                 "highlighted": false
               },
               {
-                "rank": 6,
-                "name": "NY Rangers",
+                "rank": 8,
+                "name": "Vegas Golden",
                 "gp": 3,
                 "all": {
                   "w": 2,
@@ -1543,39 +2749,12 @@
                   "w": 1,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 2
                 },
                 "away": {
                   "w": 1,
                   "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 7,
-                "name": "Vancouver",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
                   "otl": 0,
                   "l": 0,
                   "pts": 2
@@ -1583,7 +2762,7 @@
                 "highlighted": false
               },
               {
-                "rank": 8,
+                "rank": 9,
                 "name": "San Jose",
                 "gp": 2,
                 "all": {
@@ -1610,7 +2789,61 @@
                 "highlighted": false
               },
               {
-                "rank": 9,
+                "rank": 10,
+                "name": "Anaheim",
+                "gp": 2,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 11,
+                "name": "Vancouver",
+                "gp": 4,
+                "all": {
+                  "w": 1,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 2,
+                  "pts": 2
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 12,
                 "name": "Boston",
                 "gp": 3,
                 "all": {
@@ -1637,7 +2870,34 @@
                 "highlighted": false
               },
               {
-                "rank": 10,
+                "rank": 13,
+                "name": "Florida",
+                "gp": 3,
+                "all": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "home": {
+                  "w": 0,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 0
+                },
+                "away": {
+                  "w": 0,
+                  "otw": 1,
+                  "otl": 2,
+                  "l": 0,
+                  "pts": 4
+                },
+                "highlighted": false
+              },
+              {
+                "rank": 14,
                 "name": "Montreal",
                 "gp": 2,
                 "all": {
@@ -1664,12 +2924,12 @@
                 "highlighted": false
               },
               {
-                "rank": 11,
-                "name": "Florida",
+                "rank": 15,
+                "name": "Winnipeg",
                 "gp": 2,
                 "all": {
-                  "w": 0,
-                  "otw": 1,
+                  "w": 1,
+                  "otw": 0,
                   "otl": 1,
                   "l": 0,
                   "pts": 3
@@ -1677,21 +2937,21 @@
                 "home": {
                   "w": 0,
                   "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
                   "otl": 1,
                   "l": 0,
-                  "pts": 3
+                  "pts": 1
                 },
-                "highlighted": false
+                "away": {
+                  "w": 1,
+                  "otw": 0,
+                  "otl": 0,
+                  "l": 0,
+                  "pts": 2
+                },
+                "highlighted": true
               },
               {
-                "rank": 12,
+                "rank": 16,
                 "name": "Carolina",
                 "gp": 3,
                 "all": {
@@ -1718,7 +2978,7 @@
                 "highlighted": false
               },
               {
-                "rank": 13,
+                "rank": 17,
                 "name": "NY Islanders",
                 "gp": 2,
                 "all": {
@@ -1745,61 +3005,7 @@
                 "highlighted": false
               },
               {
-                "rank": 14,
-                "name": "Seattle Krak",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 15,
-                "name": "Vegas Golden",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 16,
+                "rank": 18,
                 "name": "Washington",
                 "gp": 2,
                 "all": {
@@ -1826,34 +3032,7 @@
                 "highlighted": false
               },
               {
-                "rank": 17,
-                "name": "Anaheim",
-                "gp": 1,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 18,
+                "rank": 19,
                 "name": "Ottawa",
                 "gp": 1,
                 "all": {
@@ -1880,7 +3059,7 @@
                 "highlighted": false
               },
               {
-                "rank": 19,
+                "rank": 20,
                 "name": "Columbus",
                 "gp": 2,
                 "all": {
@@ -1907,7 +3086,7 @@
                 "highlighted": false
               },
               {
-                "rank": 20,
+                "rank": 21,
                 "name": "Toronto",
                 "gp": 3,
                 "all": {
@@ -1934,7 +3113,7 @@
                 "highlighted": false
               },
               {
-                "rank": 21,
+                "rank": 22,
                 "name": "St. Louis",
                 "gp": 2,
                 "all": {
@@ -1961,7 +3140,7 @@
                 "highlighted": false
               },
               {
-                "rank": 22,
+                "rank": 23,
                 "name": "Nashville",
                 "gp": 2,
                 "all": {
@@ -1988,7 +3167,7 @@
                 "highlighted": false
               },
               {
-                "rank": 23,
+                "rank": 24,
                 "name": "Buffalo",
                 "gp": 2,
                 "all": {
@@ -2015,7 +3194,7 @@
                 "highlighted": false
               },
               {
-                "rank": 24,
+                "rank": 25,
                 "name": "Tampa Bay",
                 "gp": 2,
                 "all": {
@@ -2042,7 +3221,7 @@
                 "highlighted": false
               },
               {
-                "rank": 25,
+                "rank": 26,
                 "name": "New Jersey",
                 "gp": 2,
                 "all": {
@@ -2069,7 +3248,7 @@
                 "highlighted": false
               },
               {
-                "rank": 26,
+                "rank": 27,
                 "name": "Philadelphia",
                 "gp": 3,
                 "all": {
@@ -2092,33 +3271,6 @@
                   "otl": 1,
                   "l": 0,
                   "pts": 1
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 27,
-                "name": "Winnipeg",
-                "gp": 1,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
                 },
                 "highlighted": false
               },
@@ -2152,19 +3304,19 @@
               {
                 "rank": 29,
                 "name": "Detroit",
-                "gp": 1,
+                "gp": 2,
                 "all": {
                   "w": 0,
                   "otw": 0,
                   "otl": 0,
-                  "l": 1,
+                  "l": 2,
                   "pts": 0
                 },
                 "home": {
                   "w": 0,
                   "otw": 0,
                   "otl": 0,
-                  "l": 1,
+                  "l": 2,
                   "pts": 0
                 },
                 "away": {
@@ -2205,33 +3357,6 @@
               },
               {
                 "rank": 31,
-                "name": "Calgary",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 32,
                 "name": "Chicago",
                 "gp": 3,
                 "all": {
@@ -2256,1120 +3381,10 @@
                   "pts": 0
                 },
                 "highlighted": false
-              }
-            ]
-          },
-          "summary": {
-            "overUnderLines": []
-          }
-        },
-        {
-          "team1Id": 119,
-          "team1Name": "Anaheim",
-          "team2Id": 133,
-          "team2Name": "Florida",
-          "odds1X2": {
-            "home": 2.78,
-            "draw": 4.25,
-            "away": 2.21
-          },
-          "h2h": {
-            "homeTeam": "Anaheim",
-            "awayTeam": "Florida",
-            "date": "05.10.2026",
-            "h2hStats": {
-              "oneXtwo": {
-                "homeWins": 24,
-                "draws": 32,
-                "awayWins": 10,
-                "pcts": [
-                  40,
-                  50,
-                  10
-                ],
-                "odds": [
-                  2.5,
-                  2,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 26,
-                "awayWins": 34,
-                "pcts": [
-                  30,
-                  70
-                ],
-                "odds": [
-                  3.33,
-                  1.43
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 50,
-                "overPct": 50
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 0
-                },
-                {
-                  "goals": 1,
-                  "pct": 0
-                },
-                {
-                  "goals": 2,
-                  "pct": 30
-                },
-                {
-                  "goals": 3,
-                  "pct": 40
-                },
-                {
-                  "goals": 4,
-                  "pct": 10
-                },
-                {
-                  "goals": 5,
-                  "pct": 20
-                }
-              ],
-              "btts": 80,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 0
-                },
-                {
-                  "diff": 1,
-                  "pct": 0
-                },
-                {
-                  "diff": -1,
-                  "pct": 10
-                },
-                {
-                  "diff": -2,
-                  "pct": 10
-                }
-              ],
-              "goalAverage": {
-                "home": 2.4,
-                "away": 3.2,
-                "total": 5.6
-              }
-            },
-            "summaryHome": {
-              "oneXtwo": {
-                "homeWins": 25,
-                "draws": 40,
-                "awayWins": 40,
-                "pcts": [
-                  10,
-                  50,
-                  2.5
-                ],
-                "odds": [
-                  10,
-                  2,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 25,
-                "awayWins": 41,
-                "pcts": [
-                  40,
-                  60
-                ],
-                "odds": [
-                  2.5,
-                  1.67
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 30,
-                "overPct": 70
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 0
-                },
-                {
-                  "goals": 1,
-                  "pct": 10
-                },
-                {
-                  "goals": 2,
-                  "pct": 30
-                },
-                {
-                  "goals": 3,
-                  "pct": 20
-                },
-                {
-                  "goals": 4,
-                  "pct": 0
-                },
-                {
-                  "goals": 5,
-                  "pct": 10
-                }
-              ],
-              "btts": 90,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 10
-                },
-                {
-                  "diff": 1,
-                  "pct": 20
-                },
-                {
-                  "diff": -1,
-                  "pct": 10
-                },
-                {
-                  "diff": -2,
-                  "pct": 0
-                }
-              ],
-              "goalAverage": {
-                "home": 2.5,
-                "away": 4,
-                "total": 6.5
-              }
-            },
-            "summaryAway": {
-              "oneXtwo": {
-                "homeWins": 36,
-                "draws": 23,
-                "awayWins": 50,
-                "pcts": [
-                  40,
-                  10,
-                  2
-                ],
-                "odds": [
-                  2.5,
-                  10,
-                  null
-                ]
-              },
-              "oneTwo": {
-                "homeWins": 37,
-                "awayWins": 26,
-                "pcts": [
-                  60,
-                  40
-                ],
-                "odds": [
-                  1.67,
-                  2.5
-                ]
-              },
-              "totalGoals": {
-                "line": 5.5,
-                "underPct": 40,
-                "overPct": 60
-              },
-              "goalsAgainst": [
-                {
-                  "goals": 0,
-                  "pct": 10
-                },
-                {
-                  "goals": 1,
-                  "pct": 10
-                },
-                {
-                  "goals": 2,
-                  "pct": 40
-                },
-                {
-                  "goals": 3,
-                  "pct": 30
-                },
-                {
-                  "goals": 4,
-                  "pct": 0
-                },
-                {
-                  "goals": 5,
-                  "pct": 10
-                }
-              ],
-              "btts": 90,
-              "goalDiff": [
-                {
-                  "diff": 2,
-                  "pct": 10
-                },
-                {
-                  "diff": 1,
-                  "pct": 10
-                },
-                {
-                  "diff": -1,
-                  "pct": 0
-                },
-                {
-                  "diff": -2,
-                  "pct": 0
-                }
-              ],
-              "goalAverage": {
-                "home": 3.6,
-                "away": 2.3,
-                "total": 5.9
-              }
-            },
-            "standings": [
-              {
-                "rank": 1,
-                "name": "Edmonton",
-                "gp": 3,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 5
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 2,
-                "name": "Colorado",
-                "gp": 2,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 3,
-                "name": "Utah Mammoth",
-                "gp": 2,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 4,
-                "name": "Pittsburgh",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 5,
-                "name": "Minnesota",
-                "gp": 2,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 6,
-                "name": "NY Rangers",
-                "gp": 3,
-                "all": {
-                  "w": 2,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 7,
-                "name": "Vancouver",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 8,
-                "name": "San Jose",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 2,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 2,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 4
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 9,
-                "name": "Boston",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 4
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 10,
-                "name": "Montreal",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 11,
-                "name": "Florida",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 3
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 12,
-                "name": "Carolina",
-                "gp": 3,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 3
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 13,
-                "name": "NY Islanders",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 14,
-                "name": "Seattle Krak",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 15,
-                "name": "Vegas Golden",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 16,
-                "name": "Washington",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 17,
-                "name": "Anaheim",
-                "gp": 1,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": true
-              },
-              {
-                "rank": 18,
-                "name": "Ottawa",
-                "gp": 1,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 19,
-                "name": "Columbus",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 20,
-                "name": "Toronto",
-                "gp": 3,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 21,
-                "name": "St. Louis",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 22,
-                "name": "Nashville",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 23,
-                "name": "Buffalo",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 24,
-                "name": "Tampa Bay",
-                "gp": 2,
-                "all": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 1,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 25,
-                "name": "New Jersey",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 1,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 2
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 26,
-                "name": "Philadelphia",
-                "gp": 3,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 2,
-                  "l": 1,
-                  "pts": 2
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 27,
-                "name": "Winnipeg",
-                "gp": 1,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 0,
-                  "pts": 1
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 28,
-                "name": "Los Angeles",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 1,
-                  "l": 1,
-                  "pts": 1
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 29,
-                "name": "Detroit",
-                "gp": 1,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 0,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 30,
-                "name": "Dallas",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
-              },
-              {
-                "rank": 31,
-                "name": "Calgary",
-                "gp": 2,
-                "all": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 2,
-                  "pts": 0
-                },
-                "home": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "away": {
-                  "w": 0,
-                  "otw": 0,
-                  "otl": 0,
-                  "l": 1,
-                  "pts": 0
-                },
-                "highlighted": false
               },
               {
                 "rank": 32,
-                "name": "Chicago",
+                "name": "Calgary",
                 "gp": 3,
                 "all": {
                   "w": 0,
@@ -3382,14 +3397,14 @@
                   "w": 0,
                   "otw": 0,
                   "otl": 0,
-                  "l": 0,
+                  "l": 1,
                   "pts": 0
                 },
                 "away": {
                   "w": 0,
                   "otw": 0,
                   "otl": 0,
-                  "l": 3,
+                  "l": 2,
                   "pts": 0
                 },
                 "highlighted": false
@@ -3401,30 +3416,17 @@
           }
         },
         {
-          "team1Id": 1814,
-          "team1Name": "Seattle Kraken",
-          "team2Id": 123,
-          "team2Name": "Calgary",
+          "team1Id": 128,
+          "team1Name": "Dallas",
+          "team2Id": 145,
+          "team2Name": "San Jose",
           "odds1X2": {
-            "home": 2.07,
-            "draw": 4.16,
-            "away": 3.15
+            "home": 1.95,
+            "draw": 4.4,
+            "away": 3.3
           },
           "h2h": null,
-          "error": "timeout https://annabet.com/en/hockeystats/h2h.php?team1=1814&team2=123"
-        },
-        {
-          "team1Id": 151,
-          "team1Name": "Vancouver",
-          "team2Id": 1625,
-          "team2Name": "Vegas Golden Knights",
-          "odds1X2": {
-            "home": 4.3,
-            "draw": 4.7,
-            "away": 1.73
-          },
-          "h2h": null,
-          "error": "connect ECONNREFUSED 188.214.130.98:443"
+          "error": "timeout https://annabet.com/en/hockeystats/h2h.php?team1=128&team2=145"
         }
       ]
     },
