@@ -106,6 +106,12 @@ if [ "$NEED_BUILD" = "1" ]; then
   npx prisma generate 2>&1 || { echo "ERR: prisma generate"; exit 1; }
 
   echo "[4/6] Next.js build... (start $(date -u +%H:%M:%S))"
+  # Le jumeau `.next/standalone/pariscore.db` est une COPIE du fichier racine :
+  # il peut être périmé sans aucun lien avec la source, et il n'est ni produit ni
+  # nécessaire au runtime. On le supprime AVANT le build pour ne pas le laisser
+  # traîner : sans cela, un redéploiement sans DATABASE_PATH le ressusciterait et
+  # l'API relirait des chiffres périmés en répondant 200.
+  rm -f .next/standalone/pariscore.db
   bun run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
   # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
   # Si server.js est absent, pm2 crash en boucle (502) ; on STOPE le deploy
@@ -155,6 +161,15 @@ if [ "$BUILD_RAN" = "0" ] && printf '%s\n' "$CHANGED" | grep -q '^public/'; then
     fi
   done
   echo "  restart pariscore-next (inventaire public/ figé au boot)..."
+  # ── DATABASE_PATH obligatoire (2026-10-05) ─────────────────────────────────
+  # Sous standalone, `process.cwd()` vaut `.next/standalone/` : sans cette
+  # variable, le handball lit `.next/standalone/pariscore.db` — un JUMEAU de
+  # 515 Mo, copie périmée du fichier racine. Elle existe, donc `existsSync` la
+  # valide : l'API répond 200 avec des chiffres plausibles et faux (0 cote sur
+  # la Superlig, 85 matchs au lieu de 89). Deux diagnostics perdus là-dessus.
+  # Chemins EN DUR, jamais relatifs : un chemin relatif reproduirait exactement
+  # le bug qu'on vient de corriger.
+  export DATABASE_PATH="/home/ubuntu/pariscore/pariscore.db"
   pm2 restart pariscore-next --update-env 2>&1 | tail -2 || echo "  warn: restart pariscore-next"
 fi
 
