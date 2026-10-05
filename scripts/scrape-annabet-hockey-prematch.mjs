@@ -18,13 +18,105 @@ const FLARE_HOST = process.env.FLARE_HOST || 'localhost';
 const FLARE_PORT = process.env.FLARE_PORT || '8191';
 const HTTP_TIMEOUT = 30000;
 
+/**
+ * Delai minimum entre deux requetes Annabet, et son plafond de backoff.
+ *
+ * Mesure : le 2026-10-05, `ajax_upcoming` KHL a repondu 200 en 332 ms puis, apres
+ * ~28 requetes en rafale (1 upcoming + 9 h2h + 3 retries par echec), TOUTES les
+ * requetes suivantes ont repondu ECONNREFUSED. Le ban existe deja dans ce fichier
+ * (« Annabet ban apres ~3 requetes rapides ») mais n'etait applique que comme un
+ * `sleep(3000)` fixe, qui ne resiste pas aux retries.
+ */
+const REQUEST_DELAY_MS = 8000;
+const BACKOFF_BASE_MS = 10000;
+const BACKOFF_MAX_MS = 90000;
+
+/** Cache disque des pages h2h : evite de reinterroger les memes paires a chaque run. */
+const CACHE_DIR = join(ROOT, 'data', 'hockey-h2h-cache');
+const CACHE_TTL_MS = 20 * 60 * 60 * 1000;
+
+/**
+ * Classe une erreur reseau pour decider quoi faire — et surtout distinguer un
+ * BAN du site d'une panne locale.
+ *
+ * `ECONNREFUSED` est ambigu : c'est aussi ce que rend FlareSolverr quand il
+ * n'ecoute pas en local. D'ou la regle : cette fonction ne s'applique QU'AUX
+ * erreurs de `fetchDirect` (le site). Les erreurs de FlareSolverr sont locais et
+ * se traitent en amont.
+ */
+function classifyError(err) {
+  const code = err && err.code;
+  const msg = String(err && err.message || '');
+
+  if (code === 'BAN' || code === 'RATE') return 'ban';
+  if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ECONNRESET' || code === 'ETIMEDOUT') return 'ban';
+  if (/HTTP 403|HTTP 429|HTTP 401/.test(msg)) return 'ban';
+  if (/timeout/.test(msg)) return 'transient';
+  if (code === 'ECONNABORTED' || code === 'EAI_AGAIN') return 'transient';
+  return 'fatal';
+}
+
+/** Erreur de ban : signalee pour interrompre toute la chaine, pas pour retry. */
+class BanError extends Error {
+  constructor(detail) {
+    super(`Annabet bloque l'IP (${detail}) — chaine interrompue`);
+    this.name = 'BanError';
+    this.isBan = true;
+  }
+}
+
+/** Backoff exponentiel avec jitter : evite que 2 workers se synchronisent. */
+function backoffDelay(attempt) {
+  const base = Math.min(BACKOFF_BASE_MS * 2 ** (attempt - 1), BACKOFF_MAX_MS);
+  return base + Math.floor(Math.random() * 3000);
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Derniere requete horodatee, pour garantir l'intervalle minimal. */
+let lastRequestAt = 0;
+async function respectDelay() {
+  const wait = lastRequestAt + REQUEST_DELAY_MS - Date.now();
+  if (wait > 0) await sleep(wait);
+  lastRequestAt = Date.now();
+}
+
+// ─── Cache disque h2h ───────────────────────────────────────────────────────
+
+function cachePath(team1Id, team2Id) {
+  // La paire est ordonnee : h2h?team1=155&team2=175 === h2h?team1=175&team2=155
+  const [a, b] = [Number(team1Id), Number(team2Id)].sort((x, y) => x - y);
+  return join(CACHE_DIR, `${a}-${b}.json`);
+}
+
+function readCache(team1Id, team2Id) {
+  const p = cachePath(team1Id, team2Id);
+  if (!existsSync(p)) return null;
+  try {
+    const j = JSON.parse(readFileSync(p, 'utf-8'));
+    if (!j || typeof j.html !== 'string' || !j.fetchedAt) return null;
+    if (Date.now() - j.fetchedAt > CACHE_TTL_MS) return null;
+    return j;
+  } catch {
+    return null; // cache corrompu → on refetch, pas de crash
+  }
+}
+
+function writeCache(team1Id, team2Id, html) {
+  try {
+    mkdirSync(CACHE_DIR, { recursive: true });
+    writeFileSync(cachePath(team1Id, team2Id), JSON.stringify({ fetchedAt: Date.now(), html }));
+  } catch (e) {
+    // Le cache est une optimisation : son echec ne doit pas tuer le scrape.
+    console.warn(`[prematch] cache ecrit impossible (${e.message}) — scrape continue`);
+  }
+}
+
 const LEAGUES = [
   { id: 'nhl', name: 'NHL', serieId: 6 },
   { id: 'khl', name: 'KHL', serieId: 13 },
   { id: 'magnus', name: 'Ligue Magnus', serieId: 40 },
 ];
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function flareSolverrGet(url) {
   return new Promise((resolve, reject) => {
@@ -53,31 +145,40 @@ function flareSolverrGet(url) {
 }
 
 function fetchPage(url) {
-  // FlareSolverr d'abord (VPS derrière Cloudflare)
-  return flareSolverrGet(url).then((r) => {
-    if (typeof r === 'string') return r;
-    return fetchDirect(url);
-  }).catch(() => fetchDirect(url));
+  // FlareSolverr d'abord (VPS derrière Cloudflare). En local il n'écoute pas :
+  // son ECONNREFUSED est LOCAL, donc on l'ignore sans le confondre avec un ban.
+  return flareSolverrGet(url)
+    .then((r) => (typeof r === 'string' ? r : fetchDirect(url)))
+    .catch(() => fetchDirect(url));
 }
 
 function fetchDirect(url) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, {
-      headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US,en;q=0.9' },
-      timeout: 25000,
-    }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume();
-        const loc = res.headers.location.startsWith('http') ? res.headers.location : 'https://annabet.com' + res.headers.location;
-        return resolve(fetchDirect(loc));
-      }
-      if (res.statusCode !== 200) { res.resume(); reject(new Error('HTTP ' + res.statusCode + ' ' + url)); return; }
-      let d = '';
-      res.on('data', (c) => (d += c));
-      res.on('end', () => resolve(d));
+    respectDelay().then(() => {
+      const req = https.get(url, {
+        headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US,en;q=0.9' },
+        timeout: 25000,
+      }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          res.resume();
+          const loc = res.headers.location.startsWith('http') ? res.headers.location : 'https://annabet.com' + res.headers.location;
+          return resolve(fetchDirect(loc));
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          const err = new Error('HTTP ' + res.statusCode + ' ' + url);
+          // `code` rend la classification fiable (pas de parsing de message).
+          if (res.statusCode === 403 || res.statusCode === 429 || res.statusCode === 401) err.code = 'BAN';
+          reject(err);
+          return;
+        }
+        let d = '';
+        res.on('data', (c) => (d += c));
+        res.on('end', () => resolve(d));
+      });
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout ' + url)); });
+      req.on('error', reject);
     });
-    req.on('timeout', () => { req.destroy(); reject(new Error('timeout ' + url)); });
-    req.on('error', reject);
   });
 }
 
@@ -407,8 +508,13 @@ async function scrapeLeague(league, dryRun) {
   try {
     upcomingHtml = await fetchPage(upcomingUrl);
   } catch (err) {
-    console.error(`[prematch] Upcoming fetch error:`, err.message);
-    return { matches: [], error: err.message };
+    const kind = classifyError(err);
+    // Même traitement que le h2h : un ban ici doit remonter et interrompre la
+    // chaîne. Sans cela le run sollicitait les 3 ligues alors que l'IP était
+    // déjà coupée — mesuré : 3 requêtes, 87 s, pour rien.
+    if (kind === 'ban') throw new BanError(err.message.slice(0, 80));
+    console.error(`[prematch] Upcoming fetch ${kind}:`, err.message);
+    return { matches: [], error: `${kind}: ${err.message}` };
   }
 
   const upcoming = parseUpcoming(upcomingHtml);
@@ -419,16 +525,31 @@ async function scrapeLeague(league, dryRun) {
     return { matches: upcoming.map((m) => ({ ...m, h2h: null })) };
   }
 
-  // 2. Fetch H2H for each match (avec retry)
+  // 2. Fetch H2H for each match (backoff exponentiel + cache disque)
   const results = [];
+  let caches = 0;
   for (const match of upcoming) {
     const h2hUrl = `https://annabet.com/en/hockeystats/h2h.php?team1=${match.team1Id}&team2=${match.team2Id}`;
+
+    // Le cache évite de reinterroger une paire déjà connue : c'est le levier le
+    // plus efficace contre le ban, puisqu'il réduit le nombre de requêtes.
+    const cached = readCache(match.team1Id, match.team2Id);
+    if (cached) {
+      const h2h = parseH2H(cached.html);
+      const summary = extractSummaryTable(cached.html);
+      results.push({ ...match, h2h, summary, fromCache: true });
+      caches++;
+      console.log(`[prematch] ${match.team1Name} vs ${match.team2Name} — CACHE (${h2h.standings.length} standings)`);
+      continue;
+    }
+
     console.log(`[prematch] ${match.team1Name} vs ${match.team2Name} → ${h2hUrl}`);
 
     let lastErr = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const h2hHtml = await fetchPage(h2hUrl);
+        writeCache(match.team1Id, match.team2Id, h2hHtml);
         const h2h = parseH2H(h2hHtml);
         const summary = extractSummaryTable(h2hHtml);
         results.push({ ...match, h2h, summary });
@@ -436,21 +557,29 @@ async function scrapeLeague(league, dryRun) {
         lastErr = null;
         break;
       } catch (err) {
+        const kind = classifyError(err);
         lastErr = err;
-        console.error(`[prematch] H2H attempt ${attempt}/3 error for ${match.team1Name} vs ${match.team2Name}:`, err.message);
+
+        // Ban = l'IP est coupée. Tout retry ne ferait qu'aggraver : on remonte
+        // l'erreur pour interrompre TOUTE la chaîne, ligues suivantes comprises.
+        if (kind === 'ban') {
+          throw new BanError(err.message.slice(0, 80));
+        }
+
+        console.error(`[prematch] H2H ${kind} attempt ${attempt}/3 for ${match.team1Name} vs ${match.team2Name}:`, err.message);
         if (attempt < 3) {
-          const backoff = attempt * 5000; // 5s, 10s
-          console.log(`[prematch] Retrying in ${backoff / 1000}s...`);
-          await sleep(backoff);
+          const wait = backoffDelay(attempt);
+          console.log(`[prematch] Backoff ${Math.round(wait / 1000)}s`);
+          await sleep(wait);
         }
       }
     }
     if (lastErr) {
       results.push({ ...match, h2h: null, error: lastErr.message });
     }
-
-    await sleep(3000); // Rate limit — Annabet ban apres ~3 requêtes rapides
   }
+
+  if (caches) console.log(`[prematch] ${caches} match(s) servis depuis le cache`);
 
   return { matches: results };
 }
@@ -483,13 +612,39 @@ async function main() {
 
   for (const league of LEAGUES) {
     if (leagueFilter && league.id !== leagueFilter) continue;
-    output.leagues[league.id] = await scrapeLeague(league, dryRun);
-    await sleep(2000);
+    try {
+      output.leagues[league.id] = await scrapeLeague(league, dryRun);
+    } catch (err) {
+      if (!err.isBan) throw err;
+      // Ban : on interrompt TOUTE la chaîne. Interroger la ligue suivante
+      // n'aggraverait que le blocage, et les 3 ligues partagent la même IP.
+      console.error(`\n[prematch] ⛔ ${err.message}`);
+      console.error(`[prematch] Interrupt sur ${league.name} — ligues restantes non sollicitées.`);
+      output.banned = { league: league.id, at: new Date().toISOString(), reason: err.message };
+      // La ligue fautive ET les suivantes n'ont pas été scrapées. On écrase
+      // l'erreur issue du merge : sans ça, le payload affichait l'erreur
+      // PÉRIMÉE du run précédent (mesuré : « ECONNREFUSED » sur les 3 ligues
+      // alors qu'une seule avait été contactée) — une trace qui mentait sur ce
+      // qui a réellement été tenté.
+      const reste = LEAGUES.slice(LEAGUES.indexOf(league));
+      for (const l of reste) {
+        output.leagues[l.id] = {
+          matches: [],
+          error: l.id === league.id
+            ? `IP bloquée par Annabet — ${err.message}`
+            : 'non sollicité — IP déjà bloquée par Annabet',
+        };
+      }
+      break;
+    }
+    await sleep(REQUEST_DELAY_MS);
   }
 
   // Toujours writer les 3 clés même si absentes du merge (évite UI vide)
   for (const l of LEAGUES) {
-    if (!output.leagues[l.id]) output.leagues[l.id] = { matches: [] };
+    if (!output.leagues[l.id]) {
+      output.leagues[l.id] = { matches: [], error: output.banned ? 'non sollicité — IP bloquée par Annabet' : 'non scrape' };
+    }
   }
 
   mkdirSync(dirname(OUT), { recursive: true });
@@ -499,9 +654,11 @@ async function main() {
   // Resume
   for (const [id, data] of Object.entries(output.leagues)) {
     console.log(`\n--- ${id} ---`);
-    console.log(`  Matches: ${data.matches.length}`);
+    console.log(`  Matches: ${data.matches.length}${data.error ? `  (${data.error})` : ''}`);
+    const caches = data.matches.filter((m) => m.fromCache).length;
+    if (caches) console.log(`  dont ${caches} depuis le cache`);
     for (const m of data.matches.slice(0, 3)) {
-      const status = m.h2h ? `OK (${m.h2h.standings.length} standings)` : m.error || 'no data';
+      const status = m.h2h ? `OK (${m.h2h.standings.length} standings${m.fromCache ? ', cache' : ''})` : m.error || 'no data';
       console.log(`  ${m.team1Name} vs ${m.team2Name}: ${status}`);
     }
   }

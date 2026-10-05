@@ -141,6 +141,10 @@ scrapy_project/.mcp-output/
 scrapy_project/.mcp-crawl-*.jsonl
 data/scrapy-tests/
 data/scrapling-tests/
+# Hockey — cache des pages h2h Annabet (runtime, machine-local : ~164 Ko de HTML
+# par paire d'équipes, régénérable, et sert uniquement à limiter le débit de
+# requêtes). Aucune valeur de versionnement.
+data/hockey-h2h-cache/
 # Snooker (runtime — scrapé par cron VPS, ne pas committer)
 data/odds_flashscore_snooker.json
 data/oddsportal_nio.json
