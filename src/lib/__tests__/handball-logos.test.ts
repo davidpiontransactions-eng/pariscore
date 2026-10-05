@@ -1,7 +1,9 @@
-// Tests logos StarLigue (G13) — normHandballName + teamLogoUrl 16 clubs LNH.
-// Noms = feed flashscore (data/flashscore_handball.json, league "Starligue") +
-// variantes LNH/BetExplorer. Couverture attendue : 15/16 — Caen est le seul
-// non couvert (site officiel derrière challenge Cloudflare → fallback UI).
+// Tests logos handball — normHandballName + teamLogoUrl.
+// Couverture 1 : 15/16 clubs StarLigue (Caen est le seul non couvert, site
+// officiel derrière challenge Cloudflare → fallback UI).
+// Couverture 2 : 24 clubs Superlig TR (vitibet 120) + Liga Nationala Women RO
+// (vitibet 88), résolus par teamId API-Sports — voir handball-logos.ts.
+// Noms = feed flashscore / vitibet + variantes LNH/BetExplorer.
 
 import { describe, expect, test } from "bun:test";
 import { leagueLogo, leagueCountry, normHandballName, teamLogoUrl } from "../handball-logos";
@@ -75,5 +77,62 @@ describe("ligue StarLigue — logo + pays", () => {
   test("leagueCountry('Starligue') → FRANCE", () => {
     expect(leagueCountry("Starligue")).toBe("FRANCE");
     expect(leagueCountry("Starligue", "FRANCE")).toBe("FRANCE");
+  });
+});
+
+describe("teamLogoUrl — 24 clubs Superlig TR + Liga Nationala Women RO", () => {
+  const covered: Record<string, string> = {
+    // Superlig Turquie (vitibet 120)
+    Besiktas: "/logos/handball/teams/besiktas.png",
+    "Spor Toto": "/logos/handball/teams/spor-toto.png",
+    "Istanbul Genclik Spor Kulubu": "/logos/handball/teams/istanbul-genclik-spor-kulubu.png",
+    "Bursa Nilufer Belediyespor": "/logos/handball/teams/bursa-nilufer-belediyespor.png",
+    "Beykoz Bld.": "/logos/handball/teams/beykoz-bld.png",
+    Mihaliccik: "/logos/handball/teams/mihaliccik.png",
+    Giresunspor: "/logos/handball/teams/giresunspor.png",
+    Trabzon: "/logos/handball/teams/trabzon.png",
+    Goztepe: "/logos/handball/teams/goztepe.png",
+    Guneysu: "/logos/handball/teams/guneysu.png",
+    // Liga Nationala Women Roumanie (vitibet 88)
+    "CSM Bucuresti W": "/logos/handball/teams/csm-bucuresti-w.png",
+    "Bistrita W": "/logos/handball/teams/bistrita-w.png",
+    "Dunarea Braila W": "/logos/handball/teams/dunarea-braila-w.png",
+    "CSM Slatina W": "/logos/handball/teams/csm-slatina-w.png",
+    "Rapid Bucuresti W": "/logos/handball/teams/rapid-bucuresti-w.png",
+    "Ramnicu Valcea W": "/logos/handball/teams/ramnicu-valcea-w.png",
+    "SCM Craiova W": "/logos/handball/teams/scm-craiova-w.png",
+    "Baia Mare W": "/logos/handball/teams/baia-mare-w.png",
+    "Targu Jiu W": "/logos/handball/teams/targu-jiu-w.png",
+    "Corona Brasov W": "/logos/handball/teams/corona-brasov-w.png",
+    "Zalau W": "/logos/handball/teams/zalau-w.png",
+    "Iasi W": "/logos/handball/teams/iasi-w.png",
+    "Stiinta Bucharest W": "/logos/handball/teams/stiinta-bucharest-w.png",
+    "Targu Mures W": "/logos/handball/teams/targu-mures-w.png",
+  };
+
+  for (const [name, path] of Object.entries(covered)) {
+    test(`${name} → ${path}`, () => {
+      expect(teamLogoUrl(name)).toBe(path);
+    });
+  }
+
+  // La collision qui a fait tout le travail : « sportoto » CONTIENT « porto »
+  // (FC Porto). Sans clé exacte, le scan `includes` de teamLogoUrl servait le
+  // blason de FC Porto pour le club turc.
+  test("« Spor Toto » ne récupère PAS le blason de FC Porto", () => {
+    expect(teamLogoUrl("Spor Toto")).not.toBe("/logos/handball/teams/porto.png");
+    expect(teamLogoUrl("Spor Toto")).toBe("/logos/handball/teams/spor-toto.png");
+  });
+
+  test("l'alias ne casse pas FC Porto ( handball portugais )", () => {
+    expect(teamLogoUrl("FC Porto")).toBe("/logos/handball/teams/porto.png");
+    expect(teamLogoUrl("Porto")).toBe("/logos/handball/teams/porto.png");
+  });
+
+  test("ligues TR/RO : pas de logo de ligue → repli drapeau", () => {
+    expect(leagueLogo("Superlig")).toBeNull();
+    expect(leagueCountry("Superlig")).toBe("TURKEY");
+    expect(leagueLogo("Liga Nationala Women")).toBeNull();
+    expect(leagueCountry("Liga Nationala Women")).toBe("ROMANIA");
   });
 });

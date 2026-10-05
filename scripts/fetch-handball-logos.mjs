@@ -19,12 +19,13 @@
  *   node scripts/fetch-handball-logos.mjs --limit=20 --force
  */
 import https from "node:https";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = join(ROOT, "data", "flashscore_handball.json");
+const DATA_DIR = join(ROOT, "data");
 const TEAMS_DIR = join(ROOT, "public", "logos", "handball", "teams");
 const MANIFEST = join(ROOT, "public", "logos", "handball", "manifest.json");
 const LOGOS_TS = join(ROOT, "src", "lib", "handball-logos.ts");
@@ -36,6 +37,33 @@ const API = "https://www.thesportsdb.com/api/v1/json/3";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36";
 const PAUSE_MS = 2000; // clé free limitée → pause entre appels
 const LICENCE = "TheSportsDB fan-copyright, usage éditorial";
+
+// ─── Source 0 : CDN API-Sports handball (clé-zéro, DÉTERMINISTE par teamId) ──
+// data/vitibet-league-*.json porte pour chaque club le `teamId` API-Sports, qui
+// EST l'identifiant du blason servi par le CDN public (déjà autorisé en
+// next.config.ts) :
+//   https://media.api-sports.io/handball/teams/{teamId}.png
+// Aucune clé, aucun matching de nom → zéro risque de collision avec le scan
+// `includes` de teamLogoUrl (cf. « Bistrita W » vs « Bistrita »). Passe AVANT
+// TheSportsDB pour cette raison.
+const API_SPORTS_CDN = "https://media.api-sports.io/handball/teams";
+const API_SPORTS_LICENCE = "API-Sports media CDN (clé-zéro), blason officiel de club";
+
+/** data/vitibet-league-*.json → clubs { name, teamId, league } (classement global). */
+function vitibetTeams() {
+  const out = [];
+  const files = readdirSync(DATA_DIR)
+    .filter((n) => /^vitibet-league-\d+\.json$/.test(n))
+    .sort();
+  for (const f of files) {
+    const j = JSON.parse(readFileSync(join(DATA_DIR, f), "utf8"));
+    for (const row of j.standingsOverall || []) {
+      if (!row.team || !row.teamId) continue;
+      out.push({ name: row.team, teamId: row.teamId, league: j.name });
+    }
+  }
+  return out;
+}
 
 // ─── Args ────────────────────────────────────────────────────────────────────
 const ARGS = Object.fromEntries(
@@ -243,6 +271,33 @@ const TEAM_ALIASES = {
 // Ligues d'équipes nationales → pas de badges clubs (fallback monogramme).
 const NATIONAL_LEAGUES = new Set(["Asian Games", "Asian Games Women"]);
 
+// ─── Sources ponctuelles curées (teamId API-Sports vérifié par sonde) ─────────
+// `isCovered` fait un scan `includes` : le nom « Spor Toto » (Beşiktaş Spor
+// Toto) CONTIENT la clé « porto » (FC Porto) → faux positif, club laissé sans
+// badge. Aucune équipe ne porte ce nom ailleurs, on tranche donc à la main.
+const TEAM_ID_OVERRIDES = {
+  "Spor Toto": 1133,
+};
+
+/**
+ * Format RÉEL des octets téléchargés.
+ *
+ * Le CDN API-Sports sert certains clubs en JPEG derrière une URL `.png` (le
+ * Content-Type annonce `image/png`, les octets commencent par `ff d8 ff`).
+ * Le nom de fichier reste `.png` — convention des 145 logos déjà en place et
+ * sans effet sur `<img>`/`next/image` — mais le manifeste.record le format
+ * réel, sinon la provenance ment.
+ */
+function sniffFormat(buf) {
+  if (buf.length < 4) return "inconnu";
+  if (buf[0] === 0x89 && buf[1] === 0x50) return "png";
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpeg";
+  if (buf.subarray(0, 3).toString("ascii") === "GIF") return "gif";
+  if (buf.subarray(0, 4).toString("ascii") === "RIFF") return "webp";
+  if (buf.subarray(0, 4).toString("ascii").includes("svg")) return "svg";
+  return "inconnu";
+}
+
 // ─── Source 2b : site officiel du club (curée, sondes robots 2026-09-24) ────
 // Pour les clubs StarLigue absents de TheSportsDB (sonde : 0 hit Nîmes/Caen/
 // Saran/St-Raphael). Que des hôtes dont robots.txt autorise explicitement * :
@@ -343,6 +398,23 @@ async function main() {
     name,
     league: [...leagues.entries()].sort((a, b) => b[1] - a[1])[0][0],
   }));
+  // Clubs Vitibet (Superlig TR, Liga NA Women RO). Deux cas :
+  //   - nom absent du flux flashscore → on AJOUTE l'entrée (avec son teamId) ;
+  //   - même nom normalisé → on ENRICHIT l'entrée existante avec `teamId`
+  //     plutôt que de la dupliquer (sinon deux clés TEAM_LOGOS pour un club).
+  const byNorm = new Map(teams.map((t) => [norm(t.name), t]));
+  for (const t of vitibetTeams()) {
+    const n = norm(t.name);
+    const teamId = TEAM_ID_OVERRIDES[t.name] ?? t.teamId;
+    const existing = byNorm.get(n);
+    if (existing) {
+      existing.teamId = teamId;
+      continue;
+    }
+    const added = { ...t, teamId };
+    byNorm.set(n, added);
+    teams.push(added);
+  }
   if (ONLY_TEAMS) {
     const want = new Set(ONLY_TEAMS.map((s) => norm(s)));
     teams = teams.filter((t) => want.has(norm(t.name)));
@@ -393,6 +465,39 @@ async function main() {
     await sleep(PAUSE_MS);
     return j;
   };
+
+  // ── 0. CDN API-Sports : résolution DÉTERMINISTE par teamId (clubs Vitibet) ─
+  // Tourne AVANT le bulk TSDB : un club déjà résolu ici n'est plus cherché par
+  // nom, donc immunisé contre les collisions d'acronymes.
+  const apsports = teams.filter(
+    (t) =>
+      t.teamId &&
+      !found.has(t.name) &&
+      // Un override curé prime sur le scan `includes` : c'est ce scan-là même
+      // qui déclarait « Spor Toto » déjà couvert via la clé « porto ».
+      (!isCovered(t.name, keys) || TEAM_ID_OVERRIDES[t.name]),
+  );
+  if (apsports.length) console.log(`[api-sports] ${apsports.length} clubs à résoudre par teamId`);
+  for (const t of apsports) {
+    const url = `${API_SPORTS_CDN}/${t.teamId}.png`;
+    const size = await probeImage(url);
+    // Seuil bas : un teamId inexistant renvoie ~700 o d'image d'erreur. En deçà,
+    // ce n'est pas un blason → club laissé non résolu (monogramme côté UI).
+    if (size && size > 1000) {
+      found.set(t.name, {
+        club: { url, label: t.name },
+        via: "api-sports",
+        licence: API_SPORTS_LICENCE,
+      });
+      console.log(`[api-sports] ${t.name} ← teamId ${t.teamId} (${size} o)`);
+    } else {
+      // Pas d'image = pas de blason. JAMAIS de repli dessiné/generated : le club
+      // reste non résolu et retombe sur le monogramme côté UI.
+      console.warn(`[api-sports] ${t.name} : teamId ${t.teamId} sans image`);
+    }
+    saveCache();
+    await sleep(300);
+  }
 
   // ── 1. Bulk par ligue mappée ──────────────────────────────────────────────
   console.log(`[bulk] ${Object.keys(LEAGUE_ALIASES).length} ligues mappées`);
@@ -520,7 +625,7 @@ async function main() {
         file: rel,
         url_source: img,
         label,
-        licence: LICENCE,
+        licence: entry.licence || LICENCE,
         attribution_requise: false,
         ok: true,
         size,
@@ -539,10 +644,11 @@ async function main() {
         file: rel,
         url_source: img,
         label,
-        licence: LICENCE,
+        licence: entry.licence || LICENCE,
         attribution_requise: false,
         ok: true,
         size: buf.length,
+        format: sniffFormat(buf),
       });
       newEntries.push({ key: norm(ours), file: `/logos/handball/teams/${slug}${ext}`, ours });
       console.log(`[dl] ${ours} → ${rel} (${buf.length} o, via ${via})`);
