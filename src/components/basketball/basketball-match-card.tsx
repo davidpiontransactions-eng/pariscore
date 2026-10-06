@@ -46,6 +46,18 @@ type BasketballMatchCardMatch = {
   /** Fix B8 : proba blendées directement sur l'UnifiedMatch (sans predictions) */
   pHome?: number | null;
   pAway?: number | null;
+  /**
+   * true ⇔ une prédiction RÉELLEMENT publiée existe (source 1xBet/Vitibet).
+   * false ⇒ les champs de prédiction ci-dessous sont `null` et ce bloc est
+   * masqué. Distingue l'absence de donnée d'un 50/50, qui s'afficherait.
+   */
+  predictionsAvailable?: boolean;
+  /** Score prédit par la source, format « 90:83 ». null si non publié. */
+  predictedScore?: string | null;
+  /** Index Vitisport — forces relatives, pas une probabilité. */
+  vitibetIndex?: number | null;
+  /** Nombre de confrontations directes trouvées par la source. */
+  h2hCount?: number | null;
   injuries?: { home: { nOut: number; starsOut: string[] }; away: { nOut: number; starsOut: string[] } };
   rest?: { home: { restDays: number; b2b: boolean } | null; away: { restDays: number; b2b: boolean } | null };
   consensus?: { label: string; nModels: number } | null;
@@ -76,6 +88,35 @@ export function leagueLabel(raw: string): string {
   return cfg ? cfg.label : raw;
 }
 
+/**
+ * Signaux 1xBet affichables sur une carte, calculés SANS JSX pour être
+ * testables (aucune dépendance de rendu n'est autorisée dans ce projet).
+ *
+ * Contrat : une entrée n'apparaît que si la source l'a RÉELLEMENT publiée.
+ * `predictionsAvailable: false` ⇒ tableau vide, donc la carte retombe sur son
+ * affichage standard. C'est ce qui distingue une absence d'un 50/50.
+ */
+export function vitibetCardSignals(match: {
+  predictionsAvailable?: boolean;
+  predictedScore?: string | null;
+  vitibetIndex?: number | null;
+  h2hCount?: number | null;
+}): { predictedScore: string | null; index: number | null; h2hCount: number | null } {
+  if (!match.predictionsAvailable) {
+    return { predictedScore: null, index: null, h2hCount: null };
+  }
+  return {
+    predictedScore: match.predictedScore ?? null,
+    index: match.vitibetIndex ?? null,
+    h2hCount: match.h2hCount != null && match.h2hCount > 0 ? match.h2hCount : null,
+  };
+}
+
+/** Affiche au moins un signal ? évite un conteneur vide. */
+export function hasVitibetSignals(signals: ReturnType<typeof vitibetCardSignals>): boolean {
+  return signals.predictedScore !== null || signals.index !== null || signals.h2hCount !== null;
+}
+
 export function BasketballMatchCard({ match, onClick, onDetailRequest, className }: BasketballMatchCardProps) {
   const isLive = match.status === "in-progress";
   const isPost = match.status === "post" || match.status === "finished";
@@ -83,6 +124,8 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
     match.predictions?.blended?.p_home ?? match.predictions?.win_prob?.p_home ?? match.pHome ?? null;
   const pAway =
     match.predictions?.blended?.p_away ?? match.predictions?.win_prob?.p_away ?? match.pAway ?? null;
+
+  const signals = vitibetCardSignals(match);
 
   const handleClick = () => {
     onClick?.(match);
@@ -138,6 +181,33 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
               style={{ width: `${pHome}%` }}
             />
           </div>
+        </div>
+      )}
+
+      {/* Prédiction 1xBet : score prédit, index, H2H.
+          Masqué si la source n'a rien publié — un « — » se lirait comme une
+          mesure alors qu'elle est réellement manquante. */}
+      {hasVitibetSignals(signals) && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          {signals.predictedScore && (
+            <Badge variant="outline" className="px-1 py-0 font-mono text-[9px]">
+              Score prédit {signals.predictedScore}
+            </Badge>
+          )}
+          {signals.index != null && (
+            <span
+              className="text-[9px] text-muted-foreground"
+              title="Index Vitisport : forces relatives entre les deux équipes, pas une probabilité de victoire"
+            >
+              Index {signals.index > 0 ? "+" : ""}
+              {signals.index.toFixed(1)}
+            </span>
+          )}
+          {signals.h2hCount != null && (
+            <span className="text-[9px] text-muted-foreground">
+              {signals.h2hCount} confrontations
+            </span>
+          )}
         </div>
       )}
 

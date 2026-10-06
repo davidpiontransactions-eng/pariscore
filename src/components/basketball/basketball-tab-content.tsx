@@ -13,6 +13,8 @@ import { BasketballErrorBoundary } from "./basketball-error-boundary";
 import { BasketballHeroHeader } from "./basketball-hero-header";
 import { useBasketballMatches } from "@/hooks/use-basketball-matches";
 import { useEuroLeagueMatches } from "@/hooks/use-euroleague-matches";
+import { useVitibetPredictions } from "@/hooks/use-vitibet-predictions";
+import { matchEuroLeagueFixture } from "@/lib/basketball-vitibet-euro-join";
 import type { BasketballLeagueId } from "@/lib/basketball-data";
 import type { BasketballMatch } from "@/hooks/use-basketball-matches";
 import dynamic from "next/dynamic";
@@ -67,6 +69,20 @@ export type UnifiedMatch = {
   pHome: number | null;
   pAway: number | null;
   edgeElo: number | null;
+  /**
+   * true ⇔ une prédiction RÉELLEMENT publiée existe pour ce match. `false` ⇒
+   * `pHome`/`pAway`/`edgeElo` sont `null` et l'UI masque tout signal financier.
+   * Absent pour les matchs ESPN (qui portent déjà leur propre modèle).
+   */
+  predictionsAvailable?: boolean;
+  /** Raison motivant l'absence de prédiction, si la source l'a fournie. */
+  predictionsUnavailableReason?: string | null;
+  /** Score prédit par la source 1xBet (« 90:83 »), null si non publié. */
+  predictedScore?: string | null;
+  /** Index Vitisport, null si non publié. */
+  vitibetIndex?: number | null;
+  /** Nombre de confrontations directes trouvées par la source. */
+  h2hCount?: number | null;
   injuries?: BasketballMatch["injuries"];
   consensus?: BasketballMatch["consensus"];
 };
@@ -90,9 +106,52 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
   const { matches: nbaWnbaMatches, isLoading: nbaWnbaLoading, error: nbaWnbaError } = useBasketballMatches();
   const { matches: euroMatches, isLoading: euroLoading, apiError: euroError } = useEuroLeagueMatches("euroleague");
   const { matches: cupMatches, isLoading: cupLoading, apiError: cupError } = useEuroLeagueMatches("eurocup");
+  // 1xBet (Vitibet) : source ENRICHISSANTE de l'EuroLeague uniquement. La NBA /
+  // WNBA restent sur ESPN — mesuré, Vitibet ne publie aucune probabilité sur ces
+  // deux ligues (0/16 et 1/1), donc y mélanger dégraderait le modèle ESPN.
+  const { predictions: euroPredictions } = useVitibetPredictions("euroleague");
+  /**
+   * Raison de l'absence de prédiction, déduite de CE QUE LA SOURCE A DIT pour
+   * les matchs de la série. On ne l'invente pas : si aucun match de la journée
+   * n'a de proba, la source n'en publie pas pour cette ligue aujourd'hui.
+   * Distingue « la source ne publie rien ici » de « la requête a échoué ».
+   */
+  const noEuroPredictionReason = useMemo(() => {
+    if (euroPredictions.length === 0) {
+      return "Aucune donnée 1xBet disponible pour l'EuroLeague — le flux Vitibet n'a rien publié sur la fenêtre en cours.";
+    }
+    if (euroPredictions.some((p) => p.predictionsAvailable)) {
+      // Une partie de la série est prédite : l'absence sur CE match est une
+      // sélection, pas une panne de source.
+      return "Vitibet ne publie pas de probabilité pour ce match précis (cellules 0 % sur le pop-up).";
+    }
+    return euroPredictions[0].predictionsUnavailableReason ?? "La source ne publie aucune probabilité pour cette ligue.";
+  }, [euroPredictions]);
 
   const isLoading = nbaWnbaLoading || euroLoading || cupLoading;
   const errors = [nbaWnbaError, euroError, cupError].filter(Boolean);
+
+  // Index Vitibet → match API, résolu UNE fois par `matchEuroLeagueFixture`
+  // (jamais par similarité floue). Les deux ordres de noms sont indexés : une
+  // rencontre peut être listée domiciliation à l'envers d'une source à l'autre.
+  const vitibetByPair = useMemo(() => {
+    const apiFixtures = euroMatches.map((m) => ({
+      home: { name: m.home.name },
+      away: { name: m.away.name },
+    }));
+    const index = new Map<string, (typeof euroPredictions)[number]>();
+    for (const pred of euroPredictions) {
+      if (!pred.predictionsAvailable) continue;
+      const hit = matchEuroLeagueFixture(
+        { home: { name: pred.home.name }, away: { name: pred.away.name } },
+        apiFixtures,
+      );
+      if (!hit) continue;
+      index.set(`${hit.home.name}|${hit.away.name}`, pred);
+      index.set(`${hit.away.name}|${hit.home.name}`, pred);
+    }
+    return index;
+  }, [euroPredictions, euroMatches]);
 
   // Fusionner et filtrer par ligue sélectionnée
   const allMatches = useMemo(() => {
@@ -113,17 +172,28 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       })));
     }
     if (selectedLeagues.includes("euroleague")) {
-      matches.push(...(euroMatches ?? []).map((m) => ({
+      matches.push(...(euroMatches ?? []).map((m) => {
+        // Prédiction 1xBet si elle existe ET si elle a été appariée à CETTE
+        // rencontre. Sans appariement : null partout, jamais la proba d'un autre
+        // match.
+        const pred = vitibetByPair.get(`${m.home.name}|${m.away.name}`) ?? null;
+        return {
         id: String(m.id),
         league: "EuroLeague",
         scheduledAt: m.startTime,
         status: m.status === "live" ? "in-progress" : m.status === "finished" ? "post" : "pre",
         home: { abbr: m.home.code, name: m.home.name, score: m.homeScore, record: null },
         away: { abbr: m.away.code, name: m.away.name, score: m.awayScore, record: null },
-        pHome: null,
-        pAway: null,
-        edgeElo: null,
-      })));
+        pHome: pred?.probHome ?? null,
+        pAway: pred?.probAway ?? null,
+        edgeElo: pred?.index ?? null,
+        predictionsAvailable: pred !== null,
+        predictionsUnavailableReason: pred === null ? noEuroPredictionReason : null,
+        predictedScore: pred?.predictedScore ?? null,
+        vitibetIndex: pred?.index ?? null,
+        h2hCount: pred ? pred.h2h.length : null,
+      };
+      }));
     }
     if (selectedLeagues.includes("eurocup")) {
       matches.push(...(cupMatches ?? []).map((m) => ({
@@ -139,7 +209,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       })));
     }
     return matches;
-  }, [selectedLeagues, nbaWnbaMatches, euroMatches, cupMatches]);
+  }, [selectedLeagues, nbaWnbaMatches, euroMatches, cupMatches, vitibetByPair]);
 
   // Compteurs live/prematch
   const liveCount = useMemo(() => allMatches.filter((m) => m.status === "in-progress").length, [allMatches]);
