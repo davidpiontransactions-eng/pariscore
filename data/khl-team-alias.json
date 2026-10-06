@@ -1,0 +1,30 @@
+{
+  "note": "Table d'alias KHL : forme longue (fichier local) -> forme courte (proxy HockeyTech), la forme canonique du backtest.",
+  "derivedAt": "2026-10-06",
+  "provenance": "Derivee par croisement date+score entre les libelles proxy et local de la saison 2026/2027, sur 125 paires appariees. Aucun couple ecrit a la main : le generateur du scrape-khl-backtest.mjs la refait a chaque run des les deux sources sont disponibles, et l'ecrit ici sert de repli quand le fetch proxy de la saison courante echoue.",
+  "commentaire": "Sans cette table, « CSKA » (2024/25) et « CSKA Moskva » (2026/27) sont deux cles d'equipe : l'historique ne se combine pas et lambda ne voit jamais le passe au-dela d'une saison.",
+  "alias": {
+    "Lokomotiv Yaroslavl": "Lokomotiv",
+    "Traktor Chelyabinsk": "Traktor",
+    "Avtomobilist Yekaterinburg": "Avtomobilist",
+    "Dynamo Moskva": "Dynamo Msk",
+    "Severstal Cherepovets": "Severstal",
+    "Salavat Yulaev Ufa": "Salavat Yulaev",
+    "Ak Bars Kazan": "Ak Bars",
+    "Sibir Novosibirsk": "Sibir",
+    "SKA St. Petersburg": "SKA",
+    "Lada Togliatti": "Lada",
+    "Spartak Moskva": "Spartak",
+    "Torpedo Nizhny Novgorod": "Torpedo",
+    "Metallurg Magnitogorsk": "Metallurg Mg",
+    "Amur Khabarovsk": "Amur",
+    "Neftekhimik Nizhnekamsk": "Neftekhimik",
+    "Shanghai Dragons": "Dragons",
+    "Avangard Omsk": "Avangard",
+    "Barys Astana": "Barys",
+    "Dinamo Minsk": "Dinamo Mn",
+    "Admiral Vladivostok": "Admiral",
+    "CSKA Moskva": "CSKA",
+    "HK Sochi": "HC Sochi"
+  }
+}
