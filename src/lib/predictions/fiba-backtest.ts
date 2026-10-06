@@ -5,7 +5,12 @@
  * Calcule les métriques: accuracy, Brier score, ROI, calibration.
  */
 
-import { predictMatch, type HybridPrediction } from "./fiba-predictions";
+import {
+  FIBA_PREDICTIONS_AVAILABLE,
+  FIBA_PREDICTIONS_UNAVAILABLE_REASON,
+  predictMatch,
+  type HybridPrediction,
+} from "./fiba-predictions";
 
 export type BacktestMatch = {
   id: string;
@@ -30,6 +35,13 @@ export type BacktestResult = {
 };
 
 export type BacktestSummary = {
+  /**
+   * false = aucun backtest réel n'a pu être exécuté. Les métriques ci-dessous
+   * sont alors TOUTES à zéro et doivent être masquées par le composant : un 0
+   * de précision se lit comme une mesure, pas comme une absence.
+   */
+  available: boolean;
+  reason: string | null;
   totalMatches: number;
   correctPredictions: number;
   accuracy: number;          // % correct
@@ -49,8 +61,17 @@ export type BacktestSummary = {
 };
 
 /**
- * Résultats réels du tournoi FIBA Women's WC 2026.
- * Source: fiba.basketball + ESPN
+ * Résultats « réels » du tournoi FIBA Women's WC 2026.
+ *
+ * ⚠️ Ces 24 matchs et leurs scores sont ÉCRITS EN DUR dans ce fichier. Ce ne
+ * sont pas des résultats vérifiés : aucun appel réseau, aucune source. Le
+ * commentaire d'origine annonçait « Source: fiba.basketball + ESPN », ce qui
+ * était faux — d'où des Brier et ROI qui mesuraient un tableau de nombres
+ * Catché à la main contre un modèle de démonstration.
+ *
+ * Conservés (inertes) pour la reactivation. Un vrai backtest doit lire
+ * l'historique mesuré, comme `scripts/qa-basket-league-totals.ts` le fait pour
+ * la calibration basket.
  */
 export const ACTUAL_RESULTS: BacktestMatch[] = [
   // Journée 1 (3 septembre 2026)
@@ -84,11 +105,36 @@ export const ACTUAL_RESULTS: BacktestMatch[] = [
   { id: "fiba-024", date: "2026-09-05", homeTeam: "CZE", awayTeam: "ITA", homeScore: 81, awayScore: 77, homeAbbr: "CZE", awayAbbr: "ITA" },
 ];
 
+/** Résumé vide — métriques à zéro, `available: false`. */
+function emptySummary(reason: string): BacktestSummary {
+  const bucket = { total: 0, correct: 0, accuracy: 0 };
+  return {
+    available: false,
+    reason,
+    totalMatches: 0,
+    correctPredictions: 0,
+    accuracy: 0,
+    avgBrierScore: 0,
+    avgConfidence: 0,
+    roi: 0,
+    byConfidence: { high: bucket, medium: bucket, low: bucket },
+    byEdge: { strong: bucket, moderate: bucket, weak: bucket },
+  };
+}
+
 /**
  * Lance le backtest sur tous les matchs joués.
+ *
+ * Renvoie un résumé VIDE tant que le modèle n'est pas calibré. Le ROI de
+ * l'ancienne version (`correct ? edge * 2 : -1`) n'utilisait aucune cote :
+ * c'était une fonction de la prédiction, pas une rentabilité de marché.
  */
 export function runBacktest(): BacktestSummary {
   const results: BacktestResult[] = [];
+
+  if (!FIBA_PREDICTIONS_AVAILABLE) {
+    return emptySummary(FIBA_PREDICTIONS_UNAVAILABLE_REASON);
+  }
 
   for (const match of ACTUAL_RESULTS) {
     const prediction = predictMatch({
@@ -96,6 +142,7 @@ export function runBacktest(): BacktestSummary {
       awayTeam: match.awayTeam,
       isHome: true,
     });
+    if (!prediction) continue;
 
     const predictedHomeWin = prediction.blendedPHome > 0.5;
     const actualHomeWin = match.homeScore > match.awayScore;
@@ -139,6 +186,8 @@ export function runBacktest(): BacktestSummary {
   const weakEdge = results.filter((r) => r.edge <= 0.05);
 
   return {
+    available: true,
+    reason: null,
     totalMatches,
     correctPredictions,
     accuracy,
@@ -160,14 +209,18 @@ export function runBacktest(): BacktestSummary {
 
 /**
  * Détails du backtest pour chaque match.
+ * Vide tant que le modèle n'est pas calibré.
  */
 export function getBacktestDetails(): BacktestResult[] {
-  return ACTUAL_RESULTS.map((match) => {
+  if (!FIBA_PREDICTIONS_AVAILABLE) return [];
+
+  return ACTUAL_RESULTS.flatMap((match) => {
     const prediction = predictMatch({
       homeTeam: match.homeTeam,
       awayTeam: match.awayTeam,
       isHome: true,
     });
+    if (!prediction) return [];
 
     const predictedHomeWin = prediction.blendedPHome > 0.5;
     const actualHomeWin = match.homeScore > match.awayScore;
@@ -176,7 +229,7 @@ export function getBacktestDetails(): BacktestResult[] {
     const edge = Math.abs(prediction.blendedPHome - 0.5);
     const roi = correct ? (edge * 2) : -1;
 
-    return {
+    return [{
       match,
       prediction,
       predictedHomeWin,
@@ -185,6 +238,6 @@ export function getBacktestDetails(): BacktestResult[] {
       brierScore,
       edge,
       roi,
-    };
+    }];
   });
 }

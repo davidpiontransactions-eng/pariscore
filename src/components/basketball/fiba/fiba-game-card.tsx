@@ -105,13 +105,17 @@ export function FibaGameCard({ match, onClick, className }: FibaGameCardProps) {
     });
   }, [match.home.abbr, match.away.abbr, statsByAbbr]);
 
-  // Calculer value bet si cotes disponibles
-  const homeValue = odds ? calculateValue(prediction.blendedPHome, odds.bestHomeOdds) : null;
-  const awayValue = odds ? calculateValue(1 - prediction.blendedPHome, odds.bestAwayOdds) : null;
+  // Calculer value bet si cotes disponibles — un EV n'a de sens qu model's la
+  // prédiction existe ET est calibrée (FIBA : elle ne l'est pas, cf. contrat
+  // dans fiba-predictions.ts).
+  const homeValue = odds && prediction ? calculateValue(prediction.blendedPHome, odds.bestHomeOdds) : null;
+  const awayValue = odds && prediction ? calculateValue(1 - prediction.blendedPHome, odds.bestAwayOdds) : null;
   const hasValue = homeValue?.isValue || awayValue?.isValue;
 
-  const pHome = Math.round(prediction.blendedPHome * 100);
-  const pAway = Math.round((1 - prediction.blendedPHome) * 100);
+  // null (pas 0) quand le modèle n'est pas calibré : une barre à 50/50 se lit
+  // comme une mesure, pas comme une absence.
+  const pHome = prediction ? Math.round(prediction.blendedPHome * 100) : null;
+  const pAway = prediction ? Math.round((1 - prediction.blendedPHome) * 100) : null;
 
   return (
     <div
@@ -194,7 +198,7 @@ export function FibaGameCard({ match, onClick, className }: FibaGameCardProps) {
       )}
 
       {/* Edge & Recommendation */}
-      {prediction.edge !== 0 && (
+      {prediction && prediction.edge !== 0 && (
         <div className="flex items-center justify-between mt-1.5 text-[9px]">
           <span className={cn(
             "font-semibold",
@@ -239,13 +243,15 @@ export function FibaGameCard({ match, onClick, className }: FibaGameCardProps) {
         </div>
       )}
 
-      {/* Predictive Bets (prematch & live) */}
-      <FibaPredictiveBets
-        match={match}
-        prediction={prediction}
-        homeStats={statsByAbbr.get(match.home.abbr)}
-        awayStats={statsByAbbr.get(match.away.abbr)}
-      />
+      {/* Predictive Bets (prematch & live) — absent sans modèle calibré */}
+      {prediction && (
+        <FibaPredictiveBets
+          match={match}
+          prediction={prediction}
+          homeStats={statsByAbbr.get(match.home.abbr)}
+          awayStats={statsByAbbr.get(match.away.abbr)}
+        />
+      )}
 
       {/* Venue (pre-match) */}
       {isPre && match.venue && (

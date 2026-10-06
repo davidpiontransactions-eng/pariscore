@@ -435,6 +435,31 @@ export function hybridPredict(
 // 6. MATCH PREDICTION — Fonction principale
 // ============================================================
 
+/**
+ * ⚠️ CONTRAT D'INTÉGRITÉ — la couche prédictive FIBA est NON CALIBRÉE.
+ *
+ * Tout ce module (Elo, Four Factors, PIR, xgboostPredict, hybridPredict) est un
+ * échafaudage de démonstration : poids XGBoost écrits à la main (:262-279),
+ * `FIBA_RANKINGS_2026` dict arbitraire (:16-47), repli plat 850 sur TOUTE
+ * équipe inconnue (:351-352), features par défaut inventées (:249-255).
+ * Aucun de ces chiffres n'est mesuré sur un historique FIBA — la table
+ * `basketball_match_history` ne couvre que NBA, WNBA, EuroLeague et EuroCup.
+ *
+ * Le rendre exportable reviendrait à afficher des probabilités, des value bets
+ * et une cascade SHAP comme s'ils venaient d'un modèle trained. On le garde
+ * donc OFF: `predictMatch` renvoie `null`, ce qui oblige chaque surface de
+ * rendu à afficher une absence explicite au lieu d'un chiffre inventé.
+ *
+ * Réactiver exige : (1) un historique FIBA réel, (2) un calibrage sur cet
+ * historique, (3) un test de reliability/Brier. Voir
+ * `src/lib/basketball-calibration.ts` pour la forme attendue.
+ */
+export const FIBA_PREDICTIONS_AVAILABLE = false;
+
+export const FIBA_PREDICTIONS_UNAVAILABLE_REASON =
+  "Modèle FIBA non calibré (poids et features de démonstration, aucun historique mesuré). " +
+  "Les scores, classements et calendriers ESPN restent affichés.";
+
 export type MatchPredictionInput = {
   homeTeam: string;
   awayTeam: string;
@@ -448,9 +473,14 @@ export type MatchPredictionInput = {
 
 /**
  * Prédiction complète pour un match FIBA.
- * Utilise le modèle hybride avec toutes les features disponibles.
+ *
+ * Renvoie `null` tant que FIBA_PREDICTIONS_AVAILABLE est false : aucun appelant
+ * ne peut afficher les chiffres de démonstration par accident, et `null` se
+ * distingue d'un 0 (une probabilité mesurée de 0 reste un chiffre affiché).
  */
-export function predictMatch(input: MatchPredictionInput): HybridPrediction {
+export function predictMatch(input: MatchPredictionInput): HybridPrediction | null {
+  if (!FIBA_PREDICTIONS_AVAILABLE) return null;
+
   const homeFeatures: Partial<XGBoostFeatures> = {
     isHome: input.isHome ? 1 : 0,
     restDays: input.restDaysHome ?? 2,

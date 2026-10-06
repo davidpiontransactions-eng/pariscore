@@ -63,16 +63,31 @@ export type MatchOdds = {
  *    &markets=h2h
  *    &bookmakers=bet365,pinnacle,williamhill
  */
+/**
+ * ⚠️ Cotes SIMULÉES — ne doivent plus servir de source affichable.
+ *
+ * Elles sont générées depuis la probabilité du modèle avec un bruit RNG, puis
+ * étiquetées Bet365 / Pinnacle / William Hill. Conservées inertes pour la
+ * reactivation (tests d'intégration de l'UI cotes) ; `fetchRealOdds` ne les
+ * appelle plus et `predictMatch` renvoie `null`, donc la fonction n'est plus
+ * appelable depuis le flux de production.
+ */
 export function simulateMarketOdds(
   homeTeam: string,
   awayTeam: string,
 ): MatchOdds {
-  // Prédiction du modèle
+  // Prédiction du modèle — absente tant que FIBA n'est pas calibrée.
   const prediction = predictMatch({
     homeTeam,
     awayTeam,
     isHome: true,
   });
+  if (!prediction) {
+    throw new Error(
+      "simulateMarketOdds requiert une prédiction calibrée (FIBA_PREDICTIONS_AVAILABLE=false). " +
+        "Utiliser fetchRealOdds avec une vraie clé API.",
+    );
+  }
 
   const modelHomeProb = prediction.blendedPHome;
 
@@ -138,7 +153,14 @@ export function simulateMarketOdds(
 
 /**
  * Récupère les vraies cotes depuis The Odds API.
- * 
+ *
+ * ⚠️ AUCUN repli sur `simulateMarketOdds`. Cette fonction génère des cotes à
+ * partir de la probabilité du modèle, puis l'UI les affiche comme si elles
+ * venaient de Bet365/Pinnacle — et `calculateValue` compare ensuite le modèle
+ * à ces cotes. Un « value bet » ainsi obtenu est la différence entre deux
+ * fabrications, pas une opportunité. Sans cote réelle : `null`, donc pas de
+ * cote affichée.
+ *
  * Note: Nécessite une clé API (gratuite: 500 requêtes/mois)
  * GET https://api.the-odds-api.com/v4/sports/basketball_fiba/odds/
  */
@@ -147,10 +169,7 @@ export async function fetchRealOdds(
   awayTeam: string,
   apiKey?: string,
 ): Promise<MatchOdds | null> {
-  if (!apiKey) {
-    // Fallback sur simulation
-    return simulateMarketOdds(homeTeam, awayTeam);
-  }
+  if (!apiKey) return null;
 
   try {
     const url = `https://api.the-odds-api.com/v4/sports/basketball_fiba/odds/?apiKey=${apiKey}&regions=eu&markets=h2h`;
@@ -161,7 +180,7 @@ export async function fetchRealOdds(
 
     if (!response.ok) {
       console.error("Odds API error:", response.status);
-      return simulateMarketOdds(homeTeam, awayTeam);
+      return null;
     }
 
     const data = await response.json();
@@ -172,9 +191,7 @@ export async function fetchRealOdds(
       return teams.includes(homeTeam) && teams.includes(awayTeam);
     });
 
-    if (!matchData) {
-      return simulateMarketOdds(homeTeam, awayTeam);
-    }
+    if (!matchData) return null;
 
     const sources: OddsSource[] = matchData.bookmakers.map((bk: any) => {
       const h2hMarket = bk.markets.find((m: any) => m.key === "h2h");
@@ -193,9 +210,7 @@ export async function fetchRealOdds(
       };
     }).filter(Boolean) as OddsSource[];
 
-    if (sources.length === 0) {
-      return simulateMarketOdds(homeTeam, awayTeam);
-    }
+    if (sources.length === 0) return null;
 
     const homeOddsList = sources.map((s) => s.homeOdds);
     const awayOddsList = sources.map((s) => s.awayOdds);
@@ -213,7 +228,7 @@ export async function fetchRealOdds(
     };
   } catch (error) {
     console.error("Failed to fetch odds:", error);
-    return simulateMarketOdds(homeTeam, awayTeam);
+    return null;
   }
 }
 

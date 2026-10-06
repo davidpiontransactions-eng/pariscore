@@ -5,7 +5,12 @@
  * pour identifier les opportunités de value (edge positif).
  */
 
-import { predictMatch, type HybridPrediction } from "./fiba-predictions";
+import {
+  FIBA_PREDICTIONS_AVAILABLE,
+  FIBA_PREDICTIONS_UNAVAILABLE_REASON,
+  predictMatch,
+  type HybridPrediction,
+} from "./fiba-predictions";
 
 export type MarketOdds = {
   homeOdds: number;    // Cote décimale domicile
@@ -47,6 +52,11 @@ export type ValueBet = {
 
 /**
  * Détecte les value bets pour un match donné.
+ *
+ * Renvoie TOUJOURS `null` : sans modèle calibré, un EV calculé contre
+ * `MOCK_ODDS` (cotes d'un « Mock Bookmaker ») n'est pas une opportunité, c'est
+ * une soustraction entre deux inventions. Le type de retour reste
+ * `ValueBet | null` pour que le chemin de reactivation soit explicite.
  */
 export function detectValueBets(
   matchId: string,
@@ -54,12 +64,15 @@ export function detectValueBets(
   awayTeam: string,
   odds: MarketOdds,
 ): ValueBet | null {
+  if (!FIBA_PREDICTIONS_AVAILABLE) return null;
+
   // Prédiction du modèle
   const prediction = predictMatch({
     homeTeam,
     awayTeam,
     isHome: true,
   });
+  if (!prediction) return null;
 
   // Convertir les cotes en probabilités implicites
   const marketHomeProb = 1 / odds.homeOdds;
@@ -130,7 +143,12 @@ export function detectValueBets(
 }
 
 /**
- * Cotes mock pour démonstration (en production: API Odds)
+ * Cotes de démonstration — JAMAIS utilisées comme signal financier.
+ *
+ * Conservées pour que le chemin de reactivation reste lisible une fois de
+ * vraies cotes branchées. Tant que `FIBA_PREDICTIONS_AVAILABLE` est false,
+ * `scanAllValueBets()` ne les lit pas : un EV sur ces valeurs serait le
+ * produit de deux fictions, pas une opportunité de pari.
  */
 export const MOCK_ODDS: Record<string, MarketOdds> = {
   "GER-JPN": { homeOdds: 1.65, awayOdds: 2.20, source: "Mock Bookmaker", timestamp: "2026-09-04T10:00:00Z" },
@@ -145,9 +163,13 @@ export const MOCK_ODDS: Record<string, MarketOdds> = {
 
 /**
  * Scanne tous les matchs pour détecter les value bets.
+ * Renvoie `[]` tant que le modèle n'est pas calibré — voir
+ * `FIBA_PREDICTIONS_UNAVAILABLE_REASON`.
  */
 export function scanAllValueBets(): ValueBet[] {
   const valueBets: ValueBet[] = [];
+
+  if (!FIBA_PREDICTIONS_AVAILABLE) return valueBets;
 
   for (const [key, odds] of Object.entries(MOCK_ODDS)) {
     const [home, away] = key.split("-");

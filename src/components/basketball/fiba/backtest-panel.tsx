@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { runBacktest, type BacktestSummary } from "@/lib/predictions/fiba-backtest";
 import { scanAllValueBets, type ValueBet } from "@/lib/predictions/fiba-value-bets";
+import { PredictionUnavailable } from "./prediction-unavailable";
 
 type BacktestPanelProps = {
   className?: string;
@@ -14,11 +15,34 @@ export function BacktestPanel({ className }: BacktestPanelProps) {
   const summary = useMemo(() => runBacktest(), []);
   const valueBets = useMemo(() => scanAllValueBets(), []);
 
+  // Aucun backtest réel n'a pu être exécuté (modèle non calibré, historique
+  // codé en dur). Rendre « Précision 0 % » / « Brier 0.000 » / « ROI 0 % »
+  // afficherait trois mesures qui n'en sont pas : on affiche la raison.
+  if (!summary.available) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <PredictionUnavailable />
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold">Value Bets détectés</h3>
+            <Badge variant="secondary" className="text-[10px]">
+              {valueBets.length} opportunités
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground text-center py-4">
+            Aucun backtest — les value bets exigent un modèle calibré ET un
+            historique de cotes réelles. Les deux sont absents.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("space-y-4", className)}>
       {/* Backtest Summary */}
       <div className="rounded-xl border bg-card p-4">
-        <h3 className="text-sm font-bold mb-3">Backtest — 24 matchs joués</h3>
+        <h3 className="text-sm font-bold mb-3">Backtest — {summary.totalMatches} matchs joués</h3>
         
         {/* Main metrics */}
         <div className="grid grid-cols-4 gap-3 mb-4">

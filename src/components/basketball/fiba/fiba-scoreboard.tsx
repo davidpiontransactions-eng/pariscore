@@ -11,6 +11,7 @@ import { FibaPlayerCard } from "./fiba-player-card";
 import { FibaMvpRace } from "./fiba-mvp-race";
 import { FibaPlayerComparison } from "./fiba-player-comparison";
 import { PredictionPanel } from "./prediction-panel";
+import { PredictionUnavailable } from "./prediction-unavailable";
 import { BacktestPanel } from "./backtest-panel";
 import { FibaErrorBoundary } from "./fiba-error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -239,13 +240,17 @@ export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps)
                 Fermer
               </button>
             </div>
-            <PredictionPanel
-              prediction={prediction}
-              homeAbbr={selectedMatch.home.abbr}
-              awayAbbr={selectedMatch.away.abbr}
-              homeName={selectedMatch.home.name}
-              awayName={selectedMatch.away.name}
-            />
+            {prediction ? (
+              <PredictionPanel
+                prediction={prediction}
+                homeAbbr={selectedMatch.home.abbr}
+                awayAbbr={selectedMatch.away.abbr}
+                homeName={selectedMatch.home.name}
+                awayName={selectedMatch.away.name}
+              />
+            ) : (
+              <PredictionUnavailable />
+            )}
           </div>
         );
       })()}
