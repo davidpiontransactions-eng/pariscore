@@ -10,8 +10,8 @@ const fmt = (n: number, digits = 2) =>
 
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${fmt(n, 2)}%`;
 
-function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
-  const positive = invert ? value < 0 : value > 0;
+function Delta({ value }: { value: number }) {
+  const positive = value > 0;
   const Icon = positive ? ArrowUpRight : ArrowDownRight;
   return (
     <span
@@ -101,6 +101,19 @@ export function KpiStrip({ stats, currency }: { stats: BankrollStats; currency: 
       <Kpi label="Yield" icon={Percent} value={pct(stats.yield)} tone={stats.yield >= 0 ? "good" : "bad"} />
       <Kpi label="Réussite" icon={Activity} value={`${fmt(stats.winRate, 1)}%`} sub={`${stats.wonCount}W / ${stats.lostCount}L`} />
       <Kpi label="Total misé" icon={Layers} value={`${fmt(stats.totalStaked, 0)} €`} sub={`${stats.settledCount} réglés · ${stats.pendingCount} en attente`} />
+      <Kpi
+        label="Exposition en cours"
+        icon={Target}
+        value={`${fmt(stats.pendingExposure, 0)} €`}
+        sub={`${stats.pendingCount} paris en attente`}
+      />
+      <Kpi
+        label="Gain potentiel"
+        icon={TrendingUp}
+        value={`${fmt(stats.potentialPayout, 0)} €`}
+        tone="good"
+        sub="Σ mise × cote (pending)"
+      />
       <Kpi
         label="Drawdown max"
         icon={Activity}

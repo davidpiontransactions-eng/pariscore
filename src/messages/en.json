@@ -631,7 +631,8 @@
       "pending": "Pending",
       "won": "Won",
       "lost": "Lost",
-      "void": "Refunded (RET/WO)"
+      "void": "Refunded (RET/WO)",
+      "cashout": "Cashout"
     },
     "actions": {
       "markWon": "Mark as won",

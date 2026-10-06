@@ -4,7 +4,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { cn } from "@/lib/utils";
 import type { CapitalPoint } from "@/lib/bet-manager/types";
 
-function ChartTooltip({ active, payload, label }: any) {
+function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload as CapitalPoint;
   return (

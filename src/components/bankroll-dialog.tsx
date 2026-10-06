@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Dialog,
@@ -49,11 +49,48 @@ import {
   BarChart3,
   Inbox,
 } from "lucide-react";
-import { useBankroll, type GroupStats } from "@/hooks/use-bankroll";
+// Migré de use-bankroll (localStorage) vers le module Prisma (P7 bettrack).
+import { useBetManager } from "@/hooks/use-bet-manager";
+import type { GroupStats } from "@/lib/bet-manager/types";
+import { groupStats } from "@/lib/bet-manager/stats";
+import { bmApi } from "@/lib/bet-manager/api";
+import { betsToCSV } from "@/lib/bet-manager/calculators";
 import { useAnalytics } from "@/components/analytics-provider";
-import { betsToCSV, betsToJSON, downloadFile, getDateStamp } from "@/lib/export-bankroll";
 import { cn } from "@/lib/utils";
 import { BankrollHeatmap } from "@/components/bankroll/bankroll-heatmap";
+
+/** Téléchargement navigateur via Blob (ex-port-bankroll, consommateur unique). */
+function downloadFile(content: string, filename: string, mimeType: string) {
+  if (typeof window === "undefined") return;
+  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const getDateStamp = () => new Date().toISOString().slice(0, 10);
+
+/** Champs stats lus par ce dialog (sous-ensemble de BankrollStats). */
+type DialogStats = {
+  initial: number;
+  current: number;
+  profit: number;
+  roi: number;
+  winRate: number;
+  totalBets: number;
+  settledCount: number;
+  pendingCount: number;
+  wonCount: number;
+  lostCount: number;
+  totalStaked: number;
+  totalReturned: number;
+};
 
 let openFn: ((open: boolean) => void) | null = null;
 export function openBankrollDialog() {
@@ -62,10 +99,42 @@ export function openBankrollDialog() {
 
 export function BankrollDialog() {
   const t = useTranslations("bankroll");
-  const { state, stats, advancedStats, setInitial, settleBet, deleteBet, clearAll } = useBankroll();
+  const bm = useBetManager();
+  // Délégation des mutations (mêmes signatures que l'ancien store).
+  const { settleBet, deleteBet } = bm;
   const { track } = useAnalytics();
   const [open, setOpen] = useState(false);
-  const [initialInput, setInitialInput] = useState(String(state.initial));
+  const bets = bm.bets;
+  const bankrollInitial = bm.activeBankroll?.initial ?? 0;
+  const [initialInput, setInitialInput] = useState(String(bankrollInitial));
+
+  // Stats : sous-ensemble lu par ce dialog (BankrollStats) ou fallback au chargement.
+  const stats: DialogStats =
+    bm.stats?.stats ??
+    {
+      initial: 0,
+      current: 0,
+      profit: 0,
+      roi: 0,
+      winRate: 0,
+      totalBets: 0,
+      settledCount: 0,
+      pendingCount: 0,
+      wonCount: 0,
+      lostCount: 0,
+      totalStaked: 0,
+      totalReturned: 0,
+    };
+
+  const advancedStats = useMemo(
+    () => ({
+      byBookmaker: bm.stats?.byBookmaker ?? [],
+      // « Par joueur » : le pick porte le nom du joueur parié (format legacy betOnName).
+      byPlayer: groupStats(bets, (b) => b.pick?.trim() || b.matchLabel?.trim() || "—"),
+      byMonth: bm.stats?.byMonth ?? [],
+    }),
+    [bm.stats, bets]
+  );
 
   useEffect(() => {
     openFn = setOpen;
@@ -77,15 +146,24 @@ export function BankrollDialog() {
   // Sync input when dialog opens
   useEffect(() => {
     if (open) {
-      Promise.resolve().then(() => setInitialInput(String(state.initial)));
+      Promise.resolve().then(() => setInitialInput(String(bankrollInitial)));
     }
-  }, [open, state.initial]);
+  }, [open, bankrollInitial]);
 
-  const handleSaveInitial = () => {
+  const handleSaveInitial = async () => {
     const n = parseFloat(initialInput);
-    if (!isNaN(n) && n >= 0) {
-      setInitial(n);
+    if (!isNaN(n) && n >= 0 && bm.activeId) {
+      await bmApi.updateBankroll(bm.activeId, { initial: n });
+      bm.refresh();
     }
+  };
+
+  // Effacement complet : DELETE séquentiel puis un seul refresh (évite N refetch).
+  const handleClearAll = async () => {
+    for (const b of bets) {
+      await bmApi.deleteBet(b.id);
+    }
+    bm.refresh();
   };
 
   return (
@@ -196,7 +274,7 @@ export function BankrollDialog() {
 
               {/* History tab */}
               <TabsContent value="history" className="mt-4">
-                {state.bets.length === 0 ? (
+                {bets.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
                     {t("emptyHistory")}
                   </div>
@@ -214,9 +292,9 @@ export function BankrollDialog() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const csv = betsToCSV(state.bets);
-                          downloadFile(csv, `setpoint-bankroll-${getDateStamp()}.csv`, "text/csv");
-                          track("bankroll_exported", { format: "csv", betCount: state.bets.length });
+                          const csv = betsToCSV(bets);
+                          downloadFile(csv, `pariscore-bankroll-${getDateStamp()}.csv`, "text/csv");
+                          track("bankroll_exported", { format: "csv", betCount: bets.length });
                         }}
                         className="gap-1.5 text-xs"
                         title={t("export.csvHint")}
@@ -228,9 +306,18 @@ export function BankrollDialog() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          const json = betsToJSON(state.bets, stats);
-                          downloadFile(json, `setpoint-bankroll-${getDateStamp()}.json`, "application/json");
-                          track("bankroll_exported", { format: "json", betCount: state.bets.length });
+                          const json = JSON.stringify(
+                            {
+                              exportedAt: new Date().toISOString(),
+                              bankroll: { id: bm.activeId, name: bm.activeBankroll?.name ?? null, initial: bankrollInitial },
+                              stats,
+                              bets,
+                            },
+                            null,
+                            2
+                          );
+                          downloadFile(json, `pariscore-bankroll-${getDateStamp()}.json`, "application/json");
+                          track("bankroll_exported", { format: "json", betCount: bets.length });
                         }}
                         className="gap-1.5 text-xs"
                         title={t("export.jsonHint")}
@@ -240,7 +327,7 @@ export function BankrollDialog() {
                       </Button>
                     </div>
                     <div className="space-y-2">
-                    {state.bets.map((bet) => (
+                    {bets.map((bet) => (
                       <div
                         key={bet.id}
                         className="flex items-center gap-3 rounded-lg border border-border/60 p-3"
@@ -248,7 +335,7 @@ export function BankrollDialog() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold truncate">
-                              {bet.betOnName}
+                              {bet.pick ?? bet.matchLabel ?? "—"}
                             </span>
                             <span
                               className={cn(
@@ -256,6 +343,7 @@ export function BankrollDialog() {
                                 bet.status === "won" && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
                                 bet.status === "lost" && "bg-rose-500/15 text-rose-600 dark:text-rose-400",
                                 bet.status === "void" && "bg-slate-500/15 text-slate-600 dark:text-slate-400",
+                                bet.status === "cashout" && "bg-sky-500/15 text-sky-600 dark:text-sky-400",
                                 bet.status === "pending" && "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                               )}
                             >
@@ -263,8 +351,8 @@ export function BankrollDialog() {
                             </span>
                           </div>
                           <div className="mt-0.5 text-[11px] text-muted-foreground">
-                            vs {bet.betOn === "A" ? bet.playerB : bet.playerA} · {bet.odd.toFixed(2)} · {bet.stake.toFixed(2)} €
-                            {bet.payout !== undefined && bet.status === "won" && (
+                            {bet.matchLabel ?? "—"} · {bet.odds.toFixed(2)} · {bet.stake.toFixed(2)} €
+                            {bet.payout != null && bet.status === "won" && (
                               <span className="ml-1 font-semibold text-emerald-600 dark:text-emerald-400">
                                 → +{(bet.payout - bet.stake).toFixed(2)} €
                               </span>
@@ -316,11 +404,11 @@ export function BankrollDialog() {
                         </Button>
                       </div>
                     ))}
-                    {state.bets.length > 0 && (
+                    {bets.length > 0 && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={clearAll}
+                        onClick={() => void handleClearAll()}
                         className="mt-3 w-full text-xs text-muted-foreground hover:text-rose-600"
                       >
                         <Trash2 className="mr-1.5 h-3 w-3" />

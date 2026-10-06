@@ -29,6 +29,7 @@ export type BetInput = {
   category?: string;
   tags?: string;
   closingOdd?: number;
+  externalRef?: string;
   placedAt?: string;
   note?: string;
   legs?: { matchLabel: string; market?: string; pick?: string; odds: number }[];
@@ -100,6 +101,23 @@ export const bmApi = {
         body: JSON.stringify({ bankrollId, csv, fileName }),
       })
     ),
+
+  // Ledger banque (mouvements BankrollTx)
+  listTxs: (bankrollId: string) =>
+    j<{ txs: import("./types").BankrollTx[] }>(fetch(`${BASE}/bankrolls/${bankrollId}/txs`)),
+  createTx: (
+    bankrollId: string,
+    data: { kind: string; amount: number; at?: string; note?: string }
+  ) =>
+    j<{ tx: import("./types").BankrollTx }>(
+      fetch(`${BASE}/bankrolls/${bankrollId}/txs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+    ),
+  deleteTx: (bankrollId: string, txId: string) =>
+    j<{ ok: true }>(fetch(`${BASE}/bankrolls/${bankrollId}/txs/${txId}`, { method: "DELETE" })),
 
   // Auto-règlement via API-Football
   autoSettle: (bankrollId?: string) =>

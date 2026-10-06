@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LineChart, PiggyBank, Calculator, ChevronDown } from "lucide-react";
+import { LineChart, PiggyBank, Calculator, ChevronDown, TrendingUp, CalendarDays, Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -19,6 +19,9 @@ import type { Bankroll } from "@/lib/bet-manager/types";
 const TABS = [
   { href: "/bankroll", label: "Tableau de bord", icon: LineChart },
   { href: "/bankroll/bets", label: "Paris", icon: PiggyBank },
+  { href: "/bankroll/plan", label: "Plan", icon: CalendarDays },
+  { href: "/bankroll/ledger", label: "Banque", icon: Landmark },
+  { href: "/bankroll/montante", label: "Montante", icon: TrendingUp },
   { href: "/bankroll/tools", label: "Outils", icon: Calculator },
 ];
 
@@ -36,7 +39,7 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
   return (
     <div className="sticky top-14 z-40 border-b border-white/5 bg-bg-deep/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap items-center gap-1">
           {TABS.map((tab) => {
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + "/");
             return (

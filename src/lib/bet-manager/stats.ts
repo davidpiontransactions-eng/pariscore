@@ -1,9 +1,8 @@
-// Statistiques de bankroll — fonctions pures, portées depuis use-bankroll
-// et enrichies (drawdown, streaks, variance, courbe de capital).
+// Statistiques de bankroll — fonctions pures, enrichies (drawdown, streaks,
+// variance, courbe de capital). L'ancien store localStorage use-bankroll a été
+// retiré en P7 bettrack : Prisma est la source unique.
 
 import type { Bet, BankrollStats, CapitalPoint, GroupStats } from "./types";
-
-export const STATUS_DECIDED: Bet["status"][] = ["won", "lost", "cashout"];
 
 /** P/L réel d'un pari réglé (cashout = payout - stake aussi). */
 export function betProfit(b: Bet): number {
@@ -41,14 +40,12 @@ export function computeBankrollStats(bets: Bet[], initial: number): BankrollStat
 
   let bestStreak = 0;
   let worstStreak = 0;
-  let currentStreak = 0;
   let run = 0;
   for (const b of timeline) {
     run = b.status === "won" ? Math.max(1, run + 1) : Math.min(-1, run - 1);
     if (run > bestStreak) bestStreak = run;
     if (run < worstStreak) worstStreak = run;
   }
-  currentStreak = run;
 
   // Drawdown max sur la courbe de capital
   let peak = initial;
@@ -74,6 +71,10 @@ export function computeBankrollStats(bets: Bet[], initial: number): BankrollStat
       ? pls.reduce((s, p) => s + p * p, 0) / pls.length - (pls.reduce((s, p) => s + p, 0) / pls.length) ** 2
       : 0;
 
+  // Exposition en cours (famille Active Bets de bettrackai)
+  const pendingExposure = pending.reduce((s, b) => s + b.stake, 0);
+  const potentialPayout = pending.reduce((s, b) => s + b.stake * Math.max(0, b.odds), 0);
+
   return {
     initial,
     current: initial + profit,
@@ -94,10 +95,42 @@ export function computeBankrollStats(bets: Bet[], initial: number): BankrollStat
     avgStake,
     bestStreak,
     worstStreak,
-    currentStreak,
+    currentStreak: run,
     maxDrawdown,
     variance,
     stdev: Math.sqrt(variance),
+    pendingExposure,
+    potentialPayout,
+  };
+}
+
+// ─── Ledger banque (mouvements BankrollTx) ──────────────────────────────────
+
+export type LedgerKpis = {
+  deposits: number; // Σ kind=deposit (> 0)
+  withdrawals: number; // Σ kind=withdrawal (< 0, affiché en négatif)
+  bonuses: number; // Σ kind=bonus (> 0)
+  adjustments: number; // Σ kind=adjustment (signé)
+  net: number; // mouvement net = Σ de tous les montants
+  /** Solde courant = initial + mouvement net + P/L des paris. */
+  current: number;
+};
+
+/** KPIs du ledger : agrégats de transactions + solde courant. */
+export function ledgerKpis(
+  txs: { kind: string; amount: number }[],
+  initial: number,
+  betProfitTotal: number
+): LedgerKpis {
+  const sum = (kind: string) => txs.filter((t) => t.kind === kind).reduce((s, t) => s + t.amount, 0);
+  const net = txs.reduce((s, t) => s + t.amount, 0);
+  return {
+    deposits: sum("deposit"),
+    withdrawals: sum("withdrawal"),
+    bonuses: sum("bonus"),
+    adjustments: sum("adjustment"),
+    net,
+    current: initial + net + betProfitTotal,
   };
 }
 
@@ -127,11 +160,13 @@ export function capitalCurve(bets: Bet[], initial: number, month = false): Capit
  */
 export function groupStats(bets: Bet[], getKey: (b: Bet) => string): GroupStats[] {
   const map = new Map<string, GroupStats>();
+  // Séries chronologiques par groupe (won/lost seulement — règle de computeBankrollStats)
+  const timelines = new Map<string, { at: string; won: boolean }[]>();
   for (const bet of bets) {
     const key = getKey(bet);
     let g = map.get(key);
     if (!g) {
-      g = { key, label: key, bets: 0, won: 0, lost: 0, pending: 0, settled: 0, staked: 0, profit: 0, roi: 0, winRate: 0 };
+      g = { key, label: key, bets: 0, won: 0, lost: 0, pending: 0, settled: 0, staked: 0, profit: 0, roi: 0, winRate: 0, volumePct: 0, bestStreak: 0, worstStreak: 0 };
       map.set(key, g);
     }
     g.bets += 1;
@@ -145,13 +180,31 @@ export function groupStats(bets: Bet[], getKey: (b: Bet) => string): GroupStats[
       g.profit += betProfit(bet);
       if (bet.status === "won" || bet.status === "cashout") g.won += 1;
       else g.lost += 1;
+      if (bet.status === "won" || bet.status === "lost") {
+        let seq = timelines.get(key);
+        if (!seq) {
+          seq = [];
+          timelines.set(key, seq);
+        }
+        seq.push({ at: bet.settledAt ?? bet.placedAt, won: bet.status === "won" });
+      }
     }
   }
   const groups = Array.from(map.values());
+  let totalStaked = 0;
+  for (const g of groups) totalStaked += g.staked;
   for (const g of groups) {
     g.roi = g.staked > 0 ? (g.profit / g.staked) * 100 : 0;
     const decided = g.won + g.lost;
     g.winRate = decided > 0 ? (g.won / decided) * 100 : 0;
+    g.volumePct = totalStaked > 0 ? (g.staked / totalStaked) * 100 : 0;
+    const seq = (timelines.get(g.key) ?? []).sort((a, b) => a.at.localeCompare(b.at));
+    let run = 0;
+    for (const t of seq) {
+      run = t.won ? Math.max(1, run + 1) : Math.min(-1, run - 1);
+      if (run > g.bestStreak) g.bestStreak = run;
+      if (run < g.worstStreak) g.worstStreak = run;
+    }
   }
   groups.sort((a, b) => b.profit - a.profit || a.key.localeCompare(b.key));
   return groups;
@@ -172,4 +225,58 @@ export function monthKey(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "—";
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * CLV (Closing Line Value) — positif quand NOTRE cote bat la cote de clôture :
+ * odds 2,10 clôturée à 2,00 → on a acheté mieux que le marché final
+ * (1/closing − 1/odds = +0,0238). Null sans closingOdd exploitable.
+ */
+export function clvEdge(b: Bet): number | null {
+  if (b.odds <= 1 || !b.closingOdd || b.closingOdd <= 1) return null;
+  return 1 / b.closingOdd - 1 / b.odds;
+}
+
+export type ClvStats = {
+  /** Paris avec closingOdd exploitable. */
+  tracked: number;
+  /** CLV Edge moyen (points de probabilité). */
+  avgEdge: number;
+  /** CLV brut moyen = odds − closingOdd (points de cote, positif = beat close). */
+  avgRaw: number;
+  /** % des tracked ayant battu la clôture. */
+  positiveRate: number;
+};
+
+/** Agrégats CLV (panneau CLV : Avg Edge / Avg Raw / Positive Rate / Tracked). */
+export function computeClvStats(bets: Bet[]): ClvStats {
+  let sumEdge = 0;
+  let sumRaw = 0;
+  let positive = 0;
+  let tracked = 0;
+  for (const b of bets) {
+    const e = clvEdge(b);
+    if (e === null) continue;
+    tracked += 1;
+    sumEdge += e;
+    sumRaw += b.odds - (b.closingOdd as number);
+    if (e > 0) positive += 1;
+  }
+  return {
+    tracked,
+    avgEdge: tracked ? sumEdge / tracked : 0,
+    avgRaw: tracked ? sumRaw / tracked : 0,
+    positiveRate: tracked ? (positive / tracked) * 100 : 0,
+  };
+}
+
+/** Axe « By Timing » des analytics : plage horaire UTC de placement du pari. */
+export function timingBucket(iso: string): string {
+  const m = /^\d{4}-\d{2}-\d{2}T(\d{2})/.exec(iso ?? "");
+  if (!m) return "—";
+  const h = Number(m[1]);
+  if (h < 6) return "00-06 Nuit";
+  if (h < 12) return "06-12 Matin";
+  if (h < 18) return "12-18 Après-midi";
+  return "18-24 Soir";
 }

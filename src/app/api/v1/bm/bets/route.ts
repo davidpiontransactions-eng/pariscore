@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireBmSession } from "@/lib/bet-manager/auth";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/v1/bm/bets?bankrollId=&status=&sport=&search=&limit=
 export async function GET(req: NextRequest) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const sp = req.nextUrl.searchParams;
   const bankrollId = sp.get("bankrollId");
   const status = sp.get("status");
@@ -44,6 +47,8 @@ export async function GET(req: NextRequest) {
 
 // POST /api/v1/bm/bets — créer un pari (simple, combo, system, back, lay, dutch)
 export async function POST(req: NextRequest) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   let body: any;
   try {
     body = await req.json();
@@ -58,6 +63,16 @@ export async function POST(req: NextRequest) {
   const betType = ["single", "combo", "system", "back", "lay", "dutch"].includes(body.betType) ? body.betType : "single";
   const status = ["pending", "won", "lost", "void", "cashout"].includes(body.status) ? body.status : "pending";
   const odds = typeof body.odds === "number" && body.odds > 0 ? body.odds : 1;
+  const externalRef =
+    typeof body.externalRef === "string" && body.externalRef.trim() ? body.externalRef.trim().slice(0, 64) : null;
+
+  // Dédup des imports 1xBet : № de coupon déjà présent sur cette bankroll.
+  if (externalRef) {
+    const dup = await prisma.bet.findFirst({ where: { bankrollId, externalRef }, select: { id: true } });
+    if (dup) {
+      return NextResponse.json({ error: `Ticket déjà importé (réf ${externalRef})` }, { status: 409 });
+    }
+  }
 
   const legs = Array.isArray(body.legs)
     ? body.legs
@@ -102,6 +117,7 @@ export async function POST(req: NextRequest) {
         category: typeof body.category === "string" ? body.category : null,
         tags: typeof body.tags === "string" ? body.tags : undefined,
         closingOdd: typeof body.closingOdd === "number" ? body.closingOdd : null,
+        externalRef,
         placedAt: typeof body.placedAt === "string" ? new Date(body.placedAt) : new Date(),
         settledAt: status !== "pending" ? new Date() : null,
         note: typeof body.note === "string" ? body.note : null,

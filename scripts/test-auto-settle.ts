@@ -1,5 +1,6 @@
 // Test unitaire de evaluateMarket — logique d'auto-règlement des marchés
-import { evaluateMarket } from "../src/lib/bet-manager/auto-settle";
+// + sélection sync/backfill selectToSettle (phase P5 bettrack)
+import { evaluateMarket, selectToSettle } from "../src/lib/bet-manager/auto-settle";
 import type { Bet } from "../src/lib/bet-manager/types";
 
 function mkBet(partial: Partial<Bet>): Bet {
@@ -63,6 +64,43 @@ check("12 avec nul → perdu", evaluateMarket(mkBet({ matchLabel: "PSG vs OM", m
 // Non supporté
 check("Marché inconnu → null (règlement manuel)", evaluateMarket(mkBet({ matchLabel: "PSG vs OM", market: "Score exact", pick: "2-0" }), fx(2, 0)) === null);
 check("Score null → null", evaluateMarket(mkBet({ matchLabel: "PSG vs OM", market: "1X2", pick: "PSG" }), fx(null, null)) === null);
+
+// ─── P5 : sélection sync + backfill (selectToSettle) ─────────────────────────
+const NOW = new Date("2026-10-06T12:00:00Z").getTime();
+const mkP = (id: string, daysAgo: number) => ({ id, placedAt: new Date(NOW - daysAgo * 86400000).toISOString() });
+
+// Scénario A : 50 récents + 40 anciens (>3 j) → fresh 50 + backfill 20 (cap), sans doublon
+const recentsA = Array.from({ length: 50 }, (_, i) => mkP(`r${i}`, i * 0.02));
+const anciensA = Array.from({ length: 40 }, (_, i) => mkP(`s${i}`, 5 + i));
+const selA = selectToSettle([...recentsA, ...anciensA], NOW);
+check("sélection A : 50 fresh + 20 backfill = 70", selA.length === 70, selA.length);
+check("sélection A : aucun doublon", new Set(selA.map((b) => b.id)).size === selA.length);
+check(
+  "sélection A : backfill du plus ancien au plus récent (tête = 44 j)",
+  selA[50]?.id === "s39",
+  selA[50]?.id
+);
+check(
+  "sélection A : les 50 fresh sont les plus récents (tête = r0)",
+  selA[0]?.id === "r0",
+  selA[0]?.id
+);
+
+// Scénario B : fonds petit → un pending de 3,5 j (hors fresh) est bien backfillé
+const recentsB = Array.from({ length: 60 }, (_, i) => mkP(`br${i}`, i * 0.01));
+const selB = selectToSettle([...recentsB, mkP("mid", 3.5), ...Array.from({ length: 5 }, (_, i) => mkP(`bo${i}`, 10 + i))], NOW);
+check("sélection B : mid (3,5 j) backfillé", selB.some((b) => b.id === "mid"), selB.map((b) => b.id));
+check("sélection B : les 5 anciens backfillés", ["bo0", "bo1", "bo2", "bo3", "bo4"].every((id) => selB.some((b) => b.id === id)));
+check("sélection B : total = 50 + 6", selB.length === 56, selB.length);
+
+// Scénario C : tout tient dans fresh → pas de backfill, pas de doublon
+const selC = selectToSettle(Array.from({ length: 10 }, (_, i) => mkP(`c${i}`, i)), NOW);
+check("sélection C : 10/10 sans effet de bord", selC.length === 10 && new Set(selC.map((b) => b.id)).size === 10);
+
+// Scénario D : pending de 2 j hors fresh → PAS backfillé (trop récent pour le fonds)
+const selD = selectToSettle([...Array.from({ length: 60 }, (_, i) => mkP(`dr${i}`, i * 0.01)), mkP("young2j", 2)], NOW);
+check("sélection D : 2 j hors fresh exclu du backfill", !selD.some((b) => b.id === "young2j"), selD.length);
+check("sélection D : longueur bornée à 50 (fresh seul)", selD.length === 50, selD.length);
 
 console.log(`\n${pass} ok / ${fail} FAIL`);
 process.exit(fail > 0 ? 1 : 0);

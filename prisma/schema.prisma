@@ -237,6 +237,23 @@ model Bankroll {
   updatedAt DateTime      @updatedAt
   bets      Bet[]
   imports   ImportBatch[]
+  txs       BankrollTx[]
+}
+
+// Mouvements de fonds du ledger banque (dépôts/retraits/bonus/ajustements).
+// Montant signé : dépôt positif, retrait négatif. Les P/L des paris restent
+// sur Bet — ce tableau ne porte que les mouvements manuels de trésorerie.
+model BankrollTx {
+  id         String    @id @default(cuid())
+  bankrollId String
+  bankroll   Bankroll  @relation(fields: [bankrollId], references: [id])
+  kind       String // deposit | withdrawal | bonus | adjustment
+  amount     Float // signé, ≠ 0
+  at         DateTime  @default(now())
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([bankrollId, at])
 }
 
 model Bet {
@@ -260,6 +277,7 @@ model Bet {
   category    String?
   tags        String    @default("") // CSV : "montante,taureau,closing"
   closingOdd  Float? // closing odds pour mesurer la valeur
+  externalRef String? // réf ticket 1xBet (№ coupon) — dédup des imports
   placedAt    DateTime  @default(now())
   settledAt   DateTime?
   note        String?
@@ -268,6 +286,7 @@ model Bet {
   updatedAt   DateTime  @updatedAt
 
   @@index([bankrollId, placedAt])
+  @@index([bankrollId, externalRef])
   @@index([status])
   @@index([sport])
 }

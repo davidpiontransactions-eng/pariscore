@@ -631,7 +631,8 @@
       "pending": "En cours",
       "won": "Gagné",
       "lost": "Perdu",
-      "void": "Remboursé (RET/WO)"
+      "void": "Remboursé (RET/WO)",
+      "cashout": "Cashout"
     },
     "actions": {
       "markWon": "Marquer comme gagné",

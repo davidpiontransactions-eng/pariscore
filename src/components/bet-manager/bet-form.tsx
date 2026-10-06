@@ -23,9 +23,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { BetType } from "@/lib/bet-manager/types";
-import type { OcrTicket } from "@/lib/bet-manager/ocr";
+import { parseTicketText, type OcrTicket } from "@/lib/bet-manager/ocr";
+import { ingest1xbet, type Import1xbetBet } from "@/lib/bet-manager/import-1xbet";
 
-const SPORTS = ["football", "tennis", "basketball", "mma", "rugby", "cs2", "cycling", "f1", "baseball", "other"];
+const SPORTS = ["football", "tennis", "basketball", "hockey", "handball", "mma", "rugby", "cs2", "cycling", "f1", "baseball", "other"];
 
 type LegRow = { matchLabel: string; market: string; pick: string; odds: string };
 
@@ -34,46 +35,6 @@ type Props = {
   defaultBookmaker?: string;
   onAdd: (input: any) => Promise<void>;
 };
-
-function cleanNumber(s: string): number | undefined {
-  const n = parseFloat(s.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", "."));
-  return isNaN(n) ? undefined : n;
-}
-
-function parseTicketText(raw: string): OcrTicket {
-  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  const oddsMatches = raw.match(/(?<![\d.])([1-9]\d{0,1}[.,]\d{2})(?![\d.])/g);
-  const odds = oddsMatches?.length
-    ? Math.max(...oddsMatches.map((x) => parseFloat(x.replace(",", "."))))
-    : undefined;
-  let stake: number | undefined;
-  for (const l of lines) {
-    const m = l.match(/([\d\s.,]+)\s*[€$£]/i);
-    if (m) {
-      const v = cleanNumber(m[1]);
-      if (v !== undefined && v > 0) stake = v;
-    }
-  }
-  const participants = lines
-    .filter(
-      (l) =>
-        !/^(total|gain|cote|mise|solde|date|réf|coupon|montant)/i.test(l) &&
-        !/[€$£]/.test(l) &&
-        !/\d{2,}[.,]\d{2}/.test(l) &&
-        l.length > 2
-    )
-    .slice(-2);
-  return {
-    rawText: raw,
-    matchLabel: participants.length >= 2 ? participants.join(" vs ") : participants[0],
-    pick: participants[participants.length - 1],
-    odds,
-    stake,
-    bookmaker: "1xbet",
-    legs: [],
-    betType: "single",
-  };
-}
 
 async function loadTesseractFromCDN(): Promise<any> {
   if (typeof window === "undefined") throw new Error("Pas de window");
@@ -122,7 +83,13 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
 
   const [legs, setLegs] = useState<LegRow[]>([{ matchLabel: "", market: "", pick: "", odds: "" }]);
   const [ocrBusy, setOcrBusy] = useState(false);
+  const [externalRef, setExternalRef] = useState<string | null>(null);
+  const [placedAt, setPlacedAt] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const pasteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (pasteTimer.current) clearTimeout(pasteTimer.current); }, []);
 
   const effOdds = betType === "combo"
     ? legs.reduce((acc, l) => acc * (parseFloat(l.odds) || 1), 1)
@@ -135,31 +102,113 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
     if (t.odds) setOdds(String(t.odds));
     if (t.stake) setStake(String(t.stake));
     if (t.bookmaker) setBookmaker(t.bookmaker);
+    setExternalRef(null); // scan image : pas de № parsé côté HTML
+    setPlacedAt(null);
     if (t.legs.length > 1) {
       setBetType("combo");
       setLegs(t.legs.map((l) => ({ matchLabel: l.matchLabel, market: l.market ?? "", pick: l.pick ?? "", odds: String(l.odds ?? "") })));
     }
   }, []);
 
-  const onFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  /** Aperçu avant sauvegarde : le coupon importé remplit le formulaire éditable. */
+  const applyImportBets = useCallback((bets: Import1xbetBet[]) => {
+    if (bets.length === 0) {
+      toast.error("Aucun pari reconnu dans ce contenu.");
+      return;
+    }
+    if (bets.length > 1) {
+      toast.info(`${bets.length} coupons détectés — aperçu du dernier. Sélectionne et importe un par un.`);
+    }
+    const b = bets[bets.length - 1];
+    setBetType(b.betType);
+    setMatchLabel(b.matchLabel);
+    setMarket(b.market ?? "");
+    setPick(b.pick ?? "");
+    setOdds(b.odds > 1 ? String(b.odds) : "");
+    setStake(b.stake > 0 ? String(b.stake) : "");
+    setBookmaker(b.bookmaker);
+    setCompetition(b.competition ?? "");
+    setSport(SPORTS.includes(b.sport) ? b.sport : "other");
+    if (b.legs.length > 1) {
+      setLegs(b.legs.map((l) => ({ matchLabel: l.matchLabel, market: l.market ?? "", pick: l.pick ?? "", odds: String(l.odds) })));
+    }
+    setExternalRef(b.externalRef);
+    setPlacedAt(b.placedAt);
+    toast.success(`Ticket importé${b.externalRef ? ` — réf ${b.externalRef}` : ""} : vérifie les champs puis valide.`);
+  }, []);
+
+  /** Fichier déposé/sélectionné : image → OCR, HTML/ZIP/TXT → parseur 1xBet. */
+  const ingestFile = useCallback(
+    async (file: File) => {
+      const isImage = file.type.startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(file.name);
       setOcrBusy(true);
       try {
-        const ticket = await ocrTicketImage(file);
-        if (!ticket.matchLabel && !ticket.odds && !ticket.stake) {
-          toast.error("Aucun pari reconnu dans l'image. Colle le texte du ticket ci-dessous.");
+        if (isImage) {
+          const ticket = await ocrTicketImage(file);
+          if (!ticket.matchLabel && !ticket.odds && !ticket.stake) {
+            toast.error("Aucun pari reconnu dans l'image. Colle le texte du ticket ci-dessous.");
+          } else {
+            applyTicket(ticket);
+          }
+        } else {
+          const buf = await file.arrayBuffer();
+          const res = await ingest1xbet(buf);
+          if (res.duplicates > 0) toast.warning(`${res.duplicates} ticket déjà importé — ignoré.`);
+          applyImportBets(res.bets);
         }
-        applyTicket(ticket);
       } catch (err: any) {
-        toast.error("OCR en échec : " + (err.message ?? "erreur inconnue"));
+        toast.error("Import en échec : " + (err.message ?? "erreur inconnue"));
       } finally {
         setOcrBusy(false);
         if (fileRef.current) fileRef.current.value = "";
       }
     },
-    [applyTicket]
+    [applyImportBets, applyTicket]
+  );
+
+  /** Texte collé (coupon copié depuis l'historique 1xBet). */
+  const ingestText = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
+      try {
+        const res = await ingest1xbet(text);
+        if (res.duplicates > 0) toast.warning(`${res.duplicates} ticket déjà importé — ignoré.`);
+        if (res.bets.length > 0) applyImportBets(res.bets);
+        else toast.error("Aucun coupon reconnu dans le collage.");
+      } catch (err: any) {
+        toast.error("Lecture du collage en échec : " + (err.message ?? "erreur inconnue"));
+      }
+    },
+    [applyImportBets]
+  );
+
+  const onFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      await ingestFile(file);
+    },
+    [ingestFile]
+  );
+
+  /** Collage : hijack seulement hors champ éditable (debounce 300 ms, cf. suivi-paris). */
+  const onPaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      const editable = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable;
+      const file = e.clipboardData.files?.[0];
+      if (file) {
+        e.preventDefault();
+        void ingestFile(file);
+        return;
+      }
+      const html = e.clipboardData.getData("text/html");
+      if (editable || !html) return; // texte brut en clair dans un champ = collage normal
+      e.preventDefault();
+      if (pasteTimer.current) clearTimeout(pasteTimer.current);
+      pasteTimer.current = setTimeout(() => void ingestText(html), 300);
+    },
+    [ingestFile, ingestText]
   );
 
   const setLeg = (i: number, key: keyof LegRow, value: string) =>
@@ -196,6 +245,8 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
         category: category || undefined,
         tags: tags || undefined,
         note: note || undefined,
+        externalRef: externalRef || undefined,
+        placedAt: placedAt || undefined,
         legs: betType === "combo"
           ? legs.filter((l) => l.matchLabel && l.odds).map((l) => ({
               matchLabel: l.matchLabel,
@@ -211,6 +262,8 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
       setMarket("");
       setPick("");
       setLegs([{ matchLabel: "", market: "", pick: "", odds: "" }]);
+      setExternalRef(null);
+      setPlacedAt(null);
     } catch (err: any) {
       toast.error("Erreur : " + (err.message ?? "inconnue"));
     } finally {
@@ -226,7 +279,32 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
 
   return (
     <Dialog open onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl max-h-[90vh] sm:max-h-[90dvh] overflow-y-auto max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+      <DialogContent
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) {
+            void ingestFile(f);
+            return;
+          }
+          const html = e.dataTransfer.getData("text/html");
+          if (html) void ingestText(html);
+        }}
+        onPaste={onPaste}
+        className={cn(
+          "max-w-2xl max-h-[90vh] sm:max-h-[90dvh] overflow-y-auto max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full",
+          dragOver && "ring-2 ring-emerald-500/60"
+        )}
+      >
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
@@ -339,16 +417,20 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
             </div>
           </div>
 
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Import 1xBet : glisse-dépose un fichier <strong>.html/.zip</strong> d'historique, colle un coupon
+            copié, ou scanne une image — dédup par № de coupon.
+          </p>
+
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={ocrBusy}>
               <Camera className="h-4 w-4 mr-2" />
-              {ocrBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Scanner un ticket"}
+              {ocrBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Scanner ou importer"}
             </Button>
             <input
               type="file"
               ref={fileRef}
-              accept="image/*"
-              capture="environment"
+              accept="image/*,.html,.htm,.zip,.txt"
               onChange={onFile}
               className="hidden"
             />

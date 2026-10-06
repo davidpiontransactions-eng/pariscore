@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireBmSession } from "@/lib/bet-manager/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 
 // GET /api/v1/bm/bankrolls/:id — détail bankroll
 export async function GET(_req: NextRequest, { params }: Ctx) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const { id } = await params;
   try {
     const bankroll = await prisma.bankroll.findUnique({ where: { id } });
@@ -19,6 +22,8 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
 // PATCH /api/v1/bm/bankrolls/:id — renommer, ajuster capital initial, note
 export async function PATCH(req: NextRequest, { params }: Ctx) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const { id } = await params;
   let body: any;
   try {
@@ -39,13 +44,16 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 }
 
-// DELETE /api/v1/bm/bankrolls/:id — supprime bankroll + ses paris
+// DELETE /api/v1/bm/bankrolls/:id — supprime bankroll + ses paris + son ledger
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const { id } = await params;
   try {
     await prisma.$transaction([
       prisma.bet.deleteMany({ where: { bankrollId: id } }),
       prisma.importBatch.deleteMany({ where: { bankrollId: id } }),
+      prisma.bankrollTx.deleteMany({ where: { bankrollId: id } }),
       prisma.bankroll.delete({ where: { id } }),
     ]);
     return NextResponse.json({ ok: true });

@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
  * `placeAll()` materialises them by calling `addBet` from `useBankroll` for
  * each one.
  *
- * Singleton pattern mirroring `use-bankroll.ts` / `use-favorites.ts`:
+ * Singleton pattern mirroring `use-favorites.ts`:
  *  - Module-level `cachedSelections` is the source of truth.
  *  - `init()` reads from localStorage once on first mount and registers a
  *    `storage` event listener for cross-tab sync.
@@ -105,7 +105,7 @@ export function useBetSlip() {
     init();
     // Sync initial state if not yet initialized. Deferred to a microtask to
     // respect the `react-hooks/set-state-in-effect` rule (same convention
-    // as use-bankroll.ts / use-favorites.ts).
+    // as use-favorites.ts).
     if (cachedSelections !== selections) {
       Promise.resolve().then(() => setLocalSelections(cachedSelections));
     }

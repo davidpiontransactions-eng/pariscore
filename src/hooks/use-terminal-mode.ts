@@ -34,7 +34,7 @@ function writeTerminalMode(value: boolean) {
 }
 
 // --- Singleton state shared across all hook instances -----------------------
-// Same pattern as use-favorites / use-bankroll: one module-level cache,
+// Same pattern as use-favorites: one module-level cache,
 // one listener Set, multi-tab sync via the `storage` event. This keeps
 // every component using `useTerminalMode()` in lock-step without requiring
 // a context provider.
@@ -77,7 +77,7 @@ function setTerminalMode(next: boolean) {
  * to avoid hydration mismatches, then syncs from localStorage inside a
  * `useEffect` via a deferred `Promise.resolve().then(...)` — this
  * respects the `react-hooks/set-state-in-effect` rule the same way
- * `use-favorites` and `use-bankroll` do.
+ * `use-favorites` does.
  */
 export function useTerminalMode() {
   const [terminalMode, setLocalTerminalMode] = useState<boolean>(cachedTerminalMode);
@@ -86,7 +86,7 @@ export function useTerminalMode() {
     init();
     // Sync from the (possibly just-read) singleton cache. Deferred to a
     // microtask so we never call setState synchronously inside the effect
-    // body — this is the convention established by use-favorites/use-bankroll
+    // body — this is the convention established by use-favorites
     // and keeps `react-hooks/set-state-in-effect` happy.
     if (cachedTerminalMode !== terminalMode) {
       Promise.resolve().then(() => setLocalTerminalMode(cachedTerminalMode));
