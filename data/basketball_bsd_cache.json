@@ -1,0 +1,3554 @@
+{
+ "fetchedAt": "2026-10-06T15:27:56.257Z",
+ "staleAfterMinutes": 30,
+ "fixtures": [
+  {
+   "bsdEventId": 7160,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T16:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 106,
+    "name": "Türk Telekom B.K.",
+    "shortName": "Türk Telekom",
+    "countryCode": "TR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/106/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 127,
+    "name": "Maxima Roma",
+    "shortName": "Maxima Roma",
+    "countryCode": "",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/127/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.709,
+    "probAwayWin": 0.291,
+    "eloHome": 1652.1,
+    "eloAway": 1500,
+    "confidence": "high",
+    "confidenceScore": 0.418,
+    "predictedWinnerId": 106,
+    "predictedWinnerName": "Türk Telekom B.K.",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 6,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 75,
+     "scores_against": 82
+    },
+    "awayStanding": {
+     "position": 1,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 89,
+     "scores_against": 55
+    },
+    "last10ScoredHome": 77,
+    "last10ScoredAway": 83,
+    "last10TotalHome": 156,
+    "last10TotalAway": 165,
+    "venue": {
+     "id": 104,
+     "name": "Ankara Arena",
+     "city": "Ankara",
+     "country": "Türkiye",
+     "capacity": 10400
+    },
+    "homeCoach": "Erdem Can",
+    "awayCoach": null
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.3,
+     "oddsAway": 3.25,
+     "fairHome": 0.7143,
+     "fairAway": 0.2857,
+     "vigPct": 7.69,
+     "updatedAt": "2026-10-06T01:41:48.607409Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.33,
+     "oddsAway": 3.05,
+     "fairHome": 0.6963,
+     "fairAway": 0.3037,
+     "vigPct": 7.97,
+     "updatedAt": "2026-10-06T01:42:09.206134Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.333,
+     "oddsAway": 3,
+     "fairHome": 0.6924,
+     "fairAway": 0.3076,
+     "vigPct": 8.35,
+     "updatedAt": "2026-10-06T01:42:23.636986Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.285,
+     "oddsAway": 3.35,
+     "fairHome": 0.7228,
+     "fairAway": 0.2772,
+     "vigPct": 7.67,
+     "updatedAt": "2026-10-06T01:41:41.389146Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.33,
+     "oddsAway": 3.25,
+     "fairHome": 0.7096,
+     "fairAway": 0.2904,
+     "vigPct": 5.96,
+     "updatedAt": "2026-10-06T01:40:55.575601Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.3,
+     "oddsAway": 3.4,
+     "fairHome": 0.7234,
+     "fairAway": 0.2766,
+     "vigPct": 6.33,
+     "updatedAt": "2026-10-06T01:41:08.547326Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 1.364,
+     "oddsAway": 3.25,
+     "fairHome": 0.7044,
+     "fairAway": 0.2956,
+     "vigPct": 4.08,
+     "updatedAt": "2026-10-06T01:40:21.539034Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:18.593329Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.3,
+     "oddsAway": 3.2,
+     "fairHome": 0.7111,
+     "fairAway": 0.2889,
+     "vigPct": 8.17,
+     "updatedAt": "2026-10-06T01:42:17.556067Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.34,
+     "oddsAway": 3.2,
+     "fairHome": 0.7048,
+     "fairAway": 0.2952,
+     "vigPct": 5.88,
+     "updatedAt": "2026-10-06T01:40:47.723333Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.34,
+     "oddsAway": 3.55,
+     "fairHome": 0.726,
+     "fairAway": 0.274,
+     "vigPct": 2.8,
+     "updatedAt": "2026-10-06T14:55:18.435660Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:25.925361Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.3,
+     "oddsAway": 3.25,
+     "fairHome": 0.7143,
+     "fairAway": 0.2857,
+     "vigPct": 7.69,
+     "updatedAt": "2026-10-06T01:41:56.713486Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:33.438514Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.333,
+     "oddsAway": 3.25,
+     "fairHome": 0.7091,
+     "fairAway": 0.2909,
+     "vigPct": 5.79,
+     "updatedAt": "2026-10-06T01:40:39.786997Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 1.37,
+     "oddsAway": 3.1,
+     "fairHome": 0.6935,
+     "fairAway": 0.3065,
+     "vigPct": 5.25,
+     "updatedAt": "2026-10-06T01:40:32.215857Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7162,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T16:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 102,
+    "name": "KK Cedevita Olimpija",
+    "shortName": "Cedevita Olimpija",
+    "countryCode": "SI",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/102/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 96,
+    "name": "Hapoel Jerusalem BC",
+    "shortName": "Hapoel Jerusalem",
+    "countryCode": "IL",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/96/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.6047,
+    "probAwayWin": 0.3953,
+    "eloHome": 1602.2,
+    "eloAway": 1626.5,
+    "confidence": "medium",
+    "confidenceScore": 0.209,
+    "predictedWinnerId": 102,
+    "predictedWinnerName": "KK Cedevita Olimpija",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 6,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 81,
+     "scores_against": 85
+    },
+    "awayStanding": {
+     "position": 1,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 94,
+     "scores_against": 73
+    },
+    "last10ScoredHome": 81,
+    "last10ScoredAway": 79,
+    "last10TotalHome": 152,
+    "last10TotalAway": 155,
+    "venue": {
+     "id": 105,
+     "name": "Arena Stožice",
+     "city": "Ljubljana",
+     "country": "Slovenia",
+     "capacity": 12480
+    },
+    "homeCoach": "Zvezdan Mitrović",
+    "awayCoach": "Saša Obradović"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 2.75,
+     "oddsAway": 1.42,
+     "fairHome": 0.3405,
+     "fairAway": 0.6595,
+     "vigPct": 6.79,
+     "updatedAt": "2026-10-06T01:41:02.886339Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 2.624,
+     "oddsAway": 1.43,
+     "fairHome": 0.3527,
+     "fairAway": 0.6473,
+     "vigPct": 8.04,
+     "updatedAt": "2026-10-06T01:42:20.903715Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 2.75,
+     "oddsAway": 1.4,
+     "fairHome": 0.3373,
+     "fairAway": 0.6627,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T01:42:03.056083Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 2.75,
+     "oddsAway": 1.4,
+     "fairHome": 0.3373,
+     "fairAway": 0.6627,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T01:42:15.715662Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 2.75,
+     "oddsAway": 1.44,
+     "fairHome": 0.3437,
+     "fairAway": 0.6563,
+     "vigPct": 5.81,
+     "updatedAt": "2026-10-06T01:40:37.117299Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 2.8,
+     "oddsAway": 1.42,
+     "fairHome": 0.3365,
+     "fairAway": 0.6635,
+     "vigPct": 6.14,
+     "updatedAt": "2026-10-06T01:40:46.161564Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 2.75,
+     "oddsAway": 1.444,
+     "fairHome": 0.3443,
+     "fairAway": 0.6557,
+     "vigPct": 5.62,
+     "updatedAt": "2026-10-06T01:40:29.683813Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 3,
+     "oddsAway": 1.36,
+     "fairHome": 0.3119,
+     "fairAway": 0.6881,
+     "vigPct": 6.86,
+     "updatedAt": "2026-10-06T01:41:15.513276Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 2.65,
+     "oddsAway": 1.43,
+     "fairHome": 0.3505,
+     "fairAway": 0.6495,
+     "vigPct": 7.67,
+     "updatedAt": "2026-10-06T01:41:54.318685Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 2.8,
+     "oddsAway": 1.42,
+     "fairHome": 0.3365,
+     "fairAway": 0.6635,
+     "vigPct": 6.14,
+     "updatedAt": "2026-10-06T01:40:53.808481Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 2.65,
+     "oddsAway": 1.53,
+     "fairHome": 0.366,
+     "fairAway": 0.634,
+     "vigPct": 3.1,
+     "updatedAt": "2026-10-06T14:55:12.873443Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 3,
+     "oddsAway": 1.36,
+     "fairHome": 0.3119,
+     "fairAway": 0.6881,
+     "vigPct": 6.86,
+     "updatedAt": "2026-10-06T01:41:24.417345Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 2.7,
+     "oddsAway": 1.42,
+     "fairHome": 0.3447,
+     "fairAway": 0.6553,
+     "vigPct": 7.46,
+     "updatedAt": "2026-10-06T01:41:47.013101Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 3,
+     "oddsAway": 1.36,
+     "fairHome": 0.3119,
+     "fairAway": 0.6881,
+     "vigPct": 6.86,
+     "updatedAt": "2026-10-06T01:41:32.038854Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 2.625,
+     "oddsAway": 1.444,
+     "fairHome": 0.3549,
+     "fairAway": 0.6451,
+     "vigPct": 7.35,
+     "updatedAt": "2026-10-06T01:41:39.562362Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 2.8,
+     "oddsAway": 1.44,
+     "fairHome": 0.3396,
+     "fairAway": 0.6604,
+     "vigPct": 5.16,
+     "updatedAt": "2026-10-06T01:40:20.805375Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7165,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T17:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 107,
+    "name": "KK Budućnost VOLI",
+    "shortName": "Budućnost",
+    "countryCode": "ME",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/107/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 66,
+    "name": "Napoli Basket",
+    "shortName": "Napoli",
+    "countryCode": "IT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/66/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.6881,
+    "probAwayWin": 0.3119,
+    "eloHome": 1578,
+    "eloAway": 1414.3,
+    "confidence": "high",
+    "confidenceScore": 0.376,
+    "predictedWinnerId": 107,
+    "predictedWinnerName": "KK Budućnost VOLI",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 1,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 99,
+     "scores_against": 75
+    },
+    "awayStanding": {
+     "position": 3,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 84,
+     "scores_against": 76
+    },
+    "last10ScoredHome": 94,
+    "last10ScoredAway": 92,
+    "last10TotalHome": 171,
+    "last10TotalAway": 177,
+    "venue": {
+     "id": 106,
+     "name": "Sportski Centar Morača",
+     "city": "Podgorica",
+     "country": "Montenegro",
+     "capacity": 6000
+    },
+    "homeCoach": "Andrej Žakelj",
+    "awayCoach": "Jasmin Repeša"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.3,
+     "oddsAway": 3.35,
+     "fairHome": 0.7204,
+     "fairAway": 0.2796,
+     "vigPct": 6.77,
+     "updatedAt": "2026-10-06T01:41:22.464800Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.28,
+     "oddsAway": 3.345,
+     "fairHome": 0.7232,
+     "fairAway": 0.2768,
+     "vigPct": 8.02,
+     "updatedAt": "2026-10-06T01:42:14.416286Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.286,
+     "oddsAway": 3.3,
+     "fairHome": 0.7196,
+     "fairAway": 0.2804,
+     "vigPct": 8.06,
+     "updatedAt": "2026-10-06T01:42:20.050871Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.227,
+     "oddsAway": 3.9,
+     "fairHome": 0.7607,
+     "fairAway": 0.2393,
+     "vigPct": 7.14,
+     "updatedAt": "2026-10-06T01:41:52.495057Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.29,
+     "oddsAway": 3.5,
+     "fairHome": 0.7307,
+     "fairAway": 0.2693,
+     "vigPct": 6.09,
+     "updatedAt": "2026-10-06T01:40:45.018450Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.28,
+     "oddsAway": 3.5,
+     "fairHome": 0.7322,
+     "fairAway": 0.2678,
+     "vigPct": 6.7,
+     "updatedAt": "2026-10-06T01:41:14.517443Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 1.3,
+     "oddsAway": 3.5,
+     "fairHome": 0.7292,
+     "fairAway": 0.2708,
+     "vigPct": 5.49,
+     "updatedAt": "2026-10-06T01:40:36.093063Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:30.225774Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.27,
+     "oddsAway": 3.4,
+     "fairHome": 0.7281,
+     "fairAway": 0.2719,
+     "vigPct": 8.15,
+     "updatedAt": "2026-10-06T01:42:26.121135Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.29,
+     "oddsAway": 3.45,
+     "fairHome": 0.7278,
+     "fairAway": 0.2722,
+     "vigPct": 6.5,
+     "updatedAt": "2026-10-06T01:41:01.096514Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.37,
+     "oddsAway": 3.45,
+     "fairHome": 0.7158,
+     "fairAway": 0.2842,
+     "vigPct": 1.98,
+     "updatedAt": "2026-10-06T14:55:23.869385Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:37.958471Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.27,
+     "oddsAway": 3.5,
+     "fairHome": 0.7338,
+     "fairAway": 0.2662,
+     "vigPct": 7.31,
+     "updatedAt": "2026-10-06T01:42:01.290963Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.34,
+     "oddsAway": 3.1,
+     "fairHome": 0.6982,
+     "fairAway": 0.3018,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T01:41:45.200038Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.3,
+     "oddsAway": 3.4,
+     "fairHome": 0.7234,
+     "fairAway": 0.2766,
+     "vigPct": 6.33,
+     "updatedAt": "2026-10-06T01:40:52.264861Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 1.32,
+     "oddsAway": 3.4,
+     "fairHome": 0.7203,
+     "fairAway": 0.2797,
+     "vigPct": 5.17,
+     "updatedAt": "2026-10-06T01:40:27.824877Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7161,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T17:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 79,
+    "name": "Fraport Skyliners Frankfurt",
+    "shortName": "Frankfurt",
+    "countryCode": "DE",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/79/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 126,
+    "name": "Šiauliai",
+    "shortName": "Šiauliai",
+    "countryCode": "LT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/126/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.4035,
+    "probAwayWin": 0.5965,
+    "eloHome": 1244.6,
+    "eloAway": 1500,
+    "confidence": "medium",
+    "confidenceScore": 0.193,
+    "predictedWinnerId": 126,
+    "predictedWinnerName": "Šiauliai",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 7,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 72,
+     "scores_against": 104
+    },
+    "awayStanding": {
+     "position": 4,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 74,
+     "scores_against": 71
+    },
+    "last10ScoredHome": 80,
+    "last10ScoredAway": 81,
+    "last10TotalHome": 169,
+    "last10TotalAway": 164,
+    "venue": {
+     "id": 75,
+     "name": "Fraport Arena",
+     "city": "Frankfurt",
+     "country": "Germany",
+     "capacity": 5002
+    },
+    "homeCoach": null,
+    "awayCoach": "Zydrunas Urbonas"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T01:42:11.419709Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.47,
+     "oddsAway": 2.504,
+     "fairHome": 0.6301,
+     "fairAway": 0.3699,
+     "vigPct": 7.96,
+     "updatedAt": "2026-10-06T01:42:17.961759Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.47,
+     "oddsAway": 2.5,
+     "fairHome": 0.6297,
+     "fairAway": 0.3703,
+     "vigPct": 8.03,
+     "updatedAt": "2026-10-06T01:42:23.732871Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.454,
+     "oddsAway": 2.6,
+     "fairHome": 0.6413,
+     "fairAway": 0.3587,
+     "vigPct": 7.24,
+     "updatedAt": "2026-10-06T01:41:49.997500Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.5,
+     "oddsAway": 2.55,
+     "fairHome": 0.6296,
+     "fairAway": 0.3704,
+     "vigPct": 5.88,
+     "updatedAt": "2026-10-06T01:40:48.637143Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.48,
+     "oddsAway": 2.55,
+     "fairHome": 0.6328,
+     "fairAway": 0.3672,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T01:41:10.682622Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 1.5,
+     "oddsAway": 2.6,
+     "fairHome": 0.6341,
+     "fairAway": 0.3659,
+     "vigPct": 5.13,
+     "updatedAt": "2026-10-06T01:40:33.094533Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.48,
+     "oddsAway": 2.54,
+     "fairHome": 0.6318,
+     "fairAway": 0.3682,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T01:41:27.214717Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.45,
+     "oddsAway": 2.55,
+     "fairHome": 0.6375,
+     "fairAway": 0.3625,
+     "vigPct": 8.18,
+     "updatedAt": "2026-10-06T01:42:30.115875Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.5,
+     "oddsAway": 2.55,
+     "fairHome": 0.6296,
+     "fairAway": 0.3704,
+     "vigPct": 5.88,
+     "updatedAt": "2026-10-06T01:40:57.408673Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.53,
+     "oddsAway": 3,
+     "fairHome": 0.6623,
+     "fairAway": 0.3377,
+     "vigPct": -1.31,
+     "updatedAt": "2026-10-06T14:55:28.711319Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.48,
+     "oddsAway": 2.54,
+     "fairHome": 0.6318,
+     "fairAway": 0.3682,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T01:41:34.902298Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.48,
+     "oddsAway": 2.55,
+     "fairHome": 0.6328,
+     "fairAway": 0.3672,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T01:41:19.873598Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.48,
+     "oddsAway": 2.54,
+     "fairHome": 0.6318,
+     "fairAway": 0.3682,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T01:41:42.819556Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.444,
+     "oddsAway": 2.625,
+     "fairHome": 0.6451,
+     "fairAway": 0.3549,
+     "vigPct": 7.35,
+     "updatedAt": "2026-10-06T01:41:58.796979Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 1.53,
+     "oddsAway": 2.5,
+     "fairHome": 0.6203,
+     "fairAway": 0.3797,
+     "vigPct": 5.36,
+     "updatedAt": "2026-10-06T01:40:40.587733Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7167,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T17:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 98,
+    "name": "JL Bourg Basket",
+    "shortName": "JL Bourg",
+    "countryCode": "FR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/98/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 123,
+    "name": "Tofaş Bursa",
+    "shortName": "Tofaş",
+    "countryCode": "TR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/123/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.6979,
+    "probAwayWin": 0.3021,
+    "eloHome": 1671.3,
+    "eloAway": 1500,
+    "confidence": "high",
+    "confidenceScore": 0.396,
+    "predictedWinnerId": 98,
+    "predictedWinnerName": "JL Bourg Basket",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 6,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 76,
+     "scores_against": 84
+    },
+    "awayStanding": {
+     "position": 2,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 82,
+     "scores_against": 69
+    },
+    "last10ScoredHome": 86,
+    "last10ScoredAway": 89,
+    "last10TotalHome": 175,
+    "last10TotalAway": 174,
+    "venue": {
+     "id": 108,
+     "name": "Ekinox",
+     "city": "Bourg-En-Bresse",
+     "country": "France",
+     "capacity": 3548
+    },
+    "homeCoach": "Frédéric Fauthoux",
+    "awayCoach": "Murat Huseyin Yilmaz"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.4,
+     "oddsAway": 2.8,
+     "fairHome": 0.6667,
+     "fairAway": 0.3333,
+     "vigPct": 7.14,
+     "updatedAt": "2026-10-06T01:41:27.619157Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.42,
+     "oddsAway": 2.655,
+     "fairHome": 0.6515,
+     "fairAway": 0.3485,
+     "vigPct": 8.09,
+     "updatedAt": "2026-10-06T01:42:35.814356Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T01:42:24.524027Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.454,
+     "oddsAway": 2.6,
+     "fairHome": 0.6413,
+     "fairAway": 0.3587,
+     "vigPct": 7.24,
+     "updatedAt": "2026-10-06T01:41:35.322392Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.45,
+     "oddsAway": 2.72,
+     "fairHome": 0.6523,
+     "fairAway": 0.3477,
+     "vigPct": 5.73,
+     "updatedAt": "2026-10-06T01:40:57.136241Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.42,
+     "oddsAway": 2.8,
+     "fairHome": 0.6635,
+     "fairAway": 0.3365,
+     "vigPct": 6.14,
+     "updatedAt": "2026-10-06T01:41:20.127486Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 1.444,
+     "oddsAway": 2.75,
+     "fairHome": 0.6557,
+     "fairAway": 0.3443,
+     "vigPct": 5.62,
+     "updatedAt": "2026-10-06T01:40:48.965870Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T01:41:42.868027Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.43,
+     "oddsAway": 2.65,
+     "fairHome": 0.6495,
+     "fairAway": 0.3505,
+     "vigPct": 7.67,
+     "updatedAt": "2026-10-06T01:42:19.018732Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.7,
+     "fairHome": 0.6506,
+     "fairAway": 0.3494,
+     "vigPct": 6,
+     "updatedAt": "2026-10-06T01:41:11.070198Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.454,
+     "oddsAway": 3,
+     "fairHome": 0.6736,
+     "fairAway": 0.3264,
+     "vigPct": 2.11,
+     "updatedAt": "2026-10-06T14:55:33.227494Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T01:41:50.028615Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.42,
+     "oddsAway": 2.7,
+     "fairHome": 0.6553,
+     "fairAway": 0.3447,
+     "vigPct": 7.46,
+     "updatedAt": "2026-10-06T01:42:12.061161Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T01:41:58.909366Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T01:42:30.767396Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 1.44,
+     "oddsAway": 2.8,
+     "fairHome": 0.6604,
+     "fairAway": 0.3396,
+     "vigPct": 5.16,
+     "updatedAt": "2026-10-06T01:40:41.030848Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 9879,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T17:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 148,
+    "name": "KK Bosna",
+    "shortName": "Bosna",
+    "countryCode": "BA",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/148/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 128,
+    "name": "PAOK BC",
+    "shortName": "PAOK",
+    "countryCode": "GR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/128/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.6083,
+    "probAwayWin": 0.3917,
+    "eloHome": 1500,
+    "eloAway": 1500,
+    "confidence": "medium",
+    "confidenceScore": 0.217,
+    "predictedWinnerId": 148,
+    "predictedWinnerName": "KK Bosna",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 5,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 72,
+     "scores_against": 75
+    },
+    "awayStanding": {
+     "position": 1,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 93,
+     "scores_against": 78
+    },
+    "last10ScoredHome": 83,
+    "last10ScoredAway": 91,
+    "last10TotalHome": 164,
+    "last10TotalAway": 177,
+    "venue": {
+     "id": 107,
+     "name": "Mirza Delibasic Hall",
+     "city": "Sarajevo",
+     "country": "Bosnia & Herzegovina",
+     "capacity": 6500
+    },
+    "homeCoach": "Dario Gjergja",
+    "awayCoach": "Andrea Trinchieri"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 5.75,
+     "oddsAway": 1.111,
+     "fairHome": 0.1619,
+     "fairAway": 0.8381,
+     "vigPct": 7.4,
+     "updatedAt": "2026-10-06T01:42:25.491138Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 5.15,
+     "oddsAway": 1.119,
+     "fairHome": 0.1785,
+     "fairAway": 0.8215,
+     "vigPct": 8.78,
+     "updatedAt": "2026-10-06T01:42:36.353971Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 6,
+     "oddsAway": 1.111,
+     "fairHome": 0.1562,
+     "fairAway": 0.8438,
+     "vigPct": 6.68,
+     "updatedAt": "2026-10-06T01:41:37.990081Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 6.75,
+     "oddsAway": 1.09,
+     "fairHome": 0.139,
+     "fairAway": 0.861,
+     "vigPct": 6.56,
+     "updatedAt": "2026-10-06T01:41:30.102009Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 6.1,
+     "oddsAway": 1.11,
+     "fairHome": 0.154,
+     "fairAway": 0.846,
+     "vigPct": 6.48,
+     "updatedAt": "2026-10-06T01:41:22.427046Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 6.5,
+     "oddsAway": 1.1,
+     "fairHome": 0.1447,
+     "fairAway": 0.8553,
+     "vigPct": 6.29,
+     "updatedAt": "2026-10-06T01:41:13.262397Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 6,
+     "oddsAway": 1.12,
+     "fairHome": 0.1573,
+     "fairAway": 0.8427,
+     "vigPct": 5.95,
+     "updatedAt": "2026-10-06T01:40:51.337133Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 5,
+     "oddsAway": 1.15,
+     "fairHome": 0.187,
+     "fairAway": 0.813,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T01:42:00.559853Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 6,
+     "oddsAway": 1.1,
+     "fairHome": 0.1549,
+     "fairAway": 0.8451,
+     "vigPct": 7.58,
+     "updatedAt": "2026-10-06T01:42:31.272564Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 5.4,
+     "oddsAway": 1.14,
+     "fairHome": 0.1743,
+     "fairAway": 0.8257,
+     "vigPct": 6.24,
+     "updatedAt": "2026-10-06T01:40:59.719236Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 6,
+     "oddsAway": 1.2,
+     "fairHome": 0.1667,
+     "fairAway": 0.8333,
+     "vigPct": 0,
+     "updatedAt": "2026-10-06T14:55:36.618507Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 5,
+     "oddsAway": 1.15,
+     "fairHome": 0.187,
+     "fairAway": 0.813,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T01:42:13.567329Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 6.25,
+     "oddsAway": 1.1,
+     "fairHome": 0.1497,
+     "fairAway": 0.8503,
+     "vigPct": 6.91,
+     "updatedAt": "2026-10-06T01:41:52.406138Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 5,
+     "oddsAway": 1.15,
+     "fairHome": 0.187,
+     "fairAway": 0.813,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T01:42:19.373262Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 6,
+     "oddsAway": 1.111,
+     "fairHome": 0.1562,
+     "fairAway": 0.8438,
+     "vigPct": 6.68,
+     "updatedAt": "2026-10-06T01:41:45.319124Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 5.25,
+     "oddsAway": 1.16,
+     "fairHome": 0.181,
+     "fairAway": 0.819,
+     "vigPct": 5.25,
+     "updatedAt": "2026-10-06T01:40:43.687229Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7163,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T18:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 83,
+    "name": "Rostock Seawolves",
+    "shortName": "Rostock Seawolves",
+    "countryCode": "DE",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/83/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 125,
+    "name": "Rīgas Zeļļi",
+    "shortName": "Zeļļi",
+    "countryCode": "LV",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/125/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.5687,
+    "probAwayWin": 0.4313,
+    "eloHome": 1481.5,
+    "eloAway": 1500,
+    "confidence": "low",
+    "confidenceScore": 0.137,
+    "predictedWinnerId": 83,
+    "predictedWinnerName": "Rostock Seawolves",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 8,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 73,
+     "scores_against": 94
+    },
+    "awayStanding": {
+     "position": 4,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 86,
+     "scores_against": 84
+    },
+    "last10ScoredHome": 86,
+    "last10ScoredAway": 94,
+    "last10TotalHome": 168,
+    "last10TotalAway": 179,
+    "venue": {
+     "id": 61,
+     "name": "StadtHalle Rostock",
+     "city": "Rostock",
+     "country": "Germany",
+     "capacity": 4550
+    },
+    "homeCoach": "Przemyslaw Frasunkiewicz",
+    "awayCoach": null
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.285,
+     "oddsAway": 3.55,
+     "fairHome": 0.7342,
+     "fairAway": 0.2658,
+     "vigPct": 5.99,
+     "updatedAt": "2026-10-06T01:56:42.869167Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.26,
+     "oddsAway": 3.485,
+     "fairHome": 0.7345,
+     "fairAway": 0.2655,
+     "vigPct": 8.06,
+     "updatedAt": "2026-10-06T01:57:38.010273Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.286,
+     "oddsAway": 3.3,
+     "fairHome": 0.7196,
+     "fairAway": 0.2804,
+     "vigPct": 8.06,
+     "updatedAt": "2026-10-06T01:57:44.040941Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.25,
+     "oddsAway": 3.7,
+     "fairHome": 0.7475,
+     "fairAway": 0.2525,
+     "vigPct": 7.03,
+     "updatedAt": "2026-10-06T01:57:13.923082Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.25,
+     "oddsAway": 3.85,
+     "fairHome": 0.7549,
+     "fairAway": 0.2451,
+     "vigPct": 5.97,
+     "updatedAt": "2026-10-06T01:56:36.255666Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.26,
+     "oddsAway": 3.7,
+     "fairHome": 0.746,
+     "fairAway": 0.254,
+     "vigPct": 6.39,
+     "updatedAt": "2026-10-06T01:56:55.540870Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 1.3,
+     "oddsAway": 3.5,
+     "fairHome": 0.7292,
+     "fairAway": 0.2708,
+     "vigPct": 5.49,
+     "updatedAt": "2026-10-06T01:56:22.932163Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.3,
+     "oddsAway": 3.3,
+     "fairHome": 0.7174,
+     "fairAway": 0.2826,
+     "vigPct": 7.23,
+     "updatedAt": "2026-10-06T01:57:20.878719Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.27,
+     "oddsAway": 3.4,
+     "fairHome": 0.7281,
+     "fairAway": 0.2719,
+     "vigPct": 8.15,
+     "updatedAt": "2026-10-06T01:57:48.914342Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.24,
+     "oddsAway": 3.9,
+     "fairHome": 0.7588,
+     "fairAway": 0.2412,
+     "vigPct": 6.29,
+     "updatedAt": "2026-10-06T01:56:48.910824Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.32,
+     "oddsAway": 4.333,
+     "fairHome": 0.7665,
+     "fairAway": 0.2335,
+     "vigPct": -1.16,
+     "updatedAt": "2026-10-06T14:55:40.154253Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.3,
+     "oddsAway": 3.3,
+     "fairHome": 0.7174,
+     "fairAway": 0.2826,
+     "vigPct": 7.23,
+     "updatedAt": "2026-10-06T01:57:26.682537Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.27,
+     "oddsAway": 3.6,
+     "fairHome": 0.7392,
+     "fairAway": 0.2608,
+     "vigPct": 6.52,
+     "updatedAt": "2026-10-06T01:57:04.112043Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.3,
+     "oddsAway": 3.3,
+     "fairHome": 0.7174,
+     "fairAway": 0.2826,
+     "vigPct": 7.23,
+     "updatedAt": "2026-10-06T01:57:32.334028Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.333,
+     "oddsAway": 3.25,
+     "fairHome": 0.7091,
+     "fairAway": 0.2909,
+     "vigPct": 5.79,
+     "updatedAt": "2026-10-06T01:56:29.559334Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 1.27,
+     "oddsAway": 3.75,
+     "fairHome": 0.747,
+     "fairAway": 0.253,
+     "vigPct": 5.41,
+     "updatedAt": "2026-10-06T01:56:15.853270Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7166,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T18:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 76,
+    "name": "Dolomiti Energia Trento",
+    "shortName": "Trento",
+    "countryCode": "IT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/76/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 105,
+    "name": "Śląsk Wrocław",
+    "shortName": "Śląsk",
+    "countryCode": "PL",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/105/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.7477,
+    "probAwayWin": 0.2523,
+    "eloHome": 1498.5,
+    "eloAway": 1286.2,
+    "confidence": "high",
+    "confidenceScore": 0.495,
+    "predictedWinnerId": 76,
+    "predictedWinnerName": "Dolomiti Energia Trento",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 4,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 76,
+     "scores_against": 73
+    },
+    "awayStanding": {
+     "position": 8,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 75,
+     "scores_against": 99
+    },
+    "last10ScoredHome": 86,
+    "last10ScoredAway": 80,
+    "last10TotalHome": 172,
+    "last10TotalAway": 164,
+    "venue": {
+     "id": 40,
+     "name": "ilT quotidiano Arena",
+     "city": "Trento",
+     "country": "Italy",
+     "capacity": 4360
+    },
+    "homeCoach": "Massimo Cancellieri",
+    "awayCoach": "Ainars Bagatskis"
+   },
+   "odds": [
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.28,
+     "oddsAway": 3.4,
+     "fairHome": 0.7265,
+     "fairAway": 0.2735,
+     "vigPct": 7.54,
+     "updatedAt": "2026-10-05T01:42:54.732341Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.12,
+     "oddsAway": 7,
+     "fairHome": 0.8621,
+     "fairAway": 0.1379,
+     "vigPct": 3.57,
+     "updatedAt": "2026-10-06T14:55:43.938025Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7169,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T18:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 44,
+    "name": "Monaco Basket",
+    "shortName": "Monaco Basket",
+    "countryCode": "MC",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/44/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 128,
+    "name": "PAOK BC",
+    "shortName": "PAOK",
+    "countryCode": "GR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/128/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.6923,
+    "probAwayWin": 0.3077,
+    "eloHome": 1700.2,
+    "eloAway": 1500,
+    "confidence": "high",
+    "confidenceScore": 0.385,
+    "predictedWinnerId": 44,
+    "predictedWinnerName": "Monaco Basket",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": null,
+    "awayStanding": {
+     "position": 1,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 93,
+     "scores_against": 78
+    },
+    "last10ScoredHome": null,
+    "last10ScoredAway": null,
+    "last10TotalHome": null,
+    "last10TotalAway": null,
+    "venue": null,
+    "homeCoach": null,
+    "awayCoach": null
+   },
+   "odds": [],
+   "oddsSource": null
+  },
+  {
+   "bsdEventId": 7172,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-06T18:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 99,
+    "name": "London Lions",
+    "shortName": "London Lions",
+    "countryCode": "EN",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/99/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 57,
+    "name": "La Laguna Tenerife",
+    "shortName": "La Laguna Tenerife",
+    "countryCode": "ES",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/57/",
+     "available": true
+    }
+   },
+   "prediction": {
+    "probHomeWin": 0.4762,
+    "probAwayWin": 0.5238,
+    "eloHome": 1408.6,
+    "eloAway": 1578.3,
+    "confidence": "very_low",
+    "confidenceScore": 0.048,
+    "predictedWinnerId": 57,
+    "predictedWinnerName": "La Laguna Tenerife",
+    "modelVersion": "catboost-v1 (tier3)",
+    "rejectedFields": [
+     "prob_over_205",
+     "prob_over_215",
+     "prob_over_225",
+     "prob_favorite_wins"
+    ]
+   },
+   "predictionSource": "bsd",
+   "pregame": {
+    "homeStanding": {
+     "position": 5,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 71,
+     "scores_against": 74
+    },
+    "awayStanding": {
+     "position": 3,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 82,
+     "scores_against": 75
+    },
+    "last10ScoredHome": 83,
+    "last10ScoredAway": 86,
+    "last10TotalHome": 154,
+    "last10TotalAway": 173,
+    "venue": {
+     "id": 109,
+     "name": "Copper Box Arena",
+     "city": "London",
+     "country": "England",
+     "capacity": 6000
+    },
+    "homeCoach": "Tautvydas Sabonis",
+    "awayCoach": "Txus Vidorreta"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 2.5,
+     "oddsAway": 1.5,
+     "fairHome": 0.375,
+     "fairAway": 0.625,
+     "vigPct": 6.67,
+     "updatedAt": "2026-10-06T02:13:21.097919Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 2.474,
+     "oddsAway": 1.48,
+     "fairHome": 0.3743,
+     "fairAway": 0.6257,
+     "vigPct": 7.99,
+     "updatedAt": "2026-10-06T02:13:48.790414Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 2.375,
+     "oddsAway": 1.5,
+     "fairHome": 0.3871,
+     "fairAway": 0.6129,
+     "vigPct": 8.77,
+     "updatedAt": "2026-10-06T02:13:57.922979Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 2.35,
+     "oddsAway": 1.54,
+     "fairHome": 0.3959,
+     "fairAway": 0.6041,
+     "vigPct": 7.49,
+     "updatedAt": "2026-10-06T02:13:45.206261Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 2.47,
+     "oddsAway": 1.53,
+     "fairHome": 0.3825,
+     "fairAway": 0.6175,
+     "vigPct": 5.85,
+     "updatedAt": "2026-10-06T02:12:52.512374Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 2.48,
+     "oddsAway": 1.52,
+     "fairHome": 0.38,
+     "fairAway": 0.62,
+     "vigPct": 6.11,
+     "updatedAt": "2026-10-06T02:12:58.571974Z"
+    },
+    {
+     "bookmaker": "Betway",
+     "slug": "betway",
+     "oddsHome": 2.5,
+     "oddsAway": 1.55,
+     "fairHome": 0.3827,
+     "fairAway": 0.6173,
+     "vigPct": 4.52,
+     "updatedAt": "2026-10-06T02:12:42.233558Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 2.4,
+     "oddsAway": 1.53,
+     "fairHome": 0.3893,
+     "fairAway": 0.6107,
+     "vigPct": 7.03,
+     "updatedAt": "2026-10-06T02:13:26.237327Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 2.4,
+     "oddsAway": 1.5,
+     "fairHome": 0.3846,
+     "fairAway": 0.6154,
+     "vigPct": 8.33,
+     "updatedAt": "2026-10-06T02:13:52.963828Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 2.45,
+     "oddsAway": 1.52,
+     "fairHome": 0.3829,
+     "fairAway": 0.6171,
+     "vigPct": 6.61,
+     "updatedAt": "2026-10-06T02:13:07.646240Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 2.8,
+     "oddsAway": 1.476,
+     "fairHome": 0.3452,
+     "fairAway": 0.6548,
+     "vigPct": 3.46,
+     "updatedAt": "2026-10-06T14:55:47.479824Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 2.4,
+     "oddsAway": 1.53,
+     "fairHome": 0.3893,
+     "fairAway": 0.6107,
+     "vigPct": 7.03,
+     "updatedAt": "2026-10-06T02:13:31.449789Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 2.45,
+     "oddsAway": 1.52,
+     "fairHome": 0.3829,
+     "fairAway": 0.6171,
+     "vigPct": 6.61,
+     "updatedAt": "2026-10-06T02:13:14.914299Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 2.4,
+     "oddsAway": 1.53,
+     "fairHome": 0.3893,
+     "fairAway": 0.6107,
+     "vigPct": 7.03,
+     "updatedAt": "2026-10-06T02:13:35.751595Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 2.375,
+     "oddsAway": 1.533,
+     "fairHome": 0.3923,
+     "fairAway": 0.6077,
+     "vigPct": 7.34,
+     "updatedAt": "2026-10-06T02:13:40.742772Z"
+    },
+    {
+     "bookmaker": "fonbet",
+     "slug": "fonbet",
+     "oddsHome": 2.5,
+     "oddsAway": 1.53,
+     "fairHome": 0.3797,
+     "fairAway": 0.6203,
+     "vigPct": 5.36,
+     "updatedAt": "2026-10-06T02:12:47.491592Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7164,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T16:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 97,
+    "name": "U-Banca Transilvania Cluj-Napoca",
+    "shortName": "U-BT Cluj-Napoca",
+    "countryCode": "RO",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/97/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 68,
+    "name": "Umana Reyer Venezia",
+    "shortName": "Venezia",
+    "countryCode": "IT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/68/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 8,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 55,
+     "scores_against": 89
+    },
+    "awayStanding": {
+     "position": 2,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 104,
+     "scores_against": 72
+    },
+    "last10ScoredHome": 83,
+    "last10ScoredAway": 89,
+    "last10TotalHome": 170,
+    "last10TotalAway": 176,
+    "venue": {
+     "id": 113,
+     "name": "BT Arena",
+     "city": "Cluj Napoca",
+     "country": "Romania",
+     "capacity": 10000
+    },
+    "homeCoach": "Mihai Silvășan",
+    "awayCoach": "Neven Spahija"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 2.6,
+     "oddsAway": 1.45,
+     "fairHome": 0.358,
+     "fairAway": 0.642,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T02:15:42.605927Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 2.624,
+     "oddsAway": 1.45,
+     "fairHome": 0.3559,
+     "fairAway": 0.6441,
+     "vigPct": 7.08,
+     "updatedAt": "2026-10-06T02:15:09.736229Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 2.6,
+     "oddsAway": 1.45,
+     "fairHome": 0.358,
+     "fairAway": 0.642,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T02:15:49.701589Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 2.6,
+     "oddsAway": 1.454,
+     "fairHome": 0.3587,
+     "fairAway": 0.6413,
+     "vigPct": 7.24,
+     "updatedAt": "2026-10-06T02:15:17.858906Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 2.52,
+     "oddsAway": 1.47,
+     "fairHome": 0.3684,
+     "fairAway": 0.6316,
+     "vigPct": 7.71,
+     "updatedAt": "2026-10-06T02:15:55.938492Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 2.55,
+     "oddsAway": 1.48,
+     "fairHome": 0.3672,
+     "fairAway": 0.6328,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T02:14:51.380431Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 2.5,
+     "oddsAway": 1.5,
+     "fairHome": 0.375,
+     "fairAway": 0.625,
+     "vigPct": 6.67,
+     "updatedAt": "2026-10-06T02:14:32.474724Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 2.55,
+     "oddsAway": 1.45,
+     "fairHome": 0.3625,
+     "fairAway": 0.6375,
+     "vigPct": 8.18,
+     "updatedAt": "2026-10-06T02:16:05.364927Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 2.55,
+     "oddsAway": 1.47,
+     "fairHome": 0.3657,
+     "fairAway": 0.6343,
+     "vigPct": 7.24,
+     "updatedAt": "2026-10-06T02:15:27.576209Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 2.625,
+     "oddsAway": 1.53,
+     "fairHome": 0.3682,
+     "fairAway": 0.6318,
+     "vigPct": 3.45,
+     "updatedAt": "2026-10-06T14:57:25.717376Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 2.5,
+     "oddsAway": 1.5,
+     "fairHome": 0.375,
+     "fairAway": 0.625,
+     "vigPct": 6.67,
+     "updatedAt": "2026-10-06T02:14:39.118447Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 2.55,
+     "oddsAway": 1.48,
+     "fairHome": 0.3672,
+     "fairAway": 0.6328,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T02:14:58.281162Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 2.5,
+     "oddsAway": 1.5,
+     "fairHome": 0.375,
+     "fairAway": 0.625,
+     "vigPct": 6.67,
+     "updatedAt": "2026-10-06T02:14:45.478170Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 2.625,
+     "oddsAway": 1.444,
+     "fairHome": 0.3549,
+     "fairAway": 0.6451,
+     "vigPct": 7.35,
+     "updatedAt": "2026-10-06T02:15:35.407552Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7171,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T16:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 129,
+    "name": "Balkan Botevgrad",
+    "shortName": "Balkan Botevgrad",
+    "countryCode": "BG",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/129/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 108,
+    "name": "Bahçeşehir Koleji",
+    "shortName": "Bahçeşehir Koleji",
+    "countryCode": "TR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/108/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 7,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 84,
+     "scores_against": 98
+    },
+    "awayStanding": {
+     "position": 3,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 91,
+     "scores_against": 78
+    },
+    "last10ScoredHome": null,
+    "last10ScoredAway": null,
+    "last10TotalHome": 166,
+    "last10TotalAway": 163,
+    "venue": {
+     "id": 110,
+     "name": "Arena Botevgrad",
+     "city": "Botevgrad",
+     "country": "Bulgaria",
+     "capacity": 3200
+    },
+    "homeCoach": null,
+    "awayCoach": null
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 9,
+     "oddsAway": 1.04,
+     "fairHome": 0.1036,
+     "fairAway": 0.8964,
+     "vigPct": 7.26,
+     "updatedAt": "2026-10-06T02:15:31.136379Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 9.5,
+     "oddsAway": 1.04,
+     "fairHome": 0.0987,
+     "fairAway": 0.9013,
+     "vigPct": 6.68,
+     "updatedAt": "2026-10-06T02:14:48.632825Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 9,
+     "oddsAway": 1.05,
+     "fairHome": 0.1045,
+     "fairAway": 0.8955,
+     "vigPct": 6.35,
+     "updatedAt": "2026-10-06T02:14:37.105562Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 9,
+     "oddsAway": 1.04,
+     "fairHome": 0.1036,
+     "fairAway": 0.8964,
+     "vigPct": 7.26,
+     "updatedAt": "2026-10-06T02:15:38.739098Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 7.7,
+     "oddsAway": 1.05,
+     "fairHome": 0.12,
+     "fairAway": 0.88,
+     "vigPct": 8.23,
+     "updatedAt": "2026-10-06T02:15:59.734502Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 10,
+     "oddsAway": 1.04,
+     "fairHome": 0.0942,
+     "fairAway": 0.9058,
+     "vigPct": 6.15,
+     "updatedAt": "2026-10-06T02:14:30.493343Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 7,
+     "oddsAway": 1.08,
+     "fairHome": 0.1337,
+     "fairAway": 0.8663,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T02:14:55.123244Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 8,
+     "oddsAway": 1.05,
+     "fairHome": 0.116,
+     "fairAway": 0.884,
+     "vigPct": 7.74,
+     "updatedAt": "2026-10-06T02:15:52.761148Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 9.1,
+     "oddsAway": 1.04,
+     "fairHome": 0.1026,
+     "fairAway": 0.8974,
+     "vigPct": 7.14,
+     "updatedAt": "2026-10-06T02:15:21.823553Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 10,
+     "oddsAway": 1.08,
+     "fairHome": 0.0975,
+     "fairAway": 0.9025,
+     "vigPct": 2.59,
+     "updatedAt": "2026-10-06T14:57:21.183921Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 7,
+     "oddsAway": 1.08,
+     "fairHome": 0.1337,
+     "fairAway": 0.8663,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T02:15:00.673509Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 9,
+     "oddsAway": 1.04,
+     "fairHome": 0.1036,
+     "fairAway": 0.8964,
+     "vigPct": 7.26,
+     "updatedAt": "2026-10-06T02:15:46.124893Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 7,
+     "oddsAway": 1.08,
+     "fairHome": 0.1337,
+     "fairAway": 0.8663,
+     "vigPct": 6.88,
+     "updatedAt": "2026-10-06T02:15:13.868898Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 8,
+     "oddsAway": 1.063,
+     "fairHome": 0.1173,
+     "fairAway": 0.8827,
+     "vigPct": 6.57,
+     "updatedAt": "2026-10-06T02:14:43.632583Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7168,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T17:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 81,
+    "name": "BV Chemnitz 99",
+    "shortName": "Chemnitz",
+    "countryCode": "DE",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/81/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 101,
+    "name": "Klaipėdos Neptūnas",
+    "shortName": "Neptūnas",
+    "countryCode": "LT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/101/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 7,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 69,
+     "scores_against": 82
+    },
+    "awayStanding": {
+     "position": 5,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 73,
+     "scores_against": 76
+    },
+    "last10ScoredHome": 82,
+    "last10ScoredAway": 81,
+    "last10TotalHome": 167,
+    "last10TotalAway": 161,
+    "venue": {
+     "id": 77,
+     "name": "Messe Chemnitz",
+     "city": "Chemnitz",
+     "country": "Germany",
+     "capacity": 5200
+    },
+    "homeCoach": "Steffen Herhold",
+    "awayCoach": "Gediminas Petrauskas"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.4,
+     "oddsAway": 2.8,
+     "fairHome": 0.6667,
+     "fairAway": 0.3333,
+     "vigPct": 7.14,
+     "updatedAt": "2026-10-06T02:15:28.458826Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.37,
+     "oddsAway": 2.888,
+     "fairHome": 0.6783,
+     "fairAway": 0.3217,
+     "vigPct": 7.62,
+     "updatedAt": "2026-10-06T02:16:19.603772Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T02:16:26.504136Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T02:16:33.330360Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.4,
+     "oddsAway": 2.7,
+     "fairHome": 0.6585,
+     "fairAway": 0.3415,
+     "vigPct": 8.47,
+     "updatedAt": "2026-10-06T02:16:52.456712Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.42,
+     "oddsAway": 2.8,
+     "fairHome": 0.6635,
+     "fairAway": 0.3365,
+     "vigPct": 6.14,
+     "updatedAt": "2026-10-06T02:15:19.606180Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.44,
+     "oddsAway": 2.65,
+     "fairHome": 0.6479,
+     "fairAway": 0.3521,
+     "vigPct": 7.18,
+     "updatedAt": "2026-10-06T02:15:43.416582Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T02:16:39.709256Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.41,
+     "oddsAway": 2.75,
+     "fairHome": 0.6611,
+     "fairAway": 0.3389,
+     "vigPct": 7.29,
+     "updatedAt": "2026-10-06T02:16:11.395993Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.44,
+     "oddsAway": 2.864,
+     "fairHome": 0.6654,
+     "fairAway": 0.3346,
+     "vigPct": 4.36,
+     "updatedAt": "2026-10-06T14:57:33.820403Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.44,
+     "oddsAway": 2.65,
+     "fairHome": 0.6479,
+     "fairAway": 0.3521,
+     "vigPct": 7.18,
+     "updatedAt": "2026-10-06T02:15:50.693411Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.4,
+     "oddsAway": 2.8,
+     "fairHome": 0.6667,
+     "fairAway": 0.3333,
+     "vigPct": 7.14,
+     "updatedAt": "2026-10-06T02:15:35.806869Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.44,
+     "oddsAway": 2.65,
+     "fairHome": 0.6479,
+     "fairAway": 0.3521,
+     "vigPct": 7.18,
+     "updatedAt": "2026-10-06T02:15:57.441285Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.4,
+     "oddsAway": 2.75,
+     "fairHome": 0.6627,
+     "fairAway": 0.3373,
+     "vigPct": 7.79,
+     "updatedAt": "2026-10-06T02:16:46.009337Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7173,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T17:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 100,
+    "name": "Aris BC",
+    "shortName": "Aris",
+    "countryCode": "GR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/100/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 54,
+    "name": "Hereda San Pablo Burgos",
+    "shortName": "San Pablo",
+    "countryCode": "ES",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/54/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 2,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 87,
+     "scores_against": 74
+    },
+    "awayStanding": {
+     "position": 3,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 85,
+     "scores_against": 81
+    },
+    "last10ScoredHome": 87,
+    "last10ScoredAway": 92,
+    "last10TotalHome": 169,
+    "last10TotalAway": 181,
+    "venue": {
+     "id": 112,
+     "name": "Alexandreio Melathro Arena",
+     "city": "Thessaloniki",
+     "country": "Greece",
+     "capacity": 5138
+    },
+    "homeCoach": "Nikos Vetoulas",
+    "awayCoach": "Porfi Fisac"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.222,
+     "oddsAway": 3.95,
+     "fairHome": 0.7637,
+     "fairAway": 0.2363,
+     "vigPct": 7.15,
+     "updatedAt": "2026-10-06T02:15:59.668494Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.21,
+     "oddsAway": 3.99,
+     "fairHome": 0.7673,
+     "fairAway": 0.2327,
+     "vigPct": 7.71,
+     "updatedAt": "2026-10-06T02:16:28.082459Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.222,
+     "oddsAway": 3.75,
+     "fairHome": 0.7542,
+     "fairAway": 0.2458,
+     "vigPct": 8.5,
+     "updatedAt": "2026-10-06T02:16:47.562805Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.222,
+     "oddsAway": 3.9,
+     "fairHome": 0.7614,
+     "fairAway": 0.2386,
+     "vigPct": 7.47,
+     "updatedAt": "2026-10-06T02:16:13.923697Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.23,
+     "oddsAway": 3.7,
+     "fairHome": 0.7505,
+     "fairAway": 0.2495,
+     "vigPct": 8.33,
+     "updatedAt": "2026-10-06T02:16:41.281144Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.22,
+     "oddsAway": 4.05,
+     "fairHome": 0.7685,
+     "fairAway": 0.2315,
+     "vigPct": 6.66,
+     "updatedAt": "2026-10-06T02:15:21.656297Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.28,
+     "oddsAway": 3.5,
+     "fairHome": 0.7322,
+     "fairAway": 0.2678,
+     "vigPct": 6.7,
+     "updatedAt": "2026-10-06T02:15:38.634736Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.22,
+     "oddsAway": 3.8,
+     "fairHome": 0.757,
+     "fairAway": 0.243,
+     "vigPct": 8.28,
+     "updatedAt": "2026-10-06T02:16:34.625613Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.24,
+     "oddsAway": 3.85,
+     "fairHome": 0.7564,
+     "fairAway": 0.2436,
+     "vigPct": 6.62,
+     "updatedAt": "2026-10-06T02:15:13.483522Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.28,
+     "oddsAway": 4.075,
+     "fairHome": 0.761,
+     "fairAway": 0.239,
+     "vigPct": 2.66,
+     "updatedAt": "2026-10-06T14:57:29.909671Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.28,
+     "oddsAway": 3.5,
+     "fairHome": 0.7322,
+     "fairAway": 0.2678,
+     "vigPct": 6.7,
+     "updatedAt": "2026-10-06T02:15:46.197844Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.22,
+     "oddsAway": 3.9,
+     "fairHome": 0.7617,
+     "fairAway": 0.2383,
+     "vigPct": 7.61,
+     "updatedAt": "2026-10-06T02:16:21.200572Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.28,
+     "oddsAway": 3.5,
+     "fairHome": 0.7322,
+     "fairAway": 0.2678,
+     "vigPct": 6.7,
+     "updatedAt": "2026-10-06T02:15:52.949433Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.25,
+     "oddsAway": 3.75,
+     "fairHome": 0.75,
+     "fairAway": 0.25,
+     "vigPct": 6.67,
+     "updatedAt": "2026-10-06T02:15:31.220350Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7174,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T17:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 65,
+    "name": "Bertram Derthona Tortona",
+    "shortName": "Tortona",
+    "countryCode": "IT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/65/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 124,
+    "name": "Le Mans Sarthe Basket",
+    "shortName": "Le Mans",
+    "countryCode": "FR",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/124/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 5,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 84,
+     "scores_against": 86
+    },
+    "awayStanding": {
+     "position": 7,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 74,
+     "scores_against": 87
+    },
+    "last10ScoredHome": 84,
+    "last10ScoredAway": 87,
+    "last10TotalHome": 171,
+    "last10TotalAway": 169,
+    "venue": {
+     "id": 41,
+     "name": "Nova Arena Tortona",
+     "city": "Tortona",
+     "country": "Italy",
+     "capacity": 5000
+    },
+    "homeCoach": "Mario Fioretti",
+    "awayCoach": "Guillaume Vizade"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T02:31:28.390589Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.45,
+     "oddsAway": 2.624,
+     "fairHome": 0.6441,
+     "fairAway": 0.3559,
+     "vigPct": 7.08,
+     "updatedAt": "2026-10-06T02:31:09.774745Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.45,
+     "oddsAway": 2.6,
+     "fairHome": 0.642,
+     "fairAway": 0.358,
+     "vigPct": 7.43,
+     "updatedAt": "2026-10-06T02:31:33.866543Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.454,
+     "oddsAway": 2.6,
+     "fairHome": 0.6413,
+     "fairAway": 0.3587,
+     "vigPct": 7.24,
+     "updatedAt": "2026-10-06T02:31:16.180241Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.47,
+     "oddsAway": 2.5,
+     "fairHome": 0.6297,
+     "fairAway": 0.3703,
+     "vigPct": 8.03,
+     "updatedAt": "2026-10-06T02:31:58.082288Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.48,
+     "oddsAway": 2.55,
+     "fairHome": 0.6328,
+     "fairAway": 0.3672,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T02:30:53.588176Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.5,
+     "oddsAway": 2.45,
+     "fairHome": 0.6203,
+     "fairAway": 0.3797,
+     "vigPct": 7.48,
+     "updatedAt": "2026-10-06T02:31:39.340431Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.45,
+     "oddsAway": 2.55,
+     "fairHome": 0.6375,
+     "fairAway": 0.3625,
+     "vigPct": 8.18,
+     "updatedAt": "2026-10-06T02:32:06.077643Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.48,
+     "oddsAway": 2.5,
+     "fairHome": 0.6281,
+     "fairAway": 0.3719,
+     "vigPct": 7.57,
+     "updatedAt": "2026-10-06T02:31:53.778542Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.53,
+     "oddsAway": 2.625,
+     "fairHome": 0.6318,
+     "fairAway": 0.3682,
+     "vigPct": 3.45,
+     "updatedAt": "2026-10-06T14:57:37.663829Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.5,
+     "oddsAway": 2.45,
+     "fairHome": 0.6203,
+     "fairAway": 0.3797,
+     "vigPct": 7.48,
+     "updatedAt": "2026-10-06T02:31:44.404226Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.48,
+     "oddsAway": 2.55,
+     "fairHome": 0.6328,
+     "fairAway": 0.3672,
+     "vigPct": 6.78,
+     "updatedAt": "2026-10-06T02:30:59.891210Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.5,
+     "oddsAway": 2.45,
+     "fairHome": 0.6203,
+     "fairAway": 0.3797,
+     "vigPct": 7.48,
+     "updatedAt": "2026-10-06T02:31:48.970009Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.444,
+     "oddsAway": 2.625,
+     "fairHome": 0.6451,
+     "fairAway": 0.3549,
+     "vigPct": 7.35,
+     "updatedAt": "2026-10-06T02:31:22.312169Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7175,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T18:00:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 130,
+    "name": "BC Roma",
+    "shortName": "BC Roma",
+    "countryCode": "",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/130/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 109,
+    "name": "Panevėžio Lietkabelis",
+    "shortName": "Lietkabelis",
+    "countryCode": "LT",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/109/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 6,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 78,
+     "scores_against": 91
+    },
+    "awayStanding": {
+     "position": 4,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 75,
+     "scores_against": 72
+    },
+    "last10ScoredHome": 93,
+    "last10ScoredAway": 78,
+    "last10TotalHome": 183,
+    "last10TotalAway": 161,
+    "venue": null,
+    "homeCoach": "Alessandro Magro",
+    "awayCoach": "Nenad Čanak"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.09,
+     "oddsAway": 6.5,
+     "fairHome": 0.8564,
+     "fairAway": 0.1436,
+     "vigPct": 7.13,
+     "updatedAt": "2026-10-06T02:40:24.542128Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.08,
+     "oddsAway": 6.5,
+     "fairHome": 0.8575,
+     "fairAway": 0.1425,
+     "vigPct": 7.98,
+     "updatedAt": "2026-10-06T02:41:05.314355Z"
+    },
+    {
+     "bookmaker": "888Sport",
+     "slug": "888sport",
+     "oddsHome": 1.091,
+     "oddsAway": 7,
+     "fairHome": 0.8652,
+     "fairAway": 0.1348,
+     "vigPct": 5.94,
+     "updatedAt": "2026-10-06T02:39:15.371818Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.09,
+     "oddsAway": 6.75,
+     "fairHome": 0.861,
+     "fairAway": 0.139,
+     "vigPct": 6.56,
+     "updatedAt": "2026-10-06T02:39:40.194106Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.1,
+     "oddsAway": 5.8,
+     "fairHome": 0.8406,
+     "fairAway": 0.1594,
+     "vigPct": 8.15,
+     "updatedAt": "2026-10-06T02:41:15.987043Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.09,
+     "oddsAway": 7,
+     "fairHome": 0.8653,
+     "fairAway": 0.1347,
+     "vigPct": 6.03,
+     "updatedAt": "2026-10-06T02:39:24.435712Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.15,
+     "oddsAway": 5,
+     "fairHome": 0.813,
+     "fairAway": 0.187,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T02:39:46.924247Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.1,
+     "oddsAway": 6,
+     "fairHome": 0.8451,
+     "fairAway": 0.1549,
+     "vigPct": 7.58,
+     "updatedAt": "2026-10-06T02:40:55.311731Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.11,
+     "oddsAway": 5.8,
+     "fairHome": 0.8394,
+     "fairAway": 0.1606,
+     "vigPct": 7.33,
+     "updatedAt": "2026-10-06T02:40:46.536215Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.15,
+     "oddsAway": 7,
+     "fairHome": 0.8589,
+     "fairAway": 0.1411,
+     "vigPct": 1.24,
+     "updatedAt": "2026-10-06T14:57:41.790804Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.15,
+     "oddsAway": 5,
+     "fairHome": 0.813,
+     "fairAway": 0.187,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T02:39:56.587105Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.09,
+     "oddsAway": 6.5,
+     "fairHome": 0.8564,
+     "fairAway": 0.1436,
+     "vigPct": 7.13,
+     "updatedAt": "2026-10-06T02:40:34.800771Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.15,
+     "oddsAway": 5,
+     "fairHome": 0.813,
+     "fairAway": 0.187,
+     "vigPct": 6.96,
+     "updatedAt": "2026-10-06T02:40:11.798325Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.1,
+     "oddsAway": 6.5,
+     "fairHome": 0.8553,
+     "fairAway": 0.1447,
+     "vigPct": 6.29,
+     "updatedAt": "2026-10-06T02:39:33.279676Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  },
+  {
+   "bsdEventId": 7170,
+   "leagueBsdId": 6,
+   "leagueName": "Eurocup",
+   "scheduledAt": "2026-10-07T18:30:00+00:00",
+   "status": "scheduled",
+   "homeScore": null,
+   "awayScore": null,
+   "home": {
+    "bsdId": 62,
+    "name": "Kids&Us Manresa",
+    "shortName": "Manresa",
+    "countryCode": "ES",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/62/",
+     "available": true
+    }
+   },
+   "away": {
+    "bsdId": 87,
+    "name": "Ratiopharm Ulm",
+    "shortName": "Ulm",
+    "countryCode": "DE",
+    "logo": {
+     "url": "https://sports.bzzoiro.com/img/basketball/team/87/",
+     "available": true
+    }
+   },
+   "prediction": null,
+   "predictionSource": null,
+   "pregame": {
+    "homeStanding": {
+     "position": 8,
+     "matches": 1,
+     "wins": 0,
+     "losses": 1,
+     "percentage": 0,
+     "scores_for": 78,
+     "scores_against": 93
+    },
+    "awayStanding": {
+     "position": 2,
+     "matches": 1,
+     "wins": 1,
+     "losses": 0,
+     "percentage": 1,
+     "scores_for": 98,
+     "scores_against": 84
+    },
+    "last10ScoredHome": 90,
+    "last10ScoredAway": 80,
+    "last10TotalHome": 181,
+    "last10TotalAway": 165,
+    "venue": {
+     "id": 19,
+     "name": "Pavello Nou Congost",
+     "city": "Manresa",
+     "country": "Spain",
+     "capacity": 5000
+    },
+    "homeCoach": "Diego Ocampo",
+    "awayCoach": "Ty Harrelson"
+   },
+   "odds": [
+    {
+     "bookmaker": "10bet",
+     "slug": "10bet",
+     "oddsHome": 1.571,
+     "oddsAway": 2.3,
+     "fairHome": 0.5942,
+     "fairAway": 0.4058,
+     "vigPct": 7.13,
+     "updatedAt": "2026-10-06T02:41:00.918556Z"
+    },
+    {
+     "bookmaker": "1xBet",
+     "slug": "1xbet",
+     "oddsHome": 1.59,
+     "oddsAway": 2.24,
+     "fairHome": 0.5849,
+     "fairAway": 0.4151,
+     "vigPct": 7.54,
+     "updatedAt": "2026-10-06T02:41:30.152685Z"
+    },
+    {
+     "bookmaker": "Bet365",
+     "slug": "bet365",
+     "oddsHome": 1.54,
+     "oddsAway": 2.35,
+     "fairHome": 0.6041,
+     "fairAway": 0.3959,
+     "vigPct": 7.49,
+     "updatedAt": "2026-10-06T02:41:22.330158Z"
+    },
+    {
+     "bookmaker": "Betano",
+     "slug": "betano",
+     "oddsHome": 1.57,
+     "oddsAway": 2.27,
+     "fairHome": 0.5911,
+     "fairAway": 0.4089,
+     "vigPct": 7.75,
+     "updatedAt": "2026-10-06T02:41:36.984312Z"
+    },
+    {
+     "bookmaker": "Betsson",
+     "slug": "betsson",
+     "oddsHome": 1.58,
+     "oddsAway": 2.35,
+     "fairHome": 0.598,
+     "fairAway": 0.402,
+     "vigPct": 5.84,
+     "updatedAt": "2026-10-06T02:39:57.158025Z"
+    },
+    {
+     "bookmaker": "Bwin",
+     "slug": "bwin",
+     "oddsHome": 1.6,
+     "oddsAway": 2.25,
+     "fairHome": 0.5844,
+     "fairAway": 0.4156,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T02:40:24.376521Z"
+    },
+    {
+     "bookmaker": "Interwetten",
+     "slug": "interwetten",
+     "oddsHome": 1.55,
+     "oddsAway": 2.3,
+     "fairHome": 0.5974,
+     "fairAway": 0.4026,
+     "vigPct": 7.99,
+     "updatedAt": "2026-10-06T02:41:44.924246Z"
+    },
+    {
+     "bookmaker": "Novibet",
+     "slug": "novibet",
+     "oddsHome": 1.55,
+     "oddsAway": 2.35,
+     "fairHome": 0.6026,
+     "fairAway": 0.3974,
+     "vigPct": 7.07,
+     "updatedAt": "2026-10-06T02:40:54.059213Z"
+    },
+    {
+     "bookmaker": "OddsSafari Consensus",
+     "slug": "oddssafari-consensus",
+     "oddsHome": 1.6,
+     "oddsAway": 2.35,
+     "fairHome": 0.5949,
+     "fairAway": 0.4051,
+     "vigPct": 5.05,
+     "updatedAt": "2026-10-06T14:57:45.631007Z"
+    },
+    {
+     "bookmaker": "SportingBet",
+     "slug": "sportingbet",
+     "oddsHome": 1.6,
+     "oddsAway": 2.25,
+     "fairHome": 0.5844,
+     "fairAway": 0.4156,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T02:40:34.185112Z"
+    },
+    {
+     "bookmaker": "Unibet",
+     "slug": "unibet",
+     "oddsHome": 1.58,
+     "oddsAway": 2.3,
+     "fairHome": 0.5928,
+     "fairAway": 0.4072,
+     "vigPct": 6.77,
+     "updatedAt": "2026-10-06T02:40:09.797420Z"
+    },
+    {
+     "bookmaker": "Vistabet",
+     "slug": "vistabet",
+     "oddsHome": 1.6,
+     "oddsAway": 2.25,
+     "fairHome": 0.5844,
+     "fairAway": 0.4156,
+     "vigPct": 6.94,
+     "updatedAt": "2026-10-06T02:40:44.824268Z"
+    },
+    {
+     "bookmaker": "William Hill",
+     "slug": "william-hill",
+     "oddsHome": 1.571,
+     "oddsAway": 2.3,
+     "fairHome": 0.5942,
+     "fairAway": 0.4058,
+     "vigPct": 7.13,
+     "updatedAt": "2026-10-06T02:41:13.796999Z"
+    }
+   ],
+   "oddsSource": "bsd"
+  }
+ ]
+}
