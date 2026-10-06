@@ -1,24 +1,24 @@
 {
-  "generated": "2026-10-04T16:30:15.446Z",
+  "generated": "2026-10-06T17:58:40.230Z",
   "source": "espn-scoreboard",
   "season_start": "2025-10-21",
-  "games_count": 1327,
+  "games_count": 1334,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 1327,
-    "brier": 0.2091,
+    "n": 1334,
+    "brier": 0.2099,
     "baseline_brier": 0.25,
-    "accuracy": 66.7
+    "accuracy": 66.6
   },
   "ratings": {
     "1": {
       "name": "Atlanta Hawks",
-      "elo": 1535,
-      "gp": 88,
+      "elo": 1484,
+      "gp": 89,
       "form_l10_winpct": 30,
-      "form_l10_margin": -11.8,
-      "last_game": "2026-04-30T23:00Z"
+      "form_l10_margin": -12.4,
+      "last_game": "2026-10-05T23:00Z"
     },
     "2": {
       "name": "Boston Celtics",
@@ -62,27 +62,27 @@
     },
     "7": {
       "name": "Denver Nuggets",
-      "elo": 1648,
-      "gp": 88,
-      "form_l10_winpct": 60,
-      "form_l10_margin": 2.5,
-      "last_game": "2026-05-01T01:30Z"
+      "elo": 1587,
+      "gp": 89,
+      "form_l10_winpct": 50,
+      "form_l10_margin": 0.8,
+      "last_game": "2026-10-04T23:00Z"
     },
     "8": {
       "name": "Detroit Pistons",
-      "elo": 1660,
-      "gp": 96,
+      "elo": 1664,
+      "gp": 97,
       "form_l10_winpct": 60,
-      "form_l10_margin": 3.3,
-      "last_game": "2026-05-18T00:00Z"
+      "form_l10_margin": 2.8,
+      "last_game": "2026-10-05T23:00Z"
     },
     "9": {
       "name": "Golden State Warriors",
-      "elo": 1371,
-      "gp": 84,
+      "elo": 1364,
+      "gp": 85,
       "form_l10_winpct": 20,
-      "form_l10_margin": -7.7,
-      "last_game": "2026-04-18T02:00Z"
+      "form_l10_margin": -5.7,
+      "last_game": "2026-10-04T23:00Z"
     },
     "10": {
       "name": "Houston Rockets",
@@ -102,19 +102,19 @@
     },
     "12": {
       "name": "LA Clippers",
-      "elo": 1501,
-      "gp": 83,
+      "elo": 1508,
+      "gp": 84,
       "form_l10_winpct": 50,
-      "form_l10_margin": -0.9,
-      "last_game": "2026-04-16T02:00Z"
+      "form_l10_margin": -0.7,
+      "last_game": "2026-10-04T23:00Z"
     },
     "13": {
       "name": "Los Angeles Lakers",
-      "elo": 1604,
-      "gp": 92,
+      "elo": 1616,
+      "gp": 93,
       "form_l10_winpct": 40,
-      "form_l10_margin": -4.9,
-      "last_game": "2026-05-12T02:30Z"
+      "form_l10_margin": -3.4,
+      "last_game": "2026-10-06T02:00Z"
     },
     "14": {
       "name": "Miami Heat",
@@ -126,19 +126,19 @@
     },
     "15": {
       "name": "Milwaukee Bucks",
-      "elo": 1317,
-      "gp": 82,
+      "elo": 1308,
+      "gp": 83,
       "form_l10_winpct": 30,
-      "form_l10_margin": -7.9,
-      "last_game": "2026-04-12T22:00Z"
+      "form_l10_margin": -6.6,
+      "last_game": "2026-10-06T00:00Z"
     },
     "16": {
       "name": "Minnesota Timberwolves",
-      "elo": 1625,
-      "gp": 94,
+      "elo": 1635,
+      "gp": 95,
       "form_l10_winpct": 50,
-      "form_l10_margin": -6.4,
-      "last_game": "2026-05-16T01:30Z"
+      "form_l10_margin": -6.2,
+      "last_game": "2026-10-06T00:00Z"
     },
     "17": {
       "name": "Brooklyn Nets",
@@ -150,11 +150,11 @@
     },
     "18": {
       "name": "New York Knicks",
-      "elo": 1900,
-      "gp": 102,
-      "form_l10_winpct": 90,
-      "form_l10_margin": 11.9,
-      "last_game": "2026-06-14T00:30Z"
+      "elo": 1841,
+      "gp": 103,
+      "form_l10_winpct": 80,
+      "form_l10_margin": 6.6,
+      "last_game": "2026-10-05T23:00Z"
     },
     "19": {
       "name": "Orlando Magic",
@@ -166,19 +166,19 @@
     },
     "20": {
       "name": "Philadelphia 76ers",
-      "elo": 1592,
-      "gp": 94,
+      "elo": 1651,
+      "gp": 95,
       "form_l10_winpct": 40,
-      "form_l10_margin": -7.7,
-      "last_game": "2026-05-10T19:30Z"
+      "form_l10_margin": -6.8,
+      "last_game": "2026-10-05T23:00Z"
     },
     "21": {
       "name": "Phoenix Suns",
-      "elo": 1498,
-      "gp": 88,
+      "elo": 1493,
+      "gp": 89,
       "form_l10_winpct": 30,
-      "form_l10_margin": -6.3,
-      "last_game": "2026-04-28T01:30Z"
+      "form_l10_margin": -5.1,
+      "last_game": "2026-10-05T23:00Z"
     },
     "22": {
       "name": "Portland Trail Blazers",
@@ -190,11 +190,11 @@
     },
     "23": {
       "name": "Sacramento Kings",
-      "elo": 1330,
-      "gp": 82,
+      "elo": 1318,
+      "gp": 83,
       "form_l10_winpct": 30,
-      "form_l10_margin": -10.3,
-      "last_game": "2026-04-13T00:30Z"
+      "form_l10_margin": -8.3,
+      "last_game": "2026-10-06T02:00Z"
     },
     "24": {
       "name": "San Antonio Spurs",
@@ -214,11 +214,11 @@
     },
     "26": {
       "name": "Utah Jazz",
-      "elo": 1227,
-      "gp": 82,
-      "form_l10_winpct": 10,
-      "form_l10_margin": -14.2,
-      "last_game": "2026-04-13T00:30Z"
+      "elo": 1288,
+      "gp": 83,
+      "form_l10_winpct": 20,
+      "form_l10_margin": -10.7,
+      "last_game": "2026-10-04T23:00Z"
     },
     "27": {
       "name": "Washington Wizards",
@@ -238,11 +238,11 @@
     },
     "29": {
       "name": "Memphis Grizzlies",
-      "elo": 1176,
-      "gp": 82,
-      "form_l10_winpct": 10,
-      "form_l10_margin": -20.4,
-      "last_game": "2026-04-13T00:30Z"
+      "elo": 1228,
+      "gp": 83,
+      "form_l10_winpct": 20,
+      "form_l10_margin": -18.5,
+      "last_game": "2026-10-05T23:00Z"
     },
     "30": {
       "name": "Charlotte Hornets",

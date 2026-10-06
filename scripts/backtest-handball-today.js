@@ -53,18 +53,28 @@ if (argv.includes('--help') || argv.includes('-h')) {
 // ─── Chargeur TypeScript natif ───────────────────────────────────────────────
 // Les modules src/lib importent en "./module" (sans .ts) : Node ESM refuse.
 // On réessaie avec l'extension .ts quand le spéculateur est un chemin relatif.
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    try {
-      return nextResolve(specifier, context);
-    } catch (err) {
-      if (/^\.\.?\//.test(specifier) && !/\.[cm]?[jt]s$/.test(specifier)) {
-        return nextResolve(specifier + '.ts', context);
+//
+// Best-effort (fix 2026-10-06) : `module.registerHooks` n'existe que depuis
+// Node 22.15 — absent de Node 20.20 du VPS ET de Bun 1.3.14. Sous Bun la
+// résolution « ./module » → « ./module.ts » est NATIVE, le hook est donc
+// inutile ; sous Node <22 le .ts ne se charge pas du tout, d'où l'interpreter
+// Bun du cron `pariscore-cron-handball-nightly` dans ecosystem.config.js.
+// Sans ce garde, le script plantait en `TypeError: registerHooks is not a
+// function` à chaque tick 21h/22h (exit 1, aucun JSON de backtest écrit).
+if (typeof registerHooks === 'function') {
+  registerHooks({
+    resolve(specifier, context, nextResolve) {
+      try {
+        return nextResolve(specifier, context);
+      } catch (err) {
+        if (/^\.\.?\//.test(specifier) && !/\.[cm]?[jt]s$/.test(specifier)) {
+          return nextResolve(specifier + '.ts', context);
+        }
+        throw err;
       }
-      throw err;
-    }
-  },
-});
+    },
+  });
+}
 
 // Silence l'avertissement MODULE_TYPELESS_PACKAGE_JSON émis au chargement des
 // .ts (package.json sans "type") — bruit seul, sans impact sur l'exécution.

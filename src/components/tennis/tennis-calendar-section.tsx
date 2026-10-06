@@ -31,6 +31,7 @@ const C = {
   card: "#ffffff",
   cardBorder: "#f0f0f0",
   headerText: "#000000",
+  text: "#000000",
   time: "#717171",
   accent: "#00985f",
 } as const;

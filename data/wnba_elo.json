@@ -1,15 +1,15 @@
 {
-  "generated": "2026-10-04T16:30:43.525Z",
+  "generated": "2026-10-06T17:59:03.355Z",
   "source": "espn-scoreboard",
   "season_start": "2026-05-01",
-  "games_count": 348,
+  "games_count": 350,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 348,
-    "brier": 0.2086,
+    "n": 350,
+    "brier": 0.208,
     "baseline_brier": 0.25,
-    "accuracy": 65.5
+    "accuracy": 65.7
   },
   "ratings": {
     "3": {
@@ -46,11 +46,11 @@
     },
     "9": {
       "name": "New York Liberty",
-      "elo": 1637,
-      "gp": 48,
+      "elo": 1622,
+      "gp": 49,
       "form_l10_winpct": 60,
-      "form_l10_margin": 5.2,
-      "last_game": "2026-09-30T00:30Z"
+      "form_l10_margin": 4.9,
+      "last_game": "2026-10-04T18:00Z"
     },
     "11": {
       "name": "Phoenix Mercury",
@@ -78,11 +78,11 @@
     },
     "17": {
       "name": "Las Vegas Aces",
-      "elo": 1653,
-      "gp": 49,
-      "form_l10_winpct": 90,
-      "form_l10_margin": 15.7,
-      "last_game": "2026-10-02T01:00Z"
+      "elo": 1636,
+      "gp": 50,
+      "form_l10_winpct": 80,
+      "form_l10_margin": 12.3,
+      "last_game": "2026-10-04T20:00Z"
     },
     "18": {
       "name": "Connecticut Sun",
@@ -102,11 +102,11 @@
     },
     "20": {
       "name": "Atlanta Dream",
-      "elo": 1721,
-      "gp": 47,
+      "elo": 1735,
+      "gp": 48,
       "form_l10_winpct": 90,
       "form_l10_margin": 13.8,
-      "last_game": "2026-09-30T23:00Z"
+      "last_game": "2026-10-04T18:00Z"
     },
     "17476": {
       "name": "NIGERIA",
@@ -118,11 +118,11 @@
     },
     "129689": {
       "name": "Golden State Valkyries",
-      "elo": 1708,
-      "gp": 47,
+      "elo": 1725,
+      "gp": 48,
       "form_l10_winpct": 80,
-      "form_l10_margin": 10.3,
-      "last_game": "2026-10-03T01:00Z"
+      "form_l10_margin": 8.9,
+      "last_game": "2026-10-04T20:00Z"
     },
     "131935": {
       "name": "Toronto Tempo",
