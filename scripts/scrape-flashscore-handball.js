@@ -59,11 +59,18 @@ const RETRIES = 2;
 const SCRIPT_DIR = path.dirname(__filename);
 
 /**
- * Vrai si le match porte un SCORE FINAL exploitable (« 32:28 »).
+ * Vrai si le match porte un SCORE FINAL exploitable.
+ * Deux séparateurs coexistent et les deux doivent passer :
+ *   - « 32 - 28 » : format RÉELLEMENT produit par flush() (`${homeFT} - ${awayFT}`,
+ *     ligne ~146) — c'est celui du snapshot prod ;
+ *   - « 32:28 » : format de l'historique BetExplorer et des tests.
+ * Fix 2026-10-06 : la regex n'acceptait que « : » → freshFinished ≡ 0 à chaque
+ * run → la garde de main() annulait l'écriture → snapshot figé au 2026-09-28
+ * (calendrier + Top 10 vides en prod, bead ParisScorebis-1gge).
  * Un match « à venir » a `score` vide ou non numérique → false.
  */
 function hasFinalScore(m) {
-  return typeof m?.score === 'string' && /^\d{1,3}\s*:\s*\d{1,3}$/.test(m.score.trim());
+  return typeof m?.score === 'string' && /^\d{1,3}\s*[:\-]\s*\d{1,3}$/.test(m.score.trim());
 }
 
 /**

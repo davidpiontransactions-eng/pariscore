@@ -6,9 +6,11 @@ const require_ = createRequire(import.meta.url);
 const {
   hasFinalScore,
   mergeSnapshots,
+  parseDay,
 }: {
   hasFinalScore: (m: unknown) => boolean;
   mergeSnapshots: (previous: unknown[], fresh: unknown[]) => unknown[];
+  parseDay: (body: string) => { home: string; away: string; score: string | null }[];
 } = require_("../../../scripts/scrape-flashscore-handball.js");
 
 type M = { home: string; away: string; time: string; score?: string };
@@ -29,12 +31,60 @@ describe("hasFinalScore — distinguer un final d'un « à venir »", () => {
     expect(hasFinalScore(m("A", "B", "19:00", " 32 : 28 "))).toBe(true);
   });
 
+  test("format RÉEL du scripteur « 32 - 28 » → true (fix fige 2026-09-28)", () => {
+    // Régression du bead ParisScorebis-1gge : la regex n'acceptait que « : »,
+    // donc freshFinished ≡ 0 et la garde de main() annulait toute écriture.
+    expect(hasFinalScore(m("A", "B", "19:00", "32 - 28"))).toBe(true);
+    expect(hasFinalScore(m("A", "B", "19:00", "42 - 29"))).toBe(true);
+    expect(hasFinalScore(m("A", "B", "19:00", " 7 - 7 "))).toBe(true);
+    // Un score vide ou non numérique reste refusé.
+    expect(hasFinalScore(m("A", "B", "19:00", " - "))).toBe(false);
+    expect(hasFinalScore(m("A", "B", "19:00", "-:-"))).toBe(false);
+  });
+
   test("pas de score / score vide / non numérique → false", () => {
     expect(hasFinalScore(m("A", "B", "19:00"))).toBe(false);
     expect(hasFinalScore(m("A", "B", "19:00", ""))).toBe(false);
     expect(hasFinalScore(m("A", "B", "19:00", "?:?"))).toBe(false);
     expect(hasFinalScore(m("A", "B", "19:00", "-:-"))).toBe(false);
     expect(hasFinalScore(null)).toBe(false);
+  });
+});
+
+// ─── parseDay ⟷ hasFinalScore : l'accord format (piège du 2026-09-28) ───
+//
+// Les deux fonctions vivent dans le même script mais ont divergé : parseDay
+// écrivait « 32 - 28 », hasFinalScore attendait « 32:28 ». Les tests passaient
+// parce qu'ils fabriquaient le score à la main au format attendu. Ce test
+// construit le score par le VRAI parseur : il échoue si l'un des deux change
+// sans l'autre.
+
+describe("parseDay ⟷ hasFinalScore — le score produit est bien reconnu", () => {
+  const FEED = [
+    "~ZA÷FRANCE: StarLigue",
+    "~AA÷mt1",
+    "AD÷1760000000",
+    "AE÷Nantes",
+    "AF÷Montpellier",
+    "AG÷32",
+    "AH÷28",
+    "BA÷16",
+    "BB÷13",
+    "AS÷2",
+  ].join("¬");
+
+  test("le match parsé porte un score final reconnu par la garde", () => {
+    const parsed = parseDay(FEED);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].score).toBe("32 - 28");
+    expect(hasFinalScore(parsed[0])).toBe(true);
+  });
+
+  test("un match à venir (sans AG/AH) n'est PAS un final", () => {
+    const upcoming = ["~ZA÷FRANCE: StarLigue", "~AA÷mt2", "AD÷1760000000", "AE÷Lens", "AF÷Reims", "AS÷4"].join("¬");
+    const parsed = parseDay(upcoming);
+    expect(parsed).toHaveLength(1);
+    expect(hasFinalScore(parsed[0])).toBe(false);
   });
 });
 

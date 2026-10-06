@@ -42,6 +42,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+# Cache ESLint (gate lint incrémentale — voir AGENTS.md § Quality & Testing)
+.eslintcache
+.eslintcache.*
 next-env.d.ts
 local-*
 !local-storage-migration.tsx
@@ -59,6 +62,12 @@ server.log
 # Graphify cache (large, regenerate with `graphify update`)
 .graphify/
 src/.graphify/
+# Sortie legacy de graphify : 9 instantanes dates + un cache de 9347 fichiers
+# (217 Mo) au 2026-10-02. NON ignoree => graphify re-ingere sa propre sortie a
+# chaque `update`, chaque run grossit, la spirale ne converge jamais
+# (8 runs en 1h13, 0 termine, ~11 Go de RAM retenus). Archive seulement :
+# `.graphify/` est le graphe canon.
+graphify-out/
 # Large files (GitHub 100MB limit)
 *.db
 *.zip
@@ -150,6 +159,12 @@ data/odds_flashscore_snooker.json
 data/oddsportal_nio.json
 data/betwatch_wom.json
 data/smarkets_tennis_wom.json
+# Handball — snapshot Flashscore régénéré toutes les 4 h par le cron VPS.
+# Tracké jusqu'au 2026-10-06 : chaque `git reset --hard` de update_vps.sh le
+# remplaçait par la version commitée (2026-09-28) → calendrier + Top 10 vides
+# après chaque deploy (bead ParisScorebis-1gge). Untracked = plus jamais écrasé ;
+# update_vps.sh le sauvegarde/restore en plus, pour la transition.
+data/flashscore_handball.json
 # Rugby backtest store (runtime, machine-local — regenere par le moteur)
 data/rugby-backtest.json
 # Backtest Top 5 (runtime, machine-local — settle quotidien cron)

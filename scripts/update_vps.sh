@@ -15,10 +15,15 @@ PM2_NEXT="${PM2_NEXT:-pariscore-next}"        # Next.js standalone
 
 cd "$DEPLOY_DIR" || { echo "ERR: deploy dir $DEPLOY_DIR introuvable"; exit 1; }
 
-# Préserver les données snooker scrapées par le cron VPS (hors git)
-SNOOKER_BACKUP=$(mktemp -d)
-for f in data/odds_flashscore_snooker.json data/snooker_matches.json; do
-  [ -f "$f" ] && cp "$f" "$SNOOKER_BACKUP/" 2>/dev/null
+# Préserver les données scrapées par les crons VPS (hors git, ou écrasées par
+# le reset : data/flashscore_handball.json était tracké jusqu'au 2026-10-06 et
+# chaque deploy y remettait le snapshot du 2026-09-28 → onglet Handball vide
+# (bead ParisScorebis-1gge). Le fichier est désormais untracked + gitignoré ;
+# ce backup/restore couvre la transition et reste une assurance si quelqu'un le
+# re-tracke un jour.
+DATA_BACKUP=$(mktemp -d)
+for f in data/odds_flashscore_snooker.json data/snooker_matches.json data/flashscore_handball.json; do
+  [ -f "$f" ] && cp "$f" "$DATA_BACKUP/" 2>/dev/null
 done
 
 PREV="$(git rev-parse HEAD 2>/dev/null || echo '')"
@@ -27,11 +32,11 @@ echo "[1/6] git fetch + reset --hard origin/main..."
 git fetch --all -q || { echo "ERR: git fetch"; exit 1; }
 git reset --hard origin/main -q || { echo "ERR: git reset"; exit 1; }
 
-# Restaurer les données snooker scrapées par le cron VPS
-for f in data/odds_flashscore_snooker.json data/snooker_matches.json; do
-  [ -f "$SNOOKER_BACKUP/$(basename $f)" ] && cp "$SNOOKER_BACKUP/$(basename $f)" "$f" 2>/dev/null
+# Restaurer les données scrapées par les crons VPS
+for f in data/odds_flashscore_snooker.json data/snooker_matches.json data/flashscore_handball.json; do
+  [ -f "$DATA_BACKUP/$(basename $f)" ] && cp "$DATA_BACKUP/$(basename $f)" "$f" 2>/dev/null
 done
-rm -rf "$SNOOKER_BACKUP"
+rm -rf "$DATA_BACKUP"
 
 CURR="$(git rev-parse HEAD)"
 
@@ -92,6 +97,29 @@ if [ "$NEED_INSTALL" = "1" ]; then
   bun run rebuild 2>&1 || echo "  warn: rebuild échec (non bloquant)"
 else
   echo "[3/6] bun install SKIPPED (no deps changed)"
+fi
+
+# [3b] Dépendances Python des bridges (HORS gate NEED_INSTALL : indépendantes
+# de package.json).
+#
+# ⚠️ Dette corrigée le 2026-10-06 : euroleague_api n'était installé sur le VPS
+# que par une installation manuelle, absente de tout manifeste. `bun install`
+# ne voit rien de Python, donc un déploiement « propre » sur machine neuve
+# reproduisait la panne : le bridge rendait {games: [], error} et le calendrier
+# EuroLeague/EuroCup perdait ses matchs SANS QUE LE DÉPLOIEMENT ÉCHOUE.
+#
+# NON BLOQUANT, volontaire : le bridge attrape ImportError et dégrade
+# proprement (euroleague-bridge.ts:84). Faire échouer tout un déploiement pour
+# un calendrier dégradé serait plus cher que le défaut lui-même.
+if ! python3 -c "import euroleague_api" >/dev/null 2>&1; then
+  echo "[3b] euroleague_api manquant → installation (sinon calendrier EuroLeague/EuroCup dégradé)"
+  if python3 -m pip install --user --break-system-packages -r scripts/requirements-bridge.txt 2>&1; then
+    echo "[3b] euroleague_api installé"
+  else
+    echo "[3b] AVERTISSEMENT : échec pip — bridge euroleague dégradé, déploiement POURSUIT"
+  fi
+else
+  echo "[3b] euroleague_api déjà présent (SKIP)"
 fi
 
 BUILD_RAN=0
@@ -197,6 +225,49 @@ if pm2 describe "$PM2_LEGACY" >/dev/null 2>&1; then
 else
   echo "  $PM2_LEGACY absent (legacy retiré) — skip"
 fi
+# Chaîne hockey — 6 crons, hors du garde-fou $BUILD_RAN (deliberement).
+#
+# Ces scrapers sont des `node scripts/*.mjs` AUTONOMES : ils lisent et écrivent
+# `data/*.json`, sans jamais toucher au build Next.js. Les laisser dans le
+# `if $BUILD_RAN` faisait qu'un deploy « legacy-only » (sans rebuild) les laissait
+# non ré-inscrits — alors que leur seule dépendance vient d'être satisfaite.
+# Les 4 crons juste après, eux, restent sous le garde-fou : leur commentaire
+# declare une dependence au code Next.js, et changer cela sans le mesurer serait
+# une hypothese, pas une correction.
+#
+# Ils étaient déclarés dans ecosystem.config.js mais enregistrés À LA MAIN sur
+# le VPS courant : aucun chemin de déploiement ne les inscrivait. Conséquence
+# mesurée : sur un VPS reconstruit, la chaîne hockey entière ne démarrait pas,
+# SANS AUCUN MESSAGE D'ERREUR — un cron non inscrit est un cron absent, pas un
+# cron en erreur. Ces `--only` ferment ce trou.
+#
+# L'ORDRE de ces lignes ne séquence RIEN : `startOrRestart` enregistre le cron,
+# il ne l'exécute pas. La séquence 03:00 → 03:15 → 03:30 → 03:45 → 04:00 →
+# 04:10 vit dans les `cron_restart` d'ecosystem.config.js — notamment le KHL à
+# 03:45, après le classement eliteprospects de 03:30 dont il dépend. L'ordre
+# ci-dessous est documentaire, en miroir de cette séquence.
+for HC in annabet prematch eliteprospects khl projections restart; do
+  pm2 startOrRestart ecosystem.config.js --only "pariscore-cron-hockey-$HC" --update-env 2>/dev/null || true
+done
+
+# Chaîne handball — 7 crons, meme trou que la chaîne hockey ci-dessus : declares
+# dans ecosystem.config.js, mais inscrits à la main sur le VPS. Consequence
+# mesuree le 2026-10-06 (bead ParisScorebis-1gge) :
+#   - flashscore-handball tourne toujours à `0 23 * * *` alors que le repo
+#     impose `0 */4 * * *` (fenêtre glissante des Résultats + matchs du soir) ;
+#   - handball-history tourne `20 4 * * 1` (HEBDO) alors que le repo impose
+#     `0 23 * * *` (QUOTIDIEN) — le seuil du Top 10 exige ≥3 matchs terminés
+#     par équipe, un trou de 6 jours le vidait ;
+#   - hbl-players, lnh, handball-hero-photo, odds-papi, handball-nightly sont
+#     ABSENTS de pm2 : leurs JSON ne sont jamais régénérés (odds vides,
+#     popup LNH / stats joueurs / backtest du jour périmés).
+# startOrRestart est idempotent : il crée l'absent et réaligne le cron du
+# présent. Hors garde-fou BUILD_RAN, comme la chaîne hockey : ces scrapers ne
+# lisent/écrivent que data/*.json.
+for HB in flashscore-handball handball-history hbl-players handball-hero-photo lnh odds-papi handball-nightly; do
+  pm2 startOrRestart ecosystem.config.js --only "pariscore-cron-$HB" --update-env 2>/dev/null || true
+done
+
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then
   pm2 startOrRestart "$OPT_DIR/ecosystem.config.js" --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
