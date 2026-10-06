@@ -223,6 +223,21 @@ function _teamRating(rec, isHome) {
   return 1500 + (wp - 0.5) * 700;
 }
 
+/**
+ * Différence de ratings AVEC HCA, selon la source du rating.
+ *
+ * ⚠️ HCA selon la source — voir tools/refresh_nba_elo.js:112-118.
+ * Le replay Elo applique un delta symétrique (+delta / −delta) : les ratings
+ * restent NEUTRES quant au terrain, le HCA se réinjecte donc à chaque
+ * prédiction. Le proxy records, lui, lit déjà le bilan DOMICILE du receveur et
+ * le bilan EXTÉRIEUR du visiteur (_teamRating, ligne 221) : ces splits
+ * contiennent déjà l'avantage terrain, et ajouter hcaElo par-dessus le
+ * compterait deux fois. D'où l'application conditionnelle.
+ */
+function _winProbDiff(source, rH, rA, hcaElo) {
+  return (source === 'elo_game_by_game' ? (rH + hcaElo) : rH) - rA;
+}
+
 function computeNbaWinProb(homeRec, awayRec, homeId, awayId) {
   const hcaElo = (HCA_PTS / PTS_PER_ELO) * ELO_DIV; // HCA points → Elo
   let rH, rA, source;
@@ -236,12 +251,13 @@ function computeNbaWinProb(homeRec, awayRec, homeId, awayId) {
     rH = _teamRating(homeRec, true); rA = _teamRating(awayRec, false); source = 'records_proxy';
   }
   if (rH == null || rA == null) return null;
-  const diff = (rH + hcaElo) - rA;
+  const diff = _winProbDiff(source, rH, rA, hcaElo);
   const pHome = 1 / (1 + Math.pow(10, -diff / ELO_DIV));
   return {
     home_rating: Math.round(rH), away_rating: Math.round(rA),
     p_home: +(pHome * 100).toFixed(1), p_away: +((1 - pHome) * 100).toFixed(1),
     edge_elo: Math.round(diff), source,
+    hca_applied: source === 'elo_game_by_game' ? +hcaElo.toFixed(1) : 0,
     backtest: (source === 'elo_game_by_game' && eloData.backtest) ? eloData.backtest : null,
   };
 }
@@ -250,6 +266,21 @@ function computeNbaWinProb(homeRec, awayRec, homeId, awayId) {
 // (b) Total avec défense modélisée (standings PF/PA, log5-style).
 // expected_home = avgPF_home × avgPA_away / leagueAvg  (offense vs défense adverse, ancré ligue)
 // Si standings absent → fallback combined_offense indicatif (défense non modélisée).
+
+/**
+ * Total attendu d'un match, quantité JOINTE — donc SANS terme HCA.
+ *
+ * ⚠️ Régression corrigée : l'ancienne version ajoutait `+HCA_PTS*0.3`
+ * (≈ +1 pt) à chaque total, alors que la ligne du book embarque déjà
+ * l'avantage terrain. Résultat : un biais systématique vers l'OVER sur tous
+ * les matchs. Le HCA déplace la MARGE (domicile − extérieur), pas la somme.
+ */
+function _totalExpected(pfH, paH, pfA, paA, leagueAvg) {
+  const expH = (pfH * paA) / leagueAvg;
+  const expA = (pfA * paH) / leagueAvg;
+  return +(expH + expA).toFixed(1);
+}
+
 function computeNbaTotal(homeStats, awayStats, homeId, awayId) {
   const ptsH = _statVal(homeStats, 'avgPoints');
   const ptsA = _statVal(awayStats, 'avgPoints');
@@ -257,9 +288,7 @@ function computeNbaTotal(homeStats, awayStats, homeId, awayId) {
   const sA = _standings.map && _standings.map[awayId];
   const LA = _standings.leagueAvg || 114.5;
   if (sH && sA && sH.avgPF != null && sH.avgPA != null && sA.avgPF != null && sA.avgPA != null) {
-    const expH = (sH.avgPF * sA.avgPA) / LA;
-    const expA = (sA.avgPF * sH.avgPA) / LA;
-    const expected = +(expH + expA + HCA_PTS * 0.3).toFixed(1);
+    const expected = _totalExpected(sH.avgPF, sH.avgPA, sA.avgPF, sA.avgPA, LA);
     return {
       expected_total: expected, exp_home: +expH.toFixed(1), exp_away: +expA.toFixed(1),
       defense_modeled: true, league_avg: LA,
@@ -297,19 +326,62 @@ function computeNbaPythagorean(homeId, awayId) {
 
 // (2) Four Factors complets (eFG% + TOV% + ORB% + FT rate) — Oliver weights révisés
 // Poids WinProb (inpredictable.com) : shooting 71%, turnovers 11%, rebonds 9%, FT 8%
+// Poids WinProb (inpredictable.com) : shooting 71%, turnovers 11%, rebonds 9%, FT 8%
+// ⚠️ Ces poids publiés somment à 99 (71+11+9+8), pas 100. Ils sont normalisés
+// ici par leur somme : l'invariant « les poids effectifs somment à 1.0 » devient
+// une propriété du code, pas un total à recompter à chaque édition. Les
+// proportions 71:11:9:8 sont préservées (mesuré par test).
+const FF_WEIGHTS_RAW = { efg: 0.71, tov: 0.11, orb: 0.09, ft: 0.08 };
+const FF_W_SUM = Object.values(FF_WEIGHTS_RAW).reduce((a, b) => a + b, 0);
+const FF_WEIGHTS = Object.fromEntries(
+  Object.entries(FF_WEIGHTS_RAW).map(([k, v]) => [k, v / FF_W_SUM]),
+);
+
+/**
+ * Écart Four Factors en faveur du domicile, pondéré (poids déclarés, somme 1.0).
+ *
+ * Les quatre différentiels sont écrits ICI, une seule fois, avec leur signe :
+ *   efg : + (plus haut = mieux)
+ *   tov : INVERSÉ (moins de pertes de balle = mieux) → pct TOV de l'adversaire − le sien
+ *   orb : + (plus de rebonds offensifs = mieux)
+ *   ft  : + (plus de lancers francs = mieux)
+ *
+ * L'ancien code écrivait `scoreH` ET `scoreA` à la main, avec
+ * `+0.11*tovDiff` d'un côté et `-0.11*tovDiff` de l'autre : le différentiel
+ * effectif devenait `0.71Δefg + 0.22Δtov + 0.18Δorb + 0.08Δft`, somme 1.19,
+ * TOV et ORB comptés deux fois. N'écrire le différentiel qu'une fois rend ce
+ * doublon structurellement impossible — l'exact opposé de `adv * 0.5 - adv * 0.5`.
+ *
+ * ponytail: `FF_SLOPE` (3.2) reste NON CALIBRÉ — basketball_match_history ne
+ * porte que scores et quart-temps, pas de stats de tir, donc l'échelle n'est
+ * pas estimable ici. À recalibrer quand l'historique exposera eFG/TOV/ORB/FT.
+ */
+const FF_SLOPE = 3.2;
+
+/** Écart Four Factors signé, pondéré par les poids déclarés (somme 1.0). */
+function _ffAdvantage(d) {
+  return FF_WEIGHTS.efg * (d.dEfg || 0)
+       + FF_WEIGHTS.tov * (d.dTov || 0)
+       + FF_WEIGHTS.orb * (d.dOrb || 0)
+       + FF_WEIGHTS.ft  * (d.dFt  || 0);
+}
+
 function computeNbaFourFactors(homeStats, awayStats, homeId, awayId) {
   const efgH = _efgPct(homeStats), efgA = _efgPct(awayStats);
   const ftH = _ftRate(homeStats), ftA = _ftRate(awayStats);
   const tovH = _tovPct(homeStats), tovA = _tovPct(awayStats);
   const orbH = _orbPct(homeStats, awayStats), orbA = _orbPct(awayStats, homeStats);
   if (efgH == null || efgA == null) return null;
-  // Poids WinProb : shooting 71%, turnovers 11%, rebonds 9%, FT 8%
-  // Note : TOV% et ORB% sont inversés (lower TOV% = mieux, higher ORB% = mieux)
-  const tovDiff = (tovA != null && tovH != null) ? (tovA - tovH) : 0; // positif = home avantage (away tourne plus)
-  const orbDiff = (orbH != null && orbA != null) ? (orbH - orbA) : 0; // positif = home avantage (home prend plus de off reb)
-  const scoreH = 0.71 * efgH + 0.11 * tovDiff + 0.09 * orbDiff + 0.08 * (ftH || 0);
-  const scoreA = 0.71 * efgA + 0.11 * (-tovDiff) + 0.09 * (-orbDiff) + 0.08 * (ftA || 0);
-  const p = 1 / (1 + Math.exp(-(scoreH - scoreA) / 3.2));
+
+  // Un facteur absent vaut 0 côté « avantage » : ni crédit ni pénalité
+  // inventés. Le modèle reste utilisable sur eFG seul.
+  const dEfg = efgH - efgA;
+  const dTov = (tovH != null && tovA != null) ? (tovA - tovH) : 0;
+  const dOrb = (orbH != null && orbA != null) ? (orbH - orbA) : 0;
+  const dFt = (ftH != null && ftA != null) ? (ftH - ftA) : 0;
+
+  const adv = _ffAdvantage({ dEfg, dTov, dOrb, dFt });
+  const p = 1 / (1 + Math.exp(-adv / FF_SLOPE));
   // Ratings et pace
   const offH = _offRating(homeId), offA = _offRating(awayId);
   const defH = _defRating(homeId), defA = _defRating(awayId);
@@ -720,6 +792,8 @@ module.exports = {
   computeNbaAdjusted,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
+  // Fonctions pures de biais — exposées pour src/lib/__tests__/basketball-model-math.test.ts
+  _ffAdvantage, _totalExpected, _winProbDiff, FF_WEIGHTS, FF_WEIGHTS_RAW, FF_SLOPE,
   // Nouvelles fonctions Four Factors complètes
   _tovPct, _orbPct, _defRating, _offRating, _netRating, _paceEstimate,
 };
