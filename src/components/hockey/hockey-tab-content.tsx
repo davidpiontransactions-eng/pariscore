@@ -10,11 +10,12 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, TrendingUp, Flame, BarChart3, Users, FileText, Calendar, Zap } from "lucide-react";
+import { Trophy, TrendingUp, Flame, BarChart3, Users, FileText, Calendar, Zap, LineChart } from "lucide-react";
 import { HockeyProjectionGraph } from "./hockey-projection-graph";
 import { HockeyTopPlayers } from "./hockey-top-players";
 import { HockeyPrematchPopup } from "./hockey-prematch-popup";
 import { HockeyStrategies } from "./hockey-strategies";
+import { HockeyBacktestingView } from "./hockey-backtesting-view";
 import { useHockeyPrematch, type MatchPrematch } from "@/hooks/use-hockey-prematch";
 import { useHockeyMatches, type HockeyMatch } from "@/hooks/use-hockey-matches";
 import { FOT } from "@/components/football/fotmob-theme";
@@ -119,7 +120,7 @@ const LEAGUES: { id: LeagueId; label: string }[] = [
   { id: "magnus", label: "Magnus" },
 ];
 
-type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier" | "strategies";
+type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier" | "strategies" | "backtest";
 
 const SEASON_LENGTHS: Record<LeagueId, number> = {
   nhl: 82,
@@ -534,6 +535,12 @@ export function HockeyTabContent() {
             )}>
             <Zap className="w-3.5 h-3.5" /> Stratégies
           </button>
+          <button onClick={() => setSubView("backtest")}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+              subView === "backtest" ? "bg-[#ebebeb] text-[#222222]" : "text-[#717171] hover:text-[#3d3d3d]"
+            )}>
+            <LineChart className="w-3.5 h-3.5" /> Backtesting
+          </button>
         </div>
       </div>
 
@@ -725,6 +732,13 @@ export function HockeyTabContent() {
           activeLeague={activeLeague}
         />
       )}
+
+      {/* ─── BACKTESTING ────────────────────────────────────────── */}
+      {/* Pas de garde sur `loading` du parent : ce composant charge son
+          propre jeu de données (/api/hockey/backtest) et affiche son propre
+          squelette. Le `loading` du parent porte les standings et les
+          projections, qui ne le concernent pas. */}
+      {subView === "backtest" && <HockeyBacktestingView />}
 
       {/* Prematch Popup */}
       {selectedMatch && (
