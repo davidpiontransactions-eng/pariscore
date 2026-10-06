@@ -700,6 +700,35 @@ module.exports = {
       time: true,
     },
     {
+      // Calendrier KHL officiel (HockeyTech view=schedule, proxy khl.shayy.workers.dev).
+      //
+      // ⚠️ CRENEAU 03:45 CHOISI PAR DÉPENDANCE, PAS PAR GOÛT.
+      //   • le scraper lit `data/eliteprospects_hockey_standings.json` pour
+      //     résoudre les 22 clubs contre le classement réel (bijection 22↔22) ;
+      //     ce fichier est rafraîchi par `hockey-eliteprospects` à 03:30 →
+      //     un run AVANT 03:30 builderait l'annuaire sur un classement de la
+      //     veille et marquerait des matchs `predictions_available: false`
+      //     alors que les gf/ga réels sont là.
+      //   • il doit passer AVANT `hockey-restart` (04:10), dont le rôle est
+      //     explicitement de vider le cache in-memory APRÈS les scrapers. Un
+      //     run à 04:15 (proposition initiale) le violerait : le restart
+      //     viderait un cache que le dernier scraper n'a pas encore touché.
+      name: 'pariscore-cron-hockey-khl',
+      script: 'node',
+      args: 'scripts/scrape-khl-schedule.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '45 3 * * *', // quotidien à 03:45 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: { NODE_ENV: 'production' },
+      error_file: 'logs/cron-hockey-khl.err.log',
+      out_file: 'logs/cron-hockey-khl.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // Hockeystats projections NHL
       name: 'pariscore-cron-hockey-projections',
       script: 'node',
@@ -782,8 +811,15 @@ module.exports = {
       // Garde intégrée au script : journée sans aucun match terminé (tick hors
       // créneau) → fichier existant conservé, écriture sautée.
       name: 'pariscore-cron-handball-nightly',
-      script: 'scripts/backtest-handball-today.js',
-      args: '--refresh',
+      // Fix 2026-10-06 : le script charge des modules `src/lib/*.ts` via
+      // `module.registerHooks` — API absente de Node 20.20 (runtime VPS) ET de
+      // Bun 1.3.14, d'où `TypeError: registerHooks is not a function` puis
+      // exit 1 à CHAQUE tick 21h/22h (0 JSON de backtest ce soir-là). Bun
+      // résout pourtant « ./module » → .ts nativement : on lui passe le script
+      // directement (hook ignoré par le garde best-effort du script), même
+      // pattern que handball-history et handball-matrix.
+      script: '/home/ubuntu/.bun/bin/bun',
+      args: 'scripts/backtest-handball-today.js --refresh',
       cwd: '/home/ubuntu/pariscore',
       // 23:00 Europe/Paris = 21:00 UTC l'été (CEST) / 22:00 UTC l'hiver (CET).
       // Double tick (pattern pariscore-cron-elo-weekly) : le créneau 22:00 UTC
