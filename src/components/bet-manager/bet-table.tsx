@@ -322,13 +322,12 @@ export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
                     <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                       {b.status === "pending" ? (
                         cashout?.id === b.id ? (
-                          <div className="flex items-center gap-1">
-                            {/* eslint-disable-next-line jsx-a11y/no-autofocus -- saisie cashout, une seule ligne concerne */}
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              autoFocus
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              autoFocus
                               value={cashout.value}
                               aria-label="Montant reçu au cashout"
                               placeholder="Montant €"
