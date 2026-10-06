@@ -405,6 +405,8 @@
     "margin": "Margin",
     "best": "best",
     "tableHint": "Click a column to sort. “best” odds are highlighted in green. The margin corresponds to the bookmaker's commission (vig).",
+    "insufficientDataTitle": "Insufficient data",
+    "insufficientDataHint": "This match is live and does not yet have complete predictive data (ELO, probabilities, confidence intervals). The displayed values are placeholders.",
     "noOdds": "Multi-bookmaker odds are not available for this match.",
     "otherBookmakers": "other bookmakers",
     "sortAria": "Sort by {column}, currently {dir}. Activate to reverse sort",
