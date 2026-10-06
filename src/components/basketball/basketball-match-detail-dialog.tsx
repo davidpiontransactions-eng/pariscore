@@ -44,6 +44,12 @@ type LightMatch = {
   consensus: { meanPHome: number; stddev: number; nModels: number; label: string; crossesFifty: boolean } | null;
   /** Fix I11 : Four Factors servies directement par le hook */
   fourFactors?: FourFactorsOut | null;
+  /**
+   * Pourquoi aucune prédiction n'est affichée, quand la source l'a dit.
+   * Évite un « indisponible » générique qui laisse croire à une panne alors
+   * que Vitibet publie simplement 0 % sur cette ligue (mesuré : eurocup 0/16).
+   */
+  predictionsUnavailableReason?: string | null;
   predictions?: {
     four_factors?: FourFactorsOut | null;
   } | null;
@@ -133,9 +139,19 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] sm:max-h-[90dvh] max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
+      {/* Coque OPAQUE — voir le commentaire équivalent dans
+          src/components/tennis/match-detail-dialog.tsx:315.
+          `DialogContent` (ui/dialog.tsx:63) porte `liquid-glass--clear`, une classe
+          qui N'A AUCUNE définition CSS dans le repo (seuls `.liquid-glass--animated`
+          existe, globals.css:861) et AUCUN `bg-background`. Résultat mesuré sur
+          EuroCup : le calendrier se lit ENTIÈREMENT au travers du popup, les
+          monogrammes CE/HA et les noms se superposent, texte illisible.
+          `bg-white!` force le fond (important bat toute règle non-layered) et les
+          variables scopées redditionnent le sous-arbre en clair quel que soit le
+          thème global — indispensable ici, le calendrier étant en charte claire. */}
+      <DialogContent className="bg-white! text-[#222222] border-[#e5e5e5] [--background:#ffffff] [--foreground:#222222] [--card:#ffffff] [--card-foreground:#222222] [--muted:#f1f2f3] [--muted-foreground:#717171] [--border:#e5e5e5] [--input:#e5e5e5] [--primary:#111827] [--primary-foreground:#ffffff] [--secondary:#f1f2f3] [--secondary-foreground:#222222] [--accent:#10b981] [--accent-foreground:#ffffff] [--ring:#10b981] [--popover:#ffffff] [--popover-foreground:#222222] max-w-lg max-h-[90vh] sm:max-h-[90dvh] overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:mt-auto max-sm:w-full">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
-        <DialogHeader>
+        <DialogHeader className="border-b border-border/60 px-5 py-4">
           <DialogTitle className="flex items-center gap-2">
             <Badge variant="outline" className="text-[10px]">
               {leagueLabel(match.league)}
@@ -153,8 +169,8 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-120px)]">
-          <div className="space-y-4 p-1">
+        <ScrollArea className="max-h-[calc(90dvh-64px)]">
+          <div className="space-y-4 px-5 py-4">
             {/* Team Header */}
             <div className="flex items-center justify-between">
               <TeamBlock
@@ -490,11 +506,32 @@ export function BasketballMatchDetailDialog({ match, open, onOpenChange }: Props
               </div>
             )}
 
-            {/* No data state */}
+            {/* No data state — l'absence est MOTIVÉE, pas silencieuse. Sur
+                l'EuroCup il s'affiche systématiquement (0/16 prédictions
+                publiées par Vitibet) : écrire « indisponible » sans raison
+                ferait croire à une panne technique. */}
             {pHome == null && !fourFactors && (
-              <div className="rounded-lg border p-4 text-center text-xs text-muted-foreground">
-                <Activity className="h-5 w-5 mx-auto mb-2 opacity-50" />
-                Données de prédiction indisponibles pour ce match.
+              <div
+                className="rounded-lg border border-dashed bg-muted/30 p-4"
+                role="note"
+              >
+                <div className="flex items-start gap-2">
+                  <Activity className="mt-0.5 h-4 w-4 shrink-0 opacity-60" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold">Aucune prédiction pour ce match</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      {match.predictionsUnavailableReason ??
+                        (leagueLabel(match.league)
+                          ? `La source ne publie pas de probabilité pour ${leagueLabel(match.league)}.`
+                          : "La source ne publie pas de probabilité pour cette ligue.")}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                      L&apos;historique de la ligue reste consultable dans l&apos;onglet{" "}
+                      <span className="font-medium">Stats &amp; Classements</span> et{" "}
+                      <span className="font-medium">H2H</span> de l&apos;onglet Basket.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
