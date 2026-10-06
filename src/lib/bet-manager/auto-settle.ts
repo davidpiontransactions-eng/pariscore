@@ -126,6 +126,28 @@ async function resolveFixture(bet: Bet): Promise<AfFixture | null> {
 
 const FINISHED = new Set(["FT", "AET", "PEN"]);
 
+/**
+ * Sélection des paris à tenter dans un run (sync + backfill) :
+ *  - fraîcheur : les 50 plus récents (résultats du jour d'abord) ;
+ *  - backfill : les pending de plus de 3 jours ABSENTS du lot fraîcheur
+ *    (20 max, du plus ancien au plus récent). Sans cette passe, un fonds de
+ *    paris anciens jamais résolus serait exclu à jamais par `take` en ordre
+ *    descendant : ils resteraient premiers de leur catégorie à chaque run.
+ */
+export function selectToSettle<T extends { id: string; placedAt: Date | string }>(
+  pending: T[],
+  now = Date.now()
+): T[] {
+  const ts = (b: T) => new Date(b.placedAt).getTime();
+  const fresh = [...pending].sort((a, b) => ts(b) - ts(a)).slice(0, 50);
+  const freshIds = new Set(fresh.map((b) => b.id));
+  const stale = pending
+    .filter((b) => !freshIds.has(b.id) && now - ts(b) > 3 * 86400000)
+    .sort((a, b) => ts(a) - ts(b))
+    .slice(0, 20);
+  return [...fresh, ...stale];
+}
+
 /** Évalue le marché d'un pari face au score final. Retourne won/lost/void, ou null si marché non supporté. */
 export function evaluateMarket(bet: Bet, fixture: AfFixture): "won" | "lost" | "void" | null {
   const { home, away } = fixture.goals;
@@ -208,6 +230,9 @@ export async function autoSettleBets(bankrollId?: string): Promise<{
   unresolved: SettleOutcome[];
   skipped: string[];
 }> {
+  // ponytail: fenêtre de lecture 300 paris/run — au-delà, paginer (le
+  // backfill drain quand même 20 anciens par run, un fonds > 300 se vide
+  // sur plusieurs exécutions cron).
   const pending = await prisma.bet.findMany({
     where: {
       status: "pending",
@@ -215,14 +240,15 @@ export async function autoSettleBets(bankrollId?: string): Promise<{
       ...(bankrollId ? { bankrollId } : {}),
     },
     orderBy: { placedAt: "desc" },
-    take: 50,
+    take: 300,
   });
+  const toSettle = selectToSettle(pending);
 
   const settled: SettleOutcome[] = [];
   const unresolved: SettleOutcome[] = [];
   const skipped: string[] = [];
 
-  for (const bet of pending) {
+  for (const bet of toSettle) {
     const fixture = await resolveFixture(bet as unknown as Bet);
     if (!fixture) {
       unresolved.push({ betId: bet.id, status: "unresolved", reason: "Fixture introuvable" });
@@ -255,5 +281,5 @@ export async function autoSettleBets(bankrollId?: string): Promise<{
     });
   }
 
-  return { checked: pending.length, settled, unresolved, skipped };
+  return { checked: toSettle.length, settled, unresolved, skipped };
 }

@@ -23,6 +23,12 @@ const BasketballMatchDetailDialog = dynamic(
   { ssr: false },
 );
 
+/** Popup pré-match (cache BSD) — chargé à la demande, jamais au premier render. */
+const BasketballPreMatchPopup = dynamic(
+  () => import("./basketball-prematch-popup").then((m) => m.BasketballPreMatchPopup),
+  { ssr: false },
+);
+
 /**
  * FotmobCalMatch → BasketballMatch partiel pour le dialog détail.
  * Même élargissement que le handler open-match-detail (cast matchs euro) :
@@ -65,6 +71,13 @@ export function BasketballCalendar({ className }: { className?: string }) {
   const [hours, setHours] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<FotmobCalMatch | null>(null);
+  /**
+   * Équipe dont on a cliqué le nom → popup pré-match.
+   * `onTeamClick` ne remonte QUE l'équipe et son lieu, jamais la rencontre :
+   * la fixture est résolue depuis le cache par `findBsdFixtureByTeam`
+   * (ambiguïté = refus, donc popup qui ne s'ouvre pas plutôt que le mauvais).
+   */
+  const [prematchTeam, setPrematchTeam] = useState<string | null>(null);
 
   const shiftDay = (delta: number) => {
     const d = new Date(selectedDate);
@@ -112,8 +125,27 @@ export function BasketballCalendar({ className }: { className?: string }) {
       {isLoading && matches.length === 0 ? (
         <CalendarSkeleton />
       ) : (
-        <FotmobCalendarTable matches={filtered} onSelectMatch={setDetail} />
+        <FotmobCalendarTable
+          matches={filtered}
+          onSelectMatch={setDetail}
+          onTeamClick={(team) => setPrematchTeam(team.name)}
+        />
       )}
+
+      {/* Pré-match 1xBet : cotes (haut) + forme/classement (bas), depuis le
+          cache local — donc aucun spinner. Les ligues non couvertes par le cron
+          affichent l'absence, jamais une valeur par défaut. */}
+      <BasketballPreMatchPopup
+        open={prematchTeam !== null}
+        onOpenChange={(open) => {
+          if (!open) setPrematchTeam(null);
+        }}
+        leagueBsdId={null}
+        homeName={null}
+        awayName={null}
+        teamName={prematchTeam}
+        title={prematchTeam ? `${prematchTeam} — pré-match` : undefined}
+      />
 
       {detail && (
         <BasketballMatchDetailDialog

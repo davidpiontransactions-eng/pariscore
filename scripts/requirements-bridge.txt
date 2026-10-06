@@ -1,0 +1,22 @@
+# Dépendances Python des bridges Next.js.
+#
+# Installe par : scripts/update_vps.sh (étape [3b], idempotente)
+# Vérification : python -c "import euroleague_api"
+#
+# Contexte — dette d'installation trouvée le 2026-10-06 :
+# Le module était présent sur le VPS uniquement par une installation MANUELLE,
+# non déclarée nulle part : aucun requirements.txt au projet, et
+# `scripts/update_vps.sh` ne l'installait PAS (malgré le commentaire
+# `src/lib/euroleague-bridge.ts:42` qui affirmait le contraire). Toute machine
+# neuve reproduisait donc la panne silencieuse — le bridge renvait
+# `{"games": [], "error": "euroleague_api indisponible"}`, le calendrier
+# EuroLeague/EuroCup tombait sur le fallback initiales, et aucun test ne
+# l'attrapait.
+#
+# Version verrouillée : 0.1.1 est celle qui produit `Schedule` du chemin
+# `euroleague_api.schedule` utilisé par euroleague-bridge.ts:49.
+euroleague_api==0.1.1
+
+# Dépendances transitives déjà présentes dans l'environnement VPS,
+# déclarées ici pour qu'une machine neuve ne dépende pas d'un pip cache.
+xmltodict>=1.0.4

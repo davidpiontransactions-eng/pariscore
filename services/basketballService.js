@@ -549,10 +549,32 @@ function computeNbaLineMovement(rawOdds) {
 }
 
 // (4) Kelly stake (cap 25%, sur EV worst-case) — fairProb = proba modèle, dec = cote décimale brute
+/**
+ * Côté à miser ET proba associée — extraite du flux principal pour être testable.
+ *
+ * Invariant : le côté et la proba de mise doivent venir DU MÊME modèle.
+ * `value.ev_*` est calculé sur le blend, donc `useHome` (max EV) désigne un
+ * côté retenu par le blend, et la fraction de mise doit se lire sur ce blend.
+ * L'ancien code prenait `adjusted` (Elo + blessures + repos) pour la proba :
+ * side=blend, stake=Elo — deux modèles pour un seul pari.
+ *
+ * Renvoie null si `blend` absent : sans blend, il n'y a pas d'EV, donc pas de
+ * côté retenu et pas de mise. On ne retombe pas sur `adjusted`, qui n'a jamais
+ * produit la valeur qui motivait le pari.
+ */
+function _kellySelection(value, blend) {
+  if (!value || !blend) return null;
+  const evH = value.ev_home, evA = value.ev_away;
+  if (evH == null && evA == null) return null;
+  const useHome = (evH != null ? evH : -99) >= (evA != null ? evA : -99);
+  const prob = useHome ? blend.p_home : blend.p_away;
+  if (prob == null) return null;
+  return { useHome, prob, ev: useHome ? evH : evA, model: 'blend' };
+}
+
 function computeNbaKelly(modelProb, decimalOdds) {
   if (modelProb == null || !decimalOdds || decimalOdds <= 1) return null;
-  const p = modelProb / 100, b = decimalOdds - 1;
-  const k = (b * p - (1 - p)) / b; // Kelly
+  const p = modelProb / 100, b = decimalOdds - 1;  const k = (b * p - (1 - p)) / b; // Kelly
   if (k <= 0) return { fraction: 0, capped: 0, note: 'pas de mise (EV≤0)' };
   const capped = Math.min(k, 0.25); // cap 25% bankroll (règle CLAUDE.md)
   return { fraction: +(k * 100).toFixed(1), capped: +(capped * 100).toFixed(1) };
@@ -656,18 +678,29 @@ function _normalizeEvent(ev) {
   const adjusted = computeNbaAdjusted(spreadUQD && spreadUQD.exp_margin, injHome, injAway, restHome, restAway);
   if (adjusted) modelsPanel.push({ name: 'Ajusté', p: adjusted.p_home });
   const consensus = computeNbaConsensus(modelsPanel); // sur modèles indépendants (hors blend)
-  // Kelly sur le côté EV+ (proba ajustée si dispo, sinon blend)
+  // Kelly sur le côté EV+ — ⚠️ COHÉRENCE SIDE/STAKE (correctif P4).
+  //
+  // `useHome` est dérivé de `value.ev_*`, lui-même calculé SUR LE BLEND.
+  // L'ancienne version prenait `adjusted.p_*` (Elo + blessures + repos) pour
+  // la fraction : le côté était choisi par un modèle et la mise calculée par un
+  // AUTRE. Un parieur qui suit ce Kelly mise sur la confiance du mauvais modèle,
+  // sans jamais le voir — le taux de victoire affiché et la mise viennent de
+  // deux endroits différents.
+  //
+  // Fix : la proba de mise est celle du blend, source unique de l'EV qui a
+  // retenu le côté. `adjusted` reste affiché dans `models_panel`, il ne fixe
+  // simplement plus la mise.
   let kelly = null;
   if (value && odds && odds.moneyline) {
-    const evH = value.ev_home, evA = value.ev_away;
-    const useHome = (evH != null ? evH : -99) >= (evA != null ? evA : -99);
-    const ml = useHome ? (odds.moneyline.home && odds.moneyline.home.close && odds.moneyline.home.close.odds)
-                       : (odds.moneyline.away && odds.moneyline.away.close && odds.moneyline.away.close.odds);
-    const ip = _amOddsToProb(ml);
-    const prob = adjusted ? (useHome ? adjusted.p_home : adjusted.p_away) : (blend ? (useHome ? blend.p_home : blend.p_away) : null);
-    if (ip && prob != null) {
-      const k = computeNbaKelly(prob, 1 / ip);
-      if (k) kelly = { side: useHome ? (hTeam.displayName || 'Home') : (aTeam.displayName || 'Away'), ...k, ev: useHome ? evH : evA };
+    const sel = _kellySelection(value, blend);
+    if (sel) {
+      const ml = sel.useHome ? (odds.moneyline.home && odds.moneyline.home.close && odds.moneyline.home.close.odds)
+                             : (odds.moneyline.away && odds.moneyline.away.close && odds.moneyline.away.close.odds);
+      const ip = _amOddsToProb(ml);
+      if (ip) {
+        const k = computeNbaKelly(sel.prob, 1 / ip);
+        if (k) kelly = { side: sel.useHome ? (hTeam.displayName || 'Home') : (aTeam.displayName || 'Away'), ...k, ev: sel.ev, model: sel.model };
+      }
     }
   }
 
@@ -724,10 +757,16 @@ function computeNbaTopBets(matches, topN = 3) {
     const p = m.predictions || {}, val = p.value || {}, su = p.spread_uqd || {}, te = p.total_edge || {};
     const lbl = (m.away && m.away.abbr || '?') + ' @ ' + (m.home && m.home.abbr || '?');
     // Moneyline value (edge modèle vs cote devigée)
-    if (val.edge_home != null && val.ev_home != null && val.edge_home > 1.5) {
+    // ⚠️ Correctif P4 : l'ancienne garde testait `ev_home != null`, c'est-à-dire
+    // la PRÉSENCE du champ et non son SIGNE. Un favori coté 1.05 peut avoir
+    // edge = +2 pp (le modèle est plus optimiste que la cote devigée) tout en
+    // ayant EV = −2,7 % (la cote brute ne paie pas le risque). Le pari était
+    // donc publié comme « Top Bet » à espérance négative.
+    // Règle : edge significatif ET EV strictement positif.
+    if (val.edge_home != null && val.ev_home != null && val.ev_home > 0 && val.edge_home > 1.5) {
       cands.push({ matchId: m.id, match: lbl, market: 'Moneyline', selection: (m.home && m.home.name) || 'Home', edge_pp: +val.edge_home.toFixed(1), ev: val.ev_home, basis: 'blend vs cote devigée' });
     }
-    if (val.edge_away != null && val.ev_away != null && val.edge_away > 1.5) {
+    if (val.edge_away != null && val.ev_away != null && val.ev_away > 0 && val.edge_away > 1.5) {
       cands.push({ matchId: m.id, match: lbl, market: 'Moneyline', selection: (m.away && m.away.name) || 'Away', edge_pp: +val.edge_away.toFixed(1), ev: val.ev_away, basis: 'blend vs cote devigée' });
     }
     // ATS (spread cover)
@@ -794,6 +833,8 @@ module.exports = {
   _normalizeEvent, _devigEv, // testing
   // Fonctions pures de biais — exposées pour src/lib/__tests__/basketball-model-math.test.ts
   _ffAdvantage, _totalExpected, _winProbDiff, FF_WEIGHTS, FF_WEIGHTS_RAW, FF_SLOPE,
+  // P4 — cohérence side/stake Kelly + filtre EV des top bets
+  _kellySelection, computeNbaKelly, computeNbaTopBets,
   // Nouvelles fonctions Four Factors complètes
   _tovPct, _orbPct, _defRating, _offRating, _netRating, _paceEstimate,
 };

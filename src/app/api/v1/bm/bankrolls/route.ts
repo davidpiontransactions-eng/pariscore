@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireBmSession } from "@/lib/bet-manager/auth";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/v1/bm/bankrolls — liste des bankrolls avec stats légères
 export async function GET() {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   try {
     const bankrolls = await prisma.bankroll.findMany({
       orderBy: { createdAt: "asc" },
@@ -18,6 +21,8 @@ export async function GET() {
 
 // POST /api/v1/bm/bankrolls — créer une bankroll
 export async function POST(req: NextRequest) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   let body: any;
   try {
     body = await req.json();

@@ -7,9 +7,11 @@ import { bmApi, type BetInput } from "@/lib/bet-manager/api";
 import {
   capitalCurve,
   computeBankrollStats,
+  computeClvStats,
   groupStats,
   monthKey,
   oddsBucket,
+  timingBucket,
 } from "@/lib/bet-manager/stats";
 import type { Bet, BetStatus } from "@/lib/bet-manager/types";
 
@@ -22,6 +24,8 @@ type StatsBundle = {
   byType: ReturnType<typeof groupStats>;
   byMonth: ReturnType<typeof groupStats>;
   byOdds: ReturnType<typeof groupStats>;
+  byTiming: ReturnType<typeof groupStats>;
+  clv: ReturnType<typeof computeClvStats>;
   curve: ReturnType<typeof capitalCurve>;
 };
 
@@ -42,8 +46,12 @@ function useActiveBankrollId(bankrolls: { id: string }[] | undefined) {
 }
 
 export function useBetManager() {
-  const { data: bankrollsRes } = useSWR("/bm/bankrolls", () => bmApi.listBankrolls(), {
+  // shouldRetryOnError:false — ce hook est monté dans le layout global
+  // (BetSlip/BankrollDialog) : un visiteur anonyme reçoit 401 sur /bm/bankrolls,
+  // on ne boucle pas en retry sur chaque page.
+  const { data: bankrollsRes, mutate: mutateBankrolls } = useSWR("/bm/bankrolls", () => bmApi.listBankrolls(), {
     revalidateOnFocus: false,
+    shouldRetryOnError: false,
   });
   const bankrolls = bankrollsRes?.bankrolls ?? [];
   const { activeId, select } = useActiveBankrollId(bankrolls);
@@ -64,13 +72,16 @@ export function useBetManager() {
         byType: groupStats(bets, (b) => b.betType || "single"),
         byMonth: groupStats(bets, (b) => monthKey(b.placedAt)),
         byOdds: groupStats(bets, (b) => oddsBucket(b.odds)),
+        byTiming: groupStats(bets, (b) => timingBucket(b.placedAt)),
+        clv: computeClvStats(bets),
         curve: capitalCurve(bets, activeBankroll.initial),
       }
     : null;
 
   const refresh = useCallback(() => {
     void mutateBets();
-  }, [mutateBets]);
+    void mutateBankrolls();
+  }, [mutateBets, mutateBankrolls]);
 
   const createBankroll = useCallback(
     async (name: string, initial: number, currency?: string) => {
@@ -97,6 +108,14 @@ export function useBetManager() {
   const settleBet = useCallback(
     async (id: string, status: BetStatus, payout?: number) => {
       await bmApi.settleBet(id, status, payout);
+      void refresh();
+    },
+    [refresh]
+  );
+
+  const updateBet = useCallback(
+    async (id: string, data: Partial<BetInput>) => {
+      await bmApi.updateBet(id, data);
       void refresh();
     },
     [refresh]
@@ -144,6 +163,7 @@ export function useBetManager() {
     deleteBankroll,
     addBet,
     settleBet,
+    updateBet,
     deleteBet,
     importCSV,
     autoSettle,
@@ -159,6 +179,8 @@ export function useBetsStats(bets: Bet[], initial: number): StatsBundle {
     byType: groupStats(bets, (b) => b.betType || "single"),
     byMonth: groupStats(bets, (b) => monthKey(b.placedAt)),
     byOdds: groupStats(bets, (b) => oddsBucket(b.odds)),
+    byTiming: groupStats(bets, (b) => timingBucket(b.placedAt)),
+    clv: computeClvStats(bets),
     curve: capitalCurve(bets, initial),
   };
 }

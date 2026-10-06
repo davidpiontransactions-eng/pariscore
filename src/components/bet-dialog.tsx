@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trophy, Check, Plus } from "lucide-react";
-import { useBankroll } from "@/hooks/use-bankroll";
+import { useBetManager } from "@/hooks/use-bet-manager";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +41,8 @@ type Props = {
 export function BetDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("bankroll.bet");
   const tSlip = useTranslations("betSlip");
-  const { addBet, stats } = useBankroll();
+  // Migré de use-bankroll (localStorage) vers le module Prisma (P7 bettrack).
+  const { addBet, activeId, stats: bmStats } = useBetManager();
   const { track } = useAnalytics();
   const { addToSlip, isFull } = useBetSlip();
   const { toast } = useToast();
@@ -60,26 +61,40 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
       : 1 / (isA ? match.probA / 100 : match.probB / 100);
   }
 
-  const handlePlaceBet = () => {
+  const handlePlaceBet = async () => {
     if (!match) return;
     const stakeNum = parseFloat(stake);
     if (isNaN(stakeNum) || stakeNum <= 0) return;
+    if (!activeId) {
+      toast({
+        title: "Aucune bankroll",
+        description: "Sélectionne une bankroll (module Banque) pour enregistrer ton pari.",
+      });
+      return;
+    }
 
     const isA = betOn === "A";
     const odd = computeOdd(isA);
 
-    addBet({
-      matchId: match.id,
-      playerA: match.playerA.name,
-      playerB: match.playerB.name,
-      betOn,
-      betOnName: isA ? match.playerA.name : match.playerB.name,
-      stake: stakeNum,
-      odd,
-      bookmaker: match.odds?.bookmaker,
-      surface: match.surface,
-      tournament: match.tournament,
-    });
+    // Mapping format legacy (playerA/betOn/odd) → schéma Bet Prisma
+    try {
+      await addBet({
+        bankrollId: activeId,
+        betType: "single",
+        sport: "tennis",
+        matchLabel: `${match.playerA.name} vs ${match.playerB.name}`,
+        market: "Vainqueur",
+        pick: isA ? match.playerA.name : match.playerB.name,
+        stake: stakeNum,
+        odds: odd,
+        bookmaker: match.odds?.bookmaker ?? undefined,
+        competition: match.tournament ?? undefined,
+        note: match.surface ? `Surface : ${match.surface}` : undefined,
+      });
+    } catch (err: any) {
+      toast({ title: "Enregistrement impossible", description: err?.message ?? "Erreur inconnue" });
+      return;
+    }
 
     track("bet_placed", {
       match_id: match.id,
@@ -169,7 +184,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
           {/* Bankroll status */}
           <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 text-xs">
             <span className="text-muted-foreground">{t("currentBankroll")}</span>
-            <span className="font-mono font-bold tabular-nums">{stats.current.toFixed(2)} €</span>
+            <span className="font-mono font-bold tabular-nums">{(bmStats?.stats.current ?? 0).toFixed(2)} €</span>
           </div>
 
           {/* Bet on selector */}

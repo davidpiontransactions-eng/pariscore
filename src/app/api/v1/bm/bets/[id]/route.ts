@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireBmSession } from "@/lib/bet-manager/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 
 // PATCH /api/v1/bm/bets/:id — régler un pari (status, payout), éditer, cashout
 export async function PATCH(req: NextRequest, { params }: Ctx) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const { id } = await params;
   let body: any;
   try {
@@ -67,6 +70,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
 // DELETE /api/v1/bm/bets/:id
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   const { id } = await params;
   try {
     await prisma.$transaction([

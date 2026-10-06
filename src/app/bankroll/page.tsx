@@ -14,8 +14,6 @@ import { CsvImport } from "@/components/bet-manager/csv-import";
 import { LocalStorageMigration } from "@/components/bet-manager/local-storage-migration";
 import { Button } from "@/components/ui/button";
 import { Zap, Plus, Trophy, Loader2 } from "lucide-react";
-// Force rebuild: timestamp
-const REBUILD_TRIGGER = Date.now();
 
 export default function BankrollDashboardPage() {
   const bm = useBetManager();
@@ -72,16 +70,37 @@ export default function BankrollDashboardPage() {
           )}
         </div>
 
+        {/* Métriques CLV (Closing Line Value) */}
+        {bm.stats && bm.stats.clv.tracked > 0 && (
+          <section className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {[
+              { label: "CLV Edge moyen", value: `${(bm.stats.clv.avgEdge * 100).toFixed(2)} pts`, good: bm.stats.clv.avgEdge > 0 },
+              { label: "CLV brut moyen", value: `${bm.stats.clv.avgRaw >= 0 ? "+" : ""}${bm.stats.clv.avgRaw.toFixed(2)}`, good: bm.stats.clv.avgRaw > 0 },
+              { label: "Taux positif", value: `${bm.stats.clv.positiveRate.toFixed(0)} %`, good: bm.stats.clv.positiveRate >= 50 },
+              { label: "Paris trackés", value: String(bm.stats.clv.tracked), good: true },
+            ].map((k) => (
+              <div key={k.label} className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-[#6B5B8D]">{k.label}</div>
+                <div className={"mt-1.5 font-mono text-lg font-semibold tabular-nums " + (k.good ? "text-emerald-400" : "text-red-400")}>
+                  {k.value}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+
         {/* Répartitions */}
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <BreakdownList title="Par sport" groups={bm.stats?.bySport ?? []} />
           <BreakdownList title="Par bookmaker" groups={bm.stats?.byBookmaker ?? []} />
           <BreakdownList title="Par plage de cote" groups={bm.stats?.byOdds ?? []} />
+          <BreakdownList title="Par type de pari" groups={bm.stats?.byType ?? []} />
+          <BreakdownList title="Par période (heure)" groups={bm.stats?.byTiming ?? []} />
         </div>
 
         {/* Derniers paris + Formulaire */}
         <div className="mt-6 grid gap-4 md:grid-cols-[2fr_1fr]">
-          <section className="space-y-4">
+          <section className="min-w-0 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Derniers paris</h2>
               <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
@@ -93,6 +112,7 @@ export default function BankrollDashboardPage() {
               bets={bm.bets.slice(0, 10)}
               onSettle={bm.settleBet}
               onDelete={bm.deleteBet}
+              onUpdate={bm.updateBet}
             />
           </section>
 

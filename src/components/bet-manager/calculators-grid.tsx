@@ -19,6 +19,7 @@ import {
   Route,
   Dice5,
   BarChart3,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ import {
   handicapConverter,
   monteCarlo,
   stakingPlans,
+  promoConversion,
 } from "@/lib/bet-manager/calculators";
 
 type FieldDef = {
@@ -369,6 +371,36 @@ const CALCS: CalcDef[] = [
     },
   },
   {
+    id: "promo",
+    title: "Conversion de bonus",
+    desc: "Free bet converti en cash via couverture",
+    icon: Gift,
+    tier: "PRO",
+    fields: [
+      { key: "bonus", label: "Montant du free bet (€)", type: "number", def: "10" },
+      { key: "bonusOdds", label: "Cote du pari bonus", type: "number", def: "3.00" },
+      { key: "hedgeOdds", label: "Cote de couverture", type: "number", def: "1.50" },
+      { key: "commission", label: "Commission exchange (%)", type: "number", def: "2" },
+    ],
+    compute: (v) => {
+      const r = promoConversion(
+        Number(v.bonus) || 0,
+        Number(v.bonusOdds) || 0,
+        Number(v.hedgeOdds) || 0,
+        (Number(v.commission) || 0) / 100
+      );
+      if ("error" in r) return [{ label: "Erreur", value: r.error, tone: "bad" }];
+      return [
+        { label: "Mise de couverture", value: eur(r.hedgeStake) },
+        { label: "Profit garanti", value: eur(r.guaranteedProfit), tone: r.guaranteedProfit >= 0 ? "good" : "bad" },
+        { label: "Conversion", value: r.conversionPct + "%", tone: "good" },
+        { label: "Si le bonus gagne", value: eur(r.profitIfBonusWins) },
+        { label: "Si la couverture gagne", value: eur(r.profitIfHedgeWins) },
+        { label: "Proba implicite couverture", value: r.impliedProbHedge + "%" },
+      ];
+    },
+  },
+  {
     id: "monte-carlo",
     title: "Simulateur Monte Carlo",
     desc: "1 000 trajectoires de bankroll selon votre taux de réussite",
@@ -476,6 +508,7 @@ function CalcCard({ calc }: { calc: CalcDef }) {
 }
 
 export function CalculatorsGrid({ bets, initial }: { bets: Bet[]; initial: number }) {
+  const [planDetail, setPlanDetail] = useState(false);
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {CALCS.map((calc) => (
@@ -502,6 +535,11 @@ export function CalculatorsGrid({ bets, initial }: { bets: Bet[]; initial: numbe
               className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-1.5 text-xs"
             >
               <span className="text-zinc-300">{p.name}</span>
+              {planDetail && (
+                <span className="font-mono text-[10px] text-zinc-500">
+                  {p.finalBankroll.toFixed(0)} € · ROI {p.roi.toFixed(1)}%
+                </span>
+              )}
               <span className={cn("font-mono font-semibold", p.profit > 0 ? "text-emerald-400" : p.profit < 0 ? "text-red-400" : "text-zinc-400")}>
                 {p.profit > 0 ? "+" : ""}
                 {p.profit.toFixed(0)} €
@@ -510,8 +548,13 @@ export function CalculatorsGrid({ bets, initial }: { bets: Bet[]; initial: numbe
             </div>
           ))}
         </div>
-        <Button variant="outline" size="sm" className="mt-3 border-white/10 text-[11px] text-zinc-300" disabled>
-          Compare tes stratégies de mise
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 border-white/10 text-[11px] text-zinc-300"
+          onClick={() => setPlanDetail((d) => !d)}
+        >
+          {planDetail ? "Masquer le détail" : "Compare tes stratégies de mise"}
         </Button>
       </div>
     </div>

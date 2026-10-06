@@ -1,4 +1,4 @@
-// 17 calculateurs de paris sportifs (best-of Bet-Analytix × BettingTracker)
+// 19 calculateurs de paris sportifs (best-of Bet-Analytix × BettingTracker × bettrackai)
 // Fonctions pures, partagées entre l'API et les pages tools.
 
 import type { Bet } from "./types";
@@ -202,14 +202,21 @@ export type StakingPlan = { name: string; finalBankroll: number; profit: number;
 
 export function stakingPlans(bets: Bet[], initialBankroll: number): StakingPlan[] {
   const settled = bets.filter(isRisked).sort((a, b) => a.placedAt.localeCompare(b.placedAt));
+  // Proba des plans Kelly = taux de réussite HISTORIQUE du jeu. La proba
+  // implicite (1/odds) donnait un edge structurellement nul : Kelly misait
+  // toujours le plancher 0,50 € (fix bettrack P3).
+  const decidedWL = settled.filter((b) => b.status === "won" || b.status === "lost");
+  const histWinPct = decidedWL.length
+    ? (decidedWL.filter((b) => b.status === "won").length / decidedWL.length) * 100
+    : 0;
   type PlanDef = { name: string; fn: (bank: number, b: Bet) => number };
   const plans: PlanDef[] = [
     { name: "Flat (10 €)", fn: () => 10 },
     { name: "1% bankroll", fn: (bank: number) => bank * 0.01 },
     { name: "2% bankroll", fn: (bank: number) => bank * 0.02 },
     { name: "5% bankroll", fn: (bank: number) => bank * 0.05 },
-    { name: "Kelly 1/4", fn: (bank: number, b: Bet) => bank * Math.max(0, computeKellyStake((1 / b.odds) * 100, b.odds).pct / 100) * 0.25 },
-    { name: "Kelly 1/2", fn: (bank: number, b: Bet) => bank * Math.max(0, computeKellyStake((1 / b.odds) * 100, b.odds).pct / 100) * 0.5 },
+    { name: "Kelly 1/4", fn: (bank: number, b: Bet) => bank * Math.max(0, computeKellyStake(histWinPct, b.odds).pct / 100) * 0.25 },
+    { name: "Kelly 1/2", fn: (bank: number, b: Bet) => bank * Math.max(0, computeKellyStake(histWinPct, b.odds).pct / 100) * 0.5 },
   ];
 
   const results: StakingPlan[] = [];
@@ -246,6 +253,163 @@ export function stakingPlans(bets: Bet[], initialBankroll: number): StakingPlan[
   runPlan("Montante 1.5x", (_bank, _b, lastWin, lastStake) => (lastWin ? 10 : Math.min(lastStake * 1.5, _bank * 0.2)));
 
   return results;
+}
+
+// ─── 18. Montante — palier par palier (la mise ET la cote pour atteindre l'objectif) ──
+export type MontanteOptions = {
+  capital: number;
+  days: number;
+  /** Gain net visé par jour, en % du capital de début de journée. */
+  targetPct: number;
+  /** Part des gains versée en banque, en % (le reste est réinvesti). */
+  bankPct: number;
+  /** Capital engagé par jour, en % du capital de début de journée. */
+  stakePct: number;
+  maxBets: number;
+  /** Probabilité de réussite retenue (0-1) → cote d'espérance nulle = 1/q. */
+  winProb: number;
+  /** Date de départ au format AAAA-MM-JJ. */
+  startDate?: string;
+};
+
+export type MontanteStep = {
+  day: number;
+  date: string;
+  capitalStart: number;
+  target: number;
+  toBank: number;
+  reinvest: number;
+  capitalEnd: number;
+  bankCum: number;
+  total: number;
+  /** Capital engagé ce jour. */
+  stake: number;
+  /** Cote moyenne minimale pour atteindre l'objectif avec la mise engagée. */
+  requiredOdds: number | null;
+  /** Mise moyenne par pari (stake / maxBets). */
+  perBet: number;
+  /** Gain net visé moyen par pari (target / maxBets). */
+  perBetTarget: number;
+  /** Cote à laquelle l'espérance est nulle : 1 / winProb. */
+  neutralOdds: number | null;
+};
+
+/** Cote moyenne minimale : stake x (O - 1) = target. */
+export function requiredOddsForTarget(target: number, stake: number): number | null {
+  if (!(stake > 0)) return null;
+  return round(1 + target / stake, 4);
+}
+
+/** Mise exacte à engager pour un gain net donné à une cote donnée. */
+export function requiredStakeForTarget(target: number, odds: number): number | null {
+  if (!(odds > 1)) return null;
+  return round(target / (odds - 1), 2);
+}
+
+function isoAddDays(iso: string, n: number): string {
+  const p = iso.split("-").map(Number);
+  const d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n));
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Construit la progression palier par palier. Le capital de chaque jour alimente
+ * le jour suivant : chaque palier se base sur le capital RÉELLEMENT atteint,
+ * jamais sur une projection figée au départ.
+ */
+export function buildMontante(o: MontanteOptions): MontanteStep[] {
+  const days = Math.max(1, Math.min(999, Math.floor(o.days)));
+  const nBets = Math.max(1, Math.floor(o.maxBets));
+  const startDate = o.startDate || new Date().toISOString().slice(0, 10);
+  const bankRate = o.bankPct / 100;
+  const stakeRate = o.stakePct / 100;
+  const steps: MontanteStep[] = [];
+  let capital = o.capital;
+  let bank = 0;
+
+  for (let day = 1; day <= days; day++) {
+    const capitalStart = capital;
+    const target = round(capitalStart * (o.targetPct / 100));
+    const toBank = round(Math.max(0, target) * bankRate);
+    const reinvest = round(target - toBank);
+    /* Le capital ARRONDI est celui qu'on reporte : le tableau doit être
+       arithmétiquement vérifiable à la main (fin N == début N+1). */
+    capital = round(capitalStart + reinvest);
+    bank = round(bank + toBank);
+    const stake = round(capitalStart * stakeRate);
+    steps.push({
+      day,
+      date: isoAddDays(startDate, day - 1),
+      capitalStart: round(capitalStart),
+      target: round(target),
+      toBank: toBank,
+      reinvest: reinvest,
+      capitalEnd: capital,
+      bankCum: bank,
+      total: round(capital + bank),
+      stake: stake,
+      requiredOdds: requiredOddsForTarget(target, stake),
+      perBet: round(stake / nBets),
+      perBetTarget: round(target / nBets),
+      neutralOdds: o.winProb > 0 ? round(1 / o.winProb, 4) : null,
+    });
+  }
+  return steps;
+}
+
+/** Table d'arbitrage risque/gain : cote moyenne requise pour un gain visé = targetPct du capital. */
+export function tradeoffTable(capital: number, targetPct: number, pcts: number[]): { pct: number; stake: number; odds: number }[] {
+  return pcts.map((pct) => {
+    const stake = capital * (pct / 100);
+    return { pct, stake: round(stake), odds: requiredOddsForTarget(capital * (targetPct / 100), stake) ?? 0 };
+  });
+}
+
+// ─── 19. Conversion de free bet / bonus (best-of bettrackai) ─────────────────
+export type PromoResult = {
+  /** Mise à poser côté couverture pour égaliser les deux issues. */
+  hedgeStake: number;
+  /** Profit net si le pari bonus gagne. */
+  profitIfBonusWins: number;
+  /** Profit net si la couverture gagne (amputé de la commission). */
+  profitIfHedgeWins: number;
+  /** Le plus petit des deux : le résultat garanti. */
+  guaranteedProfit: number;
+  /** Profit garanti rapporté au montant du bonus (%). */
+  conversionPct: number;
+  /** Probabilité implicite de la cote de couverture (%). */
+  impliedProbHedge: number;
+};
+
+/**
+ * Free bet F joué à la cote O1, couvert en backant l'issue opposée à O2
+ * (commission c côté exchange). Le stake du free bet n'est pas engagé :
+ * les deux issues paient F×O1, la commission n'ampute que la couverture
+ * gagnante. Ex. F=10, O1=3.00, O2=1.50, c=2 % → couverture 20.00,
+ * garanti 9.40, conversion 94 %.
+ */
+export function promoConversion(
+  bonusAmount: number,
+  bonusOdds: number,
+  hedgeOdds: number,
+  commission = 0
+): PromoResult | { error: string } {
+  if (!(bonusAmount > 0) || !(bonusOdds > 1) || !(hedgeOdds > 1)) {
+    return { error: "Montant ou cotes invalides" };
+  }
+  const c = Math.max(0, Math.min(0.5, commission));
+  const hedgeStake = (bonusAmount * bonusOdds) / hedgeOdds;
+  const profitIfBonusWins = bonusAmount * bonusOdds - hedgeStake;
+  const profitIfHedgeWins = bonusAmount * bonusOdds * (1 - c) - hedgeStake;
+  const guaranteed = Math.min(profitIfBonusWins, profitIfHedgeWins);
+  return {
+    hedgeStake: round(hedgeStake),
+    profitIfBonusWins: round(profitIfBonusWins),
+    profitIfHedgeWins: round(profitIfHedgeWins),
+    guaranteedProfit: round(guaranteed),
+    conversionPct: round((guaranteed / bonusAmount) * 100),
+    impliedProbHedge: round((1 / hedgeOdds) * 100),
+  };
 }
 
 // ─── Export CSV des paris (compatible import) ───────────────────────────────

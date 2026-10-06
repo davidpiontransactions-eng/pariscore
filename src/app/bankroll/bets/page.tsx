@@ -30,17 +30,46 @@ const STATUSES = [
   { value: "cashout", label: "Cashout" },
 ];
 
+const BET_TYPES = [
+  { value: "all", label: "Tous les types" },
+  { value: "single", label: "Simple" },
+  { value: "combo", label: "Combiné" },
+  { value: "system", label: "Système" },
+  { value: "back", label: "Back" },
+  { value: "lay", label: "Lay" },
+  { value: "dutch", label: "Dutch" },
+];
+
+const SORTS = [
+  { value: "date-desc", label: "Date ↓" },
+  { value: "date-asc", label: "Date ↑" },
+  { value: "stake-desc", label: "Mise ↓" },
+  { value: "odds-desc", label: "Cote ↓" },
+  { value: "profit-desc", label: "P/L ↓" },
+];
+
 export default function BankrollBetsPage() {
   const bm = useBetManager();
   const [showForm, setShowForm] = useState(false);
   const [showBankrollForm, setShowBankrollForm] = useState(false);
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [betType, setBetType] = useState("all");
+  const [bookmaker, setBookmaker] = useState("all");
+  const [sort, setSort] = useState("date-desc");
   const [settling, setSettling] = useState(false);
+
+  // Options dynamiques du filtre bookmaker (issues de l'historique)
+  const bookmakerOptions = useMemo(() => {
+    const set = new Set(bm.bets.map((b) => b.bookmaker?.trim()).filter(Boolean) as string[]);
+    return Array.from(set).sort();
+  }, [bm.bets]);
 
   const filteredBets = useMemo(() => {
     let bets = bm.bets;
     if (status !== "all") bets = bets.filter((b) => b.status === status);
+    if (betType !== "all") bets = bets.filter((b) => b.betType === betType);
+    if (bookmaker !== "all") bets = bets.filter((b) => (b.bookmaker ?? "") === bookmaker);
     if (search) {
       const q = search.toLowerCase();
       bets = bets.filter(
@@ -51,8 +80,16 @@ export default function BankrollBetsPage() {
           b.tipster?.toLowerCase().includes(q)
       );
     }
-    return bets;
-  }, [bm.bets, status, search]);
+    const pl = (b: (typeof bets)[number]) => (b.payout ?? 0) - b.stake;
+    const sorters: Record<string, (a: (typeof bets)[number], b2: (typeof bets)[number]) => number> = {
+      "date-desc": (a, b2) => b2.placedAt.localeCompare(a.placedAt),
+      "date-asc": (a, b2) => a.placedAt.localeCompare(b2.placedAt),
+      "stake-desc": (a, b2) => b2.stake - a.stake,
+      "odds-desc": (a, b2) => b2.odds - a.odds,
+      "profit-desc": (a, b2) => pl(b2) - pl(a),
+    };
+    return [...bets].sort(sorters[sort] ?? sorters["date-desc"]);
+  }, [bm.bets, status, betType, bookmaker, search, sort]);
 
   return (
     <div className="min-h-screen bg-bg-deep pb-16 text-zinc-100">
@@ -106,6 +143,43 @@ export default function BankrollBetsPage() {
             </SelectTrigger>
             <SelectContent>
               {STATUSES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={betType} onValueChange={setBetType}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {BET_TYPES.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={bookmaker} onValueChange={setBookmaker}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Bookmaker" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les books</SelectItem>
+              {bookmakerOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={setSort}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Tri" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORTS.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
                 </SelectItem>
@@ -171,7 +245,7 @@ export default function BankrollBetsPage() {
         <CsvImport onImport={bm.importCSV} />
 
         {/* Liste des paris */}
-        <BetTable bets={filteredBets} onSettle={bm.settleBet} onDelete={bm.deleteBet} />
+        <BetTable bets={filteredBets} onSettle={bm.settleBet} onDelete={bm.deleteBet} onUpdate={bm.updateBet} />
 
         {/* Dialogue d'ajout de pari — redirige vers page dédiée pour éviter les problèmes de build avec tesseract.js */}
         {showForm && (

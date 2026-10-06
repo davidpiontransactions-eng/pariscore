@@ -404,6 +404,283 @@ export async function fetchUnifiedLive(): Promise<UnifiedLiveEvent[]> {
   return events;
 }
 
+// ─── Basketball (BSD) ────────────────────────────────────────────────────
+//
+// Base : https://sports.bzzoiro.com/basketball/api/v2
+// Auth : identique (Token). Les LOGOS sont sur un hôte SANS auth.
+//
+// ⚠️ OSINT 2026-10-06 : BSD est un agrégateur à base propre
+// (Django REST Framework, `No BasketballEvent matches the given query.`),
+// pas un proxy. `allow: OPTIONS, GET` = DRF. Donc les identifiants sont
+// les SIENS (entiers internes), pas ceux d'un fournisseur amont.
+
+const BASKETBALL_BASE = "https://sports.bzzoiro.com/basketball/api/v2";
+const BASKETBALL_IMG = "https://sports.bzzoiro.com/img/basketball";
+
+export type BsdBasketballTeamRef = {
+  id: number;
+  name: string;
+  short_name: string;
+  country_code: string;
+};
+
+export type BsdBasketballEvent = {
+  id: number;
+  league: { id: number; name: string; country: string };
+  home_team: BsdBasketballTeamRef;
+  away_team: BsdBasketballTeamRef;
+  event_date: string;
+  status: "scheduled" | "live" | "finished" | "postponed" | "cancelled";
+  home_score: number | null;
+  away_score: number | null;
+  round_number: number | null;
+  prediction: BsdBasketballRawPrediction | null;
+};
+
+/**
+ * Prédiction telle que renvoyée par BSD.
+ *
+ * ⚠️ `prob_over_*` sont des seuils NBA (205 / 215 / 225). Sur un match
+ * EuroCup à ~160 points (mesuré : `prob_over_215 = 0.0246` quand le
+ * `pregame` de la même source annonce 156/165), ils sont FAUX par
+ * construction — même défaut que `Over 215.5` appliqué à l'EuroLeague.
+ * Ils sont donc retirés par `sanitizeBasketballPrediction`.
+ */
+export type BsdBasketballRawPrediction = {
+  prob_home_win: number;
+  prob_away_win: number;
+  prob_over_205?: number;
+  prob_over_215?: number;
+  prob_over_225?: number;
+  prob_favorite_wins?: number;
+  predicted_winner_id?: number | null;
+  predicted_winner_name?: string | null;
+  confidence?: string;
+  confidence_score?: number;
+  elo_home?: number;
+  elo_away?: number;
+  model_version?: string;
+  is_correct?: boolean | null;
+};
+
+/**
+ * Prédiction EXPOSÉE à l'app : sans dimension, donc utilisable.
+ *
+ * `prob_favorite_wins` est écarté avec les `prob_over_*` : c'est une
+ * grandeur dérivée d'un seuil implicite, pas une probabilité d'équipe
+ * identifiable. Le garder exposerait un chiffre dont on ne peut pas dire
+ * ce qu'il mesure.
+ */
+//
+export type BsdBasketballPrediction = {
+  probHomeWin: number;
+  probAwayWin: number;
+  eloHome: number | null;
+  eloAway: number | null;
+  confidence: string | null;
+  confidenceScore: number | null;
+  predictedWinnerId: number | null;
+  predictedWinnerName: string | null;
+  modelVersion: string | null;
+  /** Champs retirés et pourquoi — auditable côté serveur. */
+  rejectedFields: string[];
+};
+
+/**
+ * Retire les champs non dimensionnels d'une prédiction BSD.
+ *
+ * Fonction pure et exportée pour être testée sans réseau : c'est la garde
+ * qui empêche `prob_over_215` de réapparaître un jour dans l'UI.
+ */
+export function sanitizeBasketballPrediction(
+  raw: BsdBasketballRawPrediction | null | undefined,
+): BsdBasketballPrediction | null {
+  if (!raw) return null;
+
+  const rejected: string[] = [];
+  for (const k of ["prob_over_205", "prob_over_215", "prob_over_225", "prob_favorite_wins"]) {
+    if (raw[k] != null) rejected.push(k);
+  }
+
+  return {
+    probHomeWin: raw.prob_home_win,
+    probAwayWin: raw.prob_away_win,
+    eloHome: raw.elo_home ?? null,
+    eloAway: raw.elo_away ?? null,
+    confidence: raw.confidence ?? null,
+    confidenceScore: raw.confidence_score ?? null,
+    predictedWinnerId: raw.predicted_winner_id ?? null,
+    predictedWinnerName: raw.predicted_winner_name ?? null,
+    modelVersion: raw.model_version ?? null,
+    rejectedFields: rejected,
+  };
+}
+
+export type BsdBasketballPregame = {
+  event_id: number;
+  home_coach: { id: number; name: string } | null;
+  away_coach: { id: number; name: string } | null;
+  venue: { id: number; name: string; city: string; country: string; capacity: number | null } | null;
+  home_standing: BsdBasketballStandingRow | null;
+  away_standing: BsdBasketballStandingRow | null;
+  streaks: { general: Array<{ name: string; team: string; value: string }>; h2h: unknown[] };
+  featured_players: unknown[];
+};
+
+export type BsdBasketballStandingRow = {
+  position: number;
+  matches: number;
+  wins: number;
+  losses: number;
+  scores_for: number;
+  scores_against: number;
+  percentage: number;
+};
+
+/** GET /events/ — `date_from`/`date_to` en YYYY-MM-DD. */
+export async function getBasketballEvents(params?: {
+  date_from?: string;
+  date_to?: string;
+  league?: number;
+  team?: number;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ count: number; results: BsdBasketballEvent[] }> {
+  return bsdFetch(`${BASKETBALL_BASE}/events/${qs(params)}`);
+}
+
+/** GET /events/live/ — cache 30 s côté BSD. */
+export async function getBasketballLive(): Promise<BsdBasketballEvent[]> {
+  return bsdFetch<BsdBasketballEvent[]>(`${BASKETBALL_BASE}/events/live/`);
+}
+
+/** GET /events/{id}/pregame/ — coach, salle, classements, séries des 10. */
+export async function getBasketballPregame(eventId: number): Promise<BsdBasketballPregame> {
+  return bsdFetch<BsdBasketballPregame>(`${BASKETBALL_BASE}/events/${eventId}/pregame/`);
+}
+
+export type BsdBasketbookmakerPrice = {
+  bookmaker: string;
+  bookmaker_slug: string;
+  odds_home: number | null;
+  odds_away: number | null;
+  movement_home: string | null;
+  movement_away: string | null;
+  updated_at: string | null;
+};
+
+export type BsdBasketballOdds = {
+  event_id: number;
+  event_date: string | null;
+  home_team_name: string | null;
+  away_team_name: string | null;
+  /** `multi` = prix par bookmaker, `consensus` = prix unique stocké, `none` = personne n'a coté. */
+  source: string;
+  bookmakers_count: number;
+  bookmakers: BsdBasketbookmakerPrice[];
+  /** Marchés additionnels (AH, OU, WINNER) — non transformés. */
+  markets?: unknown[];
+};
+
+/**
+ * GET /events/{id}/odds/
+ *
+ * Renvoie `null` quand aucune cote n'existe (404) — un cas NORMAL pour un
+ * match jeune, pas une erreur à remonter. Le cron distingue donc « pas de
+ * cotes » de « appel échoué ».
+ */
+export async function getBasketballOdds(eventId: number): Promise<BsdBasketballOdds | null> {
+  try {
+    return await bsdFetch<BsdBasketballOdds>(`${BASKETBALL_BASE}/events/${eventId}/odds/`);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * GET /predictions/?league=&days= — UN appel pour toute une ligue.
+ *
+ * ⚠️ Le champ `prediction` n'existe PAS sur `/events/` (le listing) : mesuré
+ * le 2026-10-06, le listing n'expose ni `prediction` ni `officials`, alors que
+ * le détail `/events/{id}/` les porte. Le cron lisait donc `ev.prediction`
+ * sur le listing → toujours `undefined` → 0 prédiction sur 17 matchs, alors
+ * que BSD en a. Plutôt que N appels de détail, un seul appel ici.
+ */
+export type BsdBasketballPredictionRow = BsdBasketballRawPrediction & {
+  event_id: number;
+  event_date?: string;
+  league?: { id: number; name: string };
+};
+
+export async function getBasketballPredictions(params?: {
+  league?: number;
+  days?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<{ count: number; results: BsdBasketballPredictionRow[] }> {
+  return bsdFetch(`${BASKETBALL_BASE}/predictions/${qs(params)}`);
+}
+
+/** GET /standings/?league= */
+export async function getBasketballStandings(
+  leagueId: number,
+): Promise<{ league: { id: number; name: string }; standings: Array<{ team: BsdBasketballTeamRef } & BsdBasketballStandingRow> }> {
+  return bsdFetch(`${BASKETBALL_BASE}/standings/?league=${leagueId}`);
+}
+
+/** Types d'images supportés : `team`, `league`, `player`, `manager`, `venue`. */
+export type BsdBasketballImageKind = "team" | "league" | "player" | "manager" | "venue";
+
+/**
+ * URL d'un blason BSD — SANS authentification.
+ *
+ * Contrat documenté et vérifié le 2026-10-06 : `200` = image (PNG/WebP),
+ * `204` = id valide SANS image, `404` = type inconnu. Le `204` est un cas
+ * normal, pas une erreur : d'où `logoAvailable` plus loin.
+ */
+export function basketballImageUrl(kind: BsdBasketballImageKind, id: number | null | undefined): string | null {
+  // `id > 0` et non `id != null` : BSD numérote ses entités à partir de 1,
+  // donc `0` est un id INVALIDE, pas un id valide. Sans ce garde, `0` —
+  // valeur de repli classique après un `?? 0` — produirait une URL qui
+  // répond 204 et donc une image cassée à chaque rendu.
+  if (id == null || !Number.isFinite(id) || id <= 0) return null;
+  return `${BASKETBALL_IMG}/${kind}/${Math.floor(id)}/`;
+}
+
+/**
+ * État d'une image BSD, tel qu'il doit être PROUVÉ avant d'afficher.
+ *
+ * On ne « suppose » pas qu'une URL marche : sans vérification, un 204 donne
+ * une image cassée — exactement ce que produit un `<img>` sans `onError`.
+ */
+export type BsdImageProbe =
+  | { status: "available"; url: string }
+  | { status: "absent"; url: string }
+  // `url` peut être `null` ICI (id invalide) mais reste une string quand la
+  // requête a été tentée : d'où le type union, pas `url: null` strict.
+  | { status: "unknown"; url: string | null };
+
+/** Vérifie une image. `HEAD` d'abord (léger), `GET` en secours. */
+export async function probeBasketballImage(
+  kind: BsdBasketballImageKind,
+  id: number | null | undefined,
+): Promise<BsdImageProbe> {
+  const url = basketballImageUrl(kind, id);
+  if (!url) return { status: "unknown", url: null };
+  try {
+    let res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(8_000) });
+    if (res.status === 405 || res.status === 501) {
+      res = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    }
+    if (res.status === 200) return { status: "available", url };
+    if (res.status === 204 || res.status === 404) return { status: "absent", url };
+    return { status: "unknown", url };
+  } catch {
+    return { status: "unknown", url };
+  }
+}
+
 // ─── Nettoyage cache ─────────────────────────────────────────────────────
 
 export function clearBsdCache(): void {

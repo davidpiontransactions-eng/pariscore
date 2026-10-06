@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseBetsCSV } from "@/lib/bet-manager/calculators";
+import { requireBmSession } from "@/lib/bet-manager/auth";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/v1/bm/import/csv — import en masse { bankrollId, csv }
 export async function POST(req: NextRequest) {
+  const deny = await requireBmSession();
+  if (deny) return deny;
   let body: any;
   try {
     body = await req.json();

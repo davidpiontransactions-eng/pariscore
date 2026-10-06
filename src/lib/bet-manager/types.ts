@@ -33,6 +33,8 @@ export type Bet = {
   category?: string | null;
   tags?: string | null;
   closingOdd?: number | null;
+  /** Réf ticket 1xBet (№ coupon) — clé de dédup des imports. */
+  externalRef?: string | null;
   placedAt: string;
   settledAt?: string | null;
   note?: string | null;
@@ -73,6 +75,19 @@ export type BankrollStats = {
   maxDrawdown: number; // % de drawdown max sur l'historique
   variance: number; // variance des P/L unitaires
   stdev: number; // écart-type des P/L
+  pendingExposure: number; // Σ mises des paris encore en attente
+  potentialPayout: number; // Σ stake × odds des paris en attente (gain potentiel total)
+};
+
+// Mouvements de fonds du ledger (dépôts/retraits/bonus/ajustements) — Prisma BankrollTx.
+export type BankrollTx = {
+  id: string;
+  bankrollId: string;
+  kind: "deposit" | "withdrawal" | "bonus" | "adjustment";
+  amount: number; // signé : dépôt/bonus > 0, retrait < 0, ajustement libre
+  at: string;
+  note: string | null;
+  createdAt: string;
 };
 
 export type GroupStats = {
@@ -87,6 +102,12 @@ export type GroupStats = {
   profit: number;
   roi: number;
   winRate: number;
+  /** Part de la mise totale (sum des volumePct d'un découpage = 100). */
+  volumePct: number;
+  /** Plus longue série chronologique de gains (won/lost seulement). */
+  bestStreak: number;
+  /** Plus longue série chronologique de pertes (négatif). */
+  worstStreak: number;
 };
 
 export type CapitalPoint = {

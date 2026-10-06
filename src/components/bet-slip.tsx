@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useBetSlip, type BetSelection } from "@/hooks/use-bet-slip";
-import { useBankroll } from "@/hooks/use-bankroll";
+import { useBetManager } from "@/hooks/use-bet-manager";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -34,8 +34,9 @@ import { cn } from "@/lib/utils";
  *    collapsed badge button.
  *
  * "Place bets" iterates over the selections and calls `addBet` from
- * `useBankroll` for each, fires a `bet_slip_place` PostHog event with
- * `{ count, totalStake }`, shows a confirmation toast, and clears the slip.
+ * `useBetManager` (Prisma, module bet-manager) for each, fires a
+ * `bet_slip_place` PostHog event with `{ count, totalStake }`, shows a
+ * confirmation toast, and clears the slip.
  */
 export function BetSlip() {
   const t = useTranslations("betSlip");
@@ -53,7 +54,8 @@ export function BetSlip() {
     totalPayout,
     totalProfit,
   } = useBetSlip();
-  const { addBet } = useBankroll();
+  // Migré de use-bankroll (localStorage) vers le module Prisma (P7 bettrack).
+  const { addBet, activeId } = useBetManager();
 
   const [expanded, setExpanded] = useState(false);
   const [placing, setPlacing] = useState(false);
@@ -80,22 +82,31 @@ export function BetSlip() {
   // Empty + collapsed → render nothing.
   if (count === 0 && !expanded) return null;
 
-  const handlePlace = () => {
+  const handlePlace = async () => {
     if (selections.length === 0) return;
+    if (!activeId) {
+      toast({
+        title: "Aucune bankroll",
+        description: "Connecte-toi et sélectionne une bankroll (module Banque) pour enregistrer.",
+      });
+      return;
+    }
     setPlacing(true);
     try {
       for (const sel of selections) {
-        addBet({
-          matchId: sel.matchId,
-          playerA: sel.playerA,
-          playerB: sel.playerB,
-          betOn: sel.betOn,
-          betOnName: sel.betOnName,
+        // Mapping format legacy (playerA/betOn/odd) → schéma Bet Prisma
+        await addBet({
+          bankrollId: activeId,
+          betType: "single",
+          sport: "tennis",
+          matchLabel: `${sel.playerA} vs ${sel.playerB}`,
+          market: "Vainqueur",
+          pick: sel.betOnName,
           stake: sel.stake,
-          odd: sel.odd,
-          bookmaker: sel.bookmaker,
-          surface: sel.surface,
-          tournament: sel.tournament,
+          odds: sel.odd,
+          bookmaker: sel.bookmaker ?? undefined,
+          competition: sel.tournament ?? undefined,
+          note: sel.surface ? `Surface : ${sel.surface}` : undefined,
         });
       }
       track("bet_slip_place", {
@@ -109,6 +120,11 @@ export function BetSlip() {
       });
       clearSlip();
       track("bet_slip_clear", { source: "place" });
+    } catch (err: any) {
+      toast({
+        title: "Enregistrement impossible",
+        description: err?.message ?? "Erreur inconnue",
+      });
     } finally {
       setPlacing(false);
     }
