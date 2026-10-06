@@ -316,15 +316,30 @@ const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches, ...nhlMatc
     const hasNhl = nhlMatches.length > 0;
     const degraded = !(hasBSD || hasPrematch || hasKhl || hasNhl);
 
-    const sourceParts: string[] = [];
-    if (hasBSD) sourceParts.push("bsd");
-    if (hasPrematch) sourceParts.push("prematch");
-    if (hasKhl) sourceParts.push("hockeytech");
-    if (hasNhl) sourceParts.push("espn");
+// Volumétrie par source, mesurée sur ce qui est RÉELLEMENT servi.
+    //
+    // MESURÉ en production le 2026-10-06, juste après le correctif des noms de
+    // substitution : la réponse annonçait `counts.bsd = 50` et
+    // `source = bsd+…` alors qu'aucun match BSD n'était servi — les 50 avaient
+    // été écartés. Un compte qui décrit la source brute et non la réponse est
+    // un compte faux : il annonce une contribution que le client ne reçoit
+    // pas, et un tableau de volumétrie qui ment est pire que pas de tableau.
+    // On compte donc sur `deduped`, après garde ET après dédoublonnage.
+    const compteParSource = (nom: string) =>
+      deduped.filter((m) => String((m as Record<string, unknown>).source) === nom).length;
+
+    const counts = {
+      total: deduped.length,
+      bsd: compteParSource("bsd"),
+      prematch: compteParSource("prematch"),
+      hockeytech: compteParSource("hockeytech"),
+      espn: compteParSource("espn"),
+    };
+
+    // `source` ne nomme que les sources qui contribuent réellement : annoncer
+    // « bsd » quand la source n'a fourni aucun match exploitable est faux.
+    const sourceParts = (["bsd", "prematch", "hockeytech", "espn"] as const).filter((s) => counts[s] > 0);
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
-
-    const counts = { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length, espn: nhlMatches.length };
-
 
     if (!degraded) {
       cache.set({ matches: deduped, source, degraded, counts });

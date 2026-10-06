@@ -117,6 +117,42 @@ describe("GET /api/hockey/matches — ne se suspend jamais", () => {
     expect(coupables.map((m: { homeName: string; awayName: string }) => `${m.homeName} vs ${m.awayName}`)).toEqual([]);
   }, BUDGET_MS + 5000);
 
+  test("chaque source annoncée dans `counts` et `source` contribue réellement", async () => {
+    // MESURÉ en production le 2026-10-06 : après le correctif des noms de
+    // substitution, la réponse annonçait `counts.bsd = 50` et
+    // `source = bsd+…` alors que 0 match BSD n'était servi. Un compte et une
+    // liste de sources qui décrivent la SOURCE BRUTE plutôt que la RÉPONSE
+    // annoncent une contribution que le client ne reçoit jamais — et le
+    // décompte par source d'un tableau de volumétrie doit être vérifiable
+    // ligne à ligne contre les matchs servis.
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+
+    const parSource: Record<string, number> = {};
+    for (const m of body.matches) {
+      const s = String(m.source ?? "?");
+      parSource[s] = (parSource[s] ?? 0) + 1;
+    }
+
+    // Chaque compte annoncé doit valoir le décompte réel des matchs servis.
+    for (const src of ["bsd", "prematch", "hockeytech", "espn"]) {
+      const annonce = Number(body.counts[src] ?? 0);
+      const reel = parSource[src] ?? 0;
+      expect(annonce).toBe(reel);
+      if (annonce > 0) {
+        expect(String(body.source).split("+")).toContain(src);
+      } else {
+        expect(String(body.source).split("+")).not.toContain(src);
+      }
+    }
+
+    // La somme des comptes par source vaut le total : aucune ligne sans compte.
+    const sommeComptes = ["bsd", "prematch", "hockeytech", "espn"].reduce((a, s) => a + Number(body.counts[s] ?? 0), 0);
+    expect(sommeComptes).toBe(body.counts.total);
+    expect(body.counts.total).toBe(body.matches.length);
+  }, BUDGET_MS + 5000);
+
   test("le repli « Home »/« Away » ne peut pas revenir dans le code de la route", async () => {
     // Garde statique, même esprit que le test sur les promesses : c'est le
     // motif lui-même qu'on refuse, pas seulement son effet observé. Un
