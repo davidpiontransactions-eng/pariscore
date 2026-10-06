@@ -82,10 +82,10 @@ async function fetchBSDHockey(): Promise<unknown[]> {
       const homeTeam = asObj(m.home_team);
       const awayTeam = asObj(m.away_team);
       const leagueObj = asObj(m.league);
-      const homeName = str(homeTeam?.name) || str(m.home) || str(m.homeTeam) || "Home";
-      const awayName = str(awayTeam?.name) || str(m.away) || str(m.awayTeam) || "Away";
+      const homeName = str(homeTeam?.name) || str(m.home) || str(m.homeTeam) || "";
+      const awayName = str(awayTeam?.name) || str(m.away) || str(m.awayTeam) || "";
       return {
-        id: str(m.id || m.event_id || m.match_id) || "bsd-" + str(homeTeam?.id ?? "") + "-" + str(awayTeam?.id ?? "") || "bsd-" + normName(homeName) + "-" + normName(awayName),
+        id: str(m.id || m.event_id || m.match_id) || "bsd-" + str(homeTeam?.id ?? "") + "-" + str(awayTeam?.id ?? "") + "-" + normName(homeName) + normName(awayName),
         homeName,
         awayName,
         scheduledAt: str(m.match_date || m.scheduled_at || m.start_time || m.date) || null,
@@ -131,8 +131,8 @@ async function fetchPrematchMatches(): Promise<unknown[]> {
           const odds = m.odds1X2;
           matches.push({
             id: `prematch-${leagueId}-${m.team1Id}-${m.team2Id}`,
-            homeName: m.team1Name || "Home",
-            awayName: m.team2Name || "Away",
+            homeName: m.team1Name || "",
+            awayName: m.team2Name || "",
             scheduledAt: m.date || "",
             isLive: false,
             leagueId,
@@ -173,8 +173,8 @@ function fetchKhlMatches(): unknown[] {
     const { fenetre, matchs } = khlCalendarWindow(data);
     return matchs.map((m) => ({
       id: `khl-${m.id}`,
-      homeName: m.homeName || "Home",
-      awayName: m.awayName || "Away",
+      homeName: m.homeName || "",
+      awayName: m.awayName || "",
       scheduledAt: m.scheduledAt,
       isLive: m.isLive,
       isFinished: m.isFinished,
@@ -221,8 +221,8 @@ function fetchNhlMatches(): unknown[] {
     const { fenetre, matchs } = khlCalendarWindow(data);
     return matchs.map((m) => ({
       id: `nhl-${m.id}`,
-      homeName: m.homeName || "Home",
-      awayName: m.awayName || "Away",
+      homeName: m.homeName || "",
+      awayName: m.awayName || "",
       scheduledAt: m.scheduledAt,
       isLive: m.isLive,
       isFinished: m.isFinished,
@@ -269,10 +269,38 @@ export async function GET() {
       Promise.resolve(fetchNhlMatches()),
     ]);
 
-    const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches, ...nhlMatches];
+const allMatches = [...bsdMatches, ...prematchMatches, ...khlMatches, ...nhlMatches];
     const seen = new Set<string>();
     const norm = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
-    const deduped = allMatches.filter((m) => {
+
+    // Garde unique, appliquée aux QUATRE sources après fusion.
+    //
+    // MESURÉ en production le 2026-10-06 : les 50 lignes BSD servies portaient
+    // « Home » / « Away » comme noms d'équipe, la source ne fournissant pas de
+    // nom. Repliées sur du texte, elles étaient invisibles : 20 % du payload
+    // était du vide habillé en données, et `counts.bsd = 50` le comptait
+    // comme une mesure — un `0` déguisé en donnée, le défaut exact que les
+    // routes de football corrigent déjà ailleurs dans ce dépôt.
+    //
+    // Un match dont les deux équipes ne sont pas nommées n'est pas un match :
+    // il est ÉCARTÉ et COMPTÉ, jamais renommé. Appliqué ici plutôt qu'autour
+    // de chaque source parce que le défaut est commun aux quatre — le repli
+    // `|| "Home"` existait dans les quatre mappingeurs.
+    const sansEquipes = new Map<string, number>();
+    const nommes = allMatches.filter((m) => {
+      const r = m as Record<string, unknown>;
+      const h = norm(String(r.homeName ?? ""));
+      const a = norm(String(r.awayName ?? ""));
+      if (!h || !a || h === "home" || h === "away" || a === "home" || a === "away") {
+        const src = String(r.source ?? "?");
+        sansEquipes.set(src, (sansEquipes.get(src) ?? 0) + 1);
+        return false;
+      }
+      return true;
+    });
+    for (const [src, n] of sansEquipes) console.warn(`[hockey] ${src} : ${n} match(s) ecarte(s), nom d'equipe absent de la source`);
+
+    const deduped = nommes.filter((m) => {
       const id = String((m as Record<string, unknown>).id);
       // Clé étendue : ids divergents BSD↔prematch pour un même fixture
       const key = id + "|" + norm((m as Record<string, unknown>).homeName as string) + "|" + norm((m as Record<string, unknown>).awayName as string);
@@ -296,6 +324,7 @@ export async function GET() {
     const source = sourceParts.length > 0 ? sourceParts.join("+") : "none";
 
     const counts = { total: deduped.length, bsd: bsdMatches.length, prematch: prematchMatches.length, hockeytech: khlMatches.length, espn: nhlMatches.length };
+
 
     if (!degraded) {
       cache.set({ matches: deduped, source, degraded, counts });

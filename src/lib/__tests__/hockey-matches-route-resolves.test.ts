@@ -97,4 +97,38 @@ describe("GET /api/hockey/matches — ne se suspend jamais", () => {
       expect(zone).toMatch(/resolve\(/);
     }
   });
+
+  test("aucun match servi ne porte de nom d'équipe de substitution", async () => {
+    // MESURÉ en production le 2026-10-06 : les 50 lignes BSD servies
+    // portaient « Home » / « Away », la source ne fournissant pas de nom.
+    // Repliées sur du texte elles étaient invisibles, et `counts.bsd = 50`
+    // comptait du vide comme une mesure. Un nom d'équipe absent est une
+    // absence : le match doit être écarté, pas renommé.
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+
+    const interdits = new Set(["", "home", "away", "-", "null", "undefined"]);
+    const coupables = body.matches.filter((m: { homeName: string; awayName: string }) => {
+      const h = String(m.homeName ?? "").trim().toLowerCase();
+      const a = String(m.awayName ?? "").trim().toLowerCase();
+      return interdits.has(h) || interdits.has(a);
+    });
+    expect(coupables.map((m: { homeName: string; awayName: string }) => `${m.homeName} vs ${m.awayName}`)).toEqual([]);
+  }, BUDGET_MS + 5000);
+
+  test("le repli « Home »/« Away » ne peut pas revenir dans le code de la route", async () => {
+    // Garde statique, même esprit que le test sur les promesses : c'est le
+    // motif lui-même qu'on refuse, pas seulement son effet observé. Un
+    // `|| "Home"` réintroduit ici ferait réapparaître le défaut sans qu'aucun
+    // test ne le voie tant que la source BSD ne renvoie pas de noms vides.
+    const src = readFileSync(join(process.cwd(), "src", "app", "api", "hockey", "matches", "route.ts"), "utf8");
+    // On inspecte le CODE, pas la prose : le commentaire qui DOCUMENTE le
+    // repli removed contient forcément la chaîne, et le ferait échouer. Sans
+    // ce retrait, le test cassait sur sa propre documentation — et le
+    //_uint primerait à écrire un mot sur le motif qu'il traque.
+    const sansCommentaires = src.replace(/\/\/[^\n]*/g, "");
+    const replis = sansCommentaires.match(/\|\|\s*"(Home|Away)"/g) ?? [];
+    expect(replis).toEqual([]);
+  });
 });
