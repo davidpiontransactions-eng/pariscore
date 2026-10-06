@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { MatchDetailDialog } from "@/components/tennis/match-detail-dialog";
+import { TennisLiveCardDialog } from "@/components/tennis/tennis-live-card-dialog";
 import {
   FotmobCalendarTable,
   type FotmobCalMatch,
@@ -146,6 +147,8 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [detailMatch, setDetailMatch] = useState<TennisMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [liveCard, setLiveCard] = useState<TennisMatch | null>(null);
+  const [liveCardOpen, setLiveCardOpen] = useState(false);
 
   // Pills Top des 9 stratégies (pastilles sous les noms, comme le foot).
   const pillTags = useMemo(() => {
@@ -196,7 +199,14 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
             away: { name: m.playerB.name, logo: null },
             league: { name: m.tournamentName ?? "En direct", country: null, logo: null },
             round: m.roundName ?? null,
-            live: { status: "LIVE", homeScore: wA, awayScore: wB },
+            // Tennis n'a pas de minute de match : sans `label` explicite la ligne
+            // live s'affiche comme un match terminé (score noir, aucun marqueur).
+            live: {
+              status: "LIVE",
+              homeScore: wA,
+              awayScore: wB,
+              label: "LIVE",
+            },
           };
         }),
     [liveMatchList, liveStates],
@@ -280,6 +290,24 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
     [filtered, topTagsFor],
   );
 
+  /**
+   * Snapshot live ABSOLU du filtre courant : nombre de lignes live avant le
+   * filtre « En direct ». Alimente le badge de la pastille — sans lui, un clic
+   * quand tous les matchs du jour sont déjà live ne change rien visuellement et
+   * passe pour un filtre cassé.
+   */
+  const liveCount = useMemo(() => liveCal.length, [liveCal]);
+
+  /** Filtres non-date actifs (pour le bouton de reset du vide). */
+  const hasStickyFilters =
+    calLiveOnly || calTopOnly || calHours != null || calQuery.trim() !== "";
+  const resetFilters = useCallback(() => {
+    setCalLiveOnly(false);
+    setCalTopOnly(false);
+    setCalHours(null);
+    setCalQuery("");
+  }, []);
+
   // Pont vers demain quand aujourd'hui est vide (ex : tout le prematch est à J+1).
   const tomorrowKey = useMemo(() => shiftDateKey(todayKey, 1), [todayKey]);
   const tomorrowCount = useMemo(
@@ -295,26 +323,36 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
     calDate === todayKey &&
     tomorrowCount > 0;
 
-  // Clic ligne → popup détail (live ou prematch, comme le foot).
+  /**
+   * Clic ligne :
+   *   - live    → Card Live (score set par set, jeu, serveur, probas live,
+   *               cotes 1xBet, Stats live, Décisions) ;
+   *   - prematch→ MatchDetailDialog (analyse complète, comme le foot).
+   *
+   * Le match prematch complet est réutilisé quand il existe (photos, Elo,
+   * cotes réels) ; sinon on retombe sur un objet synthétique minimal.
+   */
   const handleSelectMatch = useCallback(
     (m: FotmobCalMatch) => {
       const live = isLiveRow(m);
       const full = fullById.get(normId(m.id));
-      if (full && !live) {
-        setDetailMatch(full);
-      } else {
-        const lm = liveMatchList.find((x) => normId(x.id) === normId(m.id));
-        setDetailMatch(
-          syntheticMatch(
-            m.id,
-            lm?.playerA.name ?? m.home.name,
-            lm?.playerB.name ?? m.away.name,
-            m.league?.name ?? "Tournoi",
-            m.round ?? (live ? "En direct" : ""),
-          ),
+      const lm = liveMatchList.find((x) => normId(x.id) === normId(m.id));
+      const target =
+        full ??
+        syntheticMatch(
+          m.id,
+          lm?.playerA.name ?? m.home.name,
+          lm?.playerB.name ?? m.away.name,
+          m.league?.name ?? "Tournoi",
+          m.round ?? (live ? "En direct" : ""),
         );
+      if (live) {
+        setLiveCard(target);
+        setLiveCardOpen(true);
+      } else {
+        setDetailMatch(target);
+        setDetailOpen(true);
       }
-      setDetailOpen(true);
     },
     [fullById, liveMatchList],
   );
@@ -351,6 +389,7 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
             query={calQuery}
             onQuery={setCalQuery}
             count={filtered.length}
+            liveCount={liveCount}
             topOnly={calTopOnly}
             onToggleTop={() => setCalTopOnly((v) => !v)}
             topCount={topCount}
@@ -376,8 +415,21 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
           ) : filtered.length === 0 ? (
             <div className="py-3">
               <p className="text-xs" style={{ color: C.time }}>
-                Aucun match ce jour-là. Changez de date ou réinitialisez les filtres.
+                {calLiveOnly
+                  ? `Aucun match en direct${liveCount === 0 ? " — aucun match n'est en cours sur ce tournament." : " sur ce jour-là."}`
+                  : "Aucun match ce jour-là. Changez de date ou réinitialisez les filtres."}
               </p>
+              {hasStickyFilters && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  data-testid="calendar-reset-filters"
+                  className="mt-2 mr-2 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-transform active:scale-95"
+                  style={{ borderColor: C.cardBorder, color: C.text }}
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
               {showTomorrowCta && (
                 <button
                   type="button"
@@ -401,6 +453,11 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
       </section>
 
       <MatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
+      <TennisLiveCardDialog
+        match={liveCard}
+        open={liveCardOpen}
+        onOpenChange={setLiveCardOpen}
+      />
     </>
   );
 }

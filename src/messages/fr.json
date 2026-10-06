@@ -405,6 +405,8 @@
     "margin": "Marge",
     "best": "best",
     "tableHint": "Cliquez sur une colonne pour trier. Les cotes « best » sont surlignées en vert. La marge correspond à la commission du bookmaker (vig).",
+    "insufficientDataTitle": "Données insuffisantes",
+    "insufficientDataHint": "Ce match est en direct et ne dispose pas encore des données prédictives complètes (ELO, probabilités, intervalles de confiance). Les valeurs affichées sont des placeholders.",
     "noOdds": "Cotes multi-bookmakers non disponibles pour ce match.",
     "otherBookmakers": "autres bookmakers",
     "sortAria": "Trier par {column}, actuellement {dir}. Activer pour inverser le tri",

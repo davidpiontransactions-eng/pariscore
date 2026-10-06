@@ -15,6 +15,12 @@ import type { PowerScore } from "@/lib/power-score";
 export type FotmobCalTeam = { name: string; logo?: string | null };
 export type FotmobCalLive = {
   status: string; minute?: number | null; homeScore?: number | null; awayScore?: number | null;
+  /**
+   * Statut compact affiché quand le sport n'a pas de minute (tennis : pas de
+   * chronomètre). Sans ce champ une ligne live tennis s'affiche exactement
+   * comme un match terminé — le filtre « En direct » devient invisible.
+   */
+  label?: string;
 };
 export type FotmobCalMatch = {
   id: string;
@@ -203,19 +209,23 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
       <span
         className="w-7 shrink-0 text-center text-[12px] font-medium tabular-nums"
         style={{ color: live ? C.live : C.reason }}
-        title={finished ? "Fin du match" : undefined}
+        title={finished ? "Fin du match" : live ? "En direct" : undefined}
       >
         {live && m.live?.minute != null ? `${m.live.minute}` : finished ? "FM" : ""}
       </span>
       <div className="flex w-14 shrink-0 flex-col items-center tabular-nums">
         {showScore ? (
           <>
-            <span data-testid="status-score" className="text-[14px] font-medium" style={{ color: C.score }}>
+            <span data-testid="status-score" className="text-[14px] font-medium" style={{ color: live ? C.live : C.score }}>
               {m.live!.homeScore} - {m.live!.awayScore}
             </span>
             {live && m.live?.minute != null ? (
               <span data-testid="status-live" className="text-[12px] font-medium" style={{ color: C.live }}>
                 {m.live.minute}’
+              </span>
+            ) : live ? (
+              <span data-testid="status-live" className="text-[12px] font-medium" style={{ color: C.live }}>
+                {m.live?.label ?? "LIVE"}
               </span>
             ) : finished ? (
               <span data-testid="status-reason" className="text-[12px]" style={{ color: C.reason }}>FM</span>

@@ -75,7 +75,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | live-decisions-drawer | live-decisions-drawer.tsx | Drawer « Décisions Live » — DR, DPI, signaux, alertes (R10) |
 | live-odds-panel | live-odds-panel.tsx | Cotes live P1/P2 (1xBet, repli BSD) : chips + flèches direction + Kelly |
 | match-card-detail | match-card-detail.tsx | Détail interne de carte (utilisé par match-card-broadcast) |
-| match-detail-dialog | match-detail-dialog.tsx | Dialogue d'analyse détaillée d'un match |
+| match-detail-dialog | match-detail-dialog.tsx | Dialogue d'analyse détaillée d'un match (prematch) |
+| tennis-live-card-dialog | tennis-live-card-dialog.tsx | Card Live en surimpression au clic sur une ligne live du calendrier (enveloppe `match-card-broadcast` + `LiveMatchState` + cotes live) |
 | match-pip-widget | match-pip-widget.tsx | Conteneur du widget Document PiP (multi-matchs favoris live) |
 | momentum-dr | momentum-dr.tsx | Momentum (dynamic, best-of-5 aware) |
 | momentum-score | momentum-score.tsx | Score 0-100 EWM (DR/aces/serve/form/momentum) |

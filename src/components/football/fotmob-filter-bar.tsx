@@ -70,6 +70,12 @@ export type FotmobFilterBarProps = {
   onQuery: (q: string) => void;
   /** Nombre de matchs après filtre (compteur affiché dans l'option active). */
   count?: number;
+  /**
+   * Nombre de matchs EN DIRECT (snapshot live, pas le filtre courant).
+   * Badge dans la pastille « En direct » : sans lui le clic ne donne aucun
+   * signal quand tous les matchs du jour sont déjà live (filtre no-op).
+   */
+  liveCount?: number;
   /** Toggle "Top stratégies" : ne garde que les matchs corrélés au Top10. */
   topOnly: boolean;
   onToggleTop: () => void;
@@ -116,6 +122,12 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
       <div className="flex items-center gap-2">
         <button
           type="button" onClick={p.onToggleLive} aria-pressed={p.liveOnly}
+          data-testid="calendar-live-toggle"
+          aria-label={
+            p.liveOnly
+              ? `Filtre en direct actif, ${p.liveCount ?? 0} match${(p.liveCount ?? 0) > 1 ? "s" : ""} en cours`
+              : `Afficher les ${p.liveCount ?? 0} match${(p.liveCount ?? 0) > 1 ? "s" : ""} en direct`
+          }
           className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
           style={{
             backgroundColor: p.liveOnly ? C.live : C.pillBg,
@@ -129,6 +141,17 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
             aria-hidden="true"
           />
           En direct
+          {p.liveCount != null && p.liveCount > 0 && (
+            <span
+              className="rounded-full px-1.5 py-px font-mono text-[10px] font-bold tabular-nums"
+              style={{
+                backgroundColor: p.liveOnly ? "#ffffff" : C.live,
+                color: p.liveOnly ? C.live : "#ffffff",
+              }}
+            >
+              {p.liveCount}
+            </span>
+          )}
         </button>
         <HourSegments hours={p.hours} onHours={p.onHours} count={p.count} />
         {/* Toggle Top stratégies (E pill) : filtre les matchs corrélés au Top10. */}
