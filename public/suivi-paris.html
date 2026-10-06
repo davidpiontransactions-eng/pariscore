@@ -1,0 +1,1852 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suivi de paris — Plan +20 %/j</title>
+<style>
+:root{
+  --bg:#0b0e17; --bg2:#0e121e; --bg3:#131828; --bg4:#1a2133;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+  --txt:#e8ecf4; --muted:#8b93a7; --dim:#5b6376;
+  --accent:#00e676; --accent-dim:#00c853;
+  --red:#ef4444; --blue:#29b6f6; --amber:#f59e0b; --cyan:#22d3ee; --purple:#a78bfa;
+  --mono:ui-monospace,"JetBrains Mono","Cascadia Mono",Consolas,monospace;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 16px 80px}
+h1{font-size:20px;margin:0 0 2px;letter-spacing:-.02em}
+h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.sub{color:var(--muted);font-size:12.5px;margin:0}
+section{margin-top:22px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r)}
+.card>header{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card>header .sp{flex:1}
+.card>.body{padding:14px}
+.banner{
+  margin-top:12px;padding:9px 12px;border-radius:8px;font-size:12.5px;
+  background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.28);color:#fbbf24
+}
+.banner.ok{background:rgba(0,230,118,.07);border-color:rgba(0,230,118,.24);color:var(--accent)}
+.banner.err{background:rgba(239,68,68,.09);border-color:rgba(239,68,68,.3);color:#fca5a5}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px}
+.kpi{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px}
+.kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);font-weight:600}
+.kpi .v{font:600 20px/1.25 var(--mono);margin-top:3px;letter-spacing:-.02em}
+.kpi .s{font-size:11px;color:var(--muted);margin-top:2px}
+.pos{color:var(--accent)} .neg{color:var(--red)} .neu{color:var(--txt)} .mut{color:var(--muted)}
+/* grille de paramètres */
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);font-weight:600}
+.f input,.f select{
+  background:var(--bg);border:1px solid var(--line2);color:var(--txt);
+  border-radius:7px;padding:7px 9px;font:13px var(--mono);width:100%
+}
+.f input:focus,.f select:focus{outline:none;border-color:var(--accent-dim);box-shadow:0 0 0 2px rgba(0,230,118,.13)}
+/* tableaux */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{
+  position:sticky;top:0;background:var(--bg3);z-index:2;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600
+}
+td.l,th.l{text-align:left}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;background:var(--bg3);border-top:1px solid var(--line2)}
+tbody tr:hover{background:rgba(255,255,255,.022)}
+tbody tr.islat td{background:rgba(239,68,68,.05)}
+tbody tr.isfuture td{opacity:.42}
+.scroll{max-height:460px;overflow-y:auto}
+/* badges */
+.b{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:600;border:1px solid transparent;white-space:nowrap}
+.b.g{background:rgba(0,230,118,.13);color:var(--accent);border-color:rgba(0,230,118,.3)}
+.b.r{background:rgba(239,68,68,.13);color:#f87171;border-color:rgba(239,68,68,.32)}
+.b.a{background:rgba(245,158,11,.13);color:#fbbf24;border-color:rgba(245,158,11,.3)}
+.b.n{background:rgba(255,255,255,.06);color:var(--muted);border-color:var(--line2)}
+.b.c{background:rgba(34,211,238,.12);color:var(--cyan);border-color:rgba(34,211,238,.3)}
+/* boutons */
+button,.btn{
+  background:var(--bg4);border:1px solid var(--line2);color:var(--txt);
+  border-radius:7px;padding:7px 12px;font:600 12.5px system-ui;cursor:pointer
+}
+button:hover{background:#222b40}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.pri{background:var(--accent);border-color:var(--accent);color:#04180c}
+button.pri:hover{background:var(--accent-dim)}
+button.sm{padding:4px 9px;font-size:11.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+/* saisie */
+.sel-day{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+table.edit input,table.edit select{
+  background:var(--bg);border:1px solid var(--line2);color:var(--txt);
+  border-radius:6px;padding:5px 7px;font:12.5px var(--mono);width:100%;min-width:60px
+}
+table.edit input:focus,table.edit select:focus{outline:none;border-color:var(--accent-dim)}
+table.edit td{padding:4px 5px}
+table.edit th{padding:6px 5px}
+.chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.chk input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+/* import */
+.drop{
+  border:2px dashed var(--line2);border-radius:var(--r);padding:26px 16px;text-align:center;
+  cursor:pointer;transition:.15s
+}
+.drop:hover,.drop.over{border-color:var(--accent-dim);background:rgba(0,230,118,.04)}
+.drop .big{font-size:14px;font-weight:600}
+.drop .sm{font-size:12px;color:var(--muted);margin-top:5px}
+.hint{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.6}
+.hint code{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin:12px 0}
+.mini{font-size:11.5px;color:var(--muted);margin-top:8px}
+.lbl-in{display:flex;align-items:center;gap:5px}
+.lbl-in .src{
+  font:10.5px var(--mono);color:var(--cyan);background:rgba(34,211,238,.1);
+  padding:0 5px;border-radius:4px;border:1px solid rgba(34,211,238,.22);max-width:96px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+/* graphique */
+.chart{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.chart svg{display:block;width:100%;height:auto}
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:#050810;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;
+  font:11.5px var(--mono);z-index:9;box-shadow:0 6px 22px rgba(0,0,0,.6);min-width:150px
+}
+.tip .t{font-weight:700;margin-bottom:5px;color:var(--txt)}
+.tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+.tip .r b{color:var(--txt);font-weight:600}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:9px 4px 2px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+.note{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.55}
+@media (max-width:720px){
+  .wrap{padding:14px 10px 60px}
+  .card>.body{padding:11px}
+  .kpi .v{font-size:17px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Suivi de paris — plan +20 %/jour</h1>
+  <p class="sub">Capital de départ, objectif quotidien, evolution composée, journal réel, montant de retard et graphique — 100 % local, aucun envoi de données.</p>
+  <div class="banner">
+    <b>Projection mathématique composée.</b> Le modèle applique <b>+20 % du capital en début de journée</b>, dont la moitié part en banque et l'autre moitié est réinvestie
+    (soit ×1,10 par jour). Aucune garantie de résultat : un écart de 20 % journalier est statistiquement exceptionnel.
+    Les montants sont des projections, pas des conseils.
+  </div>
+  <div id="storageWarn"></div>
+
+  <!-- A. PARAMÈTRES -->
+  <section>
+    <div class="card">
+      <header><h2>Paramètres</h2><span class="sp"></span>
+        <button class="sm" id="btnReset">Réinitialiser</button>
+      </header>
+      <div class="body">
+        <div class="params" id="params"></div>
+        <div class="note">Objectif <code>+20 %/j</code> et engagement par défaut <code>20 %</code> : les deux valeurs sont réglées au même niveau, ce qui rend
+          <code>Mise/pari = Gain visé/pari</code>. Déplacez l'engagement et les deux colonnes se séparent.
+          À <code>Mise/pari</code> = mise réellement engagée par jour ÷ nb de paris ; <code>Gain visé/pari</code> = gain net visé du jour ÷ nb de paris.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- B. KPI -->
+  <section>
+    <div class="card">
+      <header><h2>Indicateurs</h2><span class="sp"></span><span class="mini" id="kpiNote"></span></header>
+      <div class="body"><div class="kpis" id="kpis"></div></div>
+    </div>
+  </section>
+
+  <!-- C. TABLEAU THÉORIQUE -->
+  <section>
+    <div class="card">
+      <header><h2>Tableau théorique</h2><span class="sp"></span>
+        <span class="mini" id="thNote"></span>
+      </header>
+      <div class="body">
+        <div class="tw scroll">
+          <table id="thTable">
+            <thead><tr>
+              <th class="l">Jour</th><th class="l">Date</th><th>Capital début</th><th>Gain visé</th>
+              <th>→ Banque</th><th>→ Capital</th><th>Banque cum.</th><th>Total</th>
+              <th>% cumul.</th><th>Engagement</th><th>Mise/pari</th><th>Gain visé/pari</th>
+              <th class="l">Cote req.</th><th class="l">État</th>
+            </tr></thead>
+            <tbody></tbody><tfoot></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D. ARBITRAGE -->
+  <section>
+    <div class="card">
+      <header><h2>Table d'arbitrage risque / gain</h2><span class="sp"></span>
+        <span class="mini" id="arbNote"></span>
+      </header>
+      <div class="body">
+        <div class="tw">
+          <table id="arbTable">
+            <thead><tr id="arbHead"></tr></thead><tbody></tbody>
+          </table>
+        </div>
+        <div class="note" id="arbFoot"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- E. SAISIE RÉEL -->
+  <section>
+    <div class="card">
+      <header><h2>Saisie réelle — 11 paris par jour maximum</h2><span class="sp"></span>
+        <label class="chk"><input type="checkbox" id="autoBank" checked> Auto-virement 50 % des gains en banque</label>
+      </header>
+      <div class="body">
+        <div class="sel-day">
+          <span class="mini">Journée :</span>
+          <select id="daySel" style="background:var(--bg);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:7px 9px;font:13px var(--mono)"></select>
+          <span class="mini" id="dayInfo"></span>
+          <span class="sp grow"></span>
+          <button class="sm" id="btnDup">Dupliquer J−1</button>
+          <button class="sm" id="btnClearDay">Vider la journée</button>
+          <button class="sm pri" id="btnSaveDay">Enregistrer</button>
+        </div>
+        <div class="tw">
+          <table class="edit" id="editTable">
+            <thead><tr>
+              <th style="width:26px">#</th><th class="l" style="min-width:190px">Match / Label</th>
+              <th style="min-width:96px">Type</th><th style="min-width:78px">Cote</th>
+              <th style="min-width:82px">Mise</th><th style="min-width:104px">Résultat</th>
+              <th>Gain</th>
+            </tr></thead>
+            <tbody></tbody>
+            <tfoot><tr>
+              <td colspan="4" class="l" style="padding:8px"><b>Totaux journée</b></td>
+              <td id="editStaked">—</td><td class="l" style="padding:8px"><span id="editCount">0</span> paris · objectif <span id="editObj">—</span></td>
+              <td id="editPl">—</td>
+            </tr></tfoot>
+          </table>
+        </div>
+        <div class="note">
+          1 ligne = 1 pari. Un combiné compte pour <b>1</b> pari (les sélections multiples sont saisies sur une seule ligne avec la cote combinée).
+          <code>Gagné</code> → <code>mise×(cote−1)</code> · <code>Perdu</code> → <code>−mise</code> · <code>Annulé</code> → <code>0</code> · <code>En cours</code> → non compté (creuse le retard tant qu'il n'est pas réglé).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- F. JOURNAL RÉEL -->
+  <section>
+    <div class="card">
+      <header><h2>Journal réel & retard</h2><span class="sp"></span>
+        <span class="mini" id="jrnNote"></span>
+        <button class="sm" id="btnExportCsv">Export CSV</button>
+        <button class="sm" id="btnExportHtml">Export HTML</button>
+      </header>
+      <div class="body">
+        <div class="tw scroll">
+          <table id="jrnTable">
+            <thead><tr>
+              <th class="l">Date</th><th>Nb paris</th><th>Misé</th><th>Gain réel</th><th>Objectif</th>
+              <th>% obj.</th><th>Écart du jour</th><th>Capital réel</th><th>Banque réelle</th><th>Total réel</th>
+              <th class="l">Montant de retard</th><th>Jours restants</th><th>Retard à combler / j</th>
+            </tr></thead>
+            <tbody></tbody><tfoot></tfoot>
+          </table>
+        </div>
+        <div class="note" id="jrnFoot"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- G. GRAPHIQUES -->
+  <section>
+    <div class="card">
+      <header><h2>Graphiques</h2><span class="sp"></span>
+        <button class="sm" id="btnChart1">Théorique</button>
+        <button class="sm" id="btnChart2">Réel vs théorique</button>
+      </header>
+      <div class="body">
+        <div class="chart" id="chartBox"><div class="tip" id="tip"></div></div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- H. IMPORT -->
+  <section>
+    <div class="card">
+      <header><h2>Import de paris — 1xBet (HTML/zip) ou CSV</h2><span class="sp"></span>
+        <span class="mini" id="impCount"></span>
+      </header>
+      <div class="body">
+        <div class="drop" id="drop">
+          <div class="big">Déposer un fichier <code>.zip</code> / <code>.html</code> / <code>.csv</code> / <code>.txt</code></div>
+          <div class="sm">ou cliquer pour parcourir · ou coller le contenu dans le champ ci-dessous</div>
+        </div>
+        <input type="file" id="file" accept=".zip,.html,.htm,.csv,.txt" class="hidden" style="display:none">
+        <textarea id="paste" rows="3" placeholder="Ou colle ici le contenu du fichier…"
+          style="width:100%;margin-top:10px;background:var(--bg);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:9px;font:12px var(--mono)"></textarea>
+        <div class="hint">
+          <b>Export 1xBet</b> : <code>Mon compte → Mes paris → Historique → Exporter</code>. Le zip est décompressé dans le navigateur
+          (<code>DecompressionStream</code>, natif). Est lu pour chaque coupon : identifiant, date de pose, type de pari, mise totale,
+          cote totale, statut, puis pour chaque sélection : événement, sélection, cote, statut, score.<br>
+          <b>Séparateur de station</b> : le numéro de coupon est précédé du caractère <code>№</code> (U+2116) — le motif de reconnaissance est volontairement tolérant.<br>
+          <b>Montants</b> : les cellules de l'export portent leur unité (<code>40 EUR</code>) ; elle est retirée avant conversion.<br>
+          Les fichiers ne quittent jamais votre machine.
+        </div>
+        <hr class="sep">
+        <div id="impArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- I. DONNÉES -->
+  <section>
+    <div class="card">
+      <header><h2>Données</h2></header>
+      <div class="body">
+        <div class="row">
+          <button class="sm" id="btnExportJson">Export JSON</button>
+          <button class="sm" id="btnImportJson">Import JSON</button>
+          <button class="sm" id="btnClearAll">Tout effacer</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════════
+   0. Helpers
+   ══════════════════════════════════════════════════════════════════════════ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const nfEUR = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const eur = v => (v === null || v === undefined || !isFinite(v)) ? "—" : nfEUR.format(v);
+const num2 = v => (v === null || v === undefined || !isFinite(v)) ? "—" : v.toFixed(2);
+const pct1 = v => (v === null || v === undefined || !isFinite(v)) ? "—" : v.toFixed(1) + " %";
+const ESCMAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = s => String(s).replace(/[&<>"']/g, c => ESCMAP[c]);
+
+function el(tag, o, kids) {
+  const n = document.createElement(tag);
+  o = o || {};
+  if (o.cls) n.className = o.cls;
+  if (o.text !== undefined && o.text !== null) n.textContent = String(o.text);
+  /* html : structure statique uniquement, jamais de donnée importée */
+  if (o.html != null) n.innerHTML = o.html;
+  for (const k in (o.attrs || {})) n.setAttribute(k, o.attrs[k]);
+  for (const k of (kids || [])) if (k) n.appendChild(k);
+  return n;
+}
+function td(text, cls) { return el("td", { text: text, cls: cls || "n" }); }
+function th(text, cls) { return el("th", { text: text, cls: cls || "" }); }
+
+/* Dates : clés "AAAA-MM-JJ" manipulées en UTC (immunisé DST). */
+function dFromKey(k) { const p = k.split("-").map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); }
+function kFromDate(d) { return d.toISOString().slice(0, 10); }
+function addDaysKey(k, n) { const d = dFromKey(k); d.setUTCDate(d.getUTCDate() + n); return kFromDate(d); }
+function diffDays(a, b) { return Math.round((dFromKey(b).getTime() - dFromKey(a).getTime()) / 86400000); }
+function todayKey() {
+  const n = new Date();
+  return kFromDate(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())));
+}
+function fmtDMY(k) { const p = k.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+function dayShort(k) { return k.slice(8) + "/" + k.slice(5, 7); }
+
+/* Nombre tolérant : "40 EUR", "18,50 €", "1 234,56", "1,234.56", "1.08". */
+function parseNum(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  let s = String(v).replace(/[\u00a0\u202f\u2009\s]/g, "").replace(/[€$£]/g, "");
+  s = s.replace(/(\d),(?=\d{3}(\D|$))/g, "$1");
+  s = s.replace(",", ".");
+  const m = s.match(/-?\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
+/* "02.10.2026 | 00:16" ou ISO → { y,mo,d,H,M } (aucun new Date() ambigu). */
+function parseDMYHM(s) {
+  if (!s) return null;
+  let m = String(s).match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})[^\d]{0,3}(\d{1,2}):(\d{2})/);
+  if (m) return { y: +m[3], mo: +m[2], d: +m[1], H: +m[4], M: +m[5] };
+  m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (m) return { y: +m[1], mo: +m[2], d: +m[3], H: +m[4], M: +m[5] };
+  m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return { y: +m[1], mo: +m[2], d: +m[3], H: 0, M: 0 };
+  return null;
+}
+function dmToKey(p) { if (!p) return null; return p.y + "-" + String(p.mo).padStart(2, "0") + "-" + String(p.d).padStart(2, "0"); }
+function normKey(s) {
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+/* Anti-injection de formule : Excel/LibreOffice exécutent = + - @ en tête de cellule. */
+function csvCell(v) {
+  let s = v === null || v === undefined ? "" : String(v);
+  if (/^[=+@\t\r]/.test(s) || (s.charAt(0) === "-" && !/^-\d/.test(s))) s = "'" + s;
+  if (/[",;\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function download(name, mime, text) {
+  const b = new Blob([text], { type: mime + ";charset=utf-8" });
+  const a = el("a", { attrs: { href: URL.createObjectURL(b), download: name } });
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1. État + persistance
+   ══════════════════════════════════════════════════════════════════════════ */
+const STORAGE_KEY = "suivi-paris-v1";
+const DEFAULTS = {
+  capital: 200, targetPct: 20, bankPct: 50,
+  startDate: "2026-10-02", days: 30, maxBets: 11,
+  stakePct: 20, oddsTarget: 2.00, winProb: 0.50,
+  autoBank: true,
+};
+let state = { params: Object.assign({}, DEFAULTS), days: {} };   /* days : { "AAAA-MM-JJ": Bet[] } */
+let storageOK = true;
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) {
+    storageOK = false;
+    const w = $("#storageWarn");
+    if (w && !w.firstChild) w.appendChild(el("div", { cls: "banner err",
+      text: "Sauvegarde locale indisponible (quota dépassé ou origine opaque) — vos saisies ne seront PAS conservées. Exportez vos données avant de fermer." }));
+  }
+}
+/* Copie par clés connues uniquement : une clé "__proto__" du JSON ne fixe aucun prototype. */
+function mergeParams(src) {
+  if (!src || typeof src !== "object") return;
+  for (const k in DEFAULTS)
+    if (Object.prototype.hasOwnProperty.call(src, k) && src[k] !== undefined) state.params[k] = src[k];
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    mergeParams(p && p.params);
+    if (p && p.days && typeof p.days === "object" && !Array.isArray(p.days)) state.days = p.days;
+  } catch (e) { /* données corrompues : on repart des défauts */ }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. Modèle
+   ══════════════════════════════════════════════════════════════════════════ */
+const STATUTS = [
+  ["pending", "En cours"], ["won", "Gagné"], ["lost", "Perdu"],
+  ["void", "Annulé"], ["cashout", "Cashout"]
+];
+const TYPES = [["simple", "Simple"], ["combo", "Combiné"], ["system", "Système"], ["back", "Back"], ["lay", "Lay"]];
+
+function computeTheoretical(p) {
+  const rows = [];
+  const n = Math.max(1, p.maxBets | 0);
+  const R = (v) => Math.round(v * 100) / 100;   /* report de la valeur ARRONDIE */
+  let C = p.capital, B = 0;
+  for (let d = 1; d <= p.days; d++) {
+    const cStart = C;
+    const G = cStart * p.targetPct / 100;
+    const toBank = R(Math.max(0, G) * p.bankPct / 100);
+    C = R(cStart + R(G - toBank));
+    B = R(B + toBank);
+    const S = R(cStart * p.stakePct / 100);
+    rows.push({
+      d: d, key: addDaysKey(p.startDate, d - 1),
+      cStart: cStart, G: G, toBank: toBank, reinvest: R(G - toBank),
+      C: C, B: B, T: R(C + B),
+      cumPct: p.capital ? (C + B - p.capital) / p.capital * 100 : 0,
+      stake: S,
+      oReq: S > 0 ? 1 + G / S : null,
+      oNeutral: p.winProb > 0 ? 1 / p.winProb : null,
+      miseParPari: S / n, gainParPari: G / n
+    });
+  }
+  return rows;
+}
+/* Source de vérité de chaque ligne de journal. */
+function betPL(b) {
+  if (b.status === "pending") return { pl: null, src: "en cours" };
+  if (b.status === "cashout") return { pl: b.payout != null ? b.payout - b.stake : null, src: "payout" };
+  if (b.status === "void") return { pl: 0, src: "annulé" };
+  if (b.payout != null && isFinite(b.payout)) return { pl: b.payout - b.stake, src: "payout" };
+  if (b.status === "won") return { pl: b.stake * (Math.max(1, b.odds || 1) - 1), src: "calculé" };
+  if (b.status === "lost") return { pl: -b.stake, src: "calculé" };
+  return { pl: null, src: "statut inconnu" };
+}
+function computeReal(p, th) {
+  const rows = [];
+  const R = (v) => Math.round(v * 100) / 100;
+  let cap = p.capital, bank = 0;
+  for (let i = 0; i < th.length; i++) {
+    const t = th[i];
+    const bets = state.days[t.key] || [];
+    let gRe = 0, staked = 0, settled = 0, pending = 0, won = 0, lost = 0, vd = 0;
+    for (const b of bets) {
+      const r = betPL(b);
+      if (r.pl === null) { pending++; continue; }
+      settled++; staked += b.stake; gRe += r.pl;
+      if (b.status === "won") won++; else if (b.status === "lost") lost++; else vd++;
+    }
+    const toBank = (p.autoBank && gRe > 0) ? R(gRe * p.bankPct / 100) : 0;
+    bank = R(bank + toBank); cap = R(cap + R(gRe - toBank));
+    rows.push({
+      d: t.d, key: t.key, bets: bets, n: bets.length, staked: staked, settled: settled,
+      pending: pending, won: won, lost: lost, voids: vd,
+      gRe: gRe, toBank: toBank, cap: cap, bank: bank, tRe: cap + bank,
+      thG: t.G, thT: t.T, ecartJour: (cap + bank) - t.T, ecartCum: t.T - (cap + bank)
+    });
+  }
+  /* Dernière journée "écoulée" : le jour le plus tardif entre aujourd'hui et le
+     dernier jour ayant au moins un pari. Au-delà : « à venir », pas de retard. */
+  const endKey = addDaysKey(p.startDate, p.days - 1);
+  let lastBet = 0;
+  for (const r of rows) if (r.n > 0) lastBet = r.d;
+  const todayIdx = (() => {
+    const tk = todayKey();
+    if (diffDays(p.startDate, tk) < 0) return 0;
+    if (diffDays(p.startDate, tk) > p.days - 1) return p.days;
+    return diffDays(p.startDate, tk) + 1;
+  })();
+  const lastDay = clamp(Math.max(lastBet, todayIdx), 0, p.days);
+  for (const r of rows) {
+    if (r.d > lastDay) { r.retard = null; r.jrest = null; r.retardJour = null; r.future = true; continue; }
+    r.future = false;
+    r.retard = r.ecartCum;
+    const j = diffDays(r.key, endKey) + 1;      /* jour courant inclus */
+    r.jrest = j > 0 ? j : null;
+    r.retardJour = r.jrest ? Math.max(0, r.retard) / r.jrest : null;
+  }
+  const live = rows[lastDay - 1] || null;
+  const tk = todayKey();
+  const liveJrest = diffDays(tk, endKey) + 1;
+  let cumStaked = 0;
+  for (const r of rows) if (!r.future) cumStaked += r.staked;
+  return { rows: rows, lastDay: lastDay, endKey: endKey, live: live, cumStaked: cumStaked,
+           liveJrest: liveJrest > 0 ? liveJrest : null };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. Rendu — paramètres
+   ══════════════════════════════════════════════════════════════════════════ */
+const FIELDS = [
+  { k: "capital", l: "Capital départ (€)", t: "number", step: 1 },
+  { k: "targetPct", l: "Objectif / jour (%)", t: "number", step: 0.5 },
+  { k: "bankPct", l: "Part en banque (%)", t: "number", step: 5 },
+  { k: "stakePct", l: "Capital engagé / jour (%)", t: "number", step: 5 },
+  { k: "oddsTarget", l: "Cote moyenne visée", t: "number", step: 0.05 },
+  { k: "winProb", l: "Probabilité de réussite", t: "number", step: 0.05 },
+  { k: "startDate", l: "Date de départ", t: "date" },
+  { k: "days", l: "Nombre de jours", t: "number", step: 1 },
+  { k: "maxBets", l: "Max paris / jour", t: "number", step: 1 }
+];
+function renderParams() {
+  const box = $("#params"); box.innerHTML = "";
+  for (const f of FIELDS) {
+    const inp = el("input", { attrs: {
+      type: f.t, value: state.params[f.k], step: f.step,
+      id: "p_" + f.k
+    }});
+    inp.addEventListener("change", () => {
+      let v = inp.value;
+      if (f.t === "number") {
+        v = parseFloat(v);
+        if (!isFinite(v)) v = DEFAULTS[f.k];
+        if (f.k === "days" || f.k === "maxBets") v = clamp(Math.round(v), 1, 999);
+      }
+      state.params[f.k] = v;
+      inp.value = v;
+      renderAll(); save();
+    });
+    box.appendChild(el("div", { cls: "f" }, [ el("label", { text: f.l, attrs: { for: "p_" + f.k } }), inp ]));
+  }
+  $("#autoBank").checked = !!state.params.autoBank;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. Rendu — KPI
+   ══════════════════════════════════════════════════════════════════════════ */
+function renderKPIs(th, real) {
+  const last = th[th.length - 1];
+  const live = real.live;
+  const box = $("#kpis"); box.innerHTML = "";
+  const K = (k, v, s, cls) => box.appendChild(el("div", { cls: "kpi" }, [
+    el("div", { cls: "k", text: k }),
+    el("div", { cls: "v " + (cls || ""), text: v }),
+    s ? el("div", { cls: "s", text: s }) : null
+  ]));
+
+  const k = 1 + state.params.targetPct / 100 * (1 - state.params.bankPct / 100);
+  K("Capital final théorique", eur(last.C), "×" + k.toFixed(2) + "/j · jour " + last.d);
+  K("Banque finale", eur(last.B), last.B > 0 ? "50 % des gains" : "—");
+  K("Total final", eur(last.T), "capital + banque");
+  K("ROI cumulé", pct1(last.cumPct), "sur capital " + eur(state.params.capital));
+  K("Retard actuel", live && live.retard != null ? eur(live.retard) : "—",
+    live ? (live.retard > 0 ? "en retard" : "dans les temps") : "aucune journée saisie",
+    live && live.retard != null ? (live.retard > 0 ? "neg" : "pos") : "mut");
+  K("Retard à combler / j", live && live.retardJour != null ? eur(live.retardJour) : "—",
+    real.liveJrest != null ? "sur " + real.liveJrest + " j restants" : "hors période",
+    live && live.retardJour > 0 ? "neg" : "pos");
+  K("Jours restants", real.liveJrest != null ? String(real.liveJrest) : "—", "jusqu'au " + fmtDMY(real.endKey));
+  K("Misé réel cumulé", live ? eur(real.cumStaked) : "—", "tous paris réglés");
+  $("#kpiNote").textContent = live
+    ? "Situation arrêtée au " + fmtDMY(live.key) + " (jour " + live.d + " sur " + state.params.days + ")"
+    : "Aucune journée saisie à ce jour";
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. Rendu — tableau théorique
+   ══════════════════════════════════════════════════════════════════════════ */
+function badge(txt, cls) { return el("span", { cls: "b " + cls, text: txt }); }
+function renderTheoretical(th) {
+  const tb = $("#thTable").querySelector("tbody"); tb.innerHTML = "";
+  const p = state.params;
+  for (const r of th) {
+    let ok = "ok", txt = "atteignable";
+    if (r.stake > r.cStart) { ok = "r"; txt = "engagement > capital"; }
+    else if (r.oReq != null && p.oddsTarget < r.oReq) { ok = "a"; txt = "cote trop basse"; }
+    const tr = el("tr", {}, [
+      td(r.d, "l mut"), td(fmtDMY(r.key), "l"),
+      td(eur(r.cStart)), td(eur(r.G), "pos"),
+      td(eur(r.toBank)), td(eur(r.C)), td(eur(r.B)), td(eur(r.T)),
+      td(pct1(r.cumPct), r.cumPct >= 0 ? "pos" : "neg"),
+      td(eur(r.stake)), td(num2(r.miseParPari)), td(num2(r.gainParPari)),
+      td(r.oReq != null ? num2(r.oReq) : "—"),
+      el("td", { cls: "l" }, [badge(txt, ok)])
+    ]);
+    tb.appendChild(tr);
+  }
+  const last = th[th.length - 1];
+  const tf = $("#thTable").querySelector("tfoot"); tf.innerHTML = "";
+  tf.appendChild(el("tr", {}, [
+    td("Total", "l"), td(fmtDMY(th[th.length - 1].key), "l"),
+    td("—"), td(eur(th.reduce((a, r) => a + r.G, 0))), td(eur(th.reduce((a, r) => a + r.toBank, 0))),
+    td(eur(last.C)), td(eur(last.B)), td(eur(last.T)),
+    td(pct1(last.cumPct)), td(eur(th.reduce((a, r) => a + r.stake, 0))),
+    td("—"), td("—"), td("—"), td("", "l")
+  ]));
+  $("#thNote").textContent = "Gain visé = " + p.targetPct + " % du capital de début de journée · " + p.maxBets + " paris max/jour";
+}
+
+function renderArbitrage(th) {
+  const p = state.params;
+  const pcts = [5, 10, 15, 20, 30, 40, 50, 100];
+  const head = $("#arbHead"); head.innerHTML = "";
+  head.appendChild(th("Capital engagé", "l"));
+  for (const q of pcts) head.appendChild(th(q + " %", "l"));
+  const tb = $("#arbTable").querySelector("tbody"); tb.innerHTML = "";
+  const r0 = th[0];
+  const mkRow = (label, values, fmt, activeIdx) => {
+    const tr = el("tr", {}, [td(label, "l")]);
+    values.forEach((v, i) => {
+      const c = i === activeIdx ? "l pos" : "l";
+      tr.appendChild(td(fmt(v), c));
+    });
+    tb.appendChild(tr);
+  };
+  const active = pcts.indexOf(p.stakePct);
+  mkRow("Mise à engager", pcts.map(q => r0.cStart * q / 100), v => eur(v), active);
+  mkRow("Cote moyenne requise", pcts.map(q => 1 + (p.targetPct / 100) / (q / 100)), v => num2(v), active);
+  mkRow("Mise / pari (" + p.maxBets + ")", pcts.map(q => r0.cStart * q / 100 / Math.max(1, p.maxBets)), v => num2(v), active);
+  mkRow("Perte si tout perdu", pcts.map(q => r0.cStart * q / 100), v => eur(v), active);
+  $("#arbNote").textContent = "Gain visé " + p.targetPct + " % du capital · jour 1 (" + fmtDMY(r0.key) + ", " + eur(r0.cStart) + ")";
+  $("#arbFoot").textContent =
+    "Lecture : pour obtenir " + eur(r0.G) + " de gain net avec " + eur(r0.cStart) + " de capital en engageant " + p.stakePct +
+    " %, il faut viser une cote moyenne ≥ " + num2(r0.oReq) + ". En dessous de " + num2(r0.oNeutral) +
+    " (q = " + pct1(p.winProb * 100) + "), l'espérance du pari est négative : les deux lignes se croisent, c'est le vrai arbitrage risque / espérance.";
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. Rendu — saisie réelle
+   ══════════════════════════════════════════════════════════════════════════ */
+let editDay = 1;
+function renderDaySel(th) {
+  const s = $("#daySel"); s.innerHTML = "";
+  th.forEach(r => {
+    const o = el("option", { text: "J" + r.d + " — " + fmtDMY(r.key) });
+    o.value = r.d; s.appendChild(o);
+  });
+  s.value = String(editDay);
+}
+function renderEditor(th) {
+  const r = th[editDay - 1];
+  $("#dayInfo").textContent = "capital début " + eur(r.cStart) + " · gain visé " + eur(r.G) +
+    " · engagement conseillé " + eur(r.stake) + " · " + num2(r.oReq) + " min";
+  const tbody = $("#editTable").querySelector("tbody"); tbody.innerHTML = "";
+  /* Copies de travail : l'édition ne mute jamais les paris persistés avant « Enregistrer ». */
+  const saved = (Array.isArray(state.days[r.key]) ? state.days[r.key] : []).map(x => Object.assign({}, x));
+  const nMax = Math.max(1, state.params.maxBets | 0);
+  for (let i = 0; i < nMax; i++) {
+    const b = saved[i] || { label: "", type: "simple", odds: "", stake: "", status: "pending" };
+    const mk = (key, type, w) => {
+      const inp = el("input", { attrs: { type: type, value: b[key] === undefined || b[key] === null ? "" : b[key] } });
+      if (w) inp.style.minWidth = w + "px";
+      inp.addEventListener("input", () => { b[key] = inp.value; refreshEditTotals(th); });
+      return inp;
+    };
+    const tsel = el("select", {});
+    for (const [v, l] of TYPES) { const o = el("option", { text: l }); o.value = v; tsel.appendChild(o); }
+    tsel.value = TYPES.some(t => t[0] === b.type) ? b.type : "simple";
+    tsel.addEventListener("change", () => { b.type = tsel.value; });
+    const ssel = el("select", {});
+    for (const [v, l] of STATUTS) { const o = el("option", { text: l }); o.value = v; ssel.appendChild(o); }
+    ssel.value = STATUTS.some(s2 => s2[0] === b.status) ? b.status : "pending";
+    ssel.addEventListener("change", () => { b.status = ssel.value; refreshEditTotals(th); });
+    if (b.statusRaw) ssel.title = "Statut d'origine 1xBet : " + b.statusRaw;
+    const tr = el("tr", {}, [
+      td(i + 1, "l mut"),
+      el("td", { cls: "l" }, [mk("label", "text", 190)]),
+      el("td", {}, [tsel]), el("td", {}, [mk("odds", "number", 78)]),
+      el("td", {}, [mk("stake", "number", 82)]),
+      el("td", {}, [ssel]), td("—")
+    ]);
+    tbody.appendChild(tr);
+  }
+  refreshEditTotals(th);
+}
+function refreshEditTotals(th) {
+  const r = th[editDay - 1];
+  let staked = 0, g = 0, n = 0;
+  $$("#editTable tbody tr").forEach(tr => {
+    const tds = tr.children;
+    const stake = parseNum(tds[4].querySelector("input").value) || 0;
+    const odds = parseNum(tds[3].querySelector("input").value) || 1;
+    const status = tds[5].querySelector("select").value;
+    const tmp = { stake: stake, odds: odds, status: status, payout: null };
+    const res = betPL(tmp);
+    staked += stake;
+    if (res.pl !== null) { g += res.pl; n++; }
+    const cell = tds[6];
+    cell.textContent = res.pl === null ? "en cours" : eur(res.pl);
+    cell.className = "n " + (res.pl === null ? "mut" : (res.pl > 0 ? "pos" : res.pl < 0 ? "neg" : "mut"));
+  });
+  $("#editStaked").textContent = staked > 0 ? eur(staked) : "—";
+  $("#editCount").textContent = String(n);
+  $("#editObj").textContent = eur(r.G);
+  $("#editPl").textContent = n ? eur(g) : "—";
+  $("#editPl").className = "n " + (n ? (g > 0 ? "pos" : g < 0 ? "neg" : "") : "mut");
+}
+function saveEditorDay(th) {
+  const key = th[editDay - 1].key;
+  /* Fusion avec l'existant : payout, id, bookmaker, sport, league, note et statusRaw
+     d'un import 1xBet doivent survivre à une ré-enregistrement manuelle. */
+  const prev = Array.isArray(state.days[key]) ? state.days[key] : [];
+  const out = [];
+  $$("#editTable tbody tr").forEach(tr => {
+    const tds = tr.children;
+    const label = tds[1].querySelector("input").value.trim();
+    const type = tds[2].querySelector("select").value;
+    const odds = parseNum(tds[3].querySelector("input").value);
+    const stake = parseNum(tds[4].querySelector("input").value);
+    const status = tds[5].querySelector("select").value;
+    if (!label && stake === null) return;
+    out.push(Object.assign({}, prev[out.length] || {},
+      { label: label || "(sans libellé)", type: type, odds: odds || null, stake: stake || 0, status: status }));
+  });
+  if (out.length) state.days[key] = out; else delete state.days[key];
+  save(); renderAll();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. Rendu — journal réel
+   ══════════════════════════════════════════════════════════════════════════ */
+function renderJournal(th, real) {
+  const tb = $("#jrnTable").querySelector("tbody"); tb.innerHTML = "";
+  const cumStaked = real.cumStaked;
+  for (const r of real.rows) {
+    if (r.future) {
+      tb.appendChild(el("tr", { cls: "isfuture" }, [
+        td(fmtDMY(r.key), "l"), td(String(r.n)), td(r.staked ? eur(r.staked) : "—"),
+        td(r.gRe ? eur(r.gRe) : "—"), td(eur(r.thG)), td("—"), td("—"),
+        td("—"), td("—"), td("—"), el("td", { cls: "l" }, [badge("à venir", "n")]),
+        td("—"), td("—")
+      ]));
+      continue;
+    }
+    const late = r.retard > 0.0001;
+    const objPct = r.thG ? (r.gRe / r.thG) * 100 : null;
+    const tr = el("tr", { cls: late ? "islat" : "" }, [
+      td(fmtDMY(r.key), "l"),
+      td(String(r.n), r.n > state.params.maxBets ? "neg" : ""),
+      td(r.staked ? eur(r.staked) : "—"),
+      td(r.gRe ? eur(r.gRe) : "—", r.gRe > 0 ? "pos" : r.gRe < 0 ? "neg" : "mut"),
+      td(eur(r.thG)),
+      td(objPct === null ? "—" : pct1(objPct), objPct === null ? "mut" : objPct >= 100 ? "pos" : objPct < 60 ? "neg" : ""),
+      td(eur(r.ecartJour), r.ecartJour >= 0 ? "pos" : "neg"),
+      td(eur(r.cap)), td(eur(r.bank)), td(eur(r.tRe)),
+      el("td", { cls: "l" }, [
+        late ? badge(eur(r.retard) + " de retard", "r")
+             : (r.ecartCum < -0.0001 ? badge("avance " + eur(-r.ecartCum), "g") : badge("dans les temps", "g"))
+      ]),
+      td(r.jrest != null ? String(r.jrest) : "—"),
+      td(r.retardJour === null ? "—" : eur(r.retardJour), r.retardJour > 0 ? "neg" : r.retardJour === null ? "mut" : "pos")
+    ]);
+    tb.appendChild(tr);
+  }
+  const done = real.rows.filter(r => !r.future);
+  const lastDone = done[done.length - 1];
+  const totG = done.reduce((a, r) => a + r.gRe, 0);
+  const totBets = done.reduce((a, r) => a + r.n, 0);
+  const totObj = done.reduce((a, r) => a + r.thG, 0);
+  const tf = $("#jrnTable").querySelector("tfoot"); tf.innerHTML = "";
+  tf.appendChild(el("tr", {}, [
+    td("Cumul", "l"), td(String(totBets)), td(eur(cumStaked)),
+    td(eur(totG), totG >= 0 ? "pos" : "neg"), td(eur(totObj)),
+    td(totObj ? pct1(totG / totObj * 100) : "—"),
+    td(lastDone ? eur(lastDone.ecartJour) : "—"),
+    td(lastDone ? eur(lastDone.cap) : "—"), td(lastDone ? eur(lastDone.bank) : "—"),
+    td(lastDone ? eur(lastDone.tRe) : "—"),
+    td(lastDone ? eur(lastDone.retard) : "—", lastDone && lastDone.retard > 0 ? "neg" : "pos"),
+    td(real.liveJrest != null ? String(real.liveJrest) : "—"),
+    td(lastDone ? (lastDone.retardJour === null ? "—" : eur(lastDone.retardJour)) : "—",
+       lastDone && lastDone.retardJour > 0 ? "neg" : "pos")
+  ]));
+  const endKey = real.endKey, tk = todayKey();
+  const overdue = diffDays(tk, endKey) + 1;
+  $("#jrnNote").textContent = done.length + " journée(s) saisie(s) · " + totBets + " paris · " + (real.rows.length - done.length) + " jours restants dans le plan";
+  $("#jrnFoot").textContent =
+    "« Montant de retard » = total théorique (capital + banque) − total réel, signé : positif = retard, négatif = avance. " +
+    "« Retard à combler / j » = montant de retard ÷ jours restants jusqu'au " + fmtDMY(endKey) + " (jour courant inclus), jamais négatif : " +
+    "une avance n'a rien à rattraper. Les jours postérieurs à aujourd'hui ou au dernier jour saisi sont marqués « à venir » et ne creusent pas le retard. " +
+    (overdue <= 0 ? "⚠ La période est terminée : le retard par jour ne s'affiche plus." : "Il reste " + overdue + " jour(s) jusqu'au " + fmtDMY(endKey) + ".");
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. Graphique SVG (numérique pur — aucun contenu utilisateur injecté)
+   ══════════════════════════════════════════════════════════════════════════ */
+let chartMode = 1;
+function niceStep(range, target) {
+  const raw = range / Math.max(1, target);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const n = raw / mag;
+  const s = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+  return s * mag;
+}
+/* Construction du SVG en CHAÎNE : réutilisée telle quelle par le graphique
+   interactif et par l'export HTML du rapport (aucune logique dupliquée). */
+function buildChart(mode, th, real) {
+  const labels = th.map(r => r.key);
+  let series, bars = null, title;
+  if (mode === 1) {
+    series = [
+      { name: "Capital", color: "#00e676", data: th.map(r => r.C) },
+      { name: "Banque", color: "#29b6f6", data: th.map(r => r.B) },
+      { name: "Total", color: "#a78bfa", data: th.map(r => r.T) }
+    ];
+    title = "Projection théorique — composée ×" +
+      (1 + state.params.targetPct / 100 * (1 - state.params.bankPct / 100)).toFixed(2) + " par jour";
+  } else {
+    const rr = real.rows;
+    series = [
+      { name: "Total théorique", color: "#5b6376", data: rr.map(r => r.thT), dash: true },
+      { name: "Total réel", color: "#22d3ee", data: rr.map(r => r.future ? null : r.tRe) }
+    ];
+    bars = { name: "Retard cumulé", data: rr.map(r => r.future ? null : Math.max(0, r.retard)), color: "#ef4444" };
+    title = "Réel vs théorique — écart cumulé (retard)";
+  }
+  const hasReal = real.rows.some(r => !r.future && r.n > 0);
+
+  const vals = [];
+  series.forEach(s => s.data.forEach(v => { if (v !== null && isFinite(v)) vals.push(v); }));
+  if (bars) bars.data.forEach(v => { if (v !== null && isFinite(v)) { vals.push(v); vals.push(0); } });
+  if (!vals.length) vals.push(0, 1);
+  let min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if (max === min) max = min + 1;
+  const step = niceStep(max - min, 5);
+  min = Math.floor(min / step) * step; max = Math.ceil(max / step) * step;
+  if (max - min < step) max = min + step;
+
+  const W = 980, H = 380, PL = 74, PR = 16, PT = 16, PB = 48;
+  const iw = W - PL - PR, ih = H - PT - PB, n = labels.length;
+  const X = i => n <= 1 ? PL + iw / 2 : PL + (iw * i) / (n - 1);
+  const Y = v => PT + ih - ((v - min) / (max - min)) * ih;
+  let g = "";
+  for (let t = min; t <= max + 1e-9; t += step) {
+    const y = Y(t);
+    g += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (PL + iw) + '" y2="' + y.toFixed(1) +
+         '" stroke="rgba(255,255,255,.07)"/>';
+    g += '<text x="' + (PL - 9) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" fill="#5b6376" font-size="11" font-family="ui-monospace,monospace">' +
+         esc(num2(t)) + "</text>";
+  }
+  const xTick = Math.min(n, Math.max(3, Math.floor(n / 8)));
+  for (let i = 0; i < n; i++) {
+    if (i % xTick !== 0 && i !== n - 1) continue;
+    g += '<text x="' + X(i).toFixed(1) + '" y="' + (PT + ih + 20) + '" text-anchor="middle" fill="#5b6376" font-size="11" font-family="ui-monospace,monospace">' +
+         esc(dayShort(labels[i])) + "</text>";
+  }
+  if (bars) {
+    const bw = Math.max(2, (iw / Math.max(1, n)) * 0.55);
+    bars.data.forEach((v, i) => {
+      if (v === null || v <= 0) return;
+      const y0 = Y(0), y1 = Y(v);
+      g += '<rect x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + bw.toFixed(1) +
+           '" height="' + Math.max(0.5, y0 - y1).toFixed(1) + '" fill="' + bars.color + '" opacity=".28"/>';
+    });
+  }
+  const path = data => {
+    let d = "", pen = false;
+    data.forEach((v, i) => {
+      if (v === null || !isFinite(v)) { pen = false; return; }
+      d += (pen ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1) + " ";
+      pen = true;
+    });
+    return d.trim();
+  };
+  series.forEach(s => {
+    g += '<path d="' + path(s.data) + '" fill="none" stroke="' + s.color + '" stroke-width="2.1" stroke-linejoin="round"' +
+         (s.dash ? ' stroke-dasharray="5 4"' : "") + "/>";
+  });
+  return { g: g, W: W, H: H, labels: labels, series: series, bars: bars, title: title,
+           X: X, Y: Y, n: n, iw: iw, PL: PL, ih: ih,
+           empty: mode === 2 && !hasReal };
+}
+function drawChart() {
+  const box = $("#chartBox"), tip = $("#tip"), legend = $("#legend");
+  $$("#chartBox svg").forEach(s => s.remove());
+  legend.innerHTML = "";
+  const th = computeTheoretical(state.params);
+  const real = computeReal(state.params, th);
+  const c = buildChart(chartMode, th, real);
+  const series = c.series, bars = c.bars, labels = c.labels, g = c.g, title = c.title;
+  const W = c.W, X = c.X, Y = c.Y, n = c.n, iw = c.iw, PL = c.PL;
+
+  if (c.empty) {
+    box.appendChild(el("div", { cls: "hint", text: "Aucune journée saisie : le graphique réel reste vide tant qu'aucun pari n'est enregistré ou importé." }));
+  }
+  g += '<line class="cx" x1="0" y1="16" x2="0" y2="' + (H - 48) + '" stroke="#8b93a7" stroke-width="1" opacity="0"/>';
+  g += '<circle class="cd" r="4" fill="#fff" opacity="0"/>';
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + c.W + " " + c.H);
+  svg.innerHTML = g;
+  box.appendChild(svg);
+  const cx = svg.querySelector(".cx"), cd = svg.querySelector(".cd");
+
+  series.forEach(s => legend.appendChild(el("span", {
+    html: '<i style="background:' + s.color + (s.dash ? ";opacity:.55" : "") + '"></i>'
+  })));
+  series.forEach(s => legend.appendChild(el("span", { text: s.name })));
+  if (bars) {
+    legend.appendChild(el("span", { html: '<i style="background:' + bars.color + ';opacity:.4"></i>' }));
+    legend.appendChild(el("span", { text: bars.name }));
+  }
+  legend.appendChild(el("span", { text: title, cls: "mut" }));
+
+  const move = ev => {
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width * W;
+    let i = Math.round((px - PL) / (iw / Math.max(1, n - 1)));
+    i = clamp(i, 0, n - 1);
+    const x = X(i);
+    cx.setAttribute("x1", x); cx.setAttribute("x2", x); cx.setAttribute("opacity", ".5");
+    let first = null;
+    series.forEach(s => {
+      const v = s.data[i];
+      if (v !== null && isFinite(v) && first === null) { first = { x: x, y: Y(v) }; }
+    });
+    if (first) { cd.setAttribute("cx", first.x); cd.setAttribute("cy", first.y); cd.setAttribute("opacity", "1"); }
+    tip.innerHTML = "";
+    tip.appendChild(el("div", { cls: "t", text: fmtDMY(labels[i]) }));
+    series.forEach(s => {
+      const v = s.data[i];
+      tip.appendChild(el("div", { cls: "r" }, [
+        el("span", { html: '<span class="sw" style="background:' + s.color + '"></span>' + esc(s.name) }),
+        el("b", { text: v === null || !isFinite(v) ? "—" : eur(v) })
+      ]));
+    });
+    if (bars) {
+      const v = bars.data[i];
+      tip.appendChild(el("div", { cls: "r" }, [
+        el("span", { html: '<span class="sw" style="background:' + bars.color + '"></span>' + esc(bars.name) }),
+        el("b", { text: v === null ? "—" : eur(v) })
+      ]));
+    }
+    const L = box.clientWidth;
+    tip.style.left = clamp((x / W) * L + 14, 4, L - 190) + "px";
+    tip.style.top = "22px"; tip.style.opacity = "1";
+  };
+  const leave = () => { tip.style.opacity = "0"; cx.setAttribute("opacity", "0"); cd.setAttribute("opacity", "0"); };
+  svg.addEventListener("mousemove", move);
+  svg.addEventListener("mouseleave", leave);
+  svg.addEventListener("touchmove", e => { if (e.touches[0]) move(e.touches[0]); }, { passive: true });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. Import — lecture ZIP native (aucune dépendance)
+   ══════════════════════════════════════════════════════════════════════════ */
+function zipEntries(buf) {
+  const dv = new DataView(buf);
+  let eocd = -1;
+  const lo = Math.max(0, buf.length - 22 - 65535);
+  for (let i = buf.length - 22; i >= lo; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("Archive ZIP invalide (fin de répertoire central introuvable).");
+  const count = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    if (off + 46 > buf.length || dv.getUint32(off, true) !== 0x02014b50)
+      throw new Error("Entrée ZIP corrompue (index " + i + ").");
+    const method = dv.getUint16(off + 10, true);
+    let csize = dv.getUint32(off + 20, true);
+    const nlen = dv.getUint16(off + 28, true);
+    const elen = dv.getUint16(off + 30, true);
+    const clen = dv.getUint16(off + 32, true);
+    let lho = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(off + 46, off + 46 + nlen));
+    if (dv.getUint32(lho, true) !== 0x04034b50 || lho + 30 > buf.length)
+      throw new Error("En-tête local absent ou hors bornes pour « " + name + " ».");
+    const lnlen = dv.getUint16(lho + 26, true), lelen = dv.getUint16(lho + 28, true);
+    if (!csize) csize = dv.getUint32(lho + 18, true);   /* flag data-descriptor */
+    const start = lho + 30 + lnlen + lelen;
+    out.push({ name: name, method: method, data: buf.subarray(start, start + csize) });
+    off += 46 + nlen + elen + clen;
+  }
+  return out;
+}
+async function inflateRaw(bytes, method) {
+  /* ZIP : méthode 8 = deflate BRUT (sans en-tête zlib) — d'où deflate-raw. */
+  if (method === 0) return bytes;
+  if (method !== 8) throw new Error("Compression ZIP non gérée (méthode " + method + ").");
+  const LIMIT = 64 * 1024 * 1024;
+  const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+  const chunks = []; let n = 0;
+  for (;;) {
+    const step = await reader.read();
+    if (step.done) break;
+    n += step.value.length;
+    if (n > LIMIT) { try { await reader.cancel(); } catch (e) {} throw new Error("Archive trop volumineuse une fois décompressée (> 64 Mo)."); }
+    chunks.push(step.value);
+  }
+  const out = new Uint8Array(n); let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10. Import — parseur 1xBet (DOM)
+   ══════════════════════════════════════════════════════════════════════════ */
+const STATUS_MAP = [
+  [/^(non trait|non pay|en cours|en direct|non r[eé]gl|pending|unresolved|unsettled|open)/i, "pending"],
+  [/^(pay[eé]|gagn[eé]e?|won|win|succ[eè]s|combin[ée] gagn)/i, "won"],
+  [/^(perdue?|lost|lose|[eé]chec)/i, "lost"],
+  [/^(rembours[eé]|annul[eé]e?|refunded|refund|void|cashback|sold)/i, "void"],
+  [/^(cashout|cash out)/i, "cashout"]
+];
+function mapStatus(raw) {
+  if (raw === null || raw === undefined) return { status: "pending", known: false, raw: "" };
+  const s = String(raw).replace(/\s+/g, " ").trim();
+  if (!s) return { status: "pending", known: false, raw: "" };
+  for (const [re, st] of STATUS_MAP) if (re.test(s)) return { status: st, known: true, raw: s };
+  return { status: "pending", known: false, raw: s };
+}
+function parseEventCell(td) {
+  const out = { sport: null, league: null, event: null, teams: null, kickoff: null, kickKey: null };
+  if (!td) return out;
+  const b0 = td.querySelector("b");
+  if (!b0) return out;
+  /* textContent ne contient aucun retour ligne : on découpe sur les <br>, pas sur "\n". */
+  const lines = [];
+  let cur = "";
+  for (const node of b0.childNodes) {
+    if (node.nodeType === 1 && node.tagName === "BR") { lines.push(cur.trim()); cur = ""; }
+    else cur += node.textContent || "";
+  }
+  lines.push(cur.trim());
+  const bs = td.querySelectorAll("b");
+  const first = (lines[0] || "").trim();
+  const parts = first.split(/\.\s+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length >= 3) { out.sport = parts[0]; out.league = parts.slice(1, parts.length - 1).join(". "); out.event = parts[parts.length - 1]; }
+  else if (parts.length === 2) { out.sport = parts[0]; out.event = parts[1]; }
+  else { out.event = first; }
+  if (lines[1]) out.teams = lines[1];
+  if (bs.length > 1) out.kickKey = dmToKey(parseDMYHM(bs[bs.length - 1].textContent));
+  return out;
+}
+function parse1xbetCoupon(block) {
+  const idInput = block.querySelector('input[id^="hisChekHide-"]');
+  let id = idInput ? idInput.id.replace("hisChekHide-", "") : null;
+  if (!id) {
+    const m = (block.querySelector(".time") || {}).textContent || "";
+    /* Le № est OBLIGATOIRE ici : sans lui, "02.10.2026" serait capturé comme identifiant. */
+    const mm = m.match(/\u2116\s*(\d{4,})/) || m.match(/\b\d{6,}\b/);
+    id = mm ? mm[1] : null;
+  }
+  const tEl = block.querySelector(".time time") || block.querySelector(".time");
+  const placedKey = dmToKey(parseDMYHM(tEl ? tEl.textContent : ""));
+  const ri = block.querySelector("td.ri");
+  const btRaw = ri ? (ri.textContent || "") : "";
+  const btM = btRaw.match(/Type de pari\s*:\s*(.+)/i);
+  const betType = (btM ? btM[1] : "Simple").trim().toLowerCase();
+  const cof = parseNum(block.querySelector(".hisCof") ? block.querySelector(".hisCof").textContent : null);
+
+  const legs = [];
+  let stake = null, totalOdds = null, statusRaw = null, payoutCell = null;
+  /* Repli sans .cupHisNew : le bloc peut être la <table> elle-même. */
+  const table = block.tagName === "TABLE" ? block
+              : (block.querySelector("table.table_prop") || block.querySelector("table"));
+  if (table) {
+    for (const tr of table.querySelectorAll("tr")) {
+      const pickTd = tr.querySelector('td.ce[rowspan="2"]');
+      if (pickTd) {
+        const ces = Array.prototype.filter.call(tr.querySelectorAll("td.ce"), function (x) { return x !== pickTd; });
+        const ev = parseEventCell(tr.querySelector("td.ha"));
+        let score = null;
+        const sm = (tr.textContent || "").match(/R[eé]sultat\s*:\s*(.+)/i);
+        if (sm) score = sm[1].trim();
+        if (!score) {
+          const nx = tr.nextElementSibling;
+          if (nx) { const sm2 = (nx.textContent || "").match(/R[eé]sultat\s*:\s*(.+)/i); if (sm2) score = sm2[1].trim(); }
+        }
+        legs.push({
+          pick: (pickTd.textContent || "").trim(),
+          odds: parseNum(ces[0] ? ces[0].textContent : null),
+          statusRaw: ces[1] ? (ces[1].textContent || "").trim() : "",
+          label: [ev.event, ev.teams].filter(Boolean).join(" — ") || null,
+          sport: ev.sport, league: ev.league, kickKey: ev.kickKey, score: score
+        });
+        continue;
+      }
+      const tdh = tr.querySelector("#tdH");
+      if (tdh) {
+        totalOdds = parseNum(tdh.textContent);
+        const ces = Array.prototype.filter.call(tr.querySelectorAll("td.ce"), function (x) { return x !== tdh; });
+        if (ces.length >= 1) statusRaw = (ces[ces.length - 1].textContent || "").trim();
+        if (ces.length >= 2) stake = parseNum(ces[0].textContent);
+        if (ces.length >= 3) payoutCell = parseNum(ces[ces.length - 2].textContent);
+      }
+    }
+  }
+  /* Repli de mise : la cellule d'intitulé ("Mise totale") précède la valeur ("40 EUR"). */
+  if (stake === null && table) {
+    const tds = Array.prototype.slice.call(table.querySelectorAll("td"));
+    const i = tds.findIndex(x => /mise totale|mise|stake|montant/i.test(x.textContent || ""));
+    if (i >= 0 && tds[i + 1]) stake = parseNum(tds[i + 1].textContent);
+  }
+  if (totalOdds === null) totalOdds = cof;
+  return {
+    id: id, placedKey: placedKey, betType: betType,
+    totalOdds: totalOdds, stake: stake, statusRaw: statusRaw,
+    payoutCell: payoutCell, legs: legs
+  };
+}
+function parse1xbetHtml(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const zone = doc.querySelector(".cupHisZ");
+  let summary = null;
+  if (zone) {
+    const txt = zone.textContent.replace(/\s+/g, " ");
+    const grab = label => {
+      const i = txt.toLowerCase().indexOf(label.toLowerCase());
+      if (i < 0) return null;
+      const seg = txt.slice(i + label.length, i + label.length + 48);
+      const m = seg.match(/-?[\d.,\s ]+/);
+      return m ? m[0].trim() : null;
+    };
+    summary = {
+      count: parseNum(grab("Nombre de paris")),
+      gains: parseNum(grab("Total des gains")),
+      unsettled: parseNum(grab("Montant des paris non trait"))
+    };
+  }
+  const blocks = Array.prototype.slice.call(doc.querySelectorAll(".cupHisNew"));
+  const coupons = blocks.length ? blocks.map(parse1xbetCoupon)
+                                 : Array.prototype.slice.call(doc.querySelectorAll("table.table_prop")).map(parse1xbetCoupon);
+  return { summary: summary, coupons: coupons.filter(c => c.placedKey || c.stake !== null) };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11. Import — CSV générique
+   ══════════════════════════════════════════════════════════════════════════ */
+const ALIASES = {
+  date:   ["date", "time", "datetime", "date time", "bet time", "placed at", "placedat", "date placed", "horodatage", "date heure", "heure", "mise time", "timestamp"],
+  label:  ["match", "event", "match label", "match name", "event name", "libelle", "evenement", "selection", "pick", "outcome", "jeu", "pari", "market", "matchup", "fixture"],
+  stake:  ["stake", "amount", "mise", "montant", "montant du pari", "total stake", "staked", "mise totale", "wager", "bet amount"],
+  odds:   ["odds", "cote", "total odds", "price", "coefficient", "cote totale", "decimal odds"],
+  status: ["status", "result", "resultat", "statut", "etat", "outcome", "settlement"],
+  payout: ["payout", "profit", "gain", "gains", "winnings", "return", "returns", "net return", "payouts", "gain net", "profit net"],
+  sport:  ["sport", "sports", "discipline"],
+  league: ["league", "competition", "ligue", "championnat", "tournament", "tournoi"],
+  betId:  ["id", "bet id", "betid", "n coupon", "numero coupon", "coupon", "number", "no", "ref", "reference"]
+};
+const FIELD_LABEL = {
+  date: "Date (obligatoire)", label: "Libellé du pari (obligatoire)", stake: "Mise (obligatoire)",
+  odds: "Cote", status: "Résultat", payout: "Montant payé", sport: "Sport", league: "Compétition", betId: "Identifiant"
+};
+function detectDelimiter(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 8);
+  const cands = [",", ";", "\t", "|"];
+  let best = ",", bestCols = 0, bestScore = -1;
+  for (const d of cands) {
+    /* splitCSVLine : conscient des guillemets, donc insensible aux virgules décimales. */
+    const counts = lines.map(l => splitCSVLine(l, d).length);
+    const cols = counts[0] || 0;
+    if (cols <= 1) continue;
+    const same = counts.filter(x => x === cols).length / counts.length;
+    const score = same * 1000 + cols;
+    if (score > bestScore) { bestScore = score; bestCols = cols; best = d; }
+  }
+  return bestCols > 1 ? best : ",";
+}
+function splitCSVLine(line, delim) {
+  const out = []; let cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) {
+      if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === delim) { out.push(cur); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+function guessMapping(header) {
+  const map = {};
+  const used = {};
+  for (const f in ALIASES) {
+    for (let i = 0; i < header.length; i++) {
+      if (used[i]) continue;
+      const h = normKey(header[i]);
+      if (!h) continue;
+      if (ALIASES[f].some(a => h === a
+          || (h.indexOf(a) === 0 && h.charAt(a.length) === " ")
+          || h.indexOf(" " + a) > -1)) { map[f] = i; used[i] = true; break; }
+    }
+  }
+  return map;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   12. Import — interface
+   ══════════════════════════════════════════════════════════════════════════ */
+let imp = null;   /* { kind:'1xbet'|'csv', coupons?, table?, mapping?, payoutIsTotal } */
+function renderImport() {
+  const area = $("#impArea"); area.innerHTML = "";
+  if (!imp) { $("#impCount").textContent = ""; return; }
+  if (imp.kind === "1xbet") area.appendChild(ui1xbet());
+  else area.appendChild(uiCSV());
+}
+function warn1xbetRows() {
+  const un = new Set();
+  imp.coupons.forEach(c => {
+    if (!mapStatus(c.statusRaw).known) un.add(c.statusRaw || "(vide)");
+    c.legs.forEach(l => { if (!mapStatus(l.statusRaw).known) un.add(l.statusRaw || "(vide)"); });
+  });
+  return Array.from(un);
+}
+function ui1xbet() {
+  const box = el("div", {});
+  const th = computeTheoretical(state.params);
+  const known = th.reduce((m, r) => { m[r.key] = true; return m; }, {});
+  const c = imp.coupons;
+  const sum = imp.summary;
+  const outside = c.filter(x => !known[x.placedKey]);
+  const missing = c.filter(x => !x.placedKey);
+
+  box.appendChild(el("div", { cls: "banner " + (c.length ? "ok" : "err") },
+    [el("span", { text: c.length + " coupon(s) détecté(s) dans le fichier." })]));
+  if (missing.length) box.appendChild(el("div", { cls: "banner err", text: missing.length + " coupon(s) sans date de pose exploitable : ignorés à l'import." }));
+  if (outside.length) box.appendChild(el("div", { cls: "banner", text: outside.length + " coupon(s) hors de la période du plan (" + fmtDMY(th[0].key) + " → " + fmtDMY(th[th.length - 1].key) + ") : ils seront tout de même importés dans le journal, mais hors calcul de retard." }));
+
+  if (sum) {
+    const computedGain = c.reduce((a, x) => {
+      if (x.payoutCell !== null && imp.payoutIsTotal) return a + (x.payoutCell - (x.stake || 0));
+      if (x.payoutCell !== null) return a + x.payoutCell;
+      const st = mapStatus(x.statusRaw).status;
+      if (st === "pending") return a;
+      if (st === "void") return a;
+      if (st === "won") return a + (x.stake || 0) * (Math.max(1, x.totalOdds || 1) - 1);
+      return a - (x.stake || 0);
+    }, 0);
+    const gRow = el("div", { cls: "row", },
+      [
+        el("span", { text: "Contrôle d'intégrité (export ↔ calcul) :", cls: "mini" }),
+        el("span", {}, [badge("nombre de paris " + (sum.count === c.length ? "✓ " + sum.count : "✗ " + sum.count + " vs " + c.length), sum.count === c.length ? "g" : "r")]),
+        el("span", {}, [badge("gains " + (Math.abs((sum.gains || 0) - computedGain) < 0.01 ? "✓ " + eur(sum.gains) : "✗ export " + eur(sum.gains) + " / calcul " + eur(computedGain)),
+          Math.abs((sum.gains || 0) - computedGain) < 0.01 ? "g" : "r")]),
+        sum.unsettled !== null ? el("span", {}, [badge("non traités " + eur(sum.unsettled), "n")]) : null
+      ]);
+    box.appendChild(gRow);
+  }
+
+  const unk = warn1xbetRows();
+  if (unk.length) box.appendChild(el("div", { cls: "banner", text: "Statuts non reconnus dans l'export (considérés « En cours », corrigeables ligne par ligne après import) : " + unk.join(", ") }));
+
+  const lab = el("label", { cls: "chk" });
+  const cb = el("input", { attrs: { type: "checkbox" } });
+  cb.checked = imp.payoutIsTotal;
+  cb.addEventListener("change", () => { imp.payoutIsTotal = cb.checked; renderImport(); });
+  lab.appendChild(cb);
+  lab.appendChild(el("span", { text: "Si une cellule « montant payé » est détectée : elle correspond au montant TOTAL retourné (mise incluse). Décocher si c'est déjà le gain net." }));
+  box.appendChild(lab);
+
+  const tw = el("div", { cls: "tw scroll", attrs: { style: "max-height:300px;margin-top:10px" } });
+  const t = el("table", {});
+  const thead = el("thead", {}, [el("tr", {}, [
+    th("Coupon", "l"), th("Date de pose", "l"), th("Type", "l"), th("Sél.", "l"),
+    th("Mise", "l"), th("Cote", "l"), th("Statut", "l"), th("Gain", "l"), th("Origine", "l")
+  ])]);
+  t.appendChild(thead);
+  const tb = el("tbody", {});
+  c.forEach(x => {
+    const st = mapStatus(x.statusRaw);
+    let pl = 0, src = "—";
+    if (st.status === "pending") { pl = null; src = "en cours"; }
+    else if (x.payoutCell !== null) { pl = imp.payoutIsTotal ? x.payoutCell - (x.stake || 0) : x.payoutCell; src = "payout"; }
+    else if (st.status === "void") { pl = 0; src = "calculé"; }
+    else if (st.status === "won") { pl = (x.stake || 0) * (Math.max(1, x.totalOdds || 1) - 1); src = "calculé"; }
+    else { pl = -(x.stake || 0); src = "calculé"; }
+    tb.appendChild(el("tr", {}, [
+      td(x.id || "—", "l mut"),
+      td(x.placedKey ? fmtDMY(x.placedKey) : "—", "l"),
+      td(x.betType, "l"),
+      td(x.legs.map(l => l.pick).filter(Boolean).join(" + ") || "—", "l"),
+      td(eur(x.stake)), td(num2(x.totalOdds)),
+      el("td", { cls: "l" }, [badge(st.status, st.status === "won" ? "g" : st.status === "lost" ? "r" : st.status === "void" ? "n" : "a")]),
+      td(pl === null ? "en cours" : eur(pl), pl === null ? "mut" : pl > 0 ? "pos" : pl < 0 ? "neg" : "mut"),
+      td(src, "l mut")
+    ]));
+  });
+  t.appendChild(tb);
+  tw.appendChild(t);
+  box.appendChild(tw);
+
+  const actions = el("div", { cls: "row", attrs: { style: "margin-top:12px" } });
+  const selMerge = el("select", {});
+  [["add", "Ajouter aux journées existantes"], ["replace", "Remplacer les journées concernées"]].forEach(([v, l]) => {
+    const o = el("option", { text: l }); o.value = v; selMerge.appendChild(o);
+  });
+  selMerge.style.cssText = "background:var(--bg);border:1px solid var(--line2);color:var(--txt);border-radius:7px;padding:7px 9px;font:12.5px system-ui";
+  selMerge.addEventListener("change", () => { imp.merge = selMerge.value; });
+  imp.merge = imp.merge || "add";
+  selMerge.value = imp.merge;
+  const go = el("button", { cls: "pri", text: "Importer " + c.length + " coupon(s)" });
+  go.addEventListener("click", () => applyImport1xbet(imp.merge));
+  actions.appendChild(el("span", { text: "Fusion :", cls: "mini" }));
+  actions.appendChild(selMerge);
+  actions.appendChild(go);
+  box.appendChild(actions);
+  return box;
+}
+function applyImport1xbet(mode) {
+  let n = 0;
+  const seen = {};
+  for (const k in state.days) {
+    if (!Array.isArray(state.days[k])) continue;
+    for (const b of state.days[k]) if (b && b.id) seen[b.id] = true;
+  }
+  for (const x of imp.coupons) {
+    if (!x.placedKey) continue;                 /* hors période : conservé dans le journal */
+    if (x.id && seen[x.id]) continue;            /* dédup par id coupon */
+    const st = mapStatus(x.statusRaw).status;
+    let payout = null;
+    if (x.payoutCell !== null && st !== "pending") payout = imp.payoutIsTotal ? x.payoutCell : x.payoutCell + (x.stake || 0);
+    const bet = {
+      id: x.id, label: x.legs.map(l => l.label).filter(Boolean).join(" | ") || (x.legs[0] ? x.legs[0].pick : "Coupon " + (x.id || "")),
+      type: TYPES.some(t => t[0] === x.betType) ? x.betType : "simple",
+      odds: x.totalOdds, stake: x.stake || 0, status: st,
+      payout: payout, statusRaw: x.statusRaw || null,
+      bookmaker: "1xbet",
+      sport: x.legs[0] ? x.legs[0].sport : null,
+      league: x.legs[0] ? x.legs[0].league : null,
+      note: x.legs.map(l => (l.pick || "") + (l.score ? " · " + l.score : "")).join(" / ") || null
+    };
+    if (mode === "replace") state.days[x.placedKey] = [];
+    if (!state.days[x.placedKey]) state.days[x.placedKey] = [];
+    state.days[x.placedKey].push(bet);
+    if (x.id) seen[x.id] = true;
+    n++;
+  }
+  save(); imp = null; renderImport(); renderAll();
+  flash(n + " coupon(s) importé(s).");
+}
+function flash(msg) {
+  const d = el("div", { cls: "banner ok", text: msg });
+  $("#impArea").parentNode.insertBefore(d, $("#impArea"));
+  setTimeout(() => d.remove(), 4200);
+}
+function uiCSV() {
+  const box = el("div", {});
+  const t = imp.table, delimName = { ",": "virgule", ";": "point-virgule", "\t": "tabulation", "|": "barre verticale" }[imp.delim] || "virgule";
+  box.appendChild(el("div", { cls: "banner ok", text: t.rows.length + " ligne(s) détectée(s) · séparateur " + delimName + " · " + (t.header ? "en-tête reconnu" : "pas d'en-tête") }));
+
+  const map = imp.mapping;
+  const grid = el("div", { cls: "map" });
+  for (const f in FIELD_LABEL) {
+    const wrap = el("div", { cls: "f" });
+    const lab = el("label", { text: FIELD_LABEL[f] });
+    const sel = el("select", {});
+    const none = el("option", { text: "— non mappé —" }); none.value = "-1"; sel.appendChild(none);
+    t.header.forEach((h, i) => {
+      const o = el("option", { text: h ? h : "(colonne " + (i + 1) + ")" });
+      o.value = String(i); sel.appendChild(o);
+    });
+    sel.value = map[f] != null ? String(map[f]) : "-1";
+    sel.addEventListener("change", () => {
+      const v = parseInt(sel.value, 10);
+      if (v < 0) delete imp.mapping[f]; else imp.mapping[f] = v;
+      renderImport();
+    });
+    wrap.appendChild(lab); wrap.appendChild(sel);
+    if (map[f] != null) wrap.appendChild(el("div", { cls: "lbl-in" }, [el("span", { cls: "src", text: (t.rows[0] ? t.rows[0][map[f]] : "") || "—" })]));
+    grid.appendChild(wrap);
+  }
+  box.appendChild(grid);
+
+  const ok = imp.mapping.date != null && imp.mapping.stake != null && imp.mapping.label != null;
+  const parsed = ok ? parseCsvRows(t, imp.mapping) : [];
+  const unrec = new Set();
+  parsed.forEach(p => { if (!p.statusKnown) unrec.add(p.statusRaw || "(vide)"); });
+  box.appendChild(el("div", { cls: "mini" },
+    [el("span", { text: ok ? "Analyse : " + parsed.length + " par(i)s exploitable(s)" : "Il faut mapper Date, Libellé et Mise pour continuer." })]));
+  if (unrec.size) box.appendChild(el("div", { cls: "banner", text: "Résultats non reconnus (traités « En cours ») : " + Array.from(unrec).join(", ") }));
+
+  if (parsed.length) {
+    const tw = el("div", { cls: "tw scroll", attrs: { style: "max-height:280px;margin-top:10px" } });
+    const tb = el("table", {});
+    tb.appendChild(el("thead", {}, [el("tr", {}, [th("Date", "l"), th("Libellé", "l"), th("Mise"), th("Cote"), th("Statut", "l"), th("Gain", "l")])]));
+    const body = el("tbody", {});
+    parsed.slice(0, 60).forEach(p => body.appendChild(el("tr", {}, [
+      td(fmtDMY(p.key), "l"), td(p.label, "l"), td(eur(p.stake)), td(num2(p.odds)),
+      el("td", { cls: "l" }, [badge(p.status, p.status === "won" ? "g" : p.status === "lost" ? "r" : "n")]),
+      td(p.pl === null ? "en cours" : eur(p.pl), p.pl === null ? "mut" : p.pl > 0 ? "pos" : "neg")
+    ])));
+    tb.appendChild(body); tw.appendChild(tb); box.appendChild(tw);
+    if (parsed.length > 60) box.appendChild(el("div", { cls: "mini", text: "… " + (parsed.length - 60) + " ligne(s) non affichée(s)." }));
+  }
+
+  const actions = el("div", { cls: "row", attrs: { style: "margin-top:12px" } });
+  const go = el("button", { cls: "pri", text: "Importer " + (ok ? parsed.length : 0) + " pari(s)" });
+  go.disabled = !ok;
+  go.addEventListener("click", () => applyImportCSV(parsed));
+  actions.appendChild(go);
+  box.appendChild(actions);
+  return box;
+}
+function parseCsvRows(t, map) {
+  const out = [];
+  for (const r of t.rows) {
+    const dk = map.date != null ? dmToKey(parseDMYHM(r[map.date])) : null;
+    const stake = map.stake != null ? parseNum(r[map.stake]) : null;
+    if (!dk || stake === null) continue;
+    const odds = map.odds != null ? parseNum(r[map.odds]) : null;
+    const sm = map.status != null ? mapStatus(r[map.status]) : { status: "pending", known: !map.status };
+    let payout = null;
+    if (map.payout != null) {
+      const p = parseNum(r[map.payout]);
+      if (p !== null && p > 0) payout = imp.payoutIsTotal ? p : p + stake;
+    }
+    /* P/L : on réutilise betPL (source de vérité unique) plutôt qu'un arbre de décision parallèle. */
+    const res = betPL({ stake: stake, odds: odds, status: sm.status, payout: payout });
+    out.push({
+      key: dk, label: map.label != null ? (r[map.label] || "(sans libellé)").trim() : "(sans libellé)",
+      stake: stake, odds: odds, status: sm.status, statusKnown: sm.known, statusRaw: sm.statusRaw,
+      payout: payout, pl: res.pl,
+      sport: map.sport != null ? (r[map.sport] || "").trim() || null : null,
+      league: map.league != null ? (r[map.league] || "").trim() || null : null,
+      id: map.betId != null ? (r[map.betId] || "").trim() || null : null
+    });
+  }
+  return out;
+}
+function applyImportCSV(parsed) {
+  let n = 0;
+  for (const p of parsed) {
+    if (!state.days[p.key]) state.days[p.key] = [];
+    state.days[p.key].push({
+      id: p.id, label: p.label, type: "simple", odds: p.odds, stake: p.stake,
+      status: p.status, payout: p.payout, bookmaker: null, sport: p.sport, league: p.league, note: null
+    });
+    n++;
+  }
+  save(); imp = null; renderImport(); renderAll();
+  flash(n + " pari(s) importé(s).");
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   13. Import — entrée
+   ══════════════════════════════════════════════════════════════════════════ */
+async function handleFile(file) {
+  try {
+    const name = (file.name || "").toLowerCase();
+    if (file.size > 32 * 1024 * 1024) throw new Error("Fichier trop volumineux (32 Mo maximum).");
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let text = "";
+    if (name.endsWith(".zip")) {
+      const entries = zipEntries(buf);
+      const pick = entries.filter(e => /\.(html?|csv|txt)$/i.test(e.name));
+      if (!pick.length) throw new Error("Aucune entrée HTML/CSV dans l'archive (" + entries.length + " entrée(s)).");
+      const htmls = pick.filter(e => /\.(html?|txt)$/i.test(e.name));
+      const use = htmls.length ? htmls : pick;
+      for (const e of use) text += new TextDecoder("utf-8").decode(await inflateRaw(e.data, e.method)) + "\n";
+      $("#impCount").textContent = "Archive : " + use.map(e => e.name).join(", ") + " (" + entries.length + " entrée(s))";
+    } else {
+      text = new TextDecoder("utf-8").decode(buf);
+      $("#impCount").textContent = "Fichier : " + file.name;
+    }
+    ingest(text);
+  } catch (err) {
+    $("#impCount").textContent = "";
+    renderImport();
+    const d = el("div", { cls: "banner err", text: "Lecture impossible : " + (err && err.message ? err.message : String(err)) });
+    $("#impArea").appendChild(d);
+  }
+}
+function ingest(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const looksHtml = /<\s*(table|div|html|body)\b/i.test(text.slice(0, 4000)) || /Coupon de pari/i.test(text);
+  if (looksHtml) {
+    let res;
+    try { res = parse1xbetHtml(text); }
+    catch (e) { $("#impArea").innerHTML = ""; $("#impArea").appendChild(el("div", { cls: "banner err", text: "HTML illisible : " + e.message })); return; }
+    imp = { kind: "1xbet", coupons: res.coupons, summary: res.summary, payoutIsTotal: true, merge: "add" };
+    renderImport();
+    return;
+  }
+  const delim = detectDelimiter(text);
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  if (!lines.length) { $("#impArea").innerHTML = ""; $("#impArea").appendChild(el("div", { cls: "banner err", text: "Fichier vide." })); return; }
+  const first = splitCSVLine(lines[0], delim);
+  /* En-tête seulement si AUCUNE cellule n'est un nombre (sinon un CSV sans
+     en-tête contenant une colonne texte — sport, type — serait pris pour un en-tête). */
+  const hasHeader = first.every(c => c.trim() === "" || parseNum(c) === null);
+  const table = {
+    delim: delim, header: hasHeader ? first : first.map((_, i) => "colonne " + (i + 1)),
+    rows: (hasHeader ? lines.slice(1) : lines).map(l => splitCSVLine(l, delim))
+  };
+  imp = { kind: "csv", table: table, mapping: guessMapping(table.header), payoutIsTotal: true };
+  if (!hasHeader) imp.mapping = { date: 0, label: 1, stake: 2, odds: 3, status: 4 };
+  renderImport();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   14. Export
+   ══════════════════════════════════════════════════════════════════════════ */
+function exportJournalCSV() {
+  const th = computeTheoretical(state.params);
+  const real = computeReal(state.params, th);
+  const head = ["date", "jour", "nb_paris", "mise_totale", "gain_reel", "objectif",
+    "pourcentage_objectif", "ecart_jour", "capital_reel", "banque_reele", "total_reel",
+    "montant_de_retard", "jours_restants", "retard_par_jour", "statut_journee"];
+  const lines = [head.map(csvCell).join(";")];
+  for (const r of real.rows) {
+    lines.push([
+      r.key, r.d, r.n, r.staked.toFixed(2), r.gRe.toFixed(2), r.thG.toFixed(2),
+      r.thG ? (r.gRe / r.thG * 100).toFixed(1) : "", r.ecartJour.toFixed(2),
+      r.cap.toFixed(2), r.bank.toFixed(2), r.tRe.toFixed(2),
+      r.future ? "" : r.retard.toFixed(2), r.jrest === null ? "" : r.jrest,
+      r.retardJour === null ? "" : r.retardJour.toFixed(2),
+      r.future ? "a_venir" : "saisi"
+    ].map(csvCell).join(";"));
+  }
+  const det = [];
+  for (const k in state.days) {
+    if (!Array.isArray(state.days[k])) continue;
+    for (const b of state.days[k]) {
+      if (!b) continue;
+      const r = betPL(b);
+      det.push([k, b.label, b.type, b.odds, b.stake, b.status,
+        r.pl === null ? "" : r.pl.toFixed(2), r.src, b.bookmaker || "", b.sport || "", b.league || "", b.id || ""
+      ].map(csvCell).join(";"));
+    }
+  }
+  lines.push("");
+  lines.push(csvCell("detail_paris"));
+  lines.push(["date", "libelle", "type", "cote", "mise", "statut", "gain", "origine_gain", "bookmaker", "sport", "competition", "id"].map(csvCell).join(";"));
+  lines.push.apply(lines, det);
+  download("suivi-paris-" + todayKey() + ".csv", "text/csv", "﻿" + lines.join("\r\n"));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   15. Orchestration
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   14b. Export — rapport HTML autonome de l'historique des bets
+   (fichier unique, lisible hors-ligne, aucune dépendance ; SVG reconstruit
+    via buildChart(), aucune logique de graphique dupliquée)
+   ══════════════════════════════════════════════════════════════════════════ */
+const REPORT_CSS = ":root{--bg:#0b0e17;--bg2:#0e121e;--bg3:#131828;--line:rgba(255,255,255,.09);--txt:#e8ecf4;--muted:#8b93a7;--dim:#5b6376;--accent:#00e676;--red:#ef4444;--mono:ui-monospace,Consolas,monospace}"
++ "body{background:var(--bg);color:var(--txt);font:14px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;margin:0;padding:26px 18px 70px}"
++ ".w{max-width:1400px;margin:0 auto}"
++ "h1{font-size:21px;margin:0 0 3px}h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:30px 0 9px}"
++ ".sub{color:var(--muted);font-size:12.5px;margin:0}.note{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.55}"
++ ".kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px;margin-top:14px}"
++ ".kpi{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}"
++ ".kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);font-weight:600}"
++ ".kpi .v{font:600 20px/1.25 var(--mono);margin-top:3px}.kpi .s{font-size:11px;color:var(--muted)}"
++ ".tw{overflow-x:auto;background:var(--bg2);border:1px solid var(--line);border-radius:10px}"
++ "table{border-collapse:collapse;width:100%;font-size:12.5px}"
++ "th,td{padding:6px 9px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}"
++ "th{background:var(--bg3);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}"
++ "td.l,th.l{text-align:left}td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}"
++ "tfoot td{font-weight:700;background:var(--bg3)}tr.late td{background:rgba(239,68,68,.05)}tr.fut td{opacity:.42}"
++ ".pos{color:var(--accent)}.neg{color:var(--red)}.mut{color:var(--muted)}"
++ ".b{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:600}"
++ ".b.g{background:rgba(0,230,118,.13);color:var(--accent)}.b.r{background:rgba(239,68,68,.13);color:#f87171}.b.n{background:rgba(255,255,255,.06);color:var(--muted)}"
++ ".chart{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px}.chart svg{display:block;width:100%;height:auto}"
++ ".lg{display:flex;gap:15px;flex-wrap:wrap;padding:9px 4px 0;font-size:11.5px;color:var(--muted)}"
++ ".lg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}"
++ ".warn{margin-top:12px;padding:9px 12px;border-radius:8px;font-size:12.5px;background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.28);color:#fbbf24}"
++ "footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--dim)}";
+
+function reportLegend(c) {
+  let s = '<div class="lg">';
+  c.series.forEach(x => { s += '<span><i style="background:' + x.color + (x.dash ? ";opacity:.55" : "") + '"></i>' + esc(x.name) + "</span>"; });
+  if (c.bars) s += '<span><i style="background:' + c.bars.color + ';opacity:.4"></i>' + esc(c.bars.name) + "</span>";
+  s += '<span class="mut">' + esc(c.title) + "</span></div>";
+  return s;
+}
+function exportReportHTML() {
+  const p = state.params;
+  const th = computeTheoretical(p);
+  const real = computeReal(p, th);
+  const live = real.live, thLast = th[th.length - 1];
+  const done = real.rows.filter(r => !r.future);
+  const c1 = buildChart(1, th, real), c2 = buildChart(2, th, real);
+  const nMax = Math.max(1, p.maxBets | 0);
+  const TD = (v, cls) => '<td class="' + (cls || "n") + '">' + v + "</td>";
+
+  /* Tous les paris, triés par date de pose */
+  const bets = [];
+  for (const k in state.days) {
+    if (!Array.isArray(state.days[k])) continue;
+    for (const b of state.days[k]) if (b) bets.push(Object.assign({ _k: k }, b));
+  }
+  bets.sort((a, b) => (a._k < b._k ? -1 : a._k > b._k ? 1 : 0));
+  let bStaked = 0, bPl = 0, bSettled = 0, bPending = 0, bWon = 0, bLost = 0;
+  for (const b of bets) {
+    const r = betPL(b);
+    if (r.pl === null) { bPending++; continue; }
+    bSettled++; bStaked += b.stake; bPl += r.pl;
+    if (b.status === "won") bWon++; else if (b.status === "lost") bLost++;
+  }
+  const winRate = bSettled ? (bWon / bSettled * 100) : null;
+  const roi = bStaked ? (bPl / bStaked * 100) : null;
+
+  /* Journal */
+  let jRows = "";
+  for (const r of real.rows) {
+    if (r.future) {
+      jRows += "<tr class=\"fut\"><td class=\"l\">" + fmtDMY(r.key) + "</td><td>" + r.n + "</td>" +
+        '<td class="mut">—</td><td class="mut">—</td><td>' + eur(r.thG) + '</td><td class="mut">—</td><td class="mut">—</td>' +
+        '<td class="mut">—</td><td class="mut">—</td><td class="mut">—</td><td class="l"><span class="b n">à venir</span></td>' +
+        '<td class="mut">—</td><td class="mut">—</td></tr>';
+      continue;
+    }
+    const late = r.retard > 0.0001;
+    const objPct = r.thG ? (r.gRe / r.thG * 100) : null;
+    const bdg = late ? '<span class="b r">' + esc(eur(r.retard)) + " de retard</span>"
+             : (r.ecartCum < -0.0001 ? '<span class="b g">avance ' + esc(eur(-r.ecartCum)) + "</span>"
+                                     : '<span class="b g">dans les temps</span>');
+    jRows += '<tr class="' + (late ? "late" : "") + '"><td class="l">' + fmtDMY(r.key) + "</td><td class=\"" +
+      (r.n > nMax ? "neg" : "") + '">' + r.n + "</td>" +
+      TD(r.staked ? eur(r.staked) : '<span class="mut">—</span>') +
+      TD(r.gRe ? '<span class="' + (r.gRe > 0 ? "pos" : r.gRe < 0 ? "neg" : "mut") + '">' + eur(r.gRe) + "</span>" : '<span class="mut">—</span>') +
+      TD(eur(r.thG)) +
+      TD(objPct === null ? '<span class="mut">—</span>' : '<span class="' + (objPct >= 100 ? "pos" : objPct < 60 ? "neg" : "") + '">' + pct1(objPct) + "</span>") +
+      TD('<span class="' + (r.ecartJour >= 0 ? "pos" : "neg") + '">' + eur(r.ecartJour) + "</span>") +
+      TD(eur(r.cap)) + TD(eur(r.bank)) + TD(eur(r.tRe)) +
+      '<td class="l">' + bdg + "</td>" +
+      TD(r.jrest != null ? String(r.jrest) : '<span class="mut">—</span>') +
+      TD(r.retardJour === null ? '<span class="mut">—</span>' : '<span class="' + (r.retardJour > 0 ? "neg" : "pos") + '">' + eur(r.retardJour) + "</span>") +
+      "</tr>";
+  }
+  const ld = done[done.length - 1];
+  const totG = done.reduce((a, r) => a + r.gRe, 0);
+  const totObj = done.reduce((a, r) => a + r.thG, 0);
+  const totBets = done.reduce((a, r) => a + r.n, 0);
+  const jFoot = ld
+    ? "<tr><td class=\"l\">Cumul</td><td>" + totBets + "</td><td>" + eur(real.cumStaked) + "</td>" +
+      TD('<span class="' + (totG >= 0 ? "pos" : "neg") + '">' + eur(totG) + "</span>") + TD(eur(totObj)) +
+      TD(totObj ? pct1(totG / totObj * 100) : "—") + TD(eur(ld.ecartJour)) +
+      TD(eur(ld.cap)) + TD(eur(ld.bank)) + TD(eur(ld.tRe)) +
+      TD(eur(ld.retard)) + TD(real.liveJrest != null ? String(real.liveJrest) : "—") + TD(eur(ld.retardJour)) + "</tr>"
+    : "";
+
+  /* Détail par pari */
+  const STATLBL = { pending: "En cours", won: "Gagné", lost: "Perdu", void: "Annulé", cashout: "Cashout" };
+  let dRows = "";
+  for (const b of bets) {
+    const r = betPL(b);
+    const st = b.status || "pending";
+    const bcls = st === "won" ? "g" : st === "lost" ? "r" : "n";
+    dRows += '<tr><td class="l">' + fmtDMY(b._k) + "</td>" +
+      '<td class="l">' + esc(b.label || "—") + "</td>" +
+      '<td class="l">' + esc(b.type || "simple") + "</td>" +
+      TD(b.odds ? num2(b.odds) : '<span class="mut">—</span>') +
+      TD(eur(b.stake || 0)) +
+      '<td class="l"><span class="b ' + bcls + '">' + esc(STATLBL[st] || st) + "</span></td>" +
+      TD(r.pl === null ? '<span class="mut">en cours</span>'
+                      : '<span class="' + (r.pl > 0 ? "pos" : r.pl < 0 ? "neg" : "mut") + '">' + eur(r.pl) + "</span>") +
+      '<td class="l mut">' + esc(r.src) + "</td>" +
+      '<td class="l">' + esc(b.bookmaker || "—") + "</td>" +
+      '<td class="l">' + esc(b.sport || "—") + "</td>" +
+      '<td class="l">' + esc(b.league || "—") + "</td>" +
+      '<td class="l mut">' + esc(b.id || "—") + "</td></tr>";
+  }
+
+  const k = 1 + p.targetPct / 100 * (1 - p.bankPct / 100);
+  const KPI = (kk, v, s, cls) => '<div class="kpi"><div class="k">' + esc(kk) + '</div><div class="v ' + (cls || "") + '">' + v + "</div>" +
+    (s ? '<div class="s">' + esc(s) + "</div>" : "") + "</div>";
+  const kpis =
+    KPI("Capital final théorique", esc(eur(thLast.C)), "×" + k.toFixed(2) + "/j · jour " + thLast.d) +
+    KPI("Banque finale", esc(eur(thLast.B)), p.bankPct + " % des gains") +
+    KPI("Total final", esc(eur(thLast.T)), "capital + banque") +
+    KPI("ROI cumulé", esc(pct1(thLast.cumPct)), "sur capital " + p.capital + " €") +
+    KPI("Retard actuel", live && live.retard != null ? esc(eur(live.retard)) : "—", live ? (live.retard > 0 ? "en retard" : "dans les temps") : "aucune saisie",
+        live && live.retard != null ? (live.retard > 0 ? "neg" : "pos") : "mut") +
+    KPI("Retard à combler / j", live && live.retardJour != null ? esc(eur(live.retardJour)) : "—",
+        real.liveJrest != null ? "sur " + real.liveJrest + " j restants" : "hors période",
+        live && live.retardJour > 0 ? "neg" : "pos") +
+    KPI("Jours restants", real.liveJrest != null ? String(real.liveJrest) : "—", "jusqu'au " + fmtDMY(real.endKey)) +
+    KPI("Paris réglés", bSettled + " / " + bets.length, winRate === null ? "aucun pari réglé" : pct1(winRate) + " gagnés");
+
+  const doc = '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + "<title>Suivi de paris — rapport " + esc(fmtDMY(real.endKey)) + "</title>"
+    + "<style>" + REPORT_CSS + "</style></head><body><div class=\"w\">"
+    + "<h1>Suivi de paris — rapport d'historique</h1>"
+    + '<p class="sub">Période ' + fmtDMY(th[0].key) + " → " + fmtDMY(real.endKey) + " · objectif " + p.targetPct +
+      " %/jour · capital de départ " + esc(eur(p.capital)) + " · " + p.maxBets + " paris max/jour · généré le " +
+      esc(fmtDMY(todayKey())) + "</p>"
+    + '<div class="warn"><b>Projection mathématique composée.</b> +' + p.targetPct + " % du capital par jour, moitié en banque, moitié réinvesti (×" +
+      k.toFixed(2) + "/j). Aucune garantie de résultat : un écart de " + p.targetPct +
+      " % journalier est statistiquement exceptionnel. Les montants sont des projections.</div>"
+    + '<div class="kpis">' + kpis + "</div>"
+
+    + "<h2>Projection théorique</h2>"
+    + '<div class="chart"><svg viewBox="0 0 ' + c1.W + " " + c1.H + '">' + c1.g + "</svg></div>" + reportLegend(c1)
+
+    + "<h2>Journal réel & retard</h2>"
+    + '<div class="tw"><table><thead><tr><th class="l">Date</th><th>Nb paris</th><th>Misé</th><th>Gain réel</th><th>Objectif</th>'
+    + "<th>% obj.</th><th>Écart du jour</th><th>Capital réel</th><th>Banque réelle</th><th>Total réel</th>"
+    + '<th class="l">Montant de retard</th><th>Jours restants</th><th>Retard à combler / j</th></tr></thead><tbody>'
+    + jRows + "</tbody><tfoot>" + jFoot + "</tfoot></table></div>"
+    + '<p class="note">Montant de retard = total théorique (capital + banque) − total réel, signé : positif = retard, négatif = avance. '
+    + "Retard à combler/j = montant de retard ÷ jours restants jusqu'au " + fmtDMY(real.endKey) +
+      " (jour courant inclus), jamais négatif. Les jours à venir ne creusent pas le retard.</p>"
+
+    + "<h2>Réel vs théorique</h2>"
+    + '<div class="chart"><svg viewBox="0 0 ' + c2.W + " " + c2.H + '">' + c2.g + "</svg></div>" + reportLegend(c2)
+
+    + "<h2>Historique des bets (" + bets.length + ")</h2>"
+    + '<div class="tw"><table><thead><tr><th class="l">Date</th><th class="l">Libellé</th><th class="l">Type</th><th>Cote</th>'
+    + "<th>Mise</th><th class=\"l\">Résultat</th><th>Gain</th><th class=\"l\">Origine</th><th class=\"l\">Bookmaker</th>"
+    + '<th class="l">Sport</th><th class="l">Compétition</th><th class="l">Id</th></tr></thead><tbody>'
+    + (dRows || '<tr><td class="l mut" colspan="12">Aucun pari enregistré.</td></tr>') + "</tbody>"
+    + '<tfoot><tr><td class="l">Cumul</td><td class="l">' + bets.length + " paris</td><td></td><td></td><td>" +
+      eur(bStaked) + '</td><td class="l">' + bWon + " G / " + bLost + " P" + (bPending ? " / " + bPending + " en cours" : "") +
+      '</td><td><span class="' + (bPl >= 0 ? "pos" : "neg") + '">' + eur(bPl) + "</span></td><td class=\"l mut\">ROI " +
+      (roi === null ? "—" : pct1(roi)) + "</td><td colspan=\"4\"></td></tr></tfoot></table></div>"
+    + '<p class="note">Origine du gain : « payout » = montant retourné par le bookmaker, « calculé » = mise × (cote − 1) ou −mise. '
+    + "Les paris en cours ne sont pas comptés dans le P/L et creusent donc le retard tant qu'ils ne sont pas réglés.</p>"
+
+    + "<footer>Généré par le tableur de suivi de paris — fichier autonome, aucune donnée envoyée sur le réseau.<br>"
+    + "Paramètres : capital " + p.capital + " € · objectif " + p.targetPct + " %/j · banque " + p.bankPct + " % · engagement " +
+      p.stakePct + " % · cote visée " + num2(p.oddsTarget) + " · probabilité de réussite " + pct1(p.winProb * 100) +
+      " · auto-virement " + (p.autoBank ? "activé" : "désactivé") + " · " + p.days + " jours.</footer>"
+    + "</div></body></html>";
+
+  download("suivi-paris-rapport-" + todayKey() + ".html", "text/html", doc);
+}
+
+function renderAll() {
+  const th = computeTheoretical(state.params);
+  const real = computeReal(state.params, th);
+  renderKPIs(th, real);
+  renderTheoretical(th);
+  renderArbitrage(th);
+  renderDaySel(th);
+  renderEditor(th);
+  renderJournal(th, real);
+  drawChart();
+  $("#autoBank").checked = !!state.params.autoBank;
+}
+function bind() {
+  $("#autoBank").addEventListener("change", e => { state.params.autoBank = e.target.checked; save(); renderAll(); });
+  $("#daySel").addEventListener("change", e => { editDay = parseInt(e.target.value, 10) || 1; renderEditor(computeTheoretical(state.params)); });
+  $("#btnSaveDay").addEventListener("click", () => saveEditorDay(computeTheoretical(state.params)));
+  $("#btnClearDay").addEventListener("click", () => {
+    const th = computeTheoretical(state.params); delete state.days[th[editDay - 1].key]; save(); renderAll();
+  });
+  $("#btnDup").addEventListener("click", () => {
+    const th = computeTheoretical(state.params);
+    if (editDay < 2) return;
+    const prev = state.days[th[editDay - 2].key] || [];
+    state.days[th[editDay - 1].key] = prev.map(b => Object.assign({}, b));
+    save(); renderAll();
+  });
+  $("#btnReset").addEventListener("click", () => { state.params = Object.assign({}, DEFAULTS); save(); renderParams(); renderAll(); });
+  $("#btnExportCsv").addEventListener("click", exportJournalCSV);
+  $("#btnExportHtml").addEventListener("click", exportReportHTML);
+  $("#btnExportJson").addEventListener("click", () => download("suivi-paris-" + todayKey() + ".json", "application/json", JSON.stringify(state, null, 2)));
+  $("#btnImportJson").addEventListener("click", () => {
+    const inp = el("input", { attrs: { type: "file", accept: ".json" } });
+    inp.addEventListener("change", async () => {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      try {
+        const p = JSON.parse(await f.text());
+        state.params = Object.assign({}, DEFAULTS);
+        mergeParams(p && p.params);
+        state.days = (p && p.days && typeof p.days === "object" && !Array.isArray(p.days)) ? p.days : {};
+        save(); renderParams(); renderAll(); flash("Données restaurées.");
+      } catch (e) { alert("JSON illisible : " + e.message); }
+    });
+    inp.click();
+  });
+  $("#btnClearAll").addEventListener("click", () => {
+    if (!confirm("Effacer tous les paris saisis ?")) return;
+    state.days = {}; save(); renderAll();
+  });
+  $("#btnChart1").addEventListener("click", () => { chartMode = 1; drawChart(); });
+  $("#btnChart2").addEventListener("click", () => { chartMode = 2; drawChart(); });
+
+  const drop = $("#drop"), file = $("#file");
+  drop.addEventListener("click", () => file.click());
+  file.addEventListener("change", () => { if (file.files[0]) handleFile(file.files[0]); file.value = ""; });
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => {
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  let pasteTimer = null;
+  $("#paste").addEventListener("input", e => {
+    const v = e.target.value;
+    clearTimeout(pasteTimer);
+    if (v.trim().length > 20) pasteTimer = setTimeout(() => ingest(v), 300);
+  });
+}
+load();
+renderParams();
+bind();
+renderAll();
+</script>
+</body>
+</html>
