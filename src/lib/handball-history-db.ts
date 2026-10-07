@@ -35,7 +35,9 @@ function getDb(): BSD | null {
   // produisaient le MEME message « Ligue inconnue du registre », qui désigne
   // le registre alors qu'il est sain : deux cycles de diagnostic perdus sur la
   // mauvaise couche. On nomme donc la cause réelle.
-  if (!existsSync(SQLITE_FILE)) {
+  // turbopackIgnore : chemin calculé (DATABASE_PATH / cwd) — sans cette
+  // annotation Turbopack trace le projet entier (bead ParisScorebis-r4g8).
+  if (!existsSync(/*turbopackIgnore: true*/ SQLITE_FILE)) {
     _dbUnavailable = true;
     _dbError = `Base de données introuvable au chemin : ${SQLITE_FILE}`;
     console.warn(

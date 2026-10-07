@@ -48,7 +48,9 @@ function resolveCachePath(): string {
   ];
 
   for (const p of candidates) {
-    if (existsSync(p)) return p;
+    // turbopackIgnore : chemins candidats calculés à l'exécution — voir
+    // tennis-elo/lookup.ts (bead ParisScorebis-r4g8).
+    if (existsSync(/*turbopackIgnore: true*/ p)) return p;
   }
   return candidates[0]; // fallback dev (sera vide → lookup retourne null)
 }
@@ -63,7 +65,7 @@ function getCache(): DrCache {
   const now = Date.now();
   if (_cache && now - _lastLoaded < RELOAD_INTERVAL_MS) return _cache;
   try {
-    const raw = readFileSync(CACHE_PATH, "utf8");
+    const raw = readFileSync(/*turbopackIgnore: true*/ CACHE_PATH, "utf8");
     _cache = JSON.parse(raw) as DrCache;
     _lastLoaded = now;
   } catch {

@@ -51,7 +51,9 @@ async function loadDB(): Promise<HistoryCache> {
 
   async function readJson<T>(file: string): Promise<T | null> {
     try {
-      const raw = await readFile(path.join(process.cwd(), file), "utf8");
+      // turbopackIgnore : chemin calculé (cwd + fichier paramétré) —
+      // bead ParisScorebis-r4g8 (warnings « Dynamic filesystem access »).
+      const raw = await readFile(/*turbopackIgnore: true*/ path.join(process.cwd(), file), "utf8");
       return JSON.parse(raw) as T;
     } catch {
       return null;

@@ -73,8 +73,9 @@ export function getEwmWeights(): { weights: EwmWeights; source: string } {
       resolve(process.cwd(), ".next/standalone/src/lib/tennis-dr/ewm-weights.json"),
     ];
     for (const p of candidates) {
-      if (existsSync(p)) {
-        const data = JSON.parse(readFileSync(p, "utf8"));
+      // turbopackIgnore : candidats calculés à l'exécution (bead ParisScorebis-r4g8).
+      if (existsSync(/*turbopackIgnore: true*/ p)) {
+        const data = JSON.parse(readFileSync(/*turbopackIgnore: true*/ p, "utf8"));
         if (data.weights) { _cachedWeights = data.weights as EwmWeights; _cachedSource = data.source; return { weights: data.weights as EwmWeights, source: _cachedSource }; }
       }
     }

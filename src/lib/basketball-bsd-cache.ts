@@ -159,8 +159,9 @@ export function loadBsdCache(): BsdCache | null {
   for (const file of cacheCandidates()) {
     let raw: string;
     try {
-      if (!fs.existsSync(file)) continue;
-      raw = fs.readFileSync(file, "utf8");
+      // turbopackIgnore : candidats calculés à l'exécution — bead ParisScorebis-r4g8.
+      if (!fs.existsSync(/*turbopackIgnore: true*/ file)) continue;
+      raw = fs.readFileSync(/*turbopackIgnore: true*/ file, "utf8");
     } catch {
       continue;
     }

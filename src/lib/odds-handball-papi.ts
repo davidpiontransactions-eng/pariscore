@@ -96,7 +96,8 @@ function resolveSnapshotFile(): string | null {
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
     const file = join(dataDir, "odds_handball_papi.json");
-    return existsSync(file) ? file : null;
+    // turbopackIgnore : chemin runtime (env DATA_DIR) — bead ParisScorebis-r4g8.
+    return existsSync(/*turbopackIgnore: true*/ file) ? file : null;
   } catch {
     return null;
   }
@@ -110,7 +111,7 @@ export function loadOddsPapiSnapshot(): OddsPapiSnapshot | null {
   try {
     const file = resolveSnapshotFile();
     if (file) {
-      const data = JSON.parse(readFileSync(file, "utf8")) as OddsPapiSnapshot;
+      const data = JSON.parse(readFileSync(/*turbopackIgnore: true*/ file, "utf8")) as OddsPapiSnapshot;
       snap = data && Array.isArray(data.events) ? data : null;
     }
   } catch {

@@ -64,8 +64,10 @@ function readSnapshot<T>(file: string, guard: (d: unknown) => boolean): T | null
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
     const target = join(dataDir, file);
-    if (!existsSync(target)) return null;
-    const data = JSON.parse(readFileSync(target, "utf8")) as unknown;
+    // turbopackIgnore : chemin runtime (env DATA_DIR) — voir hbl-stats.ts
+    // (bead ParisScorebis-r4g8 :45 warnings « Dynamic filesystem access »).
+    if (!existsSync(/*turbopackIgnore: true*/ target)) return null;
+    const data = JSON.parse(readFileSync(/*turbopackIgnore: true*/ target, "utf8")) as unknown;
     return guard(data) ? (data as T) : null;
   } catch {
     return null;

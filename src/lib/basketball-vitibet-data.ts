@@ -153,7 +153,8 @@ function fileCandidates(): string[] {
 function locateDump(): string | null {
   for (const f of fileCandidates()) {
     try {
-      if (fs.existsSync(f)) return f;
+      // turbopackIgnore : candidats calculés à l'exécution — bead ParisScorebis-r4g8.
+      if (fs.existsSync(/*turbopackIgnore: true*/ f)) return f;
     } catch {
       /* suivant */
     }
@@ -258,7 +259,7 @@ export function loadVitibetSnapshot(
 
   let raw: RawDump;
   try {
-    raw = JSON.parse(fs.readFileSync(file, "utf8")) as RawDump;
+    raw = JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ file, "utf8")) as RawDump;
   } catch {
     // Dump illisible ≠ « aucune donnée » : on renvoie null et l'API l'annonce.
     return null;

@@ -29,7 +29,10 @@ function resolveCachePath(): string {
   ];
 
   for (const p of candidates) {
-    if (existsSync(p)) return p;
+    // turbopackIgnore : chemins candidats calculés à l'exécution — sans cette
+    // annotation Turbopack trace le projet entier dans le bundle serveur
+    // (45 warnings « Dynamic filesystem access », bead ParisScorebis-r4g8).
+    if (existsSync(/*turbopackIgnore: true*/ p)) return p;
   }
   return candidates[0]; // fallback to dev path (will be empty)
 }
@@ -44,7 +47,7 @@ function getCache(): AbstractCache {
   const now = Date.now();
   if (_cache && now - _lastLoaded < RELOAD_INTERVAL_MS) return _cache;
   try {
-    const raw = readFileSync(CACHE_PATH, "utf8");
+    const raw = readFileSync(/*turbopackIgnore: true*/ CACHE_PATH, "utf8");
     _cache = JSON.parse(raw) as AbstractCache;
     _lastLoaded = now;
   } catch {

@@ -69,8 +69,11 @@ function readSnapshot<T>(file: string, guard: (d: unknown) => boolean): T | null
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
     const target = join(dataDir, file);
-    if (!existsSync(target)) return null;
-    const data = JSON.parse(readFileSync(target, "utf8")) as unknown;
+    // turbopackIgnore : chemin runtime (env DATA_DIR) — sans cette annotation
+    // Turbopack trace le projet entier dans le bundle (45 warnings de build,
+    // bead ParisScorebis-r4g8). Même motif dans lnh-stats / handball-players.
+    if (!existsSync(/*turbopackIgnore: true*/ target)) return null;
+    const data = JSON.parse(readFileSync(/*turbopackIgnore: true*/ target, "utf8")) as unknown;
     return guard(data) ? (data as T) : null;
   } catch {
     return null;

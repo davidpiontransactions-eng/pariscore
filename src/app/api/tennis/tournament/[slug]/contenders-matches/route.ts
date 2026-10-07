@@ -22,7 +22,8 @@ type BSD = {
 
 function getDb(): BSD | null {
   const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db");
-  if (!fs.existsSync(dbPath)) return null;
+  // turbopackIgnore : chemin runtime (env DATABASE_PATH) — bead ParisScorebis-r4g8.
+  if (!fs.existsSync(/*turbopackIgnore: true*/ dbPath)) return null;
   try {
     // Accès direct à Bun.sqlite via globalThis (pas de require/import = pas de Turbopack resolution)
     const BunSqlite = (globalThis as any).Bun?.sqlite;

@@ -36,8 +36,10 @@ export async function stealthFetchHtml(url: string): Promise<string> {
   if (proxy) argv.push("--proxy", proxy);
 
   const stdout = await new Promise<string>((resolve, reject) => {
+    // turbopackIgnore : chemin de l'interpréteur résolu à l'exécution —
+    // Turbopack traçait l'arbre complet depuis cet appel (bead ParisScorebis-r4g8).
     execFile(
-      resolvePython(),
+      /*turbopackIgnore: true*/ resolvePython(),
       argv,
       { timeout: STEALTH_TIMEOUT_MS + 20_000, maxBuffer: 512 * 1024 },
       (error, out) => {

@@ -91,8 +91,10 @@ export function loadSource(source: keyof typeof FILES): PrematchPayload | null {
     // DATA_DIR env (VPS: /opt/pariscorebis/data, écrit par les scrapers/crons)
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
     const filePath = join(dataDir, FILES[source]);
-    if (!existsSync(filePath)) return null;
-    const data = JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
+    // turbopackIgnore : chemin runtime (env DATA_DIR) — voir hbl-stats.ts
+    // (bead ParisScorebis-r4g8).
+    if (!existsSync(/*turbopackIgnore: true*/ filePath)) return null;
+    const data = JSON.parse(readFileSync(/*turbopackIgnore: true*/ filePath, "utf8")) as PrematchPayload;
     return data?.leagues ? data : null;
   } catch {
     return null;

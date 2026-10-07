@@ -23,7 +23,8 @@ function getRFModel(featCount: number): RandomForest | null {
   try {
     const modelPath = process.env.RF_MODEL_PATH
       || path.join(process.cwd(), "models", "rf_football_1x2_v1.json");
-    if (fs.existsSync(modelPath)) {
+    // turbopackIgnore : chemin runtime (env RF_MODEL_PATH) — bead ParisScorebis-r4g8.
+    if (fs.existsSync(/*turbopackIgnore: true*/ modelPath)) {
       _cachedRF = RandomForest.loadModel(modelPath);
       if (_cachedRF && _cachedRF.treeCount > 0) {
         console.log(`[RF] ✓ Modèle chargé: ${_cachedRF.treeCount} arbres (${modelPath})`);

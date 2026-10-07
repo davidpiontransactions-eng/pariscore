@@ -23,7 +23,9 @@ export function resolveHandballDataFile(name: string): string | null {
   ];
   for (const candidate of candidates) {
     try {
-      if (existsSync(candidate)) return candidate;
+      // turbopackIgnore : candidats calculés (cwd ± niveaux) — sans cette
+      // annotation Turbopack trace le projet entier (bead ParisScorebis-r4g8).
+      if (existsSync(/*turbopackIgnore: true*/ candidate)) return candidate;
     } catch {
       // chemin illisible → candidat suivant
     }
