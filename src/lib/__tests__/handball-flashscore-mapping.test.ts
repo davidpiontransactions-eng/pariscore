@@ -9,6 +9,7 @@ import {
   flashscoreAgeMs,
   FLASHSCORE_MAX_AGE_MS,
 } from "../handball-flashscore";
+import { parisDateOf } from "../handball-backtest-today";
 
 describe("toHandballMatch — identité d'équipe stable", () => {
   test("ids non nuls et distincts home vs away", () => {
@@ -59,6 +60,42 @@ describe("toHandballMatch — identité d'équipe stable", () => {
     // Même ligue → même id (join/dédup sports-tree)
     const a2 = toHandballMatch({ home: "HSG Wetzlar", away: "THW Kiel", league: "Bundesliga" }, 2);
     expect(a.league.id).toBe(a2.league.id);
+  });
+});
+
+// ─── kickoff : pas de reinterpretation de fuseau ───
+//
+// Le scripteur émet un VRAI instant UTC (`new Date(epoch*1000).toISOString()`).
+// Toute reconversion ici (Date.parse puis reformatage, soustraction d'un offset
+// CEST) décalerait l'heure affichée de 2 h en Europe/Paris. Contrat : le
+// kickoff est repris TEL QUEL, les formateurs `timeZone: "Europe/Paris"` de
+// l'UI font la conversion.
+
+describe("toHandballMatch — kickoff repris verbatim", () => {
+  const time = "2026-09-30T17:00:00.000Z"; // 19:00 Paris (CEST)
+
+  test("chaîne ISO du snapshot conservée à l'identique", () => {
+    const m = toHandballMatch({ home: "SC Magdeburg", away: "Kiel", league: "Bundesliga", time }, 0);
+    expect(m.kickoff).toBe(time);
+    expect(Date.parse(m.kickoff)).toBe(Date.parse(time));
+  });
+
+  test("l'instant reste 19:00 Europe/Paris (aucun décalage −2h)", () => {
+    const m = toHandballMatch({ home: "SC Magdeburg", away: "Kiel", league: "Bundesliga", time }, 0);
+    const shown = new Date(m.kickoff).toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Paris",
+    });
+    expect(shown).toBe("19:00");
+  });
+
+  test("un instant UTC tardif bascule bien sur le jour civil Paris suivant", () => {
+    // 22:00Z = 00:00 Paris le lendemain : c'est le comportement VOLONTAIRE du
+    // jour civil Paris (et la raison du fix de dédup : ce saut de journée est
+    // ce qui exposait le doublon horodaté à l'instant du scrape).
+    expect(parisDateOf("2026-09-30T22:00:00.000Z")).toBe("2026-10-01");
+    expect(parisDateOf(time)).toBe("2026-09-30");
   });
 });
 

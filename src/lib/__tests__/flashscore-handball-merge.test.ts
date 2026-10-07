@@ -7,13 +7,15 @@ const {
   hasFinalScore,
   mergeSnapshots,
   parseDay,
+  pushUnique,
 }: {
   hasFinalScore: (m: unknown) => boolean;
   mergeSnapshots: (previous: unknown[], fresh: unknown[]) => unknown[];
   parseDay: (body: string) => { home: string; away: string; score: string | null }[];
+  pushUnique: (all: unknown[], seen: Map<string, number>, m: unknown) => boolean;
 } = require_("../../../scripts/scrape-flashscore-handball.js");
 
-type M = { home: string; away: string; time: string; score?: string };
+type M = { home: string; away: string; time: string; score?: string; id?: string };
 
 const m = (home: string, away: string, time: string, score?: string): M => ({
   home,
@@ -169,5 +171,64 @@ describe("mergeSnapshots — ne plus perdre les scores acquis", () => {
     // Le doublon a été fusionné, pas dupliqué.
     expect(merged.filter((x) => x.home === "A")).toHaveLength(1);
     expect(merged.find((x) => x.home === "A")?.score).toBe("32:28");
+  });
+});
+
+// ─── Clé d'identité : `id` d'événement, PAS `home|away|time` ───
+//
+// Régression du 2026-10-08 : le feed Flashscore omet parfois la clé de kickoff
+// `AD`. L'entrée sortait avec `time: ""`, donc la clé composite ne la
+// fusionnait pas avec son jumeau horodaté du MÊME événement (`fs-ALuO8gMH` =
+// SC Magdeburg – Kiel, vu deux fois dans le snapshot). `toHandballMatch`
+// remplaçait alors le temps vide par `new Date().toISOString()` : la ligne
+// tombait dans la mauvaise journée et s'affichait à l'heure du scrape
+// (00:15 au lieu de 19:00). La clé doit être l'identifiant d'événement.
+
+describe("déduplication par identifiant d'événement", () => {
+  const MAGDEBURG = "fs-ALuO8gMH";
+
+  test("mergeSnapshots fusionne le jumeau sans heure avec son jumeau horodaté", () => {
+    const previous = [{ ...m("SC Magdeburg", "Kiel", ""), id: MAGDEBURG }];
+    const fresh = [{ ...m("SC Magdeburg", "Kiel", "2026-09-30T17:00:00.000Z"), id: MAGDEBURG }];
+    const merged = mergeSnapshots(previous, fresh) as M[];
+    expect(merged).toHaveLength(1);
+    expect(merged[0].time).toBe("2026-09-30T17:00:00.000Z");
+  });
+
+  test("l'ordre inverse (frais sans heure) NE perd pas le kickoff connu", () => {
+    // Snapshot accumulatif : une heure vue une fois ne doit jamais se dégrader.
+    const previous = [{ ...m("SC Magdeburg", "Kiel", "2026-09-30T17:00:00.000Z"), id: MAGDEBURG }];
+    const fresh = [{ ...m("SC Magdeburg", "Kiel", ""), id: MAGDEBURG }];
+    const merged = mergeSnapshots(previous, fresh) as M[];
+    expect(merged).toHaveLength(1);
+    expect(merged[0].time).toBe("2026-09-30T17:00:00.000Z");
+  });
+
+  test("pushUnique ne garde qu'une ligne et récupère le kickoff tardif", () => {
+    const all: M[] = [];
+    const seen = new Map<string, number>();
+    expect(pushUnique(all, seen, { ...m("SC Magdeburg", "Kiel", ""), id: MAGDEBURG })).toBe(true);
+    // Même événement rejoué avec le kickoff : pas de doublon, l'heure est récupérée.
+    expect(pushUnique(all, seen, { ...m("SC Magdeburg", "Kiel", "2026-09-30T17:00:00.000Z"), id: MAGDEBURG })).toBe(false);
+    expect(all).toHaveLength(1);
+    expect(all[0].time).toBe("2026-09-30T17:00:00.000Z");
+  });
+
+  test("deux événements distincts restent deux lignes", () => {
+    const all: M[] = [];
+    const seen = new Map<string, number>();
+    pushUnique(all, seen, { ...m("A", "B", "19:00"), id: "fs-1" });
+    pushUnique(all, seen, { ...m("C", "D", "19:00"), id: "fs-2" });
+    expect(all).toHaveLength(2);
+  });
+
+  test("deux matchs HOMONYMES sans id (legacy) restent distincts", () => {
+    // Repli sur la clé composite : ne pas fusionner à l'aveugle des matchs
+    // différents qui porteraient le même couple d'équipes.
+    const all: M[] = [];
+    const seen = new Map<string, number>();
+    pushUnique(all, seen, m("A", "B", "19:00"));
+    pushUnique(all, seen, m("A", "B", "21:00"));
+    expect(all).toHaveLength(2);
   });
 });

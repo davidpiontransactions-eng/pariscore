@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { HandballMatch } from "@/lib/handball-data";
-import { sortHandballLeagueEntries } from "@/lib/handball-leagues";
+import { countHandballLeagues, sortHandballLeagueEntries } from "@/lib/handball-leagues";
 import { HandballLeaguePopover } from "./handball-league-popover";
 
 /**
@@ -15,31 +15,34 @@ import { HandballLeaguePopover } from "./handball-league-popover";
  */
 export function HandballFilters({
   matches,
+  scope,
   selected,
   onSelect,
 }: {
+  /** Matchs servant à ÉNUMÉRER les ligues (liste complète, jamais amputée). */
   matches: HandballMatch[];
+  /**
+   * Matchs servant à COMPTER (défaut : `matches`). Le parent y passe la journée
+   * affichée par le calendrier, sinon le déclencheur annonçait le volume de
+   * TOUTE la fenêtre (« Tous les championnats (579) ») au lieu du contenu du
+   * jour sélectionné.
+   */
+  scope?: HandballMatch[];
   selected: string | null;
   onSelect: (l: string | null) => void;
 }) {
-  const leagues = useMemo(() => {
-    // country = pays du 1er match rencontré (clé de drapeau pour le badge)
-    const map = new Map<string, { count: number; country?: string }>();
-    for (const m of matches) {
-      const cur = map.get(m.league.name);
-      if (cur) cur.count += 1;
-      else map.set(m.league.name, { count: 1, country: m.league.country });
-    }
-    // Tri 1xbet : ligues majeures en tête (tier), puis volume
-    return sortHandballLeagueEntries(
-      [...map.entries()].map(([name, v]) => ({ name, count: v.count, country: v.country })),
-    );
-  }, [matches]);
+  // country = pays du 1er match trouvé (clé de drapeau du badge) ; count =
+  // volume sur le périmètre `scope`. Tri 1xbet : ligues majeures en tête.
+  const leagues = useMemo(
+    () => sortHandballLeagueEntries(countHandballLeagues(matches, scope ?? matches)),
+    [matches, scope],
+  );
+  const total = useMemo(() => leagues.reduce((s, l) => s + l.count, 0), [leagues]);
 
   return (
     <HandballLeaguePopover
       leagues={leagues}
-      total={matches.length}
+      total={total}
       selected={selected}
       onSelect={onSelect}
     />

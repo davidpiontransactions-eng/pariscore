@@ -1,11 +1,13 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { HandballMatch } from "@/lib/handball-data";
-import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
-import { CountryFlag } from "@/components/tennis/country-flag";
+import { leagueCountry } from "@/lib/handball-logos";
+// Drapeau SVG local (public/flags/<iso>.svg). Le composant tennis/emoji rendait
+// « GERMANY » → 🌍 (il exige un code ISO à 2 lettres) au lieu de de.svg.
+import { CountryFlag } from "@/components/ui/country-flag";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
 import type { StrategyChip } from "@/hooks/use-handball-top8";
 
@@ -62,12 +64,20 @@ export const HandballCalendar = memo(function HandballCalendar({
   matches,
   chipsByMatch,
   onSelect,
+  onActiveDayChange,
 }: {
   matches: HandballMatch[];
   /** Chips « Top stratégies ≥60 % » indexés par String(match.id) (2ᵉ ligne). */
   chipsByMatch?: ReadonlyMap<string, readonly StrategyChip[]>;
   /** Ouvre la popup d'analyse au clic — même state detailMatch que les cartes. */
   onSelect?: (match: HandballMatch) => void;
+  /**
+   * Remonte la journée EFFECTIVEMENT affichée (jour civil Europe/Paris, ou
+   * null = toutes les journées). Le parent s'en sert pour compter les ligues et
+   * les matchs sur la date active au lieu de toute la fenêtre : sans ça le
+   * compteur du popoverriestait sur les 579 matchs à venir toutes dates.
+   */
+  onActiveDayChange?: (iso: string | null) => void;
 }) {
   const days = useMemo<CalDay[]>(() => {
     const map = new Map<string, HandballMatch[]>();
@@ -137,6 +147,13 @@ export const HandballCalendar = memo(function HandballCalendar({
     const next = days[activeIdx + delta];
     if (next) setSelectedIso(next.iso);
   };
+
+  // Jour affiché publié vers le parent (compteurs du popover ligues). `activeIso`
+  // est déjà le jour RÉELLEMENT rendu (repli compris) → le parent ne peut pas
+  // diverger du calendrier quand un filtre ligue vide la journée choisie.
+  useEffect(() => {
+    onActiveDayChange?.(activeIso);
+  }, [activeIso, onActiveDayChange]);
 
   if (days.length === 0)
     return (
@@ -233,9 +250,12 @@ export const HandballCalendar = memo(function HandballCalendar({
             {leagues.map((lg) => (
               <div key={lg.name}>
                 {/* Bandeau championnat — miroir LeagueHeader onglet football
-                    (drapeau + nom gras + compteur), teinte FotMob #f5f5f5 */}
+                    (drapeau + nom gras + compteur), teinte FotMob #f5f5f5.
+                    `leagueCountry` complète le pays quand le feed Flashscore
+                    n'en donne pas (clef du catalogue 1xbet) → le drapeau n'est
+                    jamais un globe sur une ligue identifiee. */}
                 <div className="flex items-center gap-2 border-b border-[#f0f0f0] bg-[#f5f5f5] px-3 py-1.5">
-                  {lg.country && <CountryFlag countryCode={lg.country} size="sm" />}
+                  <CountryFlag country={leagueCountry(lg.name, lg.country ?? undefined)} size={14} />
                   <span
                     className="min-w-0 flex-1 truncate text-xs font-bold tracking-tight text-[#222222]"
                     title={lg.name}
@@ -252,9 +272,10 @@ export const HandballCalendar = memo(function HandballCalendar({
               const chips = chipsByMatch?.get(String(m.id));
               return (
                 // Ligne cliquable accessible : bouton natif (Enter/Espace inclus).
-                // 2ᵉ ligne de chips « Top stratégies ≥60 % » (flex-col) : une
-                // colonne supplémentaire déborderait sous 360 px (container
-                // overflow-hidden) et rognerait les noms d'équipes.
+                // Pas de badge ligue à droite : les matchs sont déjà regroupés
+                // sous le bandeau du championnat (le rappel était redondant et
+                // mangeait 128 px, ce qui tronquait les noms d'équipes).
+                // 2ᵉ ligne de chips « Top stratégies ≥60 % » (flex-col).
                 <button
                   key={m.id}
                   type="button"
@@ -282,13 +303,6 @@ export const HandballCalendar = memo(function HandballCalendar({
                     <span className="flex-1 font-medium truncate text-[#222222] inline-flex items-center gap-1.5">
                       <HandballTeamLogo name={m.away.name} size={18} />
                       <span className="truncate">{m.away.name}</span>
-                    </span>
-                    <span className="text-xs w-32 text-right truncate text-[#717171] inline-flex justify-end">
-                      <HandballLeagueBadge
-                        leagueName={m.league.name}
-                        country={m.league.country}
-                        className="max-w-full"
-                      />
                     </span>
                   </span>
 

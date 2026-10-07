@@ -578,6 +578,10 @@ export function HandballTabContent() {
     setSubTab("handball", MODE_TO_SUBTAB[next]);
   };
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  // Journée affichée par HandballCalendar (null = toutes). Remontée par le
+  // calendrier via `onActiveDayChange` : c'est la SEULE source de vérité du
+  // compteur du popover ligues (sinon il comptait toute la fenêtre à venir).
+  const [activeDayIso, setActiveDayIso] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<HandballStrategyKey>("bestTeam");
   // Fix wiring UX : dialog détail (composant créé en Phase 6, jamais monté)
   const [detailMatch, setDetailMatch] = useState<HandballMatch | null>(null);
@@ -610,6 +614,24 @@ export function HandballTabContent() {
         ? displayed.filter((m) => m.league.name === selectedLeague)
         : displayed,
     [displayed, selectedLeague],
+  );
+  // Finition sur la journée affichée par le calendrier. `activeDayIso` vient
+  // du calendrier lui-même (il publie le jour qu'il REND, repli compris) donc il
+  // ne peut pas diverger. Uniquement en « Calendrier » : les autres vues n'ont
+  // pas de sélecteur de jour, un jour résiduel n'aurait aucun sens.
+  const dayScope = useMemo(
+    () =>
+      mode === "prematch" && activeDayIso
+        ? displayed.filter((m) => parisDay(m.kickoff) === activeDayIso)
+        : displayed,
+    [mode, displayed, activeDayIso],
+  );
+  const dayFiltered = useMemo(
+    () =>
+      mode === "prematch" && activeDayIso
+        ? filtered.filter((m) => parisDay(m.kickoff) === activeDayIso)
+        : filtered,
+    [mode, filtered, activeDayIso],
   );
   // Matchs terminés du snapshot → forme récente + lambdas ajustés du dialog détail.
   const finished = useMemo(
@@ -706,7 +728,7 @@ export function HandballTabContent() {
                   ? `${resultsToday.length} résultat(s) aujourd'hui · historique 2 saisons`
                   : mode === "live"
                     ? `${live.length} match(s) en direct`
-                    : `${filtered.length} match(s) à venir · prédictions IA`
+                    : `${dayFiltered.length} match(s) à venir · prédictions IA`
         }
       />
 
@@ -729,7 +751,7 @@ export function HandballTabContent() {
                     ? "Stratégies & Top 10"
                     : mode === "classement"
                       ? "Classements & statistiques par championnat"
-                      : `${filtered.length} match(s) à venir`}
+                      : `${dayFiltered.length} match(s) à venir`}
           </span>
         </div>
 
@@ -752,7 +774,11 @@ export function HandballTabContent() {
               <TabsTrigger
                 key={t.mode}
                 value={t.mode}
-                className={pillClass(mode === t.mode)}
+                // `flex-none` : sans lui, l'héritage shadcn `flex-1`
+                // (flex-basis: 0) écrase chaque pilule à 1/6 de la largeur ;
+                // le libellé `whitespace-nowrap` débordait alors sur la pilule
+                // voisine et masquait le dernier onglet (RÉSULTATS).
+                className={`${pillClass(mode === t.mode)} flex-none`}
               >
                 <span className="md:hidden">{t.short}</span>
                 <span className="hidden md:inline">{t.label}</span>
@@ -762,11 +788,13 @@ export function HandballTabContent() {
 
           {/* Filtre championnat : partagé par Calendrier et Live uniquement. La
               fenêtre « dans 1h/2h/4h/8h » a été retirée (bead 4md8) — le
-              sélecteur de journées de HandballCalendar la remplace entièrement. */}
+              sélecteur de journées de HandballCalendar la remplace entièrement.
+              `scope` = journée affichée → le compteur suit le jour sélectionné. */}
           {(mode === "prematch" || mode === "live") && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <HandballFilters
                 matches={displayed}
+                scope={dayScope}
                 selected={selectedLeague}
                 onSelect={setSelectedLeague}
               />
@@ -832,6 +860,7 @@ export function HandballTabContent() {
                   matches={filtered}
                   chipsByMatch={chipsByMatch}
                   onSelect={setDetailMatch}
+                  onActiveDayChange={setActiveDayIso}
                 />
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filtered.map((m) => {

@@ -74,35 +74,73 @@ function hasFinalScore(m) {
 }
 
 /**
+ * Clé d'identité d'un match du snapshot.
+ *
+ * `id` (`fs-<eventId>`) est l'identifiant d'événement Flashscore : stable entre
+ * deux scrapes. Il DOIT primer sur `home|away|time`, parce que le feed omet
+ * parfois la clé de kickoff `AD` : l'entrée sort alors avec `time: ""` et, sur
+ * une clé composite, elle ne fusionnait PAS avec son jumeau horodaté → deux
+ * lignes pour le même match, dont une horodatée à l'instant du scrape par
+ * `toHandballMatch` (affichée au milieu de la nuit au lieu de l'heure réelle).
+ * Clé composite en repli seul pour les entrées legacy sans `id`.
+ */
+function snapshotKey(m) {
+  return m.id || `${m.home}|${m.away}|${m.time}`;
+}
+
+/**
+ * Ajoute un match au lot du run s'il est nouveau (déduplication inter-jours :
+ * le même événement est réinjecté par les boucles J-1, J+N et J-2..J-7).
+ * Deux matchs de même identifiant événement ne doivent JAMAIS coexister : le
+ * premier garde la place, le second peut seulement lui apporter un `time` que
+ * le premier n'avait pas (feed rejoué une fois le kickoff publié).
+ * @returns true si le match a été ajouté.
+ */
+function pushUnique(all, seen, m) {
+  const k = snapshotKey(m);
+  const at = seen.get(k);
+  if (at === undefined) {
+    seen.set(k, all.length);
+    all.push(m);
+    return true;
+  }
+  if (!all[at].time && m.time) all[at] = { ...all[at], time: m.time };
+  return false;
+}
+
+/**
  * Fusionne un snapshot précédent avec le snapshot frais.
  *
- * Règle : à clé identique (`home|away|time`), on PRÉFÈRE l'entrée qui porte un
- * score final. C'est ce qui empêche la perte d'un score déjà acquis quand le
- * feed rejoue un jour en « à venir », et ce qui rend la fenêtre de 7 jours
- * réellement remplissable.
+ * Règles à la clé d'identité (`snapshotKey`) :
+ *  - le frais est plus à jour → il gagne sur tout SAUF deux choses immuables ;
+ *  - `time` : on ne dégrade JAMAIS un kickoff connu en « inconnu » (le snapshot
+ *    est accumulatif, donc une heure vue une fois est conservée pour toujours) ;
+ *  - `score` : un score final est immuable → s'il est déjà connu on le garde,
+ *    même si le feed rejoue le match en cours avec un score provisoire.
  *
  * L'ordre de sortie est : entrées fraîches (dans leur ordre), puis entrées
  * previous orphelines (absentes du frais). Stable et déterministe.
  */
 function mergeSnapshots(previous, fresh) {
-  const keyOf = (m) => `${m.home}|${m.away}|${m.time}`;
   const out = [];
   const index = new Map();
   for (const m of previous || []) {
-    const k = keyOf(m);
-    index.set(k, out.length);
+    index.set(snapshotKey(m), out.length);
     out.push(m);
   }
   for (const m of fresh || []) {
-    const k = keyOf(m);
+    const k = snapshotKey(m);
     const at = index.get(k);
     if (at === undefined) {
       index.set(k, out.length);
       out.push(m);
       continue;
     }
-    // Remplace seulement si le frais apporte un score et l'ancien n'en a pas.
-    if (hasFinalScore(m) && !hasFinalScore(out[at])) out[at] = m;
+    const old = out[at];
+    const merged = { ...m };
+    if (!m.time && old.time) merged.time = old.time;
+    if (hasFinalScore(old)) merged.score = old.score;
+    out[at] = merged;
   }
   return out;
 }
@@ -340,17 +378,14 @@ async function main() {
 
   // Inclure hier (J-1) pour les matchs terminés + aujourd'hui..J+N pour les à venir
   const all = [];
-  const seen = new Set();
+  const seen = new Map();
   let emptyStreak = 0;
 
   // J-1 (matchs terminés pour le form store)
   try {
     const body = await fetchFeed(`${FEED_BASE}/f_${SPORT_HANDBALL}_-1_1_en_1`);
     const parsed = parseDay(body);
-    for (const m of parsed) {
-      const key = `${m.home}|${m.away}|${m.time}`;
-      if (!seen.has(key)) { seen.add(key); all.push(m); }
-    }
+    for (const m of parsed) pushUnique(all, seen, m);
     console.log(`[flashscore-handball] J-1: ${parsed.length} matchs`);
   } catch (err) {
     console.error(`[flashscore-handball] J-1 KO: ${err.message}`);
@@ -370,11 +405,7 @@ async function main() {
     const parsed = parseDay(body);
     let added = 0;
     for (const m of parsed) {
-      const key = `${m.home}|${m.away}|${m.time}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      all.push(m);
-      added += 1;
+      if (pushUnique(all, seen, m)) added += 1;
     }
     console.log(`[flashscore-handball] J+${day}: ${parsed.length} matchs (${added} nouveaux)`);
     emptyStreak = parsed.length === 0 ? emptyStreak + 1 : 0;
@@ -400,11 +431,7 @@ async function main() {
     let added = 0;
     for (const m of parsed) {
       if (!hasFinalScore(m)) continue;
-      const key = `${m.home}|${m.away}|${m.time}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      all.push(m);
-      added += 1;
+      if (pushUnique(all, seen, m)) added += 1;
     }
     console.log(`[flashscore-handball] J-${back}: ${parsed.length} matchs (${added} termines ajoutes)`);
   }
@@ -468,4 +495,6 @@ module.exports = {
   hasFinalScore,
   mergeSnapshots,
   readPrevious,
+  snapshotKey,
+  pushUnique,
 };
