@@ -22,6 +22,7 @@
  *   17. `pariscore-cron-handball-matrix`: matrice backtest 8 marchés × ligues (lundi 04:40 UTC)
  *   18. `pariscore-cron-hbl-stats`   : stats équipes + classement Bundesliga 1 & 2 (lundi + jeudi 05:00 UTC)
  *   19. `pariscore-cron-handball-hero-photo`: photo hero = meilleur buteur StarLigue (lundi 06:30 UTC)
+ *   20. `pariscore-cron-report`      : pré-génération rapports IA pré-match → .cache/ai-report (08:00 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -320,6 +321,35 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job Rapports IA (pré-génération v2.0, coût LLM borné) ===
+      // Appelle la route Next.js GET /api/ai/report-cron (servie par
+      // `pariscore-next`, port 3005) qui génère les rapports pré-match v2.0
+      // et les persiste dans .cache/ai-report/ (TTL 12 h) pour les matchs à
+      // venir — 20 max par run, les plus proches d'abord. L'ouverture de la
+      // modal coûte alors < 50 ms au lieu de 2-4 s d'appel LLM.
+      // 08:00 UTC : APRES le cron press-review (07:00) → le cache revue de
+      // presse est chaud, aucun refetch réseau pendant le run.
+      // Un rapport dégradé n'est jamais persisté → le run suivant retente.
+      // Le token CRON_SECRET est lu depuis .env par scripts/cron-report.sh.
+      name: 'pariscore-cron-report',
+      script: 'scripts/cron-report.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 8 * * *', // quotidien à 08:00 UTC
+      autorestart: false,        // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        REPORT_CRON_URL: 'http://localhost:3005', // pariscore-next (Next.js standalone)
+      },
+      error_file: 'logs/cron-report.err.log',
+      out_file: 'logs/cron-report.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job Stats Ligues OddAlerts (refresh quotidien) ===
       // Scrape les 1582 pages ligues oddalerts.com (stats buts/cartons/
       // corners/BTTS + fixtures cotes 1X2) et upserte la table SQLite
@@ -403,9 +433,13 @@ module.exports = {
       // (fenêtre glissante 7 j) et le « Backtesting » en dépendent : un run
       // quotidien laisse des matchs terminés invisibles jusqu'au lendemain, et
       // le rythme Handball (matchs du soir 19h-20h) rend un passage en cours de
-      // journée nécessaire. `0 */4 * * *` = 00h / 04h / 08h / 12h / 16h / 20h UTC
-      // (soit 02h / 06h / 10h / 14h / 18h / 22h heure de Paris).
-      cron_restart: '0 */4 * * *',
+      // journée nécessaire.
+      // Fix 2026-10-07 (timezone) : pm2 lit l'heure du SYSTÈME, qui est
+      // Europe/Paris (CEST) — l'ancien `0 */4` tombait donc à 00h/04h/…/20h
+      // HEURE DE PARIS, pas UTC comme le supposaient les commentaires. On
+      // écrit désormais l'intention directement : 02h/06h/10h/14h/18h/22h
+      // Paris, soit le dernier run de la soirée APRÈS les matchs 19h-21h.
+      cron_restart: '0 2,6,10,14,18,22 * * *',
       autorestart: false,         // cron-only, meurt après exécution
       instances: 1,
       exec_mode: 'fork',
@@ -821,11 +855,15 @@ module.exports = {
       script: '/home/ubuntu/.bun/bin/bun',
       args: 'scripts/backtest-handball-today.js --refresh',
       cwd: '/home/ubuntu/pariscore',
-      // 23:00 Europe/Paris = 21:00 UTC l'été (CEST) / 22:00 UTC l'hiver (CET).
-      // Double tick (pattern pariscore-cron-elo-weekly) : le créneau 22:00 UTC
-      // tombe à 23:00 hiver et 00:00 été — ce dernier est neutralisé par la
-      // garde « 0 match terminé » du script.
-      cron_restart: '0 21,22 * * *',
+      // Fix 2026-10-07 (timezone) : pm2 lit l'heure du SYSTÈME = Europe/Paris,
+      // pas UTC comme le supposaient les commentaires ci-dessous. L'ancien
+      // `0 21,22` tombait donc à 21h/22h HEURE DE PARIS : le backtest
+      // s'arrêtait AVANT les matchs de fin de soirée (kickoffs 20h45-22h).
+      // On écrit l'intention directement — 23h Paris = journée terminée — et
+      // on garde le double tick 00h : il est neutralisé par la garde
+      // « 0 match terminé » du script (utile juste après minuit si un match
+      // a fini entre les deux passes).
+      cron_restart: '0 23,0 * * *',
       autorestart: false,         // cron-only, meurt après exécution
       instances: 1,
       exec_mode: 'fork',
