@@ -4,7 +4,7 @@
     "leagueId": "bundesliga2",
     "leagueName": "Germany2",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-10-06T11:25:56.118504Z",
+    "lastUpdated": "2026-10-07T11:14:19.848649Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 19,
     "window": 8,
@@ -13,12 +13,21 @@
   },
   "home": [
     {
-      "teamName": "Preuss. Munster",
+      "teamName": "Magdeburg",
       "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 8,
+      "ga": 8
+    },
+    {
+      "teamName": "Paderborn",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 12,
       "ga": 9
     },
     {
@@ -31,13 +40,76 @@
       "ga": 7
     },
     {
-      "teamName": "Elversberg",
+      "teamName": "Schalke 04",
       "gp": 5,
       "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 12,
+      "d": 1,
+      "l": 0,
+      "gf": 11,
       "ga": 5
+    },
+    {
+      "teamName": "Preuss. Munster",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 3,
+      "gf": 5,
+      "ga": 9
+    },
+    {
+      "teamName": "Braunschweig",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 6
+    },
+    {
+      "teamName": "Bielefeld",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 11,
+      "ga": 7
+    },
+    {
+      "teamName": "Karlsruher SC",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 11,
+      "ga": 8
+    },
+    {
+      "teamName": "Holstein Kiel",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Dusseldorf",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 7
+    },
+    {
+      "teamName": "Bochum",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
     },
     {
       "teamName": "Kaiserslautern",
@@ -49,22 +121,31 @@
       "ga": 2
     },
     {
-      "teamName": "Holstein Kiel",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Braunschweig",
+      "teamName": "Darmstadt",
       "gp": 5,
       "w": 2,
-      "d": 2,
+      "d": 1,
       "l": 1,
-      "gf": 6,
+      "gf": 9,
       "ga": 6
+    },
+    {
+      "teamName": "Hertha Berlin",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
+    },
+    {
+      "teamName": "Greuther Furth",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 10,
+      "ga": 8
     },
     {
       "teamName": "Dynamo Dresden",
@@ -76,49 +157,13 @@
       "ga": 4
     },
     {
-      "teamName": "Darmstadt",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Bielefeld",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 11,
-      "ga": 7
-    },
-    {
-      "teamName": "Schalke 04",
+      "teamName": "Fc Nurnberg",
       "gp": 5,
       "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 11,
-      "ga": 5
-    },
-    {
-      "teamName": "Magdeburg",
-      "gp": 5,
-      "w": 3,
       "d": 0,
-      "l": 2,
-      "gf": 8,
-      "ga": 8
-    },
-    {
-      "teamName": "Paderborn",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 12,
-      "ga": 9
+      "l": 0,
+      "gf": 13,
+      "ga": 4
     },
     {
       "teamName": "Heidenheim",
@@ -130,160 +175,16 @@
       "ga": 6
     },
     {
-      "teamName": "Bochum",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Karlsruher SC",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 11,
-      "ga": 8
-    },
-    {
-      "teamName": "Greuther Furth",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 10,
-      "ga": 8
-    },
-    {
-      "teamName": "Hertha Berlin",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Fc Nurnberg",
+      "teamName": "Elversberg",
       "gp": 5,
       "w": 4,
       "d": 0,
-      "l": 0,
-      "gf": 13,
-      "ga": 4
-    },
-    {
-      "teamName": "Dusseldorf",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
       "l": 1,
-      "gf": 9,
-      "ga": 7
+      "gf": 12,
+      "ga": 5
     }
   ],
   "away": [
-    {
-      "teamName": "Preuss. Munster",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 11
-    },
-    {
-      "teamName": "Hannover 96",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Holstein Kiel",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 9
-    },
-    {
-      "teamName": "Elversberg",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 9
-    },
-    {
-      "teamName": "Kaiserslautern",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 4,
-      "ga": 10
-    },
-    {
-      "teamName": "Wolfsburg",
-      "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 6,
-      "ga": 3
-    },
-    {
-      "teamName": "Braunschweig",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 4,
-      "ga": 9
-    },
-    {
-      "teamName": "Dynamo Dresden",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 8
-    },
-    {
-      "teamName": "Darmstadt",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 10
-    },
-    {
-      "teamName": "Bielefeld",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Schalke 04",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 7
-    },
     {
       "teamName": "Magdeburg",
       "gp": 5,
@@ -303,13 +204,58 @@
       "ga": 7
     },
     {
-      "teamName": "Bochum",
+      "teamName": "Hannover 96",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
+    },
+    {
+      "teamName": "Schalke 04",
       "gp": 5,
       "w": 2,
-      "d": 1,
-      "l": 2,
+      "d": 2,
+      "l": 1,
       "gf": 6,
-      "ga": 6
+      "ga": 7
+    },
+    {
+      "teamName": "Wolfsburg",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 6,
+      "ga": 3
+    },
+    {
+      "teamName": "Preuss. Munster",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 11
+    },
+    {
+      "teamName": "Braunschweig",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 4,
+      "ga": 9
+    },
+    {
+      "teamName": "Bielefeld",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
+      "ga": 9
     },
     {
       "teamName": "Karlsruher SC",
@@ -321,13 +267,49 @@
       "ga": 10
     },
     {
-      "teamName": "Greuther Furth",
+      "teamName": "Holstein Kiel",
       "gp": 5,
       "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 8,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 9
+    },
+    {
+      "teamName": "Dusseldorf",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 2,
       "ga": 8
+    },
+    {
+      "teamName": "Bochum",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 6
+    },
+    {
+      "teamName": "Kaiserslautern",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 4,
+      "ga": 10
+    },
+    {
+      "teamName": "Darmstadt",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 10
     },
     {
       "teamName": "Hertha Berlin",
@@ -339,6 +321,24 @@
       "ga": 7
     },
     {
+      "teamName": "Greuther Furth",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 8
+    },
+    {
+      "teamName": "Dynamo Dresden",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 8
+    },
+    {
       "teamName": "Fc Nurnberg",
       "gp": 5,
       "w": 2,
@@ -348,13 +348,13 @@
       "ga": 7
     },
     {
-      "teamName": "Dusseldorf",
+      "teamName": "Elversberg",
       "gp": 5,
       "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 8
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 9
     }
   ]
 }

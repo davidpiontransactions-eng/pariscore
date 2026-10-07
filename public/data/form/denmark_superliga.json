@@ -4,7 +4,7 @@
     "leagueId": "denmark_superliga",
     "leagueName": "Denmark",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-10-06T11:26:35.044008Z",
+    "lastUpdated": "2026-10-07T11:15:05.312120Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 13,
     "window": 8,
@@ -12,33 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Fc Kobenhavn",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 12,
-      "ga": 4
-    },
-    {
-      "teamName": "Odense Bk",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 8
-    },
-    {
-      "teamName": "Sonderjyske",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 8
-    },
     {
       "teamName": "Randers Fc",
       "gp": 5,
@@ -49,11 +22,29 @@
       "ga": 8
     },
     {
-      "teamName": "Viborg",
+      "teamName": "Fredericia",
       "gp": 5,
-      "w": 4,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 10
+    },
+    {
+      "teamName": "Brondby If",
+      "gp": 5,
+      "w": 3,
       "d": 0,
-      "l": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Agf Aarhus",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
       "gf": 11,
       "ga": 4
     },
@@ -67,15 +58,6 @@
       "ga": 9
     },
     {
-      "teamName": "Fredericia",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 10
-    },
-    {
       "teamName": "Fc Midtjylland",
       "gp": 5,
       "w": 3,
@@ -85,11 +67,20 @@
       "ga": 5
     },
     {
-      "teamName": "Agf Aarhus",
+      "teamName": "Sonderjyske",
       "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Viborg",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
       "gf": 11,
       "ga": 4
     },
@@ -103,15 +94,6 @@
       "ga": 2
     },
     {
-      "teamName": "Brondby If",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
       "teamName": "Silkeborg",
       "gp": 5,
       "w": 1,
@@ -119,36 +101,27 @@
       "l": 2,
       "gf": 5,
       "ga": 8
-    }
-  ],
-  "away": [
+    },
+    {
+      "teamName": "Odense Bk",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 9,
+      "ga": 8
+    },
     {
       "teamName": "Fc Kobenhavn",
       "gp": 5,
       "w": 4,
       "d": 0,
-      "l": 1,
-      "gf": 13,
-      "ga": 5
-    },
-    {
-      "teamName": "Odense Bk",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 8
-    },
-    {
-      "teamName": "Sonderjyske",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 9
-    },
+      "l": 0,
+      "gf": 12,
+      "ga": 4
+    }
+  ],
+  "away": [
     {
       "teamName": "Randers Fc",
       "gp": 5,
@@ -157,24 +130,6 @@
       "l": 2,
       "gf": 4,
       "ga": 8
-    },
-    {
-      "teamName": "Viborg",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 6
-    },
-    {
-      "teamName": "Vejle Bk",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 9
     },
     {
       "teamName": "Fredericia",
@@ -186,13 +141,13 @@
       "ga": 8
     },
     {
-      "teamName": "Fc Midtjylland",
+      "teamName": "Brondby If",
       "gp": 5,
-      "w": 2,
-      "d": 3,
-      "l": 0,
-      "gf": 8,
-      "ga": 5
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 4,
+      "ga": 6
     },
     {
       "teamName": "Agf Aarhus",
@@ -204,15 +159,6 @@
       "ga": 5
     },
     {
-      "teamName": "Nordsjaelland",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
-    },
-    {
       "teamName": "Ac Horsens",
       "gp": 4,
       "w": 2,
@@ -222,13 +168,49 @@
       "ga": 7
     },
     {
-      "teamName": "Brondby If",
+      "teamName": "Vejle Bk",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 9
+    },
+    {
+      "teamName": "Fc Midtjylland",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Sonderjyske",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 2,
       "gf": 4,
+      "ga": 9
+    },
+    {
+      "teamName": "Viborg",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
       "ga": 6
+    },
+    {
+      "teamName": "Nordsjaelland",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
     },
     {
       "teamName": "Silkeborg",
@@ -238,6 +220,24 @@
       "l": 2,
       "gf": 8,
       "ga": 7
+    },
+    {
+      "teamName": "Odense Bk",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Fc Kobenhavn",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 13,
+      "ga": 5
     }
   ]
 }
