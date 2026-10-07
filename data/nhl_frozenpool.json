@@ -1,143 +1,82 @@
 {
-  "updatedAt": "2026-10-06T11:51:55.009Z",
+  "updatedAt": "2026-10-07T11:37:10.543Z",
   "source": "frozenpool.dobbersports.com",
   "games": {
     "yesterday": [
       {
-        "home": "T.B",
-        "away": "PHI",
-        "home_score": 4,
-        "away_score": 1,
-        "progress": "FINAL",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=40"
-      },
-      {
-        "home": "BOS",
-        "away": "OTT",
-        "home_score": 1,
-        "away_score": 4,
-        "progress": "FINAL",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=41"
-      },
-      {
-        "home": "PIT",
-        "away": "WPG",
-        "home_score": 2,
-        "away_score": 3,
-        "progress": "FINAL",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=42"
-      },
-      {
-        "home": "DAL",
-        "away": "S.J",
+        "home": "TOR",
+        "away": "NSH",
         "home_score": 5,
-        "away_score": 0,
-        "progress": "FINAL",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=43"
-      }
-    ],
-    "today": [
-      {
-        "home": "BUF",
-        "away": "MIN",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "7:00 PM",
-        "date": "2026-10-06",
-        "progress": "7:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=BUF"
+        "away_score": 4,
+        "progress": "F/OT",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=44"
       },
       {
         "home": "DET",
         "away": "OTT",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "7:00 PM",
-        "date": "2026-10-06",
-        "progress": "7:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=DET"
-      },
-      {
-        "home": "MTL",
-        "away": "CAR",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "7:00 PM",
-        "date": "2026-10-06",
-        "progress": "7:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=MTL"
+        "home_score": 5,
+        "away_score": 3,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=46"
       },
       {
         "home": "N.J",
         "away": "UTA",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "7:00 PM",
-        "date": "2026-10-06",
-        "progress": "7:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=N.J"
+        "home_score": 3,
+        "away_score": 5,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=47"
       },
       {
-        "home": "TOR",
-        "away": "NSH",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "7:00 PM",
-        "date": "2026-10-06",
-        "progress": "7:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=TOR"
+        "home": "BUF",
+        "away": "MIN",
+        "home_score": 3,
+        "away_score": 2,
+        "progress": "F/OT",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=49"
       },
       {
-        "home": "CHI",
-        "away": "STL",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "8:00 PM",
-        "date": "2026-10-06",
-        "progress": "8:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=CHI"
+        "home": "MTL",
+        "away": "CAR",
+        "home_score": 4,
+        "away_score": 6,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=45"
       },
       {
         "home": "NYR",
         "away": "NYI",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "8:00 PM",
-        "date": "2026-10-06",
-        "progress": "8:00 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=NYR"
+        "home_score": 5,
+        "away_score": 2,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=48"
+      },
+      {
+        "home": "CHI",
+        "away": "STL",
+        "home_score": 4,
+        "away_score": 2,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=50"
       },
       {
         "home": "SEA",
         "away": "VGK",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "9:40 PM",
-        "date": "2026-10-06",
-        "progress": "9:40 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=SEA"
+        "home_score": 2,
+        "away_score": 6,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=51"
       },
       {
         "home": "L.A",
         "away": "FLA",
-        "home_score": 0,
-        "away_score": 0,
-        "game_id": 0,
-        "time": "10:30 PM",
-        "date": "2026-10-06",
-        "progress": "10:30 PM",
-        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-06&team=L.A"
+        "home_score": 1,
+        "away_score": 2,
+        "progress": "FINAL",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_boxscore.php?season=2026-2027&game_type=R&game_num=52"
       }
     ],
-    "tomorrow": [
+    "today": [
       {
         "home": "WPG",
         "away": "COL",
@@ -170,6 +109,118 @@
         "date": "2026-10-07",
         "progress": "10:00 PM",
         "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-07&team=ANA"
+      }
+    ],
+    "tomorrow": [
+      {
+        "home": "BOS",
+        "away": "UTA",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=BOS"
+      },
+      {
+        "home": "BUF",
+        "away": "DAL",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=BUF"
+      },
+      {
+        "home": "CAR",
+        "away": "VAN",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=CAR"
+      },
+      {
+        "home": "T.B",
+        "away": "MIN",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=T.B"
+      },
+      {
+        "home": "MTL",
+        "away": "NSH",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=MTL"
+      },
+      {
+        "home": "OTT",
+        "away": "PHI",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:00 PM",
+        "date": "2026-10-08",
+        "progress": "7:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=OTT"
+      },
+      {
+        "home": "NYI",
+        "away": "CHI",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "7:30 PM",
+        "date": "2026-10-08",
+        "progress": "7:30 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=NYI"
+      },
+      {
+        "home": "STL",
+        "away": "S.J",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "8:00 PM",
+        "date": "2026-10-08",
+        "progress": "8:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=STL"
+      },
+      {
+        "home": "CGY",
+        "away": "COL",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "9:00 PM",
+        "date": "2026-10-08",
+        "progress": "9:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=CGY"
+      },
+      {
+        "home": "VGK",
+        "away": "TOR",
+        "home_score": 0,
+        "away_score": 0,
+        "game_id": 0,
+        "time": "10:00 PM",
+        "date": "2026-10-08",
+        "progress": "10:00 PM",
+        "url": "https://frozenpool.dobbersports.com/frozenpool_preview.php?date=2026-10-08&team=VGK"
       }
     ]
   },
