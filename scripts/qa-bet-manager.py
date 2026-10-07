@@ -165,6 +165,14 @@ with sync_playwright() as p:
     assert page.locator("text=Journal — objectif").count() > 0, "Journal manquant"
     assert page.locator("text=Table d'arbitrage").count() > 0, "Table d'arbitrage manquant"
     assert page.locator("text=Capital (réel)").count() > 0, "KPI jour courant manquant"
+    # Dualité Simulé/Réel (ybz4) : onglets + bascule
+    assert page.locator('button[role="tab"]:has-text("Tableau Simulé")').count() > 0, "Onglet Tableau Simulé manquant"
+    page.locator('button[role="tab"]:has-text("Tableau Réel")').click()
+    page.wait_for_timeout(400)
+    assert page.locator("th:has-text(\"Début réel\")").count() > 0, "Colonnes du Tableau Réel manquantes"
+    shot(page, "08b-plan-reel")
+    page.locator('button[role="tab"]:has-text("Tableau Simulé")').click()
+    page.wait_for_timeout(300)
 
     # 8. Page Banque / Ledger (CRUD tx live : dépôt → suppression)
     print("8. Page /bankroll/ledger (CRUD BankrollTx)")

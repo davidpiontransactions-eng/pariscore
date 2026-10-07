@@ -17,7 +17,6 @@ import {
   computeReal,
   computeTheoretical,
   dailyLoanRepayment,
-  diffDays,
   loanCumulatedAt,
   loanRemainingAt,
   stakeForTarget,
@@ -26,6 +25,8 @@ import {
   type PlanParams,
 } from "@/lib/bet-manager/plan";
 import { tradeoffTable } from "@/lib/bet-manager/calculators";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RealTable, SimulatedTable } from "@/components/bet-manager/plan-tables";
 import { useBankLoan } from "@/hooks/use-bank-loan";
 
 const fmt = (n: number, d = 2) => n.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -304,8 +305,8 @@ export default function BankrollPlanPage() {
           ))}
         </section>
 
-        {/* Journal : projection théorique + suivi réel */}
-        <section className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
+        {/* Journal — dualité Simulé vs Réel (mission ybz4) */}
+        <section className="overflow-hidden rounded-xl border border-white/5 bg-white/[0.03]">
           <div className="border-b border-white/5 px-3 py-2.5">
             <h2 className="text-sm font-semibold text-foreground">
               Journal — objectif {params.targetPct} % du capital de début de journée · {params.maxBets} paris max/jour
@@ -319,91 +320,48 @@ export default function BankrollPlanPage() {
                 ? ` · emprunt : ${fmt(loanDaily)} €/j à rembourser en plus (objectif total = gains + amortissement)`
                 : ""}
             </p>
-          </div>
-          <table className="w-full min-w-[920px] text-left text-xs">
-            <thead>
-              <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-foreground">
-                <th className="px-2 py-2 font-semibold">J</th>
-                <th className="px-2 py-2 font-semibold">Date</th>
-                <th className="px-2 py-2 text-right font-semibold">Début</th>
-                <th className="px-2 py-2 text-right font-semibold">Gain G</th>
-                {showLoan && <th className="px-2 py-2 text-right font-semibold">Remb.</th>}
-                <th className="px-2 py-2 text-right font-semibold">Banque</th>
-                <th className="px-2 py-2 text-right font-semibold">Réinvest</th>
-                <th className="px-2 py-2 text-right font-semibold">C fin</th>
-                <th className="px-2 py-2 text-right font-semibold">B</th>
-                <th className="px-2 py-2 text-right font-semibold">T th.</th>
-                <th className="px-2 py-2 text-right font-semibold">Misé</th>
-                <th className="px-2 py-2 text-right font-semibold">T réel</th>
-                <th className="px-2 py-2 text-right font-semibold">Retard</th>
-                <th className="px-2 py-2 text-right font-semibold">R/j</th>
-                <th className="px-2 py-2 font-semibold">État</th>
-              </tr>
-            </thead>
-            <tbody>
-              {th.map((t, i) => {
-                const r = real.rows[i];
-                const isLive = real.live?.d === t.d;
-                // Emprunt : jour dans la fenêtre d'amortissement ?
-                const loanDay = showLoan ? diffDays(loan.startDate, t.key) : -1;
-                const inLoanWindow = showLoan && loanDay >= 0 && loanDay < loan.days;
-                // Retard TOTAL (plan + amortissement cumulé) — objectif total.
-                const retardTotal =
-                  r && !r.future && r.retard !== null ? r.retard + loanCumulatedAt(loan, t.key) : null;
-                const retardJourTotal =
-                  retardTotal !== null && r && r.jrest !== null && r.jrest > 0
-                    ? Math.max(0, retardTotal) / r.jrest
-                    : null;
+            {live && liveTh && liveTh.T > 0 && (
+              (() => {
+                // Delta capital : réel actuel vs simulé à la même date (€ et %).
+                const delta = liveTh.T - live.tRe;
+                const pct = (Math.abs(delta) / liveTh.T) * 100;
                 return (
-                  <tr
-                    key={t.d}
-                    className={cn(
-                      "border-b border-white/[0.03]",
-                      isLive && "bg-emerald-500/[0.06]"
-                    )}
-                  >
-                    <td className="px-2 py-1.5 font-mono text-[11px] text-foreground">{t.d}</td>
-                    <td className="px-2 py-1.5 font-mono text-[11px] text-foreground">{t.key.slice(8)}/{t.key.slice(5, 7)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono">{fmt(t.cStart)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.G)}</td>
-                    {showLoan && (
-                      <td className="px-2 py-1.5 text-right font-mono text-foreground">
-                        {inLoanWindow ? fmt(loanDaily as number) : "—"}
-                      </td>
-                    )}
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.toBank)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono">{fmt(t.reinvest)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold">{fmt(t.C)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.B)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold">{fmt(t.T)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.stake)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-foreground">
-                      {r && !r.future ? fmt(r.tRe) : "—"}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">
-                      {retardTotal !== null ? `${retardTotal > 0 ? "+" : ""}${fmt(retardTotal)}` : "—"}
-                    </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">
-                      {retardJourTotal !== null ? fmt(retardJourTotal) : "—"}
-                    </td>
-                    <td className="px-2 py-1.5">
-                      {r?.future ? (
-                        <span className="font-mono text-[10px] text-foreground">à venir</span>
-                      ) : r && r.n > 0 ? (
-                        <span className="font-mono text-[10px] text-foreground">
-                          {r.won}G {r.lost}P {r.pending}C
-                        </span>
-                      ) : isLive ? (
-                        <span className="font-mono text-[10px] text-foreground">aujourd'hui</span>
-                      ) : (
-                        <span className="font-mono text-[10px] text-foreground">—</span>
-                      )}
-                    </td>
-                  </tr>
+                  <p className="mt-1 text-[11px] font-semibold text-foreground">
+                    Delta capital — simulé {fmt(liveTh.T)} € vs réel {fmt(live.tRe)} € :{" "}
+                    {delta > 0 ? `retard +${fmt(delta)} €` : `avance +${fmt(-delta)} €`} ({fmt(pct, 1)} %)
+                  </p>
                 );
-              })}
-            </tbody>
-          </table>
+              })()
+            )}
+          </div>
+          <div className="p-3">
+            <Tabs defaultValue="simule">
+              <TabsList className="mb-3">
+                <TabsTrigger value="simule">Tableau Simulé</TabsTrigger>
+                <TabsTrigger value="reel">Tableau Réel</TabsTrigger>
+              </TabsList>
+              <TabsContent value="simule">
+                <SimulatedTable
+                  params={params}
+                  th={th}
+                  real={real}
+                  loan={loan}
+                  showLoan={showLoan}
+                  loanDaily={loanDaily}
+                />
+              </TabsContent>
+              <TabsContent value="reel">
+                <RealTable
+                  params={params}
+                  th={th}
+                  real={real}
+                  loan={loan}
+                  showLoan={showLoan}
+                  loanDaily={loanDaily}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </section>
 
         {/* Table d'arbitrage risque / espérance */}
