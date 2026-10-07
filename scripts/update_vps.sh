@@ -15,15 +15,24 @@ PM2_NEXT="${PM2_NEXT:-pariscore-next}"        # Next.js standalone
 
 cd "$DEPLOY_DIR" || { echo "ERR: deploy dir $DEPLOY_DIR introuvable"; exit 1; }
 
-# Préserver les données scrapées par les crons VPS (hors git, ou écrasées par
-# le reset : data/flashscore_handball.json était tracké jusqu'au 2026-10-06 et
-# chaque deploy y remettait le snapshot du 2026-09-28 → onglet Handball vide
-# (bead ParisScorebis-1gge). Le fichier est désormais untracked + gitignoré ;
-# ce backup/restore couvre la transition et reste une assurance si quelqu'un le
-# re-tracke un jour.
+# Préserver les données de data/ produites par les crons VPS.
+#
+# Deux modes de perte au `git reset --hard origin/main` :
+#   1. un fichier TRACKÉ puis désindexé (« untrack ») est SUPPRIMÉ de l'arbre :
+#      c'est ce qui arrivera aux ~250 data/*.json désindexés par le commit
+#      « fix(git): untrack dynamic data json snapshots » au deploy suivant, et
+#      ce qui est arrivé à flashscore_handball.json (remis au snapshot committé
+#      du 2026-09-28 → onglet Handball vide, bead ParisScorebis-1gge) ;
+#   2. un fichier tracké modifié par un cron est RÉINITIALISÉ à la version
+#      committée : le run du cron est perdu jusqu'au prochain tick (drama pour
+#      les crons hebdomadaires : matrix lundi, photos lundi, hbl-stats lun/jeu).
+# Donc : sauvegarde de TOUS les fichiers de data/ trackés AVANT le reset, puis
+# restauration UNIQUEMENT de ceux disparus après le reset (ceux toujours trackés
+# sont déjà corrects — le reset les a remis lui-même).
 DATA_BACKUP=$(mktemp -d)
-for f in data/odds_flashscore_snooker.json data/snooker_matches.json data/flashscore_handball.json; do
-  [ -f "$f" ] && cp "$f" "$DATA_BACKUP/" 2>/dev/null
+git ls-files data 2>/dev/null | while read -r f; do
+  mkdir -p "$DATA_BACKUP/$(dirname "$f")" 2>/dev/null
+  cp "$f" "$DATA_BACKUP/$f" 2>/dev/null || true
 done
 
 PREV="$(git rev-parse HEAD 2>/dev/null || echo '')"
@@ -32,10 +41,16 @@ echo "[1/6] git fetch + reset --hard origin/main..."
 git fetch --all -q || { echo "ERR: git fetch"; exit 1; }
 git reset --hard origin/main -q || { echo "ERR: git reset"; exit 1; }
 
-# Restaurer les données scrapées par les crons VPS
-for f in data/odds_flashscore_snooker.json data/snooker_matches.json data/flashscore_handball.json; do
-  [ -f "$DATA_BACKUP/$(basename $f)" ] && cp "$DATA_BACKUP/$(basename $f)" "$f" 2>/dev/null
-done
+# Restauration des données scrapées devenues absentes après le reset.
+if [ -d "$DATA_BACKUP/data" ]; then
+  find "$DATA_BACKUP/data" -type f 2>/dev/null | while read -r src; do
+    rel="${src#"$DATA_BACKUP"/}"
+    if [ ! -f "$rel" ]; then
+      mkdir -p "$(dirname "$rel")" 2>/dev/null
+      cp "$src" "$rel" 2>/dev/null || true
+    fi
+  done
+fi
 rm -rf "$DATA_BACKUP"
 
 CURR="$(git rev-parse HEAD)"
@@ -267,6 +282,12 @@ done
 for HB in flashscore-handball handball-history hbl-players handball-hero-photo lnh odds-papi handball-nightly; do
   pm2 startOrRestart ecosystem.config.js --only "pariscore-cron-$HB" --update-env 2>/dev/null || true
 done
+
+# Cron foot des cotes (archive oddsportal, `30 */6 * * *`) — meme trou que les
+# deux boucles ci-dessus : declare dans ecosystem.config.js mais jamais inscrit
+# sur le VPS (constaté le 2026-10-06, bead ParisScorebis-acke : `pm2 jlist` ne
+# le contient pas, donc l'archive de cotes n'a jamais été alimentée en prod).
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-odds --update-env 2>/dev/null || true
 
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then

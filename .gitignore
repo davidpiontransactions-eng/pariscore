@@ -159,12 +159,38 @@ data/odds_flashscore_snooker.json
 data/oddsportal_nio.json
 data/betwatch_wom.json
 data/smarkets_tennis_wom.json
-# Handball — snapshot Flashscore régénéré toutes les 4 h par le cron VPS.
-# Tracké jusqu'au 2026-10-06 : chaque `git reset --hard` de update_vps.sh le
-# remplaçait par la version commitée (2026-09-28) → calendrier + Top 10 vides
-# après chaque deploy (bead ParisScorebis-1gge). Untracked = plus jamais écrasé ;
-# update_vps.sh le sauvegarde/restore en plus, pour la transition.
-data/flashscore_handball.json
+# ── data/ : snapshots dynamiques, la source de vérité est le CRON VPS ────────
+# Suivre ces fichiers dans git les faisait doublement souffrir :
+#   1. chaque `git reset --hard origin/main` de update_vps.sh y remettait la
+#      version COMMITEE — soit un snapshot périmé (flashscore_handball.json
+#      bloqué au 2026-09-28 → onglet Handball vide, bead ParisScorebis-1gge),
+#      soit la perte du run du cron depuis le dernier commit ;
+#   2. un snapshot commité = figé pour tout clone/deploy tant qu'aucun commit
+#      ne le rafraîchit — alors que les crons le réécrivent toutes les heures.
+# 15 exceptions restent trackées DELIBEREMENT (bead ParisScorebis-szqt) :
+#   • source GitHub SANS cron VPS équivalent (workflow = source de vérité) :
+#     elo NBA/WNBA, hockey prematch/éliteprospects, liguemagnus, frozenpool,
+#     fbref_advanced/, betmines ;
+#   • input de BUILD : euroleague_logos.json (import statique dans
+#     src/lib/euroleague-logos.ts — sans lui, `next build` casse) ;
+#   • fixture de TEST : basketball_vitibet_bsd.json.
+# Le backup/restore de update_vps.sh (boucle git ls-files data) protège la
+# transition : le 1er reset supprime ces fichiers de l'arbre avant leur retrait
+# du tracking, ils sont aussitôt restaurés.
+data/*
+!data/betmines-leagues-all.txt
+!data/eliteprospects_hockey_standings.json
+!data/eliteprospects_player_stats.json
+!data/fbref_advanced
+!data/hockey_prematch_annabet.json
+!data/hockey_prematch_betexplorer.json
+!data/hockey_prematch_oddspedia.json
+!data/liguemagnus_stats.json
+!data/nba_elo.json
+!data/nhl_frozenpool.json
+!data/wnba_elo.json
+!data/basketball_vitibet_bsd.json
+!data/euroleague_logos.json
 # Rugby backtest store (runtime, machine-local — regenere par le moteur)
 data/rugby-backtest.json
 # Backtest Top 5 (runtime, machine-local — settle quotidien cron)
