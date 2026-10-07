@@ -394,20 +394,21 @@ shadcn component is missing, add it via `bunx shadcn@latest add <name>`.
 
 ---
 
-## Bet Manager (`src/components/bet-manager/`) — 10 components
+## Bet Manager (`src/components/bet-manager/`) — 11 components
 
-Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, données Prisma `Bankroll`/`Bet`/`BetLeg`).
+Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, données Prisma `Bankroll`/`BankrollTx`/`Bet`/`BetLeg`).
 
 | Component | File | Role |
 |-----------|------|------|
 | bet-manager-nav | bet-manager-nav.tsx | Sous-nav du module (tabs Dashboard/Paris/Plan/Banque/Montante/Outils + sélecteur bankroll) |
 | kpi-strip | kpi-strip.tsx | Bandeau KPIs trading cockpit (capital, profit, ROI, yield, réussite, exposition en cours, gain potentiel, drawdown) |
 | capital-chart | capital-chart.tsx | Courbe d'évolution du capital (AreaChart Recharts) |
+| objective-chart | objective-chart.tsx | Graphique Objectif vs Réel : gains cumulés vs trajectoire du plan +20 %/j, zones avance (vert) / retard (rouge) entre les courbes, badge de delta |
 | breakdown-list | breakdown-list.tsx | Répartition par sport/bookmaker/cote/type/période avec barres de proportion |
-| bet-table | bet-table.tsx | Table des paris + règlement (won/lost/void/cashout avec payout saisi) + fiche détail/édition d'un pari (dialog : audit dates/CLV, champs modifiables, legs) |
+| bet-table | bet-table.tsx | Table des paris + règlement (won/lost/void/cashout avec payout saisi) + fiche détail/édition d'un pari (dialog : audit dates/CLV, champs modifiables, legs) + colonne Retard optionnelle (planParams : objectif théorique − réel cumulé à la date) |
 | bet-form | bet-form.tsx | Formulaire d'ajout de pari (dialog) : legs combinés, scan OCR image, import 1xBet HTML/ZIP en drag&drop + collage, dédup réf coupon |
 | bankroll-form | bankroll-form.tsx | Formulaire de création de bankroll (dialog) |
-| csv-import | csv-import.tsx | Import CSV de paris (fichier ou copier-coller, aperçu avant import) |
+| csv-import | csv-import.tsx | Import CSV **et Excel .xlsx** de paris (fichier : conversion SheetJS avec mappage d'en-têtes par synonymes FR/EN, colonnes non mappées conservées en note — ou copier-coller, aperçu avant import) |
 | calculators-grid | calculators-grid.tsx | Grille des 19 calculateurs (Kelly, EV, arbitrage, conversion de bonus, Monte Carlo, plan de mise…) |
 | montante-table | montante-table.tsx | Montante palier par palier : mise, cote requise, gain visé par pari, table d'arbitrage risque/gain, badges de faisabilité + courbe SVG du total |
 

@@ -12,16 +12,22 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
   PLAN_DEFAULTS,
+  PLAN_STORAGE_KEY,
   betPL,
   computeReal,
   computeTheoretical,
+  dailyLoanRepayment,
+  diffDays,
+  loanCumulatedAt,
+  loanRemainingAt,
   stakeForTarget,
+  todayKey,
   type PlanBet,
   type PlanParams,
 } from "@/lib/bet-manager/plan";
 import { tradeoffTable } from "@/lib/bet-manager/calculators";
+import { useBankLoan } from "@/hooks/use-bank-loan";
 
-const STORAGE_KEY = "bm-plan-params";
 const fmt = (n: number, d = 2) => n.toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /** Champs numériques éditables du paramétrage. */
@@ -39,13 +45,17 @@ const FIELDS: { key: keyof PlanParams; label: string; step?: string; type?: "num
 
 export default function BankrollPlanPage() {
   const bm = useBetManager();
+  const { loan, setLoan } = useBankLoan();
   const [showBankrollForm, setShowBankrollForm] = useState(false);
   const [params, setParams] = useState<PlanParams>(PLAN_DEFAULTS);
+
+  const loanDaily = dailyLoanRepayment(loan);
+  const showLoan = loanDaily !== null;
 
   // Persistance locale des paramètres (même pattern que suivi-paris.html)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(PLAN_STORAGE_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw);
       if (saved && typeof saved === "object") {
@@ -76,7 +86,7 @@ export default function BankrollPlanPage() {
               : (value as never),
       };
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(next));
       } catch {
         /* quota */
       }
@@ -100,14 +110,20 @@ export default function BankrollPlanPage() {
 
   const live = real.live;
   const liveTh = live ? th[live.d - 1] : null;
+  // Retard TOTAL du jour courant : écart du plan + amortissement de l'emprunt cumulé.
+  const retardLive = live && live.retard !== null ? live.retard + loanCumulatedAt(loan, live.key) : null;
+  const retardJourLive =
+    retardLive !== null && live && live.jrest !== null && live.jrest > 0
+      ? Math.max(0, retardLive) / live.jrest
+      : null;
 
   return (
-    <div className="min-h-screen bg-bg-deep pb-16 text-zinc-100">
+    <div className="min-h-screen bg-bg-deep pb-16 text-foreground">
       <header className="border-b border-white/5 bg-bg-deep">
         <div className="mx-auto flex min-h-14 max-w-6xl items-center justify-between px-4 py-2 sm:px-6">
           <Link
             href="/bankroll"
-            className="inline-flex items-center gap-2.5 text-sm font-bold tracking-tight text-white transition-opacity hover:opacity-80"
+            className="inline-flex items-center gap-2.5 text-sm font-bold tracking-tight text-foreground transition-opacity hover:opacity-70"
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
@@ -115,7 +131,7 @@ export default function BankrollPlanPage() {
             </span>
             Plan +{params.targetPct}%/j
           </Link>
-          <Link href="/bankroll" className="text-sm text-zinc-400 hover:text-white">
+          <Link href="/bankroll" className="text-sm text-foreground opacity-70 hover:opacity-100">
             Dashboard
           </Link>
         </div>
@@ -132,15 +148,15 @@ export default function BankrollPlanPage() {
         {/* Paramètres */}
         <section className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-100">Paramètres du plan</h2>
+            <h2 className="text-sm font-semibold text-foreground">Paramètres du plan</h2>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[11px] text-[#6B5B8D]"
+              className="h-7 text-[11px] text-foreground"
               onClick={() => {
                 setParams(PLAN_DEFAULTS);
                 try {
-                  localStorage.removeItem(STORAGE_KEY);
+                  localStorage.removeItem(PLAN_STORAGE_KEY);
                 } catch {
                   /* quota */
                 }
@@ -152,7 +168,7 @@ export default function BankrollPlanPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {FIELDS.map((f) => (
               <div key={f.key}>
-                <Label className="text-[10px] text-zinc-400">{f.label}</Label>
+                <Label className="text-[10px] text-foreground">{f.label}</Label>
                 <Input
                   type={f.type === "date" ? "date" : "number"}
                   step={f.step}
@@ -170,11 +186,75 @@ export default function BankrollPlanPage() {
                 onChange={(e) => setField("autoBank", String(e.target.checked), "check")}
                 className="h-4 w-4 accent-emerald-500"
               />
-              <Label htmlFor="planAutoBank" className="text-[11px] text-zinc-400">
+              <Label htmlFor="planAutoBank" className="text-[11px] text-foreground">
                 Virement auto en banque
               </Label>
             </div>
           </div>
+        </section>
+
+        {/* Emprunt banque — capital pris en banque, à amortir EN PLUS des gains (bead v1v8) */}
+        <section className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Emprunt banque</h2>
+            {showLoan && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[11px] text-foreground"
+                onClick={() => setLoan({ amount: 0, startDate: "", days: 0 })}
+              >
+                Retirer l'emprunt
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <Label className="text-[10px] text-foreground">Montant emprunté (€)</Label>
+              <Input
+                type="number"
+                step="1"
+                min="0"
+                value={loan.amount > 0 ? String(loan.amount) : ""}
+                placeholder="ex: 200"
+                onChange={(e) => setLoan({ ...loan, amount: parseFloat(e.target.value) || 0 })}
+                className="mt-1 h-8 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] text-foreground">Pris le (date)</Label>
+              <Input
+                type="date"
+                value={loan.startDate}
+                onChange={(e) => setLoan({ ...loan, startDate: e.target.value })}
+                className="mt-1 h-8 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-[10px] text-foreground">Durée d'amortissement (jours)</Label>
+              <Input
+                type="number"
+                step="1"
+                min="1"
+                value={loan.days > 0 ? String(loan.days) : ""}
+                placeholder="ex: 24"
+                onChange={(e) => setLoan({ ...loan, days: parseInt(e.target.value, 10) || 0 })}
+                className="mt-1 h-8 font-mono text-xs"
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-foreground">
+            {showLoan && loan.startDate ? (
+              <>
+                <strong className="font-mono">{fmt(loanDaily as number)} €/jour</strong> à rembourser en plus des gains ·
+                reste <strong className="font-mono">{fmt(loanRemainingAt(loan, todayKey()))} €</strong> à ce jour
+                (contracté le {loan.startDate.slice(8)}/{loan.startDate.slice(5, 7)}/{loan.startDate.slice(0, 4)} sur{" "}
+                {loan.days} j) · amortissement cumulé intégré à l'objectif et au retard.
+              </>
+            ) : (
+              "Aucun emprunt actif — renseigne montant, date et durée pour intégrer l'amortissement à l'objectif quotidien (gains + remboursement)."
+            )}
+          </p>
         </section>
 
         {/* KPIs du jour courant : théorique vs réel */}
@@ -199,31 +279,27 @@ export default function BankrollPlanPage() {
               tone: undefined,
             },
             {
-              label: live && live.retard !== null ? (live.retard > 0 ? "Retard à combler" : "Avance") : "Retard",
-              value: live && live.retard !== null ? `${live.retard > 0 ? "+" : ""}${fmt(live.retard)} €` : "—",
+              label: retardLive !== null ? (retardLive > 0 ? "Retard à combler" : "Avance") : "Retard",
+              value: retardLive !== null ? `${retardLive > 0 ? "+" : ""}${fmt(retardLive)} €` : "—",
               sub:
-                live && live.retardJour !== null && live.retard !== null && live.retard > 0
-                  ? `${fmt(live.retardJour)} €/j sur ${live.jrest} j`
+                retardLive !== null && retardJourLive !== null && retardLive > 0
+                  ? `${fmt(retardJourLive)} €/j sur ${live?.jrest} j${showLoan ? " (gains + emprunt)" : ""}`
                   : live && live.jrest !== null
                     ? `${live.jrest} j restants`
                     : undefined,
-              tone: live && (live.retard ?? 0) > 0 ? "bad" : "good",
+              tone: undefined,
             },
           ].map((k) => (
             <div key={k.label} className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-[#6B5B8D]">{k.label}</div>
-              <div
-                className={cn(
-                  "mt-1.5 font-mono text-lg font-semibold tabular-nums",
-                  k.tone === "good" && "text-emerald-400",
-                  k.tone === "bad" && "text-red-400",
-                  k.tone === "accent" && "text-sky-400",
-                  !k.tone && "text-zinc-100"
-                )}
-              >
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{k.label}</div>
+          <div
+            className={
+              "mt-1.5 font-mono text-lg font-semibold tabular-nums text-foreground"
+            }
+          >
                 {k.value}
               </div>
-              {k.sub ? <div className="mt-0.5 text-[11px] text-[#6B5B8D]">{k.sub}</div> : null}
+              {k.sub ? <div className="mt-0.5 text-[11px] text-foreground">{k.sub}</div> : null}
             </div>
           ))}
         </section>
@@ -231,23 +307,27 @@ export default function BankrollPlanPage() {
         {/* Journal : projection théorique + suivi réel */}
         <section className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
           <div className="border-b border-white/5 px-3 py-2.5">
-            <h2 className="text-sm font-semibold text-zinc-100">
+            <h2 className="text-sm font-semibold text-foreground">
               Journal — objectif {params.targetPct} % du capital de début de journée · {params.maxBets} paris max/jour
             </h2>
-            <p className="mt-0.5 text-[11px] text-[#6B5B8D]">
+            <p className="mt-0.5 text-[11px] text-foreground">
               Cote requise jour 1 : {liveTh?.oReq ? fmt(liveTh.oReq) : "—"} · espérance nulle :{" "}
               {liveTh?.oNeutral ? fmt(liveTh.oNeutral) : "—"} (q = {fmt(params.winProb * 100, 0)} %) · mise/pari ={" "}
               {liveTh ? fmt(liveTh.miseParPari) : "—"} € (stakeForTarget :{" "}
               {liveTh ? fmt(stakeForTarget(liveTh.gainParPari, params.oddsTarget) ?? 0) : "—"} € à {fmt(params.oddsTarget)})
+              {showLoan && loanDaily !== null
+                ? ` · emprunt : ${fmt(loanDaily)} €/j à rembourser en plus (objectif total = gains + amortissement)`
+                : ""}
             </p>
           </div>
-          <table className="w-full min-w-[860px] text-left text-xs">
+          <table className="w-full min-w-[920px] text-left text-xs">
             <thead>
-              <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-[#6B5B8D]">
+              <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-foreground">
                 <th className="px-2 py-2 font-semibold">J</th>
                 <th className="px-2 py-2 font-semibold">Date</th>
                 <th className="px-2 py-2 text-right font-semibold">Début</th>
                 <th className="px-2 py-2 text-right font-semibold">Gain G</th>
+                {showLoan && <th className="px-2 py-2 text-right font-semibold">Remb.</th>}
                 <th className="px-2 py-2 text-right font-semibold">Banque</th>
                 <th className="px-2 py-2 text-right font-semibold">Réinvest</th>
                 <th className="px-2 py-2 text-right font-semibold">C fin</th>
@@ -264,50 +344,59 @@ export default function BankrollPlanPage() {
               {th.map((t, i) => {
                 const r = real.rows[i];
                 const isLive = real.live?.d === t.d;
+                // Emprunt : jour dans la fenêtre d'amortissement ?
+                const loanDay = showLoan ? diffDays(loan.startDate, t.key) : -1;
+                const inLoanWindow = showLoan && loanDay >= 0 && loanDay < loan.days;
+                // Retard TOTAL (plan + amortissement cumulé) — objectif total.
+                const retardTotal =
+                  r && !r.future && r.retard !== null ? r.retard + loanCumulatedAt(loan, t.key) : null;
+                const retardJourTotal =
+                  retardTotal !== null && r && r.jrest !== null && r.jrest > 0
+                    ? Math.max(0, retardTotal) / r.jrest
+                    : null;
                 return (
                   <tr
                     key={t.d}
                     className={cn(
                       "border-b border-white/[0.03]",
-                      isLive && "bg-emerald-500/[0.06]",
-                      r?.future && "opacity-45"
+                      isLive && "bg-emerald-500/[0.06]"
                     )}
                   >
-                    <td className="px-2 py-1.5 font-mono text-[11px] text-[#6B5B8D]">{t.d}</td>
-                    <td className="px-2 py-1.5 font-mono text-[11px] text-[#6B5B8D]">{t.key.slice(8)}/{t.key.slice(5, 7)}</td>
+                    <td className="px-2 py-1.5 font-mono text-[11px] text-foreground">{t.d}</td>
+                    <td className="px-2 py-1.5 font-mono text-[11px] text-foreground">{t.key.slice(8)}/{t.key.slice(5, 7)}</td>
                     <td className="px-2 py-1.5 text-right font-mono">{fmt(t.cStart)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-emerald-400">{fmt(t.G)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-sky-400">{fmt(t.toBank)}</td>
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.G)}</td>
+                    {showLoan && (
+                      <td className="px-2 py-1.5 text-right font-mono text-foreground">
+                        {inLoanWindow ? fmt(loanDaily as number) : "—"}
+                      </td>
+                    )}
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.toBank)}</td>
                     <td className="px-2 py-1.5 text-right font-mono">{fmt(t.reinvest)}</td>
                     <td className="px-2 py-1.5 text-right font-mono font-semibold">{fmt(t.C)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-sky-400">{fmt(t.B)}</td>
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.B)}</td>
                     <td className="px-2 py-1.5 text-right font-mono font-semibold">{fmt(t.T)}</td>
-                    <td className="px-2 py-1.5 text-right font-mono text-[#6B5B8D]">{fmt(t.stake)}</td>
-                    <td className={cn("px-2 py-1.5 text-right font-mono font-semibold", r && !r.future && r.tRe >= t.T ? "text-emerald-400" : "text-zinc-200")}>
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{fmt(t.stake)}</td>
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-foreground">
                       {r && !r.future ? fmt(r.tRe) : "—"}
                     </td>
-                    <td
-                      className={cn(
-                        "px-2 py-1.5 text-right font-mono",
-                        r && !r.future ? (r.retard !== null && r.retard > 0 ? "text-red-400" : "text-emerald-400") : "text-zinc-600"
-                      )}
-                    >
-                      {r && !r.future && r.retard !== null ? `${r.retard > 0 ? "+" : ""}${fmt(r.retard)}` : "—"}
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">
+                      {retardTotal !== null ? `${retardTotal > 0 ? "+" : ""}${fmt(retardTotal)}` : "—"}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono text-[#6B5B8D]">
-                      {r && !r.future && r.retardJour !== null ? fmt(r.retardJour) : "—"}
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">
+                      {retardJourTotal !== null ? fmt(retardJourTotal) : "—"}
                     </td>
                     <td className="px-2 py-1.5">
                       {r?.future ? (
-                        <span className="font-mono text-[10px] text-zinc-600">à venir</span>
+                        <span className="font-mono text-[10px] text-foreground">à venir</span>
                       ) : r && r.n > 0 ? (
-                        <span className="font-mono text-[10px] text-emerald-400">
+                        <span className="font-mono text-[10px] text-foreground">
                           {r.won}G {r.lost}P {r.pending}C
                         </span>
                       ) : isLive ? (
-                        <span className="font-mono text-[10px] text-amber-400">aujourd'hui</span>
+                        <span className="font-mono text-[10px] text-foreground">aujourd'hui</span>
                       ) : (
-                        <span className="font-mono text-[10px] text-zinc-600">—</span>
+                        <span className="font-mono text-[10px] text-foreground">—</span>
                       )}
                     </td>
                   </tr>
@@ -320,14 +409,14 @@ export default function BankrollPlanPage() {
         {/* Table d'arbitrage risque / espérance */}
         <section className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
           <div className="border-b border-white/5 px-3 py-2.5">
-            <h2 className="text-sm font-semibold text-zinc-100">Table d'arbitrage — cote requise par engagement</h2>
-            <p className="mt-0.5 text-[11px] text-[#6B5B8D]">
+            <h2 className="text-sm font-semibold text-foreground">Table d'arbitrage — cote requise par engagement</h2>
+            <p className="mt-0.5 text-[11px] text-foreground">
               Pour viser {params.targetPct} % du capital ({fmt(params.capital)} €) le premier jour
             </p>
           </div>
           <table className="w-full min-w-[640px] text-left text-xs">
             <thead>
-              <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-[#6B5B8D]">
+              <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-foreground">
                 <th className="px-3 py-2 font-semibold">Capital engagé</th>
                 {arb.map((r) => (
                   <th key={r.pct} className="px-3 py-2 text-right font-semibold">
@@ -338,7 +427,7 @@ export default function BankrollPlanPage() {
             </thead>
             <tbody>
               <tr className="border-b border-white/[0.03]">
-                <td className="px-3 py-2 text-[#6B5B8D]">Mise à engager</td>
+                <td className="px-3 py-2 text-foreground">Mise à engager</td>
                 {arb.map((r) => (
                   <td key={r.pct} className="px-3 py-2 text-right font-mono">
                     {fmt(r.stake)} €
@@ -346,15 +435,15 @@ export default function BankrollPlanPage() {
                 ))}
               </tr>
               <tr className="border-b border-white/[0.03]">
-                <td className="px-3 py-2 text-[#6B5B8D]">Cote moyenne requise</td>
+                <td className="px-3 py-2 text-foreground">Cote moyenne requise</td>
                 {arb.map((r) => (
-                  <td key={r.pct} className="px-3 py-2 text-right font-mono font-semibold text-emerald-400">
+                  <td key={r.pct} className="px-3 py-2 text-right font-mono font-semibold text-foreground">
                     {fmt(r.odds)}
                   </td>
                 ))}
               </tr>
               <tr className="border-b border-white/[0.03]">
-                <td className="px-3 py-2 text-[#6B5B8D]">Mise / pari ({params.maxBets})</td>
+                <td className="px-3 py-2 text-foreground">Mise / pari ({params.maxBets})</td>
                 {arb.map((r) => (
                   <td key={r.pct} className="px-3 py-2 text-right font-mono">
                     {fmt(r.stake / Math.max(1, params.maxBets))} €
@@ -362,9 +451,9 @@ export default function BankrollPlanPage() {
                 ))}
               </tr>
               <tr>
-                <td className="px-3 py-2 text-[#6B5B8D]">Perte si tout perdu</td>
+                <td className="px-3 py-2 text-foreground">Perte si tout perdu</td>
                 {arb.map((r) => (
-                  <td key={r.pct} className="px-3 py-2 text-right font-mono text-red-400">
+                  <td key={r.pct} className="px-3 py-2 text-right font-mono text-foreground">
                     −{fmt(r.stake)} €
                   </td>
                 ))}

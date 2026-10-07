@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Camera, Loader2, Plus, X } from "lucide-react";
+import { Camera, ChevronsUpDown, Loader2, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,15 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +34,7 @@ import { cn } from "@/lib/utils";
 import type { BetType } from "@/lib/bet-manager/types";
 import { parseTicketText, type OcrTicket } from "@/lib/bet-manager/ocr";
 import { ingest1xbet, type Import1xbetBet } from "@/lib/bet-manager/import-1xbet";
+import { useTodayMatches } from "@/hooks/use-today-matches";
 
 const SPORTS = ["football", "tennis", "basketball", "hockey", "handball", "mma", "rugby", "cs2", "cycling", "f1", "baseball", "other"];
 
@@ -86,8 +96,14 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const [externalRef, setExternalRef] = useState<string | null>(null);
   const [placedAt, setPlacedAt] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  // Combobox matchs du jour (mission k044) : liste par défaut, bascule libre.
+  const [matchMode, setMatchMode] = useState<"list" | "free">("list");
+  const [comboOpen, setComboOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const pasteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Matchs du jour du sport sélectionné (SWR : refetch auto au changement de sport)
+  const todayMatches = useTodayMatches(sport);
 
   useEffect(() => () => { if (pasteTimer.current) clearTimeout(pasteTimer.current); }, []);
 
@@ -351,8 +367,90 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
           {betType === "single" ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label>Match / Événement</Label>
-                <Input value={matchLabel} onChange={(e) => setMatchLabel(e.target.value)} placeholder="ex: PSG vs OM" />
+                <div className="flex items-center justify-between">
+                  <Label className="mb-0">Match / Événement</Label>
+                  <button
+                    type="button"
+                    aria-label={matchMode === "list" ? "saisie libre" : "liste du jour"}
+                    onClick={() => setMatchMode((m) => (m === "list" ? "free" : "list"))}
+                    className="text-[11px] text-primary underline-offset-2 hover:underline"
+                  >
+                    {matchMode === "list" ? "Saisie libre" : "Liste du jour"}
+                  </button>
+                </div>
+                {matchMode === "list" ? (
+                  <Popover open={comboOpen} onOpenChange={setComboOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-label="Sélectionner un match du jour"
+                        className="mt-1 h-9 w-full justify-between px-3 font-normal"
+                      >
+                        <span
+                          className={
+                            "truncate " + (matchLabel ? "text-foreground" : "text-muted-foreground")
+                          }
+                        >
+                          {matchLabel ||
+                            (todayMatches.isLoading
+                              ? "Chargement des matchs du jour…"
+                              : "Choisir un match du jour…")}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      className="w-[--radix-popover-trigger-width] min-w-[320px] bg-background border-border p-0"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Rechercher une équipe, une ligue…" />
+                        <CommandList>
+                          {todayMatches.matches.length === 0 && !todayMatches.isLoading ? (
+                            <CommandEmpty className="px-3 py-3 text-sm">
+                              Aucun match de « {sport} » répertorié aujourd'hui.
+                              <button
+                                type="button"
+                                aria-label="saisie libre"
+                                onClick={() => setMatchMode("free")}
+                                className="ml-1 text-primary underline underline-offset-2"
+                              >
+                                Passer en saisie libre
+                              </button>
+                            </CommandEmpty>
+                          ) : (
+                            <CommandGroup heading={`${sport} — matchs du jour`}>
+                              {todayMatches.matches.map((m, i) => (
+                                <CommandItem
+                                  key={`${m.home}-${m.away}-${m.time}-${i}`}
+                                  value={`${m.home} ${m.away} ${m.league} ${m.time}`}
+                                  onSelect={() => {
+                                    setMatchLabel(`${m.home} vs ${m.away}`);
+                                    if (m.league) setCompetition(m.league);
+                                    setComboOpen(false);
+                                  }}
+                                >
+                                  <span className="truncate">
+                                    {`[${m.league || m.sport}] ${m.time || "—"} — ${m.home} vs ${m.away}`}
+                                  </span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <Input
+                    className="mt-1"
+                    value={matchLabel}
+                    onChange={(e) => setMatchLabel(e.target.value)}
+                    placeholder="ex: PSG vs OM"
+                  />
+                )}
               </div>
               <div>
                 <Label>Marché</Label>

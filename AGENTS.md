@@ -49,6 +49,23 @@ Balance between doing the right thing and not surprising the user.
 - **Batch parallel calls** → Single message with multiple tool calls when independent
 - **Never** use bash to communicate with the user (no `echo` for explanations)
 
+### Recherche & vérif : chemins piégés (constats 2026-09-30)
+
+- **Jamais de `Grep`/`Glob` hors racine projet** (ex. `%TEMP%`, `~`) : le tool
+  parcourt l'arbre entier (Go, 100k+ fichiers) avant/après le filtre `include`.
+  Un fichier ciblé se lit avec `Read`/script, pas avec `Grep` (et `path` d'un
+  fichier isolé ne borne pas toujours la recherche → le tool élargit).
+- **Fichier minifié en UNE ligne > 64 Ko** (HTML prod, chunks JS) → erreur
+  `Ripgrep JSON record exceeded 65536` : ne pas persister, passer à la méthode
+  fiable ci-dessous.
+- **Pas de `grep -r` sur `.next/`** (890 Mo, ~600 à 10k chunks sans index ;
+  Next 16 dev stocke sous `.next/dev/static`, PAS `.next/static`) ni de pipe
+  `|` dans `ps_shell` (timeout documenté) — `dir /s` non plus (timeout).
+- **Méthode fiable 100 %** : script `bun` ciblé (`%TEMP%\opencode\*.mjs`) qui
+  lit les seuls fichiers voulus (lecture mémoire, `includes`), écrit le résultat
+  dans un fichier, puis `type` ce fichier — le stdout des exécutables n'est pas
+  capturé dans ce shell.
+
 ## Code References
 
 When referencing code, use `file_path:line_number` format:
@@ -109,6 +126,10 @@ Non-negotiable rules enforced automatically. Violations block PRs/commits.
 14. **Le Ladder** — Avant d'écrire du code, vérifier chaque échelon : (1) Nécessaire? → (2) Existe déjà? → (3) Stdlib le fait? → (4) Native le fait? → (5) Dep installée? → (6) Une ligne? → (7) Seulement alors: code minimum.
 15. **Root Cause Rule** — Bug fix = root cause, pas symptôme. Grep tous les appelants de la fonction touchée, corriger la fonction partagée une seule fois.
 16. **Complexity Tags** — Lors des reviews, tagger la sur-complexité : `delete:` (code mort), `stdlib:` (utiliser stdlib), `native:` (utiliser plateforme), `yagni:` (abstraction inutile), `shrink:` (moins de lignes).
+17. **Ne pas être fainard sur la sécurité ni sur la compréhension** — Le Ladder raccourcit la solution, jamais la compréhension, jamais la sécurité. Ne jamais simplifier : validation aux frontières de confiance, gestion d'erreur qui prévient la perte de données, sécurité, accessibilité de base. Tracer le flux réel de bout en bout **avant** de choisir un échelon. Laisser le bouton de calibration quand le matériel n'est pas idéal.
+18. **Prose plafonnée sur livraison de code** — Code d'abord, puis au plus 3 lignes courtes (ce qui a été sauté, quand l'ajouter). Ce que l'utilisateur demande explicitement (rapport, walkthrough, notes par phase) est donné en entier ; la règle ne porte que sur la prose non demandée.
+19. **`ponytail:` — raccourcis délibérés nommés** — Un raccourci qui coupe un angle réel avec un plafond connu porte un commentaire qui nomme le plafond ET le chemin d'optimisation. Sans lui, le raccourci pourrit en « plus tard jamais ».
+20. **Une vérification exécutable par logique non triviale** — Une branche, une boucle, un parser, un chemin argent ou sécurité laisse UNE vérification exécutable, la plus petite qui échoue si la casse casse. Un `assert` dans une `demo()`, ou un petit `test_*.ts`. YAGNI s'applique aux tests aussi.
 
 ### Le Ladder (avant d'écrire du code)
 
@@ -121,6 +142,63 @@ Non-negotiable rules enforced automatically. Violations block PRs/commits.
 6. Une ligne?        → Si possible, le faire en une ligne
 7. Code minimum     → Seulement alors, écrire le strict nécessaire
 ```
+
+### Quand NE PAS être fainard (carve-outs de sécurité)
+
+Le Ladder raccourcit la solution, **jamais la compréhension, jamais la sécurité**.
+Ces règles priment sur les échelons 1 à 7 :
+
+**Ne jamais simplifier au loin :**
+- Validation des entrées aux **frontières de confiance** (API routes, form actions, webhooks, params URL, cookies)
+- Gestion d'erreur qui **prévient la perte de données** (suppression, migration, écriture fichier/DB)
+- Mesures de **sécurité** (auth, autorisation, secrets, `.env`, anti-injection, `dangerouslySetInnerHTML`)
+- Accessibilité de base (labels, `alt`, navigation clavier, focus)
+
+**Ne jamais être fainard sur la compréhension.** La trace real flow de bout en
+bout **avant** de choisir un échelon. Une fainardise qui saute la lecture pour
+livrer un petit diff est le pire échec possible : elle se déguise en efficacité
+et livre un fix erroné et confiant.
+
+**Le matériel n'est jamais idéal sur le papier** : une vraie horloge dérive, un
+vrai capteur lit, un PCA9685 varie de quelques pourcents. Laisser le **bouton
+de calibration**, pas seulement moins de code.
+
+### Code d'abord, prose plafonnée
+
+Sur une livraison de code : **le code d'abord, puis au plus 3 lignes courtes** —
+ce qui a été sauté, et quand l'ajouter. Pas de tour de functionality, pas de note
+de design. *Si l'explication est plus longue que le code, supprimer l'explication.*
+
+Ce qui est **explicitement demandé** par l'utilisateur (un rapport, un walkthrough,
+des notes par phase) n'est pas du gaspillage : le donner en entier. La règle ne
+porte que sur la prose **non demandée**.
+
+Pattern : `[code] → skipped: [X], add when [Y].`
+
+### Convention `ponytail:` — raccourcis délibérés
+
+Une simplification qui coupe un vrai angle avec un plafond connu (lock global,
+scan O(n²), heuristique naïve, calibration par défaut) porte un commentaire
+qui **nomme le plafond et le chemin d'optimisation** :
+
+```ts
+// ponytail: lock global, passer en lock par compte si le throughput devient un sujet
+```
+
+Sans ce commentaire, le raccourci devient un piège qui pourrit en « plus tard
+jamais ». `/ponytail-debt` récolte tous ces commentaires en registre.
+
+### Une vérification exécutable par logique non triviale
+
+Logique non triviale = une branche, une boucle, un parser, un chemin argent ou
+sécurité. Elle laisse **UNE** vérification exécutable derrière elle, la plus
+petite qui échoue si la casse casse — un `assert` dans une `demo()`/`__main__`,
+ou un petit `test_*.ts`. Pas de framework, pas de fixtures, pas de suite par
+fonction sauf demande. Les one-liners triviaux n'ont pas besoin de test : YAGNI
+s'applique aux tests aussi.
+
+Un diff qui échoue `bun run lint` ou `bun run typecheck` n'est pas terminé, même
+si la logique est triviale.
 
 ### Tags de Sur-Complexité (code review)
 
@@ -366,6 +444,7 @@ Explicit allowlist. Stdlib-first. No new deps without approval.
 | **HTTP** | node:https (NOT undici fetch) | Scraping (WAF bypass) |
 | **Mobile** | @capacitor/core, @capacitor/cli | Android APK |
 | **AI** | @google/genai, z-ai-web-dev-sdk | AI features |
+| **Excel** | xlsx | Import `.xlsx` bet-manager (client, import dynamique — mission 2026-10-07 validée) |
 
 ### Build/Dev Dependencies
 
@@ -646,6 +725,13 @@ exist (`player-vs-block`, `country-flag`, `surface-badge`…) and re-searching t
 - **Types**: `bun-types` for Bun runtime APIs
 - Commands: `bun run lint`, `bun run typecheck` (if configured)
 
+**Gates rapides (durées mesurées le 2026-09-30, 12 cœurs logiques)** :
+- `bun run lint` = gate **complet** mais incrémental : `eslint src scripts public packages --cache --cache-strategy content`. Durées réelles : **≈ 8-9 s** sans changement, 10-25 s selon le nombre de fichiers modifiés, **≈ 140 s** seulement si le cache est neuf/invalidé (clone, 1re exécution, changement d'`eslint.config.mjs` ou de version d'ESLint). Avant fix : **123-135 s à chaque exécution**.
+- Le cache (`.eslintcache`, gitignoré) se valide sur le **hash de contenu** de chaque fichier **ET** sur le hash de la config ESLint : toute modification de fichier ou de règle re-lint ce qui doit l'être — preuve faite : `var`/`const` injectés ⇒ exit 1 (`no-var`), retrait ⇒ exit 0. **Aucune règle n'est désactivée**, aucun dossier ajouté aux `ignores`, `strict` intact.
+- `bun run lint:full` = même périmètre **sans cache** (référence audit / CI, ≈ 135 s). `--concurrency 4` a été testé puis écarté : froid 89 s (gain réel) mais runs chauds **plus lents** (13-18 s vs 8-9 s) + warning `ESLintPoorConcurrencyWarning` à chaque exécution partiellement cachée ; `--concurrency auto` est encore pire ici (8-12 workers = rechargement de config ×N).
+- `bun run typecheck` = `tsc --noEmit` incrémental via `.tsbuildinfo` : **≈ 16 s** ; **≈ 87 s** en froid (buildinfo absent) — ne jamais supprimer `.tsbuildinfo`.
+- Cause racine de la lenteur lint (mesures A/B) : `src/components` = 81,5 s → parseur seul 14,2 s → plugins sans règles 22 s → **`react-hooks/*` désactivées ⇒ 27,6 s** : `eslint-plugin-react-hooks` v7 rejoue le React Compiler (re-parse Babel/Hermes par fichier) sur `static-components`/`use-memo`/`globals`/`error-boundaries`/`set-state-in-render`/`config`/`gating` ≈ 45 % du temps total. **Ne pas les désactiver** — le cache compense.
+
 ## Session: awesome-design-md / DESIGN.md (2026-08-19)
 
 **Scope**: Bibliothèque locale de **74 DESIGN.md** (format Google Stitch, extraits de vrais sites) + skill `design-md` câblé sur **opencode**, **cline** et **claude** (via `.claude/skills`). Miroir upstream [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) (MIT).
@@ -756,6 +842,9 @@ powershell -NoProfile -File scripts\deploy-runner.ps1 -Message "feat(scope): des
 ### Secrets
 - `.env` contains live API keys — **NEVER commit**
 - Git already ignores `.env`, `*.db`, `*.log`
+- **Scoping** : un scraper n'a besoin que de sa clé (scraping ≠ `NEXTAUTH_SECRET`, `SENDGRID_API_KEY`). Pas de fallback hardcodé — fail fast si la var est absente.
+- **Egress allowlist** (idée OpenShell, sans runtime) : `ax/hockey-scrapers.yaml` (Gateway `hockey-sources`) = source de vérité des hôtes scrapables. Vérifier avant run : `bun run scrape:guard <script>` (`--allow=h1,h2` si légitime, `--exec` pour vérifier+exécuter). Loopback (`localhost`/`127.0.0.1` = FlareSolverr) toujours OK.
+- **Inference routing** : données scraping/licenciées → providers EU de préférence (`ovhcloud`, `mistral`) ; `mimo`/`nvidia-nim` pour le code. Ne jamais envoyer `.env` ni données sous licence à un provider hors besoin.
 
 ## gstack — Orchestration & Review
 

@@ -44,6 +44,25 @@ export const PLAN_DEFAULTS: PlanParams = {
   autoBank: true,
 };
 
+/** Clé de persistance des paramètres du plan (localStorage). */
+export const PLAN_STORAGE_KEY = "bm-plan-params";
+
+/**
+ * Emprunt banque (bead v1v8) : capital pris en banque à amortir en PLUS des
+ * gains quotidiens (ex. 200 € pris le 07/10 sur 24 j → 8,33 €/j).
+ * `amount = 0` = pas d'emprunt.
+ */
+export type BankLoan = {
+  amount: number;
+  /** Date de contractualisation AAAA-MM-JJ. */
+  startDate: string;
+  /** Durée d'amortissement en jours (24 → 24 remboursements égaux). */
+  days: number;
+};
+
+/** Clé de persistance de l'emprunt (localStorage). */
+export const LOAN_STORAGE_KEY = "bm-plan-loan";
+
 /** Ligne de journal minimal — Bet (types.ts) est structurellement compatible. */
 export type PlanBet = {
   stake: number;
@@ -306,4 +325,84 @@ export function computeReal(
 export function stakeForTarget(gainParPari: number, odds: number): number | null {
   if (!(odds > 1)) return null;
   return gainParPari / (odds - 1);
+}
+
+/** Remboursement journalier de l'emprunt (amount / days) ; null si inactif. */
+export function dailyLoanRepayment(loan: BankLoan | null | undefined): number | null {
+  if (!loan || !(loan.amount > 0) || !(loan.days > 0)) return null;
+  return loan.amount / loan.days;
+}
+
+/**
+ * Remboursement cumulé DÛ à une date (inclus) : 0 avant le début,
+ * `daily × (jours écoulés + 1)` pendant l'amortissement, borné au montant.
+ */
+export function loanCumulatedAt(loan: BankLoan | null | undefined, dateKey: string): number {
+  const daily = dailyLoanRepayment(loan);
+  if (daily === null || !loan) return 0;
+  const j = diffDays(loan.startDate, dateKey);
+  if (j < 0) return 0;
+  return Math.min(loan.amount, daily * (Math.min(j, loan.days - 1) + 1));
+}
+
+/** Reste à rembourser à une date (borné [0, amount]). */
+export function loanRemainingAt(loan: BankLoan | null | undefined, dateKey: string): number {
+  if (!loan || !(loan.amount > 0)) return 0;
+  return Math.max(0, loan.amount - loanCumulatedAt(loan, dateKey));
+}
+
+/**
+ * Objectif de GAINS cumulés (T_j − capital0) à une date du plan.
+ * - date avant startDate → null (aucun objectif) ;
+ * - date au-delà de la période → dernier objectif du plan (borné) ;
+ * - `loan` fourni → l'objectif TOTAL inclut l'amortissement cumulé
+ *   (gains + remboursement, le remboursement étant une obligation EN PLUS).
+ */
+export function objectiveGainsAt(p: PlanParams, dateKey: string, loan?: BankLoan | null): number | null {
+  const j = diffDays(p.startDate, dateKey);
+  if (j < 0) return null;
+  const rows = computeTheoretical(p);
+  const row = rows[Math.min(j, rows.length - 1)];
+  return row.T - p.capital + loanCumulatedAt(loan, dateKey);
+}
+
+/** Ligne minimale pour le cumul réel (Bet de types.ts est structurellement compatible). */
+export type CumBet = {
+  placedAt: string;
+  settledAt?: string | null;
+  status: string;
+  stake: number;
+  payout?: number | null;
+};
+
+/**
+ * Profit cumulé (P/L des paris réglés) PAR DATE — convention identique à
+ * computeBankrollStats : date d'attribution = settledAt ?? placedAt.
+ * Void/pending exclus (P/L nul). Valeurs = cumul APRÈS la date.
+ */
+export function cumulativeProfitByDay(bets: readonly CumBet[]): Map<string, number> {
+  const byDay = new Map<string, number>();
+  for (const b of bets) {
+    if (b.status === "pending" || b.status === "void") continue;
+    const key = (b.settledAt ?? b.placedAt).slice(0, 10);
+    const pl = (b.payout ?? 0) - b.stake;
+    byDay.set(key, (byDay.get(key) ?? 0) + pl);
+  }
+  const sorted = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const cum = new Map<string, number>();
+  let run = 0;
+  for (const [k, v] of sorted) {
+    run += v;
+    cum.set(k, run);
+  }
+  return cum;
+}
+
+/** Cumul réel à une date (dernier jour connu ≤ dateKey, 0 si rien avant). */
+export function cumulativeProfitAt(cum: Map<string, number>, dateKey: string): number {
+  let best: string | null = null;
+  for (const k of cum.keys()) {
+    if (k <= dateKey && (best === null || k > best)) best = k;
+  }
+  return best === null ? 0 : cum.get(best) as number;
 }

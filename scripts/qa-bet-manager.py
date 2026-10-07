@@ -2,6 +2,7 @@
 # Étendu en phase P6 bettrack : session cookie (routes /bm/* protégées depuis P2),
 # fiche détail/édition, page Plan, page Ledger (CRUD tx live), nav 6 onglets.
 import json
+import os
 import pathlib
 
 from playwright.sync_api import sync_playwright
@@ -72,12 +73,31 @@ with sync_playwright() as p:
     # Nav 6 onglets (P6)
     assert page.locator('nav a[href="/bankroll/plan"]').count() > 0, "Onglet Plan manquant"
     assert page.locator('nav a[href="/bankroll/ledger"]').count() > 0, "Onglet Banque manquant"
+    # Recette v9ga : graphique Réel vs Objectif + colonne Retard
+    assert page.locator("text=Objectif vs Réel").count() > 0, "Graphique Objectif vs Réel manquant"
+    assert page.locator('th:has-text("Retard")').count() > 0, "Colonne Retard du tableau manquante"
+
+    # 1b. Recette import Excel (v9ga) : aperçu sur le VRAI calc.xlsx, sans importer
+    CALC_PATH = r"C:\Users\David\Documents\GenOffice\calc.xlsx"
+    if os.path.exists(CALC_PATH):
+        print("1b. Import Excel calc.xlsx (aperçu uniquement)")
+        page.get_by_role("button", name="Import CSV / Excel").click()
+        page.locator('input[type="file"][accept*=".xlsx"]').set_input_files(CALC_PATH)
+        page.wait_for_selector("text=Feuille2", timeout=15000)
+        shot(page, "01b-import-xlsx")
+        assert page.locator("text=1 pari détecté").count() > 0, "Aperçu xlsx : 1 pari non détecté sur calc.xlsx"
+        page.get_by_role("button", name="Annuler").click()
+        page.wait_for_timeout(400)
+    else:
+        print("  [skip] calc.xlsx absent — recette d'import Excel ignorée")
 
     # 2. Ajout d'un pari via la page dédiée
     print("2. Formulaire ajout pari /bankroll/bets/new")
     page.goto(f"{BASE}/bankroll/bets/new")
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1000)
+    # Défaut = liste du jour (Combobox) : bascule en saisie libre pour le remplissage
+    page.locator('button[aria-label="saisie libre"]').click()
     page.fill('input[placeholder="ex: PSG vs OM"]', "Lyon vs Monaco")
     page.fill('input[placeholder="ex: 1X2, Over 2.5, BTTS"]', "1X2")
     page.fill('input[placeholder="ex: PSG, Over, Oui"]', "Lyon")

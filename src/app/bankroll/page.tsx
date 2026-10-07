@@ -4,9 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useBetManager } from "@/hooks/use-bet-manager";
+import { usePlanParams } from "@/hooks/use-plan-params";
+import { useBankLoan } from "@/hooks/use-bank-loan";
 import { BetManagerNav } from "@/components/bet-manager/bet-manager-nav";
 import { KpiStrip } from "@/components/bet-manager/kpi-strip";
 import { CapitalChart } from "@/components/bet-manager/capital-chart";
+import { ObjectiveChart } from "@/components/bet-manager/objective-chart";
 import { BreakdownList } from "@/components/bet-manager/breakdown-list";
 import { BetTable } from "@/components/bet-manager/bet-table";
 import { BankrollForm } from "@/components/bet-manager/bankroll-form";
@@ -17,6 +20,8 @@ import { Zap, Plus, Trophy, Loader2 } from "lucide-react";
 
 export default function BankrollDashboardPage() {
   const bm = useBetManager();
+  const plan = usePlanParams();
+  const { loan } = useBankLoan();
   const [showForm, setShowForm] = useState(false);
   const [showBankrollForm, setShowBankrollForm] = useState(false);
   const [settling, setSettling] = useState(false);
@@ -70,6 +75,11 @@ export default function BankrollDashboardPage() {
           )}
         </div>
 
+        {/* Objectif vs Réel — courbe cumulée réelle contre la trajectoire du plan (+ amortissement emprunt) */}
+        <div className="mt-4">
+          <ObjectiveChart bets={bm.bets} planParams={plan} loan={loan} />
+        </div>
+
         {/* Métriques CLV (Closing Line Value) */}
         {bm.stats && bm.stats.clv.tracked > 0 && (
           <section className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -113,6 +123,9 @@ export default function BankrollDashboardPage() {
               onSettle={bm.settleBet}
               onDelete={bm.deleteBet}
               onUpdate={bm.updateBet}
+              planParams={plan}
+              loan={loan}
+              allBets={bm.bets}
             />
           </section>
 

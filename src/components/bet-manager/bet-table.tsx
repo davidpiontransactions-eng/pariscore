@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MoreHorizontal, Check, X, RotateCcw, Banknote, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Bet, BetStatus } from "@/lib/bet-manager/types";
 import type { BetInput } from "@/lib/bet-manager/api";
 import { clvEdge } from "@/lib/bet-manager/stats";
+import {
+  cumulativeProfitAt,
+  cumulativeProfitByDay,
+  objectiveGainsAt,
+  type BankLoan,
+  type PlanParams,
+} from "@/lib/bet-manager/plan";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +60,12 @@ type Props = {
   onDelete: (id: string) => void;
   /** Sauvegarde des champs éditables (fiche détail) — PATCH partiel. */
   onUpdate?: (id: string, data: Partial<BetInput>) => Promise<void>;
+  /** Paramètres du plan : active la colonne « Retard » (dashboard). */
+  planParams?: PlanParams | null;
+  /** Emprunt banque : le Retard compare alors à l'objectif TOTAL (gains + amortissement). */
+  loan?: BankLoan | null;
+  /** Historique COMPLET pour le cumul réel (défaut : bets). */
+  allBets?: Bet[];
 };
 
 /** Fiche individuelle du pari : audit + édition inline des champs modifiables. */
@@ -230,11 +243,18 @@ function BetDetailDialog({
   );
 }
 
-export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
+export function BetTable({ bets, onSettle, onDelete, onUpdate, planParams, loan, allBets }: Props) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   // Cashout avec payout saisi : montant réel reçu, pas le stake forcé.
   const [cashout, setCashout] = useState<{ id: string; value: string } | null>(null);
   const [detail, setDetail] = useState<Bet | null>(null);
+
+  // Colonne Retard : objectif théorique du plan vs profit réel cumulé à la date.
+  const showRetard = !!planParams;
+  const cumProfit = useMemo(
+    () => (showRetard ? cumulativeProfitByDay(allBets ?? bets) : null),
+    [showRetard, allBets, bets]
+  );
 
   const confirmCashout = (id: string, raw: string) => {
     const v = parseFloat(raw);
@@ -244,7 +264,7 @@ export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
-      <table className="w-full min-w-[600px] text-left text-xs sm:min-w-[760px]">
+      <table className="w-full min-w-[680px] text-left text-xs sm:min-w-[860px]">
         <thead>
           <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-[#6B5B8D]">
             <th className="px-3 py-2.5 font-semibold">Date</th>
@@ -253,6 +273,7 @@ export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
             <th className="px-3 py-2.5 text-right font-semibold">Cote</th>
             <th className="px-3 py-2.5 text-right font-semibold">Mise</th>
             <th className="px-3 py-2.5 text-right font-semibold">P/L</th>
+            {showRetard && <th className="px-3 py-2.5 text-right font-semibold">Retard</th>}
             <th className="px-3 py-2.5 text-center font-semibold">Statut</th>
             <th className="px-3 py-2.5" />
           </tr>
@@ -260,7 +281,7 @@ export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
         <tbody>
           {bets.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-3 py-10 text-center text-zinc-600">
+              <td colSpan={showRetard ? 9 : 8} className="px-3 py-10 text-center text-zinc-600">
                 Aucun pari. Ajoute ton premier pari ci-dessus.
               </td>
             </tr>
@@ -315,6 +336,29 @@ export function BetTable({ bets, onSettle, onDelete, onUpdate }: Props) {
                   >
                     {profit === null ? "—" : `${profit > 0 ? "+" : ""}${fmt(profit)} €`}
                   </td>
+                  {showRetard &&
+                    cumProfit &&
+                    (() => {
+                      const dk = b.placedAt.slice(0, 10);
+                      const obj = planParams ? objectiveGainsAt(planParams, dk, loan) : null;
+                      if (obj === null) {
+                        return <td className="px-3 py-2.5 text-right font-mono text-zinc-600">—</td>;
+                      }
+                      // Retard = objectif théorique − réel cumulé (positif = en retard).
+                      const retard = obj - cumulativeProfitAt(cumProfit, dk);
+                      return (
+                        <td
+                          className={cn(
+                            "px-3 py-2.5 text-right font-mono font-semibold",
+                            retard > 0.005 ? "text-red-400" : retard < -0.005 ? "text-emerald-400" : "text-zinc-500"
+                          )}
+                          title={retard > 0 ? "En retard par rapport à l'objectif" : "En avance sur l'objectif"}
+                        >
+                          {retard > 0 ? "+" : ""}
+                          {fmt(retard)} €
+                        </td>
+                      );
+                    })()}
                   <td className="px-3 py-2.5 text-center">
                     <StatusBadge status={b.status} />
                   </td>
