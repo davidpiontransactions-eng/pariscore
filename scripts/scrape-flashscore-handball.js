@@ -76,36 +76,91 @@ function hasFinalScore(m) {
 /**
  * Clé d'identité d'un match du snapshot.
  *
- * `id` (`fs-<eventId>`) est l'identifiant d'événement Flashscore : stable entre
- * deux scrapes. Il DOIT primer sur `home|away|time`, parce que le feed omet
- * parfois la clé de kickoff `AD` : l'entrée sort alors avec `time: ""` et, sur
- * une clé composite, elle ne fusionnait PAS avec son jumeau horodaté → deux
- * lignes pour le même match, dont une horodatée à l'instant du scrape par
- * `toHandballMatch` (affichée au milieu de la nuit au lieu de l'heure réelle).
- * Clé composite en repli seul pour les entrées legacy sans `id`.
+ * La clé doit décrire le match ENTIÈREMENT : événement + équipes + coup d'envoi.
+ * Deux clés plus laxes ont été essayées et rejetées sur données réelles (snapshot
+ * VPS du 2026-10-08, 1408 matchs) :
+ *  - `id` seul → 5 COLLISIONS : le feed réemploie le même id sur deux matchs
+ *    différents (ex. `fs-AR0BBBdl` = Ramat Hasharon – MK Beer Sheva ET le
+ *    match retour, quelques minutes plus tard). Fusionner par id aurait
+ *    SUPPRIMÉ un vrai match du calendrier ;
+ *  - `id|équipes` seul → 50 paires d'aller-retour légitimes (ex.
+ *    `fs-xhNzXglB` = Dalmatinka W – Zrinski W les 30/09 ET le 14/10) : là
+ *    encore, la fusion aurait effacé un rendez-vous réel.
+ * Seule la clé complète est sans risque : deux lignes ne se fusionnent que si
+ * elles décrivent littéralement le même match.
  */
 function snapshotKey(m) {
-  return m.id || `${m.home}|${m.away}|${m.time}`;
+  return `${m.id ?? ''}|${m.home}|${m.away}|${m.time}`;
+}
+
+/** Deux matchs sont le MÊME rendez-vous vu par deux fichiers-jour du feed. */
+function sameFixtureKey(m) {
+  return `${m.id ?? ''}|${m.home}|${m.away}`;
 }
 
 /**
  * Ajoute un match au lot du run s'il est nouveau (déduplication inter-jours :
- * le même événement est réinjecté par les boucles J-1, J+N et J-2..J-7).
- * Deux matchs de même identifiant événement ne doivent JAMAIS coexister : le
- * premier garde la place, le second peut seulement lui apporter un `time` que
- * le premier n'avait pas (feed rejoué une fois le kickoff publié).
+ * le même rendez-vous est réinjecté par les boucles J-1, J+N et J-2..J-7).
  * @returns true si le match a été ajouté.
  */
 function pushUnique(all, seen, m) {
   const k = snapshotKey(m);
-  const at = seen.get(k);
-  if (at === undefined) {
+  if (!seen.has(k)) {
     seen.set(k, all.length);
     all.push(m);
     return true;
   }
-  if (!all[at].time && m.time) all[at] = { ...all[at], time: m.time };
   return false;
+}
+
+/**
+ * Complète le coup d'envoi manquant à partir d'un jumeau complet.
+ *
+ * Le feed omet la clé `AD` sur certaines lignes : l'entrée sort avec
+ * `time: ""`, et `toHandballMatch` horodate alors le match à l'INSTANT DU SCRAPE
+ * (`new Date().toISOString()`) → mauvais jour de calendrier, heure fantaisiste
+ * (le symptôme « Magdeburg – Kiel à 00:15 » au lieu de 19:00). On rattache donc
+ * l'heure du jumeau — même événement, mêmes équipes, une seule heure candidate.
+ *
+ * Garde-fou quand plusieurs heures sont candidates (aller-retour) : on n'adopte
+ * que celle qui n'est DÉJÀ portée par aucune autre ligne du même couple, sinon
+ * on laisse la ligne sans heure plutôt que de lui donner une heure qui appartient
+ * à un autre match.
+ *
+ * @returns le nombre de lignes réparées.
+ */
+function repairMissingTimes(matches) {
+  const timed = new Map();
+  for (const m of matches) {
+    if (!m.time) continue;
+    const k = sameFixtureKey(m);
+    if (!timed.has(k)) timed.set(k, new Set());
+    timed.get(k).add(m.time);
+  }
+  let fixed = 0;
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    if (m.time) continue;
+    const set = timed.get(sameFixtureKey(m));
+    if (!set || set.size !== 1) continue;
+    const [only] = [...set];
+    matches[i] = { ...m, time: only };
+    set.delete(only); // une heure ne répare qu'une seule ligne
+    fixed++;
+  }
+  return fixed;
+}
+
+/**
+ * Retire les lignes « fantômes » : sans heure ET sans score final, on ne peut ni
+ * les placer sur un jour de calendrier ni les compter comme résultat — les
+ * laisser produirait un match « à venir » horodaté à l'heure du scrape.
+ * Une ligne SANS heure mais AVEC score est conservée : elle reste dans
+ * l'historique des résultats, et son statut `finished` l'exclut déjà du
+ * calendrier des matchs à venir.
+ */
+function dropUnplaceable(matches) {
+  return matches.filter((m) => m.time || hasFinalScore(m));
 }
 
 /**
@@ -118,30 +173,32 @@ function pushUnique(all, seen, m) {
  *  - `score` : un score final est immuable → s'il est déjà connu on le garde,
  *    même si le feed rejoue le match en cours avec un score provisoire.
  *
+ * Les doublons INTERNES à `previous` sont fusionnés eux aussi : sans cela un
+ * fichier déjà pollué (deux lignes pour le même match, l'une sans heure) ne
+ * se résorbait jamais, car la clé de la 2ᵉ ligne n'était jamais visitée.
+ *
  * L'ordre de sortie est : entrées fraîches (dans leur ordre), puis entrées
  * previous orphelines (absentes du frais). Stable et déterministe.
  */
 function mergeSnapshots(previous, fresh) {
   const out = [];
   const index = new Map();
-  for (const m of previous || []) {
-    index.set(snapshotKey(m), out.length);
-    out.push(m);
-  }
-  for (const m of fresh || []) {
+  const absorb = (m) => {
     const k = snapshotKey(m);
     const at = index.get(k);
     if (at === undefined) {
       index.set(k, out.length);
       out.push(m);
-      continue;
+      return;
     }
     const old = out[at];
     const merged = { ...m };
     if (!m.time && old.time) merged.time = old.time;
     if (hasFinalScore(old)) merged.score = old.score;
     out[at] = merged;
-  }
+  };
+  for (const m of previous || []) absorb(m);
+  for (const m of fresh || []) absorb(m);
   return out;
 }
 
@@ -232,7 +289,11 @@ function parseDay(body) {
     // Ligne de match
     if (t.startsWith('~AA\u00F7')) {
       flush();
-      cur = { id: t.slice(4).trim() };
+      // On ne garde que le TIRET alphanumérique : le feed colle parfois la clé
+      // de kickoff sur la même ligne (`<id><2 octets>AD÷<epoch>`), et le suffixe
+      // entrait dans l'id — donc dans la clé de fusion. Conséquence mesurée :
+      // 2 matchs/jour avec un id différent de leur jumeau, jamais fusionnés.
+      cur = { id: (t.slice(4).trim().match(/^[A-Za-z0-9]+/) || [''])[0] };
       continue;
     }
 
@@ -445,10 +506,30 @@ async function main() {
 
   // ── Fusion avec l'existant (ne JAMAIS ecraser un historique valide) ──
   const previous = readPrevious(outPath);
-  const merged = mergeSnapshots(previous, all);
+  let merged = mergeSnapshots(previous, all);
   console.log(
     `[flashscore-handball] fusion: ${previous.length} precedent(s) + ${all.length} frais -> ${merged.length}`,
   );
+
+  // ── Gauges ───────────────────────────────────────────────────────────────
+  // Le feed omet `AD` sur certaines lignes. Tant que l'heure manque, la ligne
+  // reste une SECONDE copie du meme match (cle differente) : on la rattache
+  // d'abord, puis on relit le fichier pour fusionner les copies redevenues
+  // identiques. Ordre IMPORTANT : reparer avant re-fusionner, sinon la cle de
+  // la copie sans heure ne rejoint plus jamais celle de son jumeau.
+  const repaired = repairMissingTimes(merged);
+  if (repaired > 0) console.log(`[flashscore-handball] kickoff manquant: ${repaired} ligne(s) rattachee(s)`);
+  if (repaired > 0) merged = mergeSnapshots(merged, []);
+  const beforeDrop = merged.length;
+  merged = dropUnplaceable(merged);
+  if (beforeDrop !== merged.length) {
+    console.log(
+      `[flashscore-handball] ${beforeDrop - merged.length} ligne(s) fantome(s) retirees (ni heure ni score)`,
+    );
+  }
+  if (merged.length !== mergeSnapshots(previous, all).length) {
+    console.log(`[flashscore-handball] fusion finale: ${merged.length} matchs`);
+  }
 
   const freshFinished = all.filter(hasFinalScore).length;
   const mergedFinished = merged.filter(hasFinalScore).length;
@@ -497,4 +578,7 @@ module.exports = {
   readPrevious,
   snapshotKey,
   pushUnique,
+  repairMissingTimes,
+  dropUnplaceable,
+  sameFixtureKey,
 };
