@@ -63,7 +63,7 @@ let _standing: LnhStandingSnapshot | null | undefined;
 function readSnapshot<T>(file: string, guard: (d: unknown) => boolean): T | null {
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-    const target = join(dataDir, file);
+    const target = join(/*turbopackIgnore: true*/ dataDir, /*turbopackIgnore: true*/ file);
     // turbopackIgnore : chemin runtime (env DATA_DIR) — voir hbl-stats.ts
     // (bead ParisScorebis-r4g8 :45 warnings « Dynamic filesystem access »).
     if (!existsSync(/*turbopackIgnore: true*/ target)) return null;

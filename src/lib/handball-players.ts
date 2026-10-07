@@ -81,7 +81,7 @@ let _merged: HblPlayersSnapshot | null | undefined;
 function readSnapshot(file: string): HblPlayersSnapshot | null {
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-    const target = join(dataDir, file);
+    const target = join(/*turbopackIgnore: true*/ dataDir, /*turbopackIgnore: true*/ file);
     // turbopackIgnore : chemin runtime (env DATA_DIR) — voir hbl-stats.ts
     // (bead ParisScorebis-r4g8).
     if (!existsSync(/*turbopackIgnore: true*/ target)) return null;

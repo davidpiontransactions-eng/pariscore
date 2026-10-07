@@ -68,7 +68,7 @@ let _standing: HblStandingSnapshot | null | undefined;
 function readSnapshot<T>(file: string, guard: (d: unknown) => boolean): T | null {
   try {
     const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-    const target = join(dataDir, file);
+    const target = join(/*turbopackIgnore: true*/ dataDir, /*turbopackIgnore: true*/ file);
     // turbopackIgnore : chemin runtime (env DATA_DIR) — sans cette annotation
     // Turbopack trace le projet entier dans le bundle (45 warnings de build,
     // bead ParisScorebis-r4g8). Même motif dans lnh-stats / handball-players.
