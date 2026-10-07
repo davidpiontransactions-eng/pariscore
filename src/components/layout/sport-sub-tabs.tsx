@@ -47,12 +47,15 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
   // de cette rangée (`useSportsSidebarStore.sportSubTabs.handball`). Sans cette
   // entrée, `SportSubTabs` sortait en early-return (ligne 63) : le sous-onglet
   // handball « Backtesting » n'existait nulle part dans la navigation.
+  // L'ordre suit `SUBTABS` du conteneur pour que les deux rangées se lisent
+  // pareil.
   handball: [
     { id: "calendrier", label: "Calendrier" },
     { id: "live", label: "Live" },
+    { id: "top10", label: "Stratégie Top 10" },
     { id: "backtesting", label: "Backtesting" },
+    { id: "classement", label: "Classement & Stats" },
     { id: "resultats", label: "Résultats" },
-    { id: "top10", label: "Top 10" },
   ],
 };
 

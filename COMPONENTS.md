@@ -164,11 +164,11 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 | projected-standings-card | projected-standings-card.tsx | Carte « Classement projeté fin de saison » (ExtraTrees offline, JSON rank-projector, papier JISTA 2026) |
 
-## Handball (`src/components/handball/`) — 27 components
+## Handball (`src/components/handball/`) — 28 components
 
 | Component | File | Role |
 |-----------|------|------|
-| handball-tab-content | handball-tab-content.tsx | Conteneur onglet handball (3 modes : 🔴 Live / 📅 À venir / 📆 Résultats du jour — panneau local `HandballResultsToday` = backtest des stratégies du jour + scores, filtres ligues, grille) |
+| handball-tab-content | handball-tab-content.tsx | Conteneur onglet handball — **6 sous-onglets** pilotés par Radix `Tabs`/`TabsContent` et par la rangée headbar `SportSubTabs` (MÊME clé de store `sportSubTabs.handball`, cf. `SUBTAB_TO_MODE`/`MODE_TO_SUBTAB` qui doivent rester synchronisées avec `SPORT_SUB_TABS.handball`) : 📅 Calendrier (`HandballCalendar` + sélecteur de journées + `HandballFilters` + grille de cartes, `HandballResultsToday` pour l'historique) · 🔴 Live (tableau ligne : minute, MT, arrêts, cotes 1X2) · 🎯 Stratégie Top 10 (`HandballStrategyBar` + `HandballTop8Widget` + `HandballTop10Table`) · 📊 Backtesting (`HandballBacktestingView`) · 🏆 Classement & Stats (`HandballLeagueStandings`) · 📆 Résultats (`HandballResultsToday`). Fenêtre « dans 1h/2h/4h/8h » **retirée** (bead 4md8) : le sélecteur de jours du calendrier la remplace |
 | handball-match-card | handball-match-card.tsx | Carte match prematch (équipes, cotes 1X2, badge ligue) |
 | handball-live-card | handball-live-card.tsx | Carte match live (score temps réel, minute, MT, stats 7m/saves) |
 | handball-filters | handball-filters.tsx | Barre filtres ligues (pills horizontaux avec compteurs) |
@@ -187,6 +187,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | handball-league-popover | handball-league-popover.tsx | Popover filtre championnats GÉNÉRIQUE partagé (trigger 🏆 + compteur, recherche, liste à ascenseur 55vh, reset) — utilisé par HandballFilters (calendrier) et HandballTop8Widget (Top 10 par stratégie) |
 | handball-table-caption | handball-table-caption.tsx | `<caption>` natif stylé collé à chaque tableau handball (onglet + popup) — nom visible mobile et desktop, défile avec le tableau dans les conteneurs overflow-x-auto |
 | handball-league-badge | handball-league-badge.tsx | Badge ligue : logo local + drapeau + nom (remplace "🤾 NomLigue") |
+| handball-league-standings | handball-league-standings.tsx | Sous-onglet **🏆 Classement & Stats par championnat**. Sélecteur de championnat (`HandballLeaguePopover`) **limité aux ligues réellement couvertes** par Vitibet — un championnat sans données n'apparaît pas. 3 blocs alimentés par la même `CoveredLeague` : **cartes synthétiques** (base de buts mesurée, buts/match, D/N/E, écart domicile — via `buildOutcomeSplit` réexporté de `handball-league-overview`), **classements Domicile / Extérieur** (`buildSplitTable`, testé) et **stats d'équipes** (Team Power via `buildPowerRanking`, la formule du modèle live). `buildSplitTable` lit les **tableaux Vitibet Home/Away**, jamais le total ; moyenne `null` côté affichage quand l'équipe n'a aucun match sur ce côté (« — » ≠ « 0.0 ») ; tri déterministe PPG → diff → buts marqués → nom. Aucune requête réseau |
 | handball-team-logo | handball-team-logo.tsx | Badge équipe local + fallback initiales (miroir hockey-team-logo) |
 | handball-vitibet-top10 | handball-vitibet-top10.tsx | Section « Top 10 par INDEX » Vitibet (pronostics J→J+3 triés \|INDEX\| décroissant, tip + score prédit, mini-banner, masquée si table absente) |
 | handball-vitibet-backtest | handball-vitibet-backtest.tsx | Section « Backtest Vitibet » : taux de réussite des tips (résultat FT vs prédit), répartition 1/X/2, période couverte, compte des finished sans tip, état vide explicite 0/0 |
