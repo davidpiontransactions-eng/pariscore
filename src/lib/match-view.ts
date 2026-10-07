@@ -85,6 +85,48 @@ export function parseTimeFilter(key: TimeFilterKey): {
   return { hours: Number.isFinite(hours) ? hours : null, today: false, tomorrow: false, weekend: false };
 }
 
+/** Formateur jour civil Europe/Paris (« AAAA-MM-JJ ») — partagé par les filtres. */
+const PARIS_DAY_KEY_FMT = new Intl.DateTimeFormat("fr-CA", {
+  timeZone: "Europe/Paris",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/**
+ * Filtre les matchs dont le coup d'envoi tombe dans les `days` prochains jours
+ * CIVILS Europe/Paris, en partant de DEMAIN : days=1 → demain seul, days=2 →
+ * demain + après-demain, days=3 → les 3 prochains jours.
+ *
+ * Aujourd'hui est EXCLU par construction : « les 3 prochains jours » ne doit
+ * pas se recouvrir avec la pill « Aujourd'hui ». Pour aujourd'hui seul, voir
+ * `filterByToday`.
+ *
+ * Jours civils et non fenêtre glissante : « Demain » doit rester demain à
+ * 23h50, pas « dans les 24 h » (cf. `filterByStartWindow` pour ça).
+ * Un match sans date exploitable est exclu dès qu'un filtre est engagé.
+ */
+export function filterByNextDays<T>(
+  items: T[],
+  days: number,
+  getScheduledAt: (match: T) => string | null | undefined,
+  now: Date = new Date(),
+): T[] {
+  if (days <= 0) return [];
+  const wanted = new Set<string>();
+  for (let i = 1; i <= days; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    wanted.add(PARIS_DAY_KEY_FMT.format(d));
+  }
+  return items.filter((match) => {
+    const raw = getScheduledAt(match);
+    if (!raw) return false;
+    const ts = new Date(raw).getTime();
+    return Number.isFinite(ts) && wanted.has(PARIS_DAY_KEY_FMT.format(new Date(ts)));
+  });
+}
+
 /**
  * Filtre les matchs dont le coup d'envoi tombe aujourd'hui (jour calendaire
  * local) — complément de `filterByStartWindow` pour la pill « Aujourd'hui ».
@@ -94,37 +136,25 @@ export function filterByToday<T>(
   getScheduledAt: (match: T) => string | null | undefined,
   now: Date = new Date(),
 ): T[] {
-  const PARIS_TZ = "Europe/Paris";
-  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-  const day = fmt.format(now);
+  const day = PARIS_DAY_KEY_FMT.format(now);
   return items.filter((match) => {
     const raw = getScheduledAt(match);
     if (!raw) return false;
     const ts = new Date(raw).getTime();
-    return Number.isFinite(ts) && fmt.format(new Date(ts)) === day;
+    return Number.isFinite(ts) && PARIS_DAY_KEY_FMT.format(new Date(ts)) === day;
   });
 }
 
 /**
- * Filtre les matchs dont le coup d'envoi tombe DEMAIN (jour calendaire local).
- * Complément de `filterByToday` pour la pill « Demain ».
+ * Filtre les matchs dont le coup d'envoi tombe DEMAIN, et uniquement demain
+ * (jour calendaire local) — complément de `filterByToday` pour la pill « Demain ».
  */
 export function filterByTomorrow<T>(
   items: T[],
   getScheduledAt: (match: T) => string | null | undefined,
   now: Date = new Date(),
 ): T[] {
-  const PARIS_TZ = "Europe/Paris";
-  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const day = fmt.format(tomorrow);
-  return items.filter((match) => {
-    const raw = getScheduledAt(match);
-    if (!raw) return false;
-    const ts = new Date(raw).getTime();
-    return Number.isFinite(ts) && fmt.format(new Date(ts)) === day;
-  });
+  return filterByNextDays(items, 1, getScheduledAt, now);
 }
 
 /**
