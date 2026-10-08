@@ -161,6 +161,24 @@ export function h2hSupport(leagueBsdId: number | null): H2hSupport {
   };
 }
 
+/**
+ * Traduit une erreur d'infrastructure en message lisible — JAMAIS de code HTTP.
+ *
+ * ⚠️ Un 502 n'a pas le sens « cache manquant ». C'est nginx annonçant que
+ * l'upstream Next n'a pas répondu (fenêtre de redéparrage PM2, timeout…).
+ * Afficher « HTTP 502 » au parieur, c'est lui parler d'un reverse-proxy : il
+ * ne peut rien en faire. La route, elle, ne renvoie que du JSON (400/503).
+ *
+ * Le message expose donc ce qui lui arrive : « bookmakers indisponibles ».
+ */
+export function infraMessage(error: string | null | undefined): string | null {
+  if (!error) return null;
+  if (/^HTTP \d{3}$/.test(error) || /fetch failed|network|timeout|ECONN/i.test(error)) {
+    return "Les données bookmakers sont temporairement indisponibles. Réessayez dans un instant.";
+  }
+  return error;
+}
+
 // ─── Composant ─────────────────────────────────────────────────────────────
 
 type Props = {
@@ -198,6 +216,13 @@ export function BasketballPreMatchPopup({
     [data, leagueBsdId, homeName, awayName, teamName],
   );
 
+  // ⚠️ L'erreur ne doit JAMAIS balayer ce qu'on a déjà. SWR garde la donnée
+  // précédente (`keepPreviousData`) : si le cache a été lu une fois puis que
+  // l'infrastructure redémarre, les sections doivent rester affichées. Avant,
+  // la branche `error` était testée AVANT `fixture`, donc un simple blip
+  // fermait toute la popup alors que ses données étaient en mémoire.
+  const notice = infraMessage(error);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] sm:max-h-[90dvh] overflow-y-auto">
@@ -207,18 +232,20 @@ export function BasketballPreMatchPopup({
           </DialogTitle>
         </DialogHeader>
 
-        {/* État vide — motivé, jamais un cadran vide */}
-        {isLoading ? (
+        {isLoading && !fixture ? (
           <p className="text-xs text-muted-foreground">Lecture du cache local…</p>
-        ) : error ? (
-          <p className="text-xs text-destructive">Cache BSD indisponible : {error}</p>
-        ) : isUnavailable || !fixture ? (
-          <p className="text-xs text-muted-foreground">
-            Aucune donnée 1xBet pour cette rencontre. Le cache couvre les ligues
-            servies par le cron — la donnée n&apos;est pas simulée.
-          </p>
-        ) : (
+        ) : fixture ? (
           <>
+            {/* Avertissement non bloquant — muted, pas rouge : ce n'est pas
+                une faute de l'utilisateur. */}
+            {notice && (
+              <p
+                className="rounded-md border border-dashed px-3 py-2 text-[11px] text-muted-foreground"
+                role="note"
+              >
+                {notice}
+              </p>
+            )}
             {/* Fraîcheur : le popup affiche QUAND, il ne prétend pas au temps réel */}
             {isStale && (
               <p
@@ -233,6 +260,22 @@ export function BasketballPreMatchPopup({
             <FormSection fixture={fixture} />
             <H2hEntry fixture={fixture} onOpen={() => setH2hOpen(true)} />
           </>
+        ) : notice ? (
+          <p className="rounded-md border border-dashed px-3 py-2 text-[11px] text-muted-foreground" role="note">
+            {notice}
+            <span className="mt-1 block text-[10px]">
+              Le classement et le last-10 ne sont pas lisibles sans cache.
+            </span>
+          </p>
+        ) : isUnavailable ? (
+          <p className="text-xs text-muted-foreground">
+            Aucune donnée 1xBet pour cette rencontre. Le cache couvre les ligues
+            servies par le cron — la donnée n&apos;est pas simulée.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Aucune donnée 1xBet pour cette rencontre.
+          </p>
         )}
       </DialogContent>
 

@@ -71,11 +71,23 @@ async function main() {
   const dateTo = new Date(Date.now() + DAYS * 86_400_000).toISOString().slice(0, 10);
 
   console.log(`fenêtre ${dateFrom} → ${dateTo}${LEAGUES ? ` · ligues ${LEAGUES}` : ""}`);
-  const listing = await getBasketballEvents({
-    date_from: dateFrom,
-    date_to: dateTo,
-    limit: 200,
-  });
+  // Sans ce try/catch, un échec réseau ici terminait le process en exception :
+  // aucun fichier n'était écrit, l'ancien cache restait (bon) mais RIEN ne
+  // signalait l'échec au cron. On échoue explicitement, avec une trace, et on
+  // garde l'ancien cache intact — jamais d'écriture partielle.
+  let listing: Awaited<ReturnType<typeof getBasketballEvents>>;
+  try {
+    listing = await getBasketballEvents({
+      date_from: dateFrom,
+      date_to: dateTo,
+      limit: 200,
+    });
+  } catch (err) {
+    console.error(`[FATAL] liste des matchs impossible : ${(err as Error).message}`);
+    console.error("[FATAL] ancien cache conservé, rien n'est écrit.");
+    process.exitCode = 1;
+    return;
+  }
   let events = listing.results;
   if (LEAGUES) events = events.filter((e) => LEAGUES.includes(e.league.id));
   console.log(`${listing.count} matchs dans la fenêtre, ${events.length} retenus`);
@@ -221,9 +233,20 @@ async function main() {
     console.log("--dry-run : rien n'est écrit.");
     return;
   }
+
+  // ⚠️ Écriture ATOMIQUE : temp + rename.
+  //
+  // `writeFileSync` direct réécrit le fichier à plat. La route lit ce même
+  // fichier en cours de route : elle peut donc intercepter un JSON TRONQUÉ,
+  // échouer sur `JSON.parse` et répondre 503 — un « cache absent » fantôme
+  // pendant la fraction de seconde de l'écriture. `rename` est atomique au
+  // sein d'un même système de fichiers : le lecteur voit l'ancien OU le
+  // nouveau fichier, jamais un à moitié écrit.
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-  fs.writeFileSync(OUT_FILE, JSON.stringify(cache, null, 1), "utf8");
-  console.log(`écrit ${OUT_FILE}`);
+  const tmp = `${OUT_FILE}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, JSON.stringify(cache, null, 1), "utf8");
+  fs.renameSync(tmp, OUT_FILE);
+  console.log(`écrit ${OUT_FILE} (atomique, ${cache.fixtures.length} fixtures)`);
 }
 
 /**

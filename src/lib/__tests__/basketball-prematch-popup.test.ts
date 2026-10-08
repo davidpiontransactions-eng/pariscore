@@ -4,6 +4,7 @@ import {
   summarizeOdds,
   standingLabel,
   h2hSupport,
+  infraMessage,
 } from "@/components/basketball/basketball-prematch-popup";
 import { findBsdFixture, findBsdFixtureByTeam, type BsdCacheResponse } from "@/hooks/use-bsd-cache";
 import type { CachedOdds } from "@/lib/basketball-bsd-cache";
@@ -247,5 +248,38 @@ describe("h2hSupport — couverture déclarée par les données, pas par le type
     for (const id of [null, 3, 4, 5, 99]) {
       expect(h2hSupport(id).supported, `ligue ${id} acceptée par défaut`).toBe(false);
     }
+  });
+});
+
+describe("infraMessage — on ne parle pas de reverse-proxy au parieur", () => {
+  test("un code HTTP brut ne doit jamais fuiter à l'écran", () => {
+    // Régression : le popup affichait « Cache BSD indisponible : HTTP 502 » en
+    // rouge. Le 502 vient de nginx (upstream), pas de notre route — il n'a
+    // aucun sens pour l'utilisateur.
+    for (const code of ["HTTP 502", "HTTP 500", "HTTP 504", "HTTP 404"]) {
+      const msg = infraMessage(code);
+      expect(msg, `${code} fuit tel quel`).not.toBeNull();
+      expect(msg).not.toContain("HTTP");
+      expect(msg).not.toContain(String(code).slice(-3));
+    }
+  });
+
+  test("les échecs réseau sont normalisés aussi", () => {
+    for (const e of ["fetch failed", "network timeout", "ECONNRESET"]) {
+      expect(infraMessage(e)).not.toContain(e);
+    }
+  });
+
+  test("pas d'erreur ⇒ null (aucun bandeau affiché)", () => {
+    expect(infraMessage(null)).toBeNull();
+    expect(infraMessage(undefined)).toBeNull();
+    expect(infraMessage("")).toBeNull();
+  });
+
+  test("une erreur de MAISON (pas infra) reste affichée telle quelle", () => {
+    // Si notre route renvoie un message propre du type « paramètre league
+    // invalide », on le montre : il vient de nous et il est actionnable.
+    const maison = "paramètre `league` invalide";
+    expect(infraMessage(maison)).toBe(maison);
   });
 });

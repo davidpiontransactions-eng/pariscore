@@ -67,12 +67,41 @@ export type BsdCacheResponse = {
   details?: string;
 };
 
+/**
+ * Lecture de la route cache, avec SÉPARATION des deux échecs.
+ *
+ * C'est la distinction qui permet de ne pas invalider la popup :
+ *
+ *  (a) Notre route répond un JSON en 400/503 (cache absent, paramètre
+ *      invalide) → c'est une ABSENCE SIGNALÉE. On la normalise en payload :
+ *      le composant affiche « aucune donnée », pas une erreur.
+ *
+ *  (b) Un corps non-JSON (nginx 502, page d'erreur Next) OU une exception
+ *      réseau → ce n'est PAS notre route, c'est l'infrastructure. On THROW :
+ *      SWR conserve alors la dernière donnée valide (`keepPreviousData`), et le
+ *      composant peut afficher ses sections + un avis non bloquant.
+ *
+ * ⚠️ Rétrogression corrigée : l'ancien code RETOURNAIT un objet synthétique
+ * vide sur tout `!res.ok`. Résultat : un simple 502 dû au redémarrage PM2
+ * écrasait une donnée par ailleurs lisible, et la popup s'affichait vide avec
+ * « HTTP 502 » en rouge.
+ */
 const fetcher = async (url: string): Promise<BsdCacheResponse> => {
   const res = await fetch(url, { cache: "no-store" });
-  // 503 = cache absent. On le propage tel quel : le composant affiche la
-  // raison, il ne simule pas une journée sans match.
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as Partial<BsdCacheResponse>;
+  const text = await res.text();
+
+  let body: Partial<BsdCacheResponse> | null = null;
+  try {
+    body = JSON.parse(text) as Partial<BsdCacheResponse>;
+  } catch {
+    body = null;
+  }
+
+  // (b) Pas de JSON ⇒ pas notre route. On laisse SWR gérer l'erreur.
+  if (!res.ok && !body) throw new Error(`HTTP ${res.status}`);
+
+  // (a) JSON mais statut d'erreur ⇒ absence annoncée par NOTRE route.
+  if (!res.ok && body) {
     return {
       source: "bsd-cache",
       fetchedAt: "",
@@ -87,7 +116,9 @@ const fetcher = async (url: string): Promise<BsdCacheResponse> => {
       details: body.details,
     };
   }
-  return res.json();
+
+  if (!body) throw new Error(`réponse illisible (HTTP ${res.status})`);
+  return body as BsdCacheResponse;
 };
 
 export type UseBsdCacheResult = {
