@@ -1123,7 +1123,10 @@ function _resolve1xBetPath() {
     p.join(__dirname, '..', 'data', 'odds_1xbet_mma.json'),
   ];
   for (const c of candidates) {
-    try { if (FS_1XBET.existsSync(c)) return c; } catch (_) {}
+    // turbopackIgnore: le chemin vient d'une BOUCLE, Turbopack ne peut pas
+    // l'analyser statiquement au build. Le contrôle reste valide à l'exécution
+    // (le fichier est seulement lu s'il existe). Aucune logique modifiée.
+    try { if (FS_1XBET.existsSync(/*turbopackIgnore: true*/ c)) return c; } catch (_) {}
   }
   return candidates[0];
 }
@@ -1133,9 +1136,9 @@ function getOdds1xBet() {
   if (_1xbetCache.data && (now - _1xbetCache.ts) < 300 * 1000) return _1xbetCache.data;
   try {
     const PATH_1XBET = _resolve1xBetPath();
-    if (!FS_1XBET.existsSync(PATH_1XBET)) return null;
+    if (!FS_1XBET.existsSync(/*turbopackIgnore: true*/ PATH_1XBET)) return null;
     // Staleness check: if file is older than 48h, log warning and return null
-    const stat = FS_1XBET.statSync(PATH_1XBET);
+    const stat = FS_1XBET.statSync(/*turbopackIgnore: true*/ PATH_1XBET);
     const fileAgeMs = now - stat.mtimeMs;
     const MAX_AGE_MS = 7 * 24 * 3600 * 1000; // 7 jours (scraper n'est pas quotidien)
     if (fileAgeMs > MAX_AGE_MS) {
