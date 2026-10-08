@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { normHandballName } from "./handball-logos";
-import { resolveHandballDataFile } from "./handball-flashscore";
+import { resolveDataFile } from "./data-dir";
 import type { HandballMatch, HandballOpeningOdds } from "./handball-data";
 
 /** Cotes 1X2 (marché 223) ou 2 voies (221 → draw absent). */
@@ -87,20 +87,13 @@ const CACHE_TTL_MS = 5 * 60_000;
 let _cache: { snap: OddsPapiSnapshot | null; ts: number } | undefined;
 
 /**
- * Résout data/odds_handball_papi.json : helper resolveHandballDataFile d'abord
- * (cwd standalone .next/standalone), puis DATA_DIR (VPS), puis cwd/data.
+ * Résout data/odds_handball_papi.json : helper partagé `resolveDataFile`
+ * (couvre `DATA_DIR` puis les racines vivantes du dépôt, cf. `data-dir.ts`).
+ * Ancien repli local supprimé — il faisait `DATA_DIR || cwd/data`, donc la
+ * copie figée du build standalone quand `DATA_DIR` est le seul réglage actif.
  */
 function resolveSnapshotFile(): string | null {
-  const fromHelper = resolveHandballDataFile("odds_handball_papi.json");
-  if (fromHelper) return fromHelper;
-  try {
-    const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-    const file = join(dataDir, "odds_handball_papi.json");
-    // turbopackIgnore : chemin runtime (env DATA_DIR) — bead ParisScorebis-r4g8.
-    return existsSync(/*turbopackIgnore: true*/ file) ? file : null;
-  } catch {
-    return null;
-  }
+  return resolveDataFile("odds_handball_papi.json");
 }
 
 /** Lit le snapshot Papi. null = fichier absent/invalide (state caché, TTL 5 min). */

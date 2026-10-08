@@ -5,32 +5,22 @@
  * Ids d'équipe = hash déterministe du nom (join finished ↔ upcoming).
  */
 
-import { existsSync } from "fs";
-import { join } from "path";
+import { resolveDataFile } from "./data-dir";
 import type { HandballMatch, HandballOpeningOdds } from "./handball-data";
 
 /**
- * Résout data/<name> quel que soit le cwd.
- * Prod standalone : cwd = <repo>/.next/standalone → remonte de 2 niveaux.
- * Dev : cwd = racine repo → candidat direct.
+ * Résout data/<name> quel que soit le cwd ET quel que soit le dossier de
+ * données vivant (voir `data-dir.ts` : la prod a deux racines, `DATA_DIR` +
+ * le dépôt).
+ *
+ * ⚠️ Ne PAS réintroduire une marche à `cwd` ± N niveaux ici : le premier
+ * candidat (`cwd/data`) est la COPIE figée par `next build`, servie parce que
+ * le serveur standalone fait `process.chdir(__dirname)`. C'est exactement ce
+ * qui faisait que l'API handball servait un snapshot de 2 h de retard pendant
+ * que le cron écrivait un fichier frais (constaté le 2026-10-08).
  */
 export function resolveHandballDataFile(name: string): string | null {
-  const candidates = [
-    join(process.cwd(), "data", name),
-    join(process.cwd(), "..", "data", name),
-    join(process.cwd(), "..", "..", "data", name),
-    join(process.cwd(), "..", "..", "..", "data", name),
-  ];
-  for (const candidate of candidates) {
-    try {
-      // turbopackIgnore : candidats calculés (cwd ± niveaux) — sans cette
-      // annotation Turbopack trace le projet entier (bead ParisScorebis-r4g8).
-      if (existsSync(/*turbopackIgnore: true*/ candidate)) return candidate;
-    } catch {
-      // chemin illisible → candidat suivant
-    }
-  }
-  return null;
+  return resolveDataFile(name);
 }
 
 export type FlashscoreMatch = {

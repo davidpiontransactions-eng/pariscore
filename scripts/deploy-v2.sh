@@ -202,12 +202,17 @@ if [ "$NEED_BUILD" = "1" ]; then
   chown -R ubuntu:ubuntu .next/standalone/ 2>/dev/null || true
   ok "  Static assets permissions fixed"
 
-  # --- Symlink data directory inside standalone ---
-  log "  Ensuring data symlink in standalone..."
-  if [ ! -L .next/standalone/data ]; then
-    ln -sf "$(pwd)/data" .next/standalone/data 2>/dev/null || true
-  fi
-  ok "  Data symlink ensured"
+  # --- PAS de symlink data/ dans le standalone (retiré le 2026-10-08) ---
+  # Ce bloc etait `if [ ! -L .next/standalone/data ]` : `next build` cree un
+  # REPERTOIRE reel a cet endroit (file tracing), donc la garde etait toujours
+  # fausse et le symlink n'a jamais existe : un faux fix qui masquait le
+  # probleme. Surtout, un lien unique aurait ete une REGRESSION : la prod a
+  # deux dossiers data/ vivants (`$OPT_DIR/data` alimente par les crons
+  # hockey/oddalerts, `<repo>/data` par les crons flashscore/tennis/snooker).
+  # Un seul lien aurait affame l'une des deux familles.
+  # La lecture multi-racines est désormais dans `src/lib/data-dir.ts`
+  # (resolveDataFile : DATA_DIR, puis data/ vivants, puis copies de build).
+  ok "  Data resolution handled by src/lib/data-dir.ts (no symlink)"
 
   # --- Fix Nginx CSP (remove double-quoting) ---
   log "  Fixing Nginx CSP header..."
@@ -226,6 +231,19 @@ fi
 # --- [7/9] PM2 restart ---
 log "[7/9] PM2 restart..."
 pm2 restart "$PM2_LEGACY" --update-env 2>&1 | tail -3 | tee -a "$LOG_FILE" || echo "  warn: pm2 restart $PM2_LEGACY failed"
+
+# Chaîne hockey — 6 crons, hors du garde-fou $BUILD_RAN (délibéré).
+# Scrapers `node scripts/*.mjs` autonomes : lisent/écrivent `data/*.json`, sans
+# dépendance au build Next.js. Les 4 crons du bloc suivant restent sous le
+# garde-fou — leur dépendance au code Next.js y est déclarée, et la modifier sans
+# mesure serait une hypothèse. Ces 6 n'étaient inscrits qu'à la main : sur un VPS
+# reconstruit, aucun ne démarrait, SILENCIEUSEMENT (un cron non inscrit est un
+# cron absent, pas un cron en erreur). L'ordre des lignes ne séquence rien
+# (startOrRestart enregistre, n'exécute pas) — la séquence 03:00 → 03:15 → 03:30
+# → 03:45 → 04:00 → 04:10 est portée par les `cron_restart`.
+for HC in annabet prematch eliteprospects khl projections restart; do
+  pm2 startOrRestart ecosystem.config.js --only "pariscore-cron-hockey-$HC" --update-env 2>/dev/null || true
+done
 
 if [ "$BUILD_RAN" = "1" ]; then
   pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
