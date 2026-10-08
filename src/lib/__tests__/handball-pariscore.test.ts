@@ -573,3 +573,98 @@ describe("computePariscorePrediction — régression du prior neutre aveugle", (
     expect(Math.abs(p.scoreAway - p.scoreHome)).toBeLessThanOrEqual(3);
   });
 });
+
+/**
+ * COHÉRENCE score ↔ 1N2 — la régression que le correctif de sourcing a rendue
+ * visible.
+ *
+ * Skellam est une différence de deux POISSON : son λ est une MOYENNE. Le chemin
+ * CMP fournit des TAUX (λ ≈ 1.15× la moyenne, et le facteur dépend de ν). Or le
+ * classement des TAUX peut s'inverser par rapport à celui de leurs moyennes —
+ * un ν élevé exige un taux bien plus grand pour la même espérance. Skellam ne
+ * lisant que le RAPPORT λh/λe, le 1N2 sortait alors à l'opposé du score
+ * affiché juste au-dessus.
+ *
+ * Mesuré sur CSM Bucuresti vs Minaur Baia Mare (14 matchs réels chacun) :
+ * score 30:36 MAIS 1N2 99.3 % domicile. Le chemin dormait parce que le store
+ * retombait presque toujours sous CMP_MIN_HISTORY (prior neutre).
+ *
+ * L'invariant testé est simple et sans exception : **l'équipe au score prédit
+ * le plus élevé doit avoir la probabilité de victoire la plus élevée.**
+ */
+describe("computePariscorePrediction — cohérence score prédit ↔ winrate 1N2", () => {
+  /** leagueGoalsPerTeam("Liga Nationala", "Romania") mesuré en base. */
+  const ROMANIA_MEAN = 30.1;
+
+  test("le côté au score prédit le plus élevé a la probabilité de victoire la plus élevée (toute la fixture)", () => {
+    for (const f of fixture.fixtures) {
+      const p = computePariscorePrediction(
+        makeMatch(f.home, f.homeId, f.away, f.awayId, `${f.date}T${f.time}:00+02:00`),
+        {
+          formStore: storeOf(
+            [f.home, f.homeId, F[f.home]],
+            [f.away, f.awayId, F[f.away]],
+          ),
+        },
+      );
+      if (p.scoreHome > p.scoreAway) {
+        expect(p.winrate.home).toBeGreaterThan(p.winrate.away);
+      } else if (p.scoreAway > p.scoreHome) {
+        expect(p.winrate.away).toBeGreaterThan(p.winrate.home);
+      }
+    }
+  });
+
+  test("aucune probabilité de victoire ne s'approche d'une certitude", () => {
+    // Un 1N2 à > 95 % est mathématiquement possible mais invendable (cf.
+    // PARISCORE_MAX_PROB_PCT) : ici c'est un SIGNAL D'ALERTE sur un fit CMP
+    // mal conditionné, pas une information de marché.
+    for (const f of fixture.fixtures) {
+      const p = computePariscorePrediction(
+        makeMatch(f.home, f.homeId, f.away, f.awayId, `${f.date}T${f.time}:00+02:00`),
+        {
+          formStore: storeOf(
+            [f.home, f.homeId, F[f.home]],
+            [f.away, f.awayId, F[f.away]],
+          ),
+        },
+      );
+      const top = Math.max(p.winrate.home, p.winrate.away);
+      expect(top).toBeLessThan(95);
+      expect(top).toBeGreaterThan(20);
+    }
+  });
+
+  test("le cas réel CSM/Minaur : 1N2 et score vont dans le même sens", () => {
+    // Séries réelles (handball_match_history, 14 matchs chacune).
+    const m: HandballMatch = {
+      id: 777_003,
+      league: { id: 161, name: "Liga Nationala", country: "Romania", countryCode: "RO" },
+      home: { id: 101, name: "CSM Bucuresti" },
+      away: { id: 102, name: "Minaur Baia Mare" },
+      kickoff: "2026-10-08T15:00:00+02:00",
+      status: "not_started",
+    };
+    const csmReal: Series = {
+      gf: [33, 34, 23, 51, 28, 36, 30, 38, 29, 31, 39, 33, 31, 33],
+      ga: [34, 34, 25, 34, 23, 40, 38, 28, 27, 29, 30, 29, 24, 34],
+    };
+    const minaurReal: Series = {
+      gf: [31, 27, 38, 25, 28, 27, 32, 28, 37, 28, 29, 33, 31, 27],
+      ga: [23, 19, 26, 25, 25, 36, 28, 36, 25, 30, 33, 30, 23, 25],
+    };
+    const p = computePariscorePrediction(m, {
+      formStore: storeOf(
+        ["CSM Bucuresti", 101, csmReal],
+        ["Minaur Baia Mare", 102, minaurReal],
+      ),
+      leagueMean: ROMANIA_MEAN,
+    });
+    expect(p.hasForm).toBe(true);
+    // Le score annoncé décide du côté favorisé, et le 1N2 doit suivre.
+    const homeWins = p.scoreHome > p.scoreAway;
+    const topHome = p.winrate.home > p.winrate.away;
+    expect(homeWins).toBe(topHome);
+    expect(Math.max(p.winrate.home, p.winrate.away)).toBeLessThan(95);
+  });
+});

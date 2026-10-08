@@ -486,15 +486,34 @@ export function computePariscorePrediction(
     leagueMean,
   );
 
-  const w = skellamMatchProbs(lambdaH, lambdaE);
-  const total = pickTotalThreshold(lambdaH, nuH, lambdaE, nuE, opts.totalOdds);
+  // Sur le modèle ajusté, λ est un TAUX CMP et non une moyenne de buts : toute
+// lecture de λ doit repasser par cmpMean, sinon on lit ~13 buts au lieu de
+// ~30 (E[X](30, ν=1.3) = 13.6). (Au prior neutre ν = 1, cmpMean(λ) = λ.)
+const meanH = cmpMean(lambdaH, nuH);
+const meanE = cmpMean(lambdaE, nuE);
 
-  // Sur le modèle ajusté, λ est un TAUX CMP et non une moyenne de buts : le
-  // score affiché doit repasser par cmpMean, sinon on afficherait ~80 buts
-  // au lieu de ~29. (Au prior neutre ν = 1, cmpMean(λ) = λ — neutre.)
-  const meanH = cmpMean(lambdaH, nuH);
-  const meanE = cmpMean(lambdaE, nuE);
-  const pct = (v: number) => round1(v * 100);
+const total = pickTotalThreshold(lambdaH, nuH, lambdaE, nuE, opts.totalOdds);
+
+// ⚠️ Skellam reçoit les MOYENNES, pas les taux CMP.
+//
+// Skellam est une différence de deux POISSON : son λ est la moyenne. Lui passer
+// les taux produit un 1X2 qui peut CONTREDIRE le score affiché juste au-dessus.
+// Mesuré sur CSM Bucuresti vs Minaur Baia Mare (14 matchs chacun, données
+// réelles, base ligue 30.06) : le score sortait à 30:36 (défaite de CSM) mais le
+// 1N2 à 99.3 % de victoire domicile.
+//
+// Pourquoi : λ est un taux, donc le RANGEMENT des λ en fonction de ν peut
+// s'inverser par rapport à celui de leurs moyennes (un ν élevé exige un taux
+// bien plus grand pour la même espérance). Or Skellam ne lit que le RAPPORT
+// λh/λe. Les deux nt étaient inversés.
+//
+// Ce bug dormait parce que ce chemin était presque jamais atteint : le store
+// descendait presque toujours sous CMP_MIN_HISTORY et le moteur tombait sur son
+// prior neutre (28:28, 47.4 %-5.3 %-47.4 %). Le correctif de sourcing rend le
+// chemin CMP-Fréquent — il aurait fallu corriger les deux ensemble.
+const w = skellamMatchProbs(meanH, meanE);
+
+const pct = (v: number) => round1(v * 100);
   const winrate: PariscoreWinrate = {
     home: pct(w.home),
     draw: pct(w.draw),
