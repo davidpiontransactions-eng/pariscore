@@ -32,11 +32,14 @@ function getDb(): BSD | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Database } = require("bun:sqlite") as { Database: new (file: string, opts?: object) => BSD };
+    // `eval("require")` : le bundler réécrit un `require("bun:sqlite")` littéral
+    // en résolution Node (qui échoue dans le bundle standalone) — mesuré en prod
+    // 2026-10-05 (cf. handball-history-db.ts). Le runtime sait charger bun:sqlite.
+    const req = eval("require") as NodeRequire;
+    const { Database } = req("bun:sqlite") as { Database: new (file: string, opts?: object) => BSD };
     _db = new Database(SQLITE_FILE, { readonly: true });
     return _db;
-  } catch {
+  } catch (bunErr) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Database = require("better-sqlite3") as unknown as {
@@ -44,17 +47,23 @@ function getDb(): BSD | null {
       };
       _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
       return _db;
-    } catch (err) {
+    } catch (nodeErr) {
       _dbUnavailable = true;
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `[vitibet] pariscore.db non lisible (${SQLITE_FILE}) — ` +
-            `pronostics Vitibet désactivés. Détail: ${(err as Error).message}`
-        );
-      }
+      // Journalisé TOUJOURS (pas de guard NODE_ENV) : l'échec silencieux en prod
+      // a coûté toute la mission SPS/DR sur tennis-stats/db.ts.
+      console.warn(
+        `[vitibet] Aucun pilote SQLite n'a pu ouvrir ${SQLITE_FILE} — ` +
+          `bun:sqlite: ${firstLine(bunErr)} · better-sqlite3: ${firstLine(nodeErr)}. ` +
+          "Pronostics Vitibet désactivés."
+      );
       return null;
     }
   }
+}
+
+function firstLine(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  return m.split("\n")[0].slice(0, 200);
 }
 
 /** Jour courant Europe/Paris (« AAAA-MM-JJ ») — début de fenêtre J → J+3. */

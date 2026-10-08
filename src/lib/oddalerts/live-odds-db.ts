@@ -17,24 +17,42 @@ let _dbUnavailable = false;
 function getDb(): BSD | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
+  // Double driver : `bun:sqlite` d'abord via `eval("require")` — le runtime de
+  // prod est Bun, où better-sqlite3 est REFUSÉ (« not yet supported in Bun »),
+  // et le bundler réécrit un `require` littéral en résolution Node qui échoue.
+  // Même pattern que tennis-stats/db.ts (migration 2026-10-08).
   try {
-    // better-sqlite3 est un module natif CJS (serverExternalPackages) —
-    // require dynamique pour ne pas le charger côté client.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as unknown as {
-      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
+    const req = eval("require") as NodeRequire;
+    const { Database } = req("bun:sqlite") as {
+      Database: new (file: string, opts?: object) => BSD;
     };
-    _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
+    _db = new Database(SQLITE_FILE, { readonly: true });
     return _db;
-  } catch (err) {
-    _dbUnavailable = true;
-    if (process.env.NODE_ENV !== "production") {
+  } catch (bunErr) {
+    try {
+      // Runtime Node : `bun:sqlite` n'existe pas, better-sqlite3 est le seul pilote.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Database = require("better-sqlite3") as unknown as {
+        new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
+      };
+      _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
+      return _db;
+    } catch (nodeErr) {
+      _dbUnavailable = true;
+      // Journalisé TOUJOURS (pas de guard NODE_ENV).
       console.warn(
-        `[oddalerts-live-odds] pariscore.db non lisible (${SQLITE_FILE}) — live odds désactivées. Détail: ${(err as Error).message}`
+        `[oddalerts-live-odds] Aucun pilote SQLite n'a pu ouvrir ${SQLITE_FILE} — ` +
+          `bun:sqlite: ${firstLine(bunErr)} · better-sqlite3: ${firstLine(nodeErr)}. ` +
+          "Live odds désactivées."
       );
+      return null;
     }
-    return null;
   }
+}
+
+function firstLine(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  return m.split("\n")[0].slice(0, 200);
 }
 
 function rowToMarket(row: Record<string, unknown>): OddAlertsLiveOddsParsed {

@@ -37,23 +37,54 @@ type SqliteLike = {
 let _db: SqliteLike | null = null;
 let _dbUnavailable = false;
 
+/** Ouvre la base avec `bun:sqlite` via `eval("require")` : le bundler réécrit un
+ *  `require` littéral en résolution Node (qui échoue dans le bundle standalone).
+ *  C'est LE chemin qui fonctionne sous Bun, où better-sqlite3 est refusé. */
+function openNativeSqlite(): SqliteLike {
+  const req = eval("require") as NodeRequire;
+  const { Database } = req("bun:sqlite") as {
+    Database: new (file: string, opts?: object) => SqliteLike;
+  };
+  return new Database(
+    process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db"),
+    { readonly: true },
+  );
+}
+
 function getDb(): SqliteLike | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as unknown as {
-      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): SqliteLike;
-    };
-    _db = new Database(
-      process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db"),
-      { readonly: true, fileMustExist: true },
-    );
+    _db = openNativeSqlite();
     return _db;
-  } catch {
-    _dbUnavailable = true;
-    return null;
+  } catch (bunErr) {
+    try {
+      // Runtime Node : `bun:sqlite` n'existe pas, better-sqlite3 est le seul pilote.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Database = require("better-sqlite3") as unknown as {
+        new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): SqliteLike;
+      };
+      _db = new Database(
+        process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db"),
+        { readonly: true, fileMustExist: true },
+      );
+      return _db;
+    } catch (nodeErr) {
+      _dbUnavailable = true;
+      // Journalisé TOUJOURS (pas de guard NODE_ENV) : l'échec silencieux en prod
+      // a coûté toute la mission SPS/DR sur tennis-stats/db.ts.
+      console.warn(
+        `[tennis-top5] Aucun pilote SQLite — bun:sqlite: ${firstLine(bunErr)} · ` +
+          `better-sqlite3: ${firstLine(nodeErr)}. Stats Top 5 désactivées.`
+      );
+      return null;
+    }
   }
+}
+
+function firstLine(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  return m.split("\n")[0].slice(0, 200);
 }
 
 const SURFACE_SQL: Record<Top5Surface, string[]> = {

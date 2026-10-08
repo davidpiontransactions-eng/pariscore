@@ -17,7 +17,7 @@
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { ValidationError } from "@/lib/api-error";
-import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
+import { getPlayerStatsBatch, normalizeName } from "@/lib/tennis-stats/db";
 import { fetchPlayers } from "@/lib/bsd-tennis-service";
 import { computeL10SurfaceFromDb } from "@/lib/tennis-elo/l10-surface";
 import { prisma } from "@/lib/prisma";
@@ -124,10 +124,12 @@ export async function GET(request: Request) {
           const rank = hit.current_ranking?.position ?? null;
           const type = hit.current_ranking?.type ?? (hit.gender === "F" ? "WTA" : "ATP");
           if (rank != null) {
-            map[name] = {
-              ...(map[name] ?? {}),
-              ...(type === "WTA" ? { wtaRank: rank } : { atpRank: rank }),
-            };
+            // Clé NORMALISÉE, identique à getPlayerStatsBatch : indexer par le nom
+            // brut créait DEUX clés par joueur (ex. `ekaterina alexandrova` pour la
+            // DB et `Ekaterina Alexandrova` pour le repli BSD) et le rang officiel
+            // du repli n'était pas lu par un UI qui lit la clé normalisée → `#—`.
+            const outKey = normalizeName(name);
+            map[outKey] = { ...(map[outKey] ?? {}), ...(type === "WTA" ? { wtaRank: rank } : { atpRank: rank }) };
           }
         }
       } catch {

@@ -131,27 +131,48 @@ let _dbUnavailable = false;
 /**
  * Ouvre pariscore.db en lecture seule (singleton). Retourne null si absente —
  * l'appelant dégrade alors gracieusement (état vide côté UI).
+ *
+ * Double driver : `bun:sqlite` d'abord via `eval("require")` (le runtime de
+ * prod est Bun, où better-sqlite3 est REFUSÉ — et le bundler réécrit un
+ * `require` littéral en résolution Node qui échoue), `better-sqlite3` en repli
+ * (node). Même pattern que tennis-stats/db.ts.
  */
 function getDb(): SqliteLike | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as unknown as {
-      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): SqliteLike;
+    const req = eval("require") as NodeRequire;
+    const { Database } = req("bun:sqlite") as {
+      Database: new (file: string, opts?: object) => SqliteLike;
     };
-    _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
+    _db = new Database(SQLITE_FILE, { readonly: true });
     return _db;
-  } catch (err) {
-    _dbUnavailable = true;
-    if (process.env.NODE_ENV !== "production") {
+  } catch (bunErr) {
+    try {
+      // Runtime Node : `bun:sqlite` n'existe pas, better-sqlite3 est le seul pilote.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Database = require("better-sqlite3") as unknown as {
+        new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): SqliteLike;
+      };
+      _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
+      return _db;
+    } catch (nodeErr) {
+      _dbUnavailable = true;
+      // Journalisé TOUJOURS (pas de guard NODE_ENV) : l'échec silencieux en prod
+      // a coûté toute la mission SPS/DR sur tennis-stats/db.ts.
       console.warn(
-        `[tennis-leaderboard] pariscore.db non lisible (${SQLITE_FILE}) — ` +
-          `leaderboard désactivé. Détail: ${(err as Error).message}`
+        `[tennis-leaderboard] Aucun pilote SQLite n'a pu ouvrir ${SQLITE_FILE} — ` +
+          `bun:sqlite: ${firstLine(bunErr)} · better-sqlite3: ${firstLine(nodeErr)}. ` +
+          "Leaderboard désactivé."
       );
+      return null;
     }
-    return null;
   }
+}
+
+function firstLine(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  return m.split("\n")[0].slice(0, 200);
 }
 
 
