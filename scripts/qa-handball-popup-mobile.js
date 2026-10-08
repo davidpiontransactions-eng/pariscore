@@ -25,6 +25,9 @@ const VIEWPORTS = [
   { name: "430x932 (iPhone 15 Pro Max)", width: 430, height: 932 },
 ];
 
+/** Marge de tolérance : 1 px de rounding sub-pixel n'est pas un débordement. */
+const OVERFLOW_TOLERANCE = 2;
+
 const CTX_BASE = {
   isMobile: true,
   hasTouch: true,
@@ -32,14 +35,7 @@ const CTX_BASE = {
     "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36",
 };
 
-/** Ratio de contraste WCAG entre deux couleurs rgb(). */
-function luminance([r, g, b]) {
-  const f = (v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-}
+/** Ratio de contraste WCAG — non utilisé : calculé dans la page (voir plus bas). */
 
 (async () => {
   const out = [];
@@ -75,6 +71,10 @@ function luminance([r, g, b]) {
         await page.screenshot({ path: `${SHOTS}/qa-hb-${vp.width}-no-match.png` }).catch(() => {});
         continue;
       }
+      // Ouvrir le premier match du calendrier.
+      const opener = page.locator('[aria-label^="Analyse du match"]').first();
+      const label = await opener.getAttribute("aria-label");
+      log(`match ouvert : ${label}`);
       await opener.click();
       await page.waitForTimeout(3500);
 
@@ -88,10 +88,35 @@ function luminance([r, g, b]) {
         const vw = window.innerWidth;
 
         // 1. débordement
+        //
+        // ⚠️ Deux pièges de mesure, tous deux corrige par une证据 mesurée :
+        //
+        // (a) On IGNORE les descendants d'un conteneur à défilement horizontal :
+        //     un onglet d'un carrousel `overflow-x: auto` a par construction un
+        //     `right` au-delà du bord tout en étant CORRECTEMENT affiché dans la
+        //     fenêtre du carrousel. Les compter tous donnait « 1 débordement »
+        //     à 375 px alors que scripts/qa-hb-tabs.js mesurait scrollLeft 0 et
+        //     6 onglets entièrement visibles.
+        //
+        // (b) La tolérance est écrite EN DUR : cette fonction est sérialisée et
+        //     exécutée DANS la page, donc elle ne peut pas fermer sur une
+        //     constante du scope Node (`OVERFLOW_TOLERANCE is not defined`).
+        //     2 px = arrondi sub-pixel, pas un débordement.
+        const inScroller = (el) => {
+          let n = el.parentElement;
+          while (n && n !== root) {
+            const ox = getComputedStyle(n).overflowX;
+            if ((ox === "auto" || ox === "scroll" || ox === "hidden") && n.scrollWidth > n.clientWidth + 1) {
+              return true;
+            }
+            n = n.parentElement;
+          }
+          return false;
+        };
         const over = [];
         root.querySelectorAll("*").forEach((el) => {
           const r = el.getBoundingClientRect();
-          if (r.width > 0 && r.right > vw + 1) {
+          if (r.width > 0 && r.right > vw + 2 && !inScroller(el)) {
             over.push({
               tag: el.tagName.toLowerCase(),
               cls: typeof el.className === "string" ? el.className.slice(0, 60) : "",
@@ -110,16 +135,55 @@ function luminance([r, g, b]) {
         // Étiquettes « Score Prédit » / occurrences d'un motif « NN : NN »
         const scoreCells = text.match(/\b\d{1,2}\s*:\s*\d{1,2}\b/g) || [];
 
-        // 3. badges Pwr / Forme : couleur + taille
+        // 3. badges Pwr / Forme : couleur + contraste RÉELS.
+        //    Le contraste est calculé ICI (dans la page) : `getComputedStyle`
+        //    renvoie `oklab(...)` / `lab(...)` sur les couleurs translucides de
+        //    Tailwind v4, illisibles pour une formule RGB — d'où des ratios
+        //    absurdes (124829168.5:1) quand le calcul était fait en Node. Un
+        //    canvas 2D convertit n'importe quelle couleur CSS en octets sRGB.
+        const toRGB = (() => {
+          const cv = document.createElement("canvas");
+          cv.width = cv.height = 1;
+          const g2 = cv.getContext("2d", { willReadFrequently: true });
+          return (color) => {
+            if (!g2) return [0, 0, 0];
+            g2.clearRect(0, 0, 1, 1);
+            g2.fillStyle = "#000";
+            g2.fillStyle = color; // couleur invalide → fillStyle reste noir
+            g2.fillRect(0, 0, 1, 1);
+            const d = g2.getImageData(0, 0, 1, 1).data;
+            return [d[0], d[1], d[2]];
+          };
+        })();
+        const lum = ([r, gr, b]) => {
+          const f = (v) => {
+            const x = v / 255;
+            return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+          };
+          return 0.2126 * f(r) + 0.7152 * f(gr) + 0.0722 * f(b);
+        };
+        const contrast = (fg, bg) => {
+          const a = lum(toRGB(fg));
+          const b = lum(toRGB(bg));
+          return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        };
+
         const badges = [];
         root.querySelectorAll("span").forEach((sp) => {
           const t = (sp.textContent || "").trim();
-          if (/^(⚡\s*)?Pwr\s/i.test(t) || /^🔥\s*Forme/i.test(t)) {
+          if (/^(⚡\s*)?Pwr\s/i.test(t) || /^\d{1,3}\.\d\s*%\s*de\s*Forme/i.test(t)) {
             const cs = getComputedStyle(sp);
+            // Fond réel : le chip translucide laisse voir la carte marine.
+            const chip = sp.parentElement ? getComputedStyle(sp.parentElement) : null;
+            const chipBg = chip && chip.backgroundColor !== "rgba(0, 0, 0, 0)" ? chip.backgroundColor : null;
+            const realBg = chipBg && !sp.parentElement.className.includes("bg-") ? "#0A2E5C" : chipBg;
+            const ratio = contrast(cs.color, realBg || "#0A2E5C");
             badges.push({
-              text: t.slice(0, 24),
+              text: t.replace(/\s*de\s*Forme Calculée/i, "").slice(0, 16),
               color: cs.color,
-              bg: cs.backgroundColor,
+              bg: chipBg || "rgba(0,0,0,0)",
+              realBg: realBg || "#0A2E5C",
+              ratio,
               weight: cs.fontWeight,
               size: cs.fontSize,
             });
@@ -176,16 +240,12 @@ function luminance([r, g, b]) {
       log(`<img> dans le pop-up (logos + illustrations) : ${probe.logoCount}`);
       log(`occurrences d'un motif « NN : NN » : ${probe.scoreCells.length} → ${JSON.stringify(probe.scoreCells)}`);
 
-      log(`\n-- BADGES KPI --`);
+log(`\n-- BADGES KPI --`);
       if (probe.badges.length === 0) log("!! aucun badge Pwr/Forme trouvé");
       probe.badges.forEach((b) => {
-        const parse = (s) => (s.match(/\d+/g) || []).slice(0, 3).map(Number);
-        const l1 = luminance(parse(b.color));
-        const l2 = luminance(parse(b.bg));
-        const ratio =
-          (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        const verdict = b.ratio >= 4.5 ? "AA OK" : b.ratio >= 3 ? "OK grand texte" : "ÉCHEC AA";
         log(
-          `   ${b.text.padEnd(22)} ${b.size}/${b.weight} ${b.color} sur ${b.bg} → contraste ~${ratio.toFixed(1)}:1 ${ratio >= 4.5 ? "AA OK" : ratio >= 3 ? "AA large OK" : "ÉCHEC"}`,
+          `   ${b.text.padEnd(14)} ${b.size}/${b.weight} ${b.color} sur ${b.realBg} → ${b.ratio.toFixed(1)}:1 ${verdict}`,
         );
       });
 
@@ -196,10 +256,6 @@ function luminance([r, g, b]) {
           `   ${probe.tabInfo.count} onglets · scrollWidth ${probe.tabInfo.scrollWidth} > clientWidth ${probe.tabInfo.clientWidth} → défilement : ${probe.tabInfo.scrollable} · overflow-x: ${probe.tabInfo.overflowX} · snap: ${probe.tabInfo.snapType}`,
         );
 
-      const label = await opener.getAttribute("aria-label");
-      log(`match ouvert : ${label}`);
-      // 5. Captures.
-      //
       // ⚠️ `locator.screenshot()` fait défiler l'élément pour le cadrer : sur un
       // pop-up plus haut que le viewport, Playwright remontait le CARRUSEL
       // d'onglets et la capture montrait « nalysis ». C'était un artefact de la
