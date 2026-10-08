@@ -164,16 +164,26 @@ function PowerBadge({ power, align }: { power: number; align: "left" | "right" }
   );
 }
 
-/** Badge « 🔥 Forme 71.7 % » — rouge / ambre / vert selon le seuil. */
+/**
+ * Badge de forme — `🔥 48.7%`, teinte rose / ambre / vert émeraude par paliers.
+ *
+ * Le mot « Forme » a été retiré après recette mobile : à 430 px la colonne
+ * d'équipe fait ~112 px, et « 🔥 Forme 48.7% » ne tient pas — le texte se
+ * réduisait à « 🔥 Forme 48… ». L'icône + la couleur portent déjà le sens, et
+ * c'est la forme demandée (`🔥 2.6%`). `title` + `sr-only` gardent le libellé
+ * long pour l'accessibilité.
+ */
 function FormBadge({ formPct, align }: { formPct: number; align: "left" | "right" }) {
   const tone = FORM_BADGE_TONE.find((t) => formPct < t.max) ?? FORM_BADGE_TONE[FORM_BADGE_TONE.length - 1];
   return (
     <span
-      className={`flex min-w-[5.25rem] flex-1 flex-col rounded-md px-1.5 py-0.5 ring-1 ${tone.chip}`}
+      className={`flex min-w-[4.25rem] flex-1 flex-col rounded-md px-1.5 py-0.5 ring-1 ${tone.chip}`}
       title={`Forme Calculée ${formPct}% — points/match pondérés par la récence, le lieu et l'écart de buts`}
     >
       <span className="truncate text-[10px] font-bold tabular-nums">
-        🔥 Forme {formPct.toFixed(1)}%
+        <span aria-hidden="true">🔥 </span>
+        {formPct.toFixed(1)}%
+        <span className="sr-only"> de Forme Calculée</span>
       </span>
       <Meter pct={formPct} bar={tone.bar} align={align} />
     </span>
