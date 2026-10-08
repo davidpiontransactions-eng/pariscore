@@ -9,6 +9,9 @@
 //   - Dates flexibles (today, tomorrow, etc.)
 
 import type { TennisMatch } from "@/lib/tennis-data";
+import { getPlayerStats } from "@/lib/tennis-stats/db";
+import { findPlayerElo, extractFormFromHistory } from "@/lib/player-matcher";
+import { resolvePlayerPhoto } from "@/lib/player-photos";
 
 const BBC_BASE = "https://www.bbc.co.uk/sport/tennis/us-open/scores-and-schedule";
 
@@ -140,23 +143,39 @@ function toTennisMatch(m: RawMatch, dateSlugNY: string): TennisMatch {
   const scheduledAt = etTimeToUtcIso(dateSlugNY, time);
   const gender = m.gender === "men" ? "M" : "F";
 
-  const mkPlayer = (name: string, seed?: number) => ({
-    id: `bbc-${name.toLowerCase().replace(/\s/g, "-")}`,
-    name,
-    shortName: name.split(" ").pop() || name,
-    rank: seed || 0,
-    elo: 1500,
-    photoUrl: "",
-    color: "#333",
-    form: [] as ("W" | "L")[],
-    country: "",
-    gender,
-  });
+  // R7.9 : la carte BBC affichait `Elo 1500 / #— / SPS — / DR —` en dur. On
+  // résout le joueur via la même base que le reste du tennis ; sans correspondance
+  // on laisse les champs à null/0 pour que l'UI affiche `—` plutôt qu'un faux Elo.
+  // Le seed BBC n'est PAS un classement ATP : il ne sert plus de `rank`.
+  const mkPlayer = (name: string) => {
+    const stats = getPlayerStats(name, "Dur");
+    const eloMatch = findPlayerElo(name);
+    const eloResolved = stats?.elo ?? eloMatch?.elo;
+    const eloKnown = Boolean(eloResolved);
+    const atp = stats?.atpRank ?? 0;
+    const wta = stats?.wtaRank ?? 0;
+    return {
+      id: `bbc-${name.toLowerCase().replace(/\s/g, "-")}`,
+      name,
+      shortName: name.split(" ").pop() || name,
+      rank: atp > 0 ? atp : wta,
+      elo: eloKnown ? Number(eloResolved) : 0,
+      eloKnown,
+      surfaceElo: stats?.eloSurface ?? (eloKnown ? Number(eloResolved) : 0),
+      sps: stats?.sps ?? undefined,
+      spsRank: stats?.spsRank ?? undefined,
+      photoUrl: resolvePlayerPhoto(name),
+      color: "#333",
+      form: eloMatch?.history ? extractFormFromHistory(eloMatch.history, 6) : [],
+      country: "",
+      gender,
+    };
+  };
 
   return {
     id: `bbc-usopen-${m.gender}-${m.playerA.replace(/\s/g, "-")}-${m.playerB.replace(/\s/g, "-")}`,
-    playerA: mkPlayer(m.playerA, m.seedA),
-    playerB: mkPlayer(m.playerB, m.seedB),
+    playerA: mkPlayer(m.playerA),
+    playerB: mkPlayer(m.playerB),
     tournament: "US Open",
     tournamentCategory: "Grand Chelem",
     surface: "Dur",

@@ -16,10 +16,30 @@ import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useBetNotify } from "@/hooks/use-bet-notify";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { sameBsdMatch } from "@/lib/bsd-id";
+import type { LivePlayerBrief } from "@/lib/live-state-builder";
 import type { TennisMatch } from "@/lib/tennis-data";
+import type { LiveMatchState } from "@/hooks/use-live-matches";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { PipMatchRow } from "@/components/tennis/pip-match-row";
 import { PipBetPanel } from "@/components/tennis/pip-bet-panel";
+
+type Props = {
+  /** Match sur lequel l'utilisateur a cliqué « Widget live » (carte ou détail).
+   *  Épinglé en tête du widget même s'il n'est pas encore en direct — sinon le
+   *  widget s'ouvre vide alors que l'utilisateur vient de choisir ce match. */
+  focusMatch?: TennisMatch | null;
+};
+
+/** Une ligne du widget : un match + son état live (absent si pas encore en direct). */
+type WidgetRow = {
+  match: TennisMatch;
+  liveState: LiveMatchState | undefined;
+  /** false = match ciblé pas encore joué (état "en attente du live"). */
+  isLive: boolean;
+  /** true = match ciblé par le clic sur le bouton. */
+  isFocus: boolean;
+};
 
 /** Normalisation d'un nom pour le lookup dans playerStatsMap.
  *  Doit matcher `normForLookup` côté match-card (sinon lookup rate). */
@@ -39,38 +59,36 @@ function shortName(fullName: string): string {
  *  On réutilise la logique de tennis-tab-content.tsx:234-277 (match synthétique). */
 function buildSyntheticMatch(
   id: string,
-  nameA: string,
-  nameB: string,
+  playerA: LivePlayerBrief,
+  playerB: LivePlayerBrief,
   tournamentName?: string,
   roundName?: string,
 ): TennisMatch {
-  const shortA = nameA.trim().split(/\s+/).pop() || nameA;
-  const shortB = nameB.trim().split(/\s+/).pop() || nameB;
+  const shortA = playerA.name.trim().split(/\s+/).pop() || playerA.name;
+  const shortB = playerB.name.trim().split(/\s+/).pop() || playerB.name;
+  // R7.9 : lelo et le rang viennent du flux live enrichi. `eloKnown: false` →
+  // on ne fabrique plus de 1500, la ligne affiche « — ».
+  const mkPlayer = (brief: LivePlayerBrief, short: string, color: string) => ({
+    name: brief.name,
+    shortName: short.toUpperCase(),
+    id: brief.name.toLowerCase().replace(/\s+/g, "-"),
+    rank: brief.rank,
+    elo: brief.eloKnown ? brief.elo : 0,
+    eloKnown: brief.eloKnown,
+    surfaceElo: brief.surfaceElo,
+    sps: brief.sps ?? undefined,
+    spsRank: brief.spsRank ?? undefined,
+    photoUrl: brief.photoUrl || undefined,
+    color,
+    form: brief.form,
+  });
   return {
     id,
     tournament: tournamentName || "Live",
     round: roundName || "En direct",
     scheduledAt: new Date().toISOString(),
-    playerA: {
-      name: nameA,
-      shortName: shortA.toUpperCase(),
-      id: nameA.toLowerCase().replace(/\s+/g, "-"),
-      rank: 0,
-      elo: 1500,
-      photoUrl: undefined,
-      color: "#22c55e",
-      form: [],
-    },
-    playerB: {
-      name: nameB,
-      shortName: shortB.toUpperCase(),
-      id: nameB.toLowerCase().replace(/\s+/g, "-"),
-      rank: 0,
-      elo: 1500,
-      photoUrl: undefined,
-      color: "#3b82f6",
-      form: [],
-    },
+    playerA: mkPlayer(playerA, shortA, "#22c55e"),
+    playerB: mkPlayer(playerB, shortB, "#3b82f6"),
     probA: 50,
     probB: 50,
     stats: {
@@ -87,45 +105,76 @@ function buildSyntheticMatch(
   } as unknown as TennisMatch;
 }
 
-export function MatchPipWidget() {
-  const { favorites } = useFavorites();
+export function MatchPipWidget({ focusMatch = null }: Props = {}) {
+  const { favorites, remove: removeFavorite } = useFavorites();
   const { liveStates, liveMatchList, connectionStatus } = useLiveStream();
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+  const removeMatchSelection = useSportsSidebarStore((s) => s.removeMatchSelection);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Matchs favoris/sélectionnés en live : intersection des favoris + sélection sidebar
-  // avec les matchs live. Pour chaque match live, on construit un TennisMatch synthétique.
-  const liveFavoriteMatches = useMemo(() => {
-    const selectedSet = new Set(selectedMatchIds);
-    // FIX prefix mismatch : sidebar="bsd-tn-XXX", live stream="bsd-XXX".
-    const normalizedSelected = new Set(
-      selectedMatchIds.map((id) =>
-        id.startsWith("bsd-tn-") ? `bsd-${id.slice(7)}` : id,
-      ),
-    );
-    const result: Array<{
-      match: TennisMatch;
-      liveState: (typeof liveStates)[string];
-    }> = [];
+  // Dépingle un match des DEUX sources (★ follows + sélection sidebar) : le
+  // widget lit leur union, laisser l'un des deux would le ferait réapparaître au
+  // prochain tick. Les deux retraits sont idempotents.
+  const unpinMatch = useCallback(
+    (matchId: string) => {
+      removeMatchSelection(matchId);
+      removeFavorite(matchId);
+      setExpandedId((cur) => (cur && sameBsdMatch(cur, matchId) ? null : cur));
+    },
+    [removeMatchSelection, removeFavorite],
+  );
+
+  // Lignes du widget, dans l'ordre : (1) le match ciblé, toujours présent ;
+  // (2) les favoris / matchs sélectionnés en direct. La comparaison d'id passe
+  // par `sameBsdMatch` (le flux live et la sidebar n'utilisent pas le même
+  // préfixe : `bsd-<num>` vs `bsd-tn-<num>`).
+  const rows = useMemo<WidgetRow[]>(() => {
+    const result: WidgetRow[] = [];
+    const pushed = new Set<string>();
+
+    if (focusMatch) {
+      const lm = liveMatchList.find((m) => sameBsdMatch(m.id, focusMatch.id));
+      result.push({
+        match: focusMatch,
+        liveState: lm ? liveStates[lm.id] : undefined,
+        isLive: Boolean(lm?.isLive),
+        isFocus: true,
+      });
+      pushed.add(focusMatch.id);
+    }
+
     for (const lm of liveMatchList) {
-      if (!lm.isLive) continue;
-      // Match si favori ★ OU sélectionné dans la sidebar (direct + normalisé)
-      if (!favorites.has(lm.id) && !selectedSet.has(lm.id) && !normalizedSelected.has(lm.id)) continue;
+      if (pushed.has(lm.id)) continue;
+      // Match si favori ★ OU sélectionné dans la sidebar (comparaison d'id normalisée).
+      // ponytail: ni filtre `isLive` ni filtre `liveState` — le widget montrait
+      // « Aucun match en live » parce qu'il SKIPPAIT les matchs épinglés qui
+      // n'étaient pas encore dans le flux ou n'avaient pas de state (les 2
+      // conditions sont vraies juste après l'épinglage). PipMatchRow et
+      // PipBetPanel gèrent tous deux `liveState === undefined` (rendu « prématch »).
+      const pinned =
+        favorites.has(lm.id) ||
+        selectedMatchIds.some((id) => sameBsdMatch(id, lm.id));
+      if (!pinned) continue;
       const liveState = liveStates[lm.id];
-      if (!liveState) continue; // pas encore de state live détaillé
       result.push({
         match: buildSyntheticMatch(
           lm.id,
-          lm.playerA.name,
-          lm.playerB.name,
+          lm.playerA,
+          lm.playerB,
           lm.tournamentName,
           lm.roundName,
         ),
         liveState,
+        isLive: Boolean(lm.isLive),
+        isFocus: false,
       });
+      pushed.add(lm.id);
     }
+
     return result;
-  }, [favorites, liveMatchList, liveStates, selectedMatchIds]);
+  }, [focusMatch, favorites, liveMatchList, liveStates, selectedMatchIds]);
+
+  const liveFavoriteMatches = rows;
 
   // Récupère les stats serve pour TOUS les joueurs affichés (1 seul call SWR).
   // Comme dans match-card.tsx:117 — on concatène les noms.
@@ -221,12 +270,12 @@ export function MatchPipWidget() {
             Aucun match en live.
           </p>
           <p className="text-[11px] text-muted-foreground/50 mt-1">
-            Épingle des matchs ★ ou sélectionne-les dans la sidebar pour les voir ici.
+            Épingle des matchs ★ (ou sélectionne-les dans la sidebar) pour les voir ici — ✕ pour dépingler.
           </p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          {liveFavoriteMatches.map(({ match, liveState }) => {
+          {liveFavoriteMatches.map(({ match, liveState, isLive, isFocus }) => {
             const isExpanded = expandedId === match.id;
             // Stats serve pour ce match (lookup normalisé).
             const statsA = playerStatsMap?.[normForLookup(match.playerA.name)];
@@ -247,7 +296,31 @@ export function MatchPipWidget() {
                 : null;
 
             return (
-              <div key={match.id}>
+              <div key={match.id} className="relative">
+                {/* Bouton X : dépingle immédiatement. Doit être un FRÈRE de
+                    PipMatchRow (dont la racine est un <button>) — un <button>
+                    imbriqué serait du HTML invalide et déclencherait onToggle. */}
+                <button
+                  type="button"
+                  onClick={() => unpinMatch(match.id)}
+                  aria-label={`Dépingler ${match.playerA.name} vs ${match.playerB.name}`}
+                  title="Dépingler ce match du widget"
+                  className="absolute right-1 top-1 z-30 rounded p-0.5 text-[11px] leading-none text-muted-foreground/70 transition-colors hover:bg-rose-500/20 hover:text-rose-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  ✕
+                </button>
+                {isFocus && (
+                  <div className="mb-0.5 flex items-center gap-1.5 px-0.5">
+                    <span className="rounded bg-emerald-500/20 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-emerald-300">
+                      Sélectionné
+                    </span>
+                    {!isLive && (
+                      <span className="text-[9px] text-muted-foreground/60">
+                        pas encore en direct
+                      </span>
+                    )}
+                  </div>
+                )}
                 <PipMatchRow
                   match={match}
                   liveState={liveState}

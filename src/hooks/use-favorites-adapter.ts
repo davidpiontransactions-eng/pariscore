@@ -59,6 +59,19 @@ export function useFavorites() {
     [favorites]
   );
 
+  /**
+   * Retire un favori de façon IDEMPOTENTE. `toggle` ne convient pas au bouton
+   * « dépingler » du widget PariScore Live : sur un match déjà épinglé par une
+   * autre voie (sidebar vs ★), il le REMETTRAIT au lieu de l'enlever.
+   */
+  const remove = useCallback(
+    (matchId: string) => {
+      if (!favorites.has(matchId)) return;
+      removeFollow(toFollowId(matchId));
+    },
+    [favorites, removeFollow]
+  );
+
   const clear = useCallback(() => {
     const matchFollows = getByCategory("match");
     for (const entry of matchFollows) {
@@ -70,6 +83,7 @@ export function useFavorites() {
     favorites,
     count: favorites.size,
     toggle,
+    remove,
     isFavorite,
     clear,
   };

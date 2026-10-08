@@ -14,32 +14,25 @@ import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
 // v6ka : SideScore/LiveMatchState définis dans live-state-builder.ts (source de
 // vérité partagée SSE + polling). Ré-exportés ici pour compat des consommateurs.
 export type { LiveMatchState, SideScore } from "@/lib/live-state-builder";
+import type { LiveListItem, LivePlayerBrief } from "@/lib/live-state-builder";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 export type UseLiveMatchesResult = {
   liveStates: Record<string, LiveMatchState>;
-  /** Basic info for each live match (id + player names). Used by TennisTabContent
+  /** Basic info for each live match (id + joueurs enrichis). Used by TennisTabContent
    *  to create synthetic cards for matches not present in prematch data.
    *  R7.3 : inclut tournamentName + roundName depuis BSD live.
    *  R10 : inclut calculated metrics (DR, alertes) pour les badges de décision. */
-  liveMatchList: Array<{
-    id: string;
-    playerA: { name: string };
-    playerB: { name: string };
-    isLive: boolean;
-    tournamentName?: string;
-    roundName?: string;
-    calculated?: CalculatedLiveMetrics;
-  }>;
+  liveMatchList: LiveListItem[];
   connectionStatus: ConnectionStatus;
   latency: number;
 };
 
 export type LiveMatchResponseItem = {
   id: string;
-  playerA: { name: string };
-  playerB: { name: string };
+  playerA: LivePlayerBrief;
+  playerB: LivePlayerBrief;
   setsDetail: Array<{ p1: number; p2: number }>;
   currentGame: { p1: number; p2: number };
   currentPoint: { p1: number; p2: number };
@@ -89,14 +82,7 @@ export function useLiveMatches(): UseLiveMatchesResult {
   const stream = useLiveStream();
 
   const [liveStates, setLiveStates] = useState<Record<string, LiveMatchState>>({});
-  const [liveMatchList, setLiveMatchList] = useState<Array<{
-    id: string;
-    playerA: { name: string };
-    playerB: { name: string };
-    isLive: boolean;
-    tournamentName?: string;
-    roundName?: string;
-  }>>([]);
+  const [liveMatchList, setLiveMatchList] = useState<LiveListItem[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [latency, setLatency] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);

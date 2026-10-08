@@ -49,7 +49,14 @@ export function BentoGrid({
   return (
     <motion.div
       className={cn(
-        "grid gap-[var(--bento-gap)]",
+        // `min-w-0 max-w-full` : sans cela, la piste `grid-cols-1` a un minimum
+        // `auto` = max-content, et UN descendant large (rangée de filtres,
+        // tableau) élargit la grille au-delà du viewport → débordement
+        // horizontal de toute la page en viewport étroit.
+        // `overflow-x-clip` (et non `-hidden`) : `clip` ne crée pas de conteneur
+        // de défilement, donc `position: sticky` des descendants continue de
+        // fonctionner — `-hidden` le casserait.
+        "grid w-full min-w-0 max-w-full gap-[var(--bento-gap)] overflow-x-clip",
         cols === 2 && "grid-cols-1 sm:grid-cols-2",
         cols === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
         cols === 4 && "grid-cols-1 sm:grid-cols-2 md:grid-cols-4",
@@ -95,7 +102,9 @@ export function BentoTile({
         /* standard + small = 1×1 (no span) */
 
         /* Visual */
-        "rounded-[var(--bento-radius)] p-6",
+        // `min-w-0` : item de grille, sinon son minimum `auto` l'empêche de
+        // rétrécir sous la largeur de son contenu (débordement horizontal).
+        "min-w-0 rounded-[var(--bento-radius)] p-4 sm:p-6",
         "transition-all duration-[var(--bento-transition)]",
 
         /* Variant */

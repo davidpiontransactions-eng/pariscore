@@ -17,8 +17,10 @@ import { lookupServeStats } from "@/lib/tennis-dr/lookup";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { resolvePlayerCountry } from "@/lib/tennis-player-country";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
-import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
+import { getPlayerStatsBatch, getPlayerStats, normalizeName } from "@/lib/tennis-stats/db";
+import type { PlayerStats } from "@/lib/tennis-stats/types";
 import { computeMomentumScore } from "@/lib/momentum-score";
+import type { LivePlayerBrief } from "@/lib/live-state-builder";
 
 /** Mappe la surface UI (français) → surface du modèle total-games (anglais DB). */
 function toModelSurface(s: Surface): PredictionSurface {
@@ -33,6 +35,12 @@ const EXCLUDED_TOURNAMENTS = [/utr/i, /exhibition/i, /expo/i, /hopman/i, /laver\
 function isExcludedTournament(name?: string): boolean {
   if (!name) return false;
   return EXCLUDED_TOURNAMENTS.some((re) => re.test(name));
+}
+
+/** Date locale `YYYY-MM-DD` (le fuseau du serveur, pas UTC). */
+function isoDate(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function normalizeSurface(s?: string): Surface {
@@ -298,10 +306,23 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
 
 // ─── Live matches (BSD /api/v2/matches/live/) ───────────────────────────────
 
+/**
+ * Le type joueur enrichi est défini dans `live-state-builder.ts` (module pur
+ * partagé avec le client) ; on le ré-exporte pour que les appelants serveur
+ * n'aient qu'un seul point d'import.
+ */
+export type { LivePlayerBrief } from "@/lib/live-state-builder";
+
 export type LiveMatchItem = {
   id: string;
-  playerA: { name: string };
-  playerB: { name: string };
+  /**
+   * Joueur enrichi (Elo / rang / SPS / DR réels). Avant R7.9 ces deux champs ne
+   * portaient que `{ name }` : les cartes live retombaient sur la sentinelle
+   * `Elo 1500 / #— / SPS — / DR —` faute de métriques à afficher. Tous les
+   * champs sont nullable — `null` = donnée absente, l'UI affiche `—`.
+   */
+  playerA: LivePlayerBrief;
+  playerB: LivePlayerBrief;
   setsDetail: Array<{ p1: number; p2: number }>;
   currentGame: { p1: number; p2: number };
   currentPoint: { p1: number; p2: number };
@@ -339,10 +360,55 @@ export type LiveMatchItem = {
 };
 
 /**
+ * Construit le joueur enrichi du flux live. `elo: 0` + `eloKnown: false`
+ * signifient « inconnu » — l'UI affiche alors `—` au lieu de la sentinelle
+ * 1500 qui masquait l'absence de données.
+ */
+function buildLivePlayer(
+  name: string,
+  bsdId: number | null | undefined,
+  bsdRank: number | null | undefined,
+  surface: Surface,
+  db: PlayerStats | null,
+): LivePlayerBrief {
+  // Même chaîne de priorité que buildMatch (prématch) : TennisAbstract >
+  // base locale > elo-data.json.
+  const abstract = lookupAbstractElo(name, surface);
+  const eloMatch = findPlayerElo(name);
+  const eloResolved = abstract?.elo ?? db?.elo ?? eloMatch?.elo;
+  const eloKnown = Boolean(eloResolved);
+  const elo = eloKnown ? Number(eloResolved) : 0;
+  const surfaceElo = abstract?.surfaceElo ?? db?.eloSurface ?? elo;
+  const atp = db?.atpRank ?? 0;
+  const wta = db?.wtaRank ?? 0;
+  const dbRank = atp > 0 ? atp : wta;
+  return {
+    name,
+    rank: dbRank > 0 ? dbRank : (bsdRank ?? 0),
+    elo,
+    eloKnown,
+    surfaceElo,
+    form: eloMatch?.history ? extractForm(eloMatch.history) : [],
+    sps: db?.sps ?? null,
+    spsRank: db?.spsRank ?? null,
+    drMoyen5m: db?.drMoyen5m ?? null,
+    photoUrl: bsdId ? getPlayerPhotoUrl(bsdId) : resolvePlayerPhoto(name),
+  };
+}
+
+/**
  * Fetch live tennis matches via bsd-tennis-service (V2).
  * Returns normalized match objects with scores, sets, server, and live probabilities.
  */
 export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
+  // Mémo par fetch : le broker interroge toutes les 10 s, un même joueur revient
+  // d'un match à l'autre (double, formats) — sans mémo on rejoue 2 SQL par match.
+  const statsMemo = new Map<string, PlayerStats | null>();
+  const statsFor = (name: string, surface: Surface): PlayerStats | null => {
+    const key = `${surface}|${normalizeName(name)}`;
+    if (!statsMemo.has(key)) statsMemo.set(key, getPlayerStats(name, surface));
+    return statsMemo.get(key) ?? null;
+  };
   const rawData = await fetchLiveMatches();
 
   return rawData.map((m: BSDLiveMatch): LiveMatchItem | null => {
@@ -398,6 +464,23 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
     // Determine server
     const server: "A" | "B" = m.is_serving_p1 === true ? "A" : m.is_serving_p1 === false ? "B" : "A";
 
+    // Joueurs enrichis : Elo / rang / SPS / DR réels (au lieu de 1500 / — ).
+    const liveSurface = normalizeSurface(m.tournament?.surface);
+    const playerA = buildLivePlayer(
+      nameA,
+      m.player1?.id,
+      m.player1?.current_ranking?.position,
+      liveSurface,
+      statsFor(nameA, liveSurface),
+    );
+    const playerB = buildLivePlayer(
+      nameB,
+      m.player2?.id,
+      m.player2?.current_ranking?.position,
+      liveSurface,
+      statsFor(nameB, liveSurface),
+    );
+
     // Live probabilities from odds when available
     let liveProbA = 50;
     let liveProbB = 50;
@@ -418,8 +501,8 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
 
     return {
       id: `bsd-${m.id}`,
-      playerA: { name: nameA },
-      playerB: { name: nameB },
+      playerA,
+      playerB,
       setsDetail,
       currentGame: { p1: gameP1, p2: gameP2 },
       currentPoint: { p1: pointP1, p2: pointP2 },
@@ -475,14 +558,39 @@ function extractForm(history: { elo: number; date: string }[]): ("W" | "L")[] {
   return form.slice(-6);
 }
 
+/** Plafond de matchs prématch conservés après tri (les plus proches de now). */
+const PREMATCH_LIMIT = 30;
+
+/**
+ * Ne garde que les matchs **à venir**, du plus proche au plus lointain.
+ *
+ * BSD renvoie `results` sans ordre garanti (au 08/10/2026 : 09/10 en tête).
+ * Sans ce tri, le plafond de 30 ne conservait que J+1 et le filtre « JOUR »
+ * (`filterByTimeWindow(..., "jour")`) renvoyait 0 match — les matchs de J0
+ * étaient tous hors du plateau. Exportée pour le test de régression.
+ */
+export function pickUpcomingMatches(
+  matches: BSDMatch[],
+  limit: number = PREMATCH_LIMIT,
+  now: number = Date.now(),
+): BSDMatch[] {
+  return matches
+    .filter((m) => {
+      const t = new Date(m.match_date ?? "").getTime();
+      return Number.isFinite(t) && t >= now;
+    })
+    .sort((a, b) => String(a.match_date).localeCompare(String(b.match_date)))
+    .slice(0, limit);
+}
+
 /** Fetch scheduled prematch matches via bsd-tennis-service (V2). */
 export async function fetchBSDMatches(): Promise<TennisMatch[]> {
-  const page = await fetchMatches({ status: "scheduled", limit: 200 });
-  const matches = page.results ?? [];
+  // date_from = J-1 : un match lancé à 00:30 heure locale a un `match_date`
+  // UTC au J-1 — sans marge, il disparaît selon la sémantique de date BSD.
+  const page = await fetchMatches({ status: "scheduled", date_from: isoDate(Date.now() - 86400000), limit: 200 });
 
   const tennisMatches: TennisMatch[] = [];
-  for (let i = 0; i < matches.length && tennisMatches.length < 30; i++) {
-    const bsdMatch = matches[i];
+  for (const [i, bsdMatch] of pickUpcomingMatches(page.results ?? []).entries()) {
     if (isExcludedTournament(bsdMatch.tournament?.name)) continue;
     const m = buildMatch(bsdMatch, i);
     if (m) tennisMatches.push(m);

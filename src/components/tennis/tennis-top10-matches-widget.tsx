@@ -491,18 +491,22 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
 
   return (
     <section
-      className="rounded-2xl"
+      className="w-full min-w-0 max-w-full overflow-x-clip rounded-2xl"
       style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
       aria-label="Top 10 matchs tennis par stratégie"
     >
       <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <h2 className="text-[15px] font-semibold" style={{ color: C.headerText }}>
+        <h2 className="shrink-0 text-[15px] font-semibold" style={{ color: C.headerText }}>
           Top 10 matchs
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Mobile : rail tactile défilant (les 5 `Select` ont des largeurs fixes
+            120-180 px, soit ~700 px de filtres — le repli en `flex-wrap` laissait
+            des rangées à 1-2 contrôles et brunissait la barre). Desktop : retour
+            au `flex-wrap` d'origine. */}
+        <div className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 py-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:py-0">
           {/* Toggle Prematch / Live */}
           <div
-            className="flex overflow-hidden rounded"
+            className="flex shrink-0 overflow-hidden rounded"
             style={{ border: `1px solid ${C.cardBorder}` }}
             role="group"
             aria-label="Mode"
@@ -531,7 +535,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             onValueChange={handleBetTypeChange}
           >
             <SelectTrigger
-              className="h-9 w-[150px] text-xs"
+              className="h-9 w-[150px] shrink-0 text-xs"
               aria-label="Type de bet"
             >
               <SelectValue placeholder="Type de bet" />
@@ -550,7 +554,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             <>
               {/* Toggle bo3 / bo5 */}
               <div
-                className="flex overflow-hidden rounded"
+                className="flex shrink-0 overflow-hidden rounded"
                 style={{ border: `1px solid ${C.cardBorder}` }}
                 role="group"
                 aria-label="Format match"
@@ -578,7 +582,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
                 onValueChange={matchFormat === "bo3" ? handleMatchGameLineBo3Change : handleMatchGameLineBo5Change}
               >
                 <SelectTrigger
-                  className="h-9 w-[120px] text-xs"
+                  className="h-9 w-[120px] shrink-0 text-xs"
                   aria-label="Ligne Over match"
                 >
                   <SelectValue placeholder="Ligne" />
@@ -607,7 +611,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
               onValueChange={handleGameLineChange}
             >
               <SelectTrigger
-                className="h-9 w-[120px] text-xs"
+                className="h-9 w-[120px] shrink-0 text-xs"
                 aria-label="Ligne Over set"
               >
                 <SelectValue placeholder="Ligne" />
@@ -628,7 +632,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             onValueChange={handleTournamentChange}
           >
             <SelectTrigger
-              className="h-9 w-[180px] text-xs"
+              className="h-9 w-[180px] shrink-0 text-xs"
               aria-label="Tournoi du Top 10"
             >
               <SelectValue placeholder="Tous les tournois" />
@@ -651,7 +655,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             onValueChange={handleSurfaceChange}
           >
             <SelectTrigger
-              className="h-9 w-[120px] text-xs"
+              className="h-9 w-[120px] shrink-0 text-xs"
               aria-label="Surface"
             >
               <SelectValue placeholder="Surface" />
@@ -671,7 +675,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
             onValueChange={handleTourCatChange}
           >
             <SelectTrigger
-              className="h-9 w-[130px] text-xs"
+              className="h-9 w-[130px] shrink-0 text-xs"
               aria-label="Catégorie tournoi"
             >
               <SelectValue placeholder="Catégorie" />
@@ -687,7 +691,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
 
           {/* Fenêtre temporelle (Jour / 48h / Sem / Tout) */}
           <div
-            className="flex overflow-hidden rounded"
+            className="flex shrink-0 overflow-hidden rounded"
             style={{ border: `1px solid ${C.cardBorder}` }}
             role="group"
             aria-label="Période des matchs"

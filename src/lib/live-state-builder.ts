@@ -18,6 +18,31 @@
 // NOTE 2 : `lastUpdate` ne change que quand la signature change (réutilisation
 // d'identité) — le timestamp reflète la dernière MAJ réelle, pas le dernier poll.
 
+/**
+ * Joueur transporté par le flux live (serveur → SSE/REST → cartes).
+ *
+ * Déclaré ici, module pur, pour être partagé par `bsd-fetcher.ts` (qui construit
+ * la valeur) et les hooks client (qui la consomment) sans tirer le serveur
+ * (`bsd-fetcher` importe better-sqlite3). `elo: 0` + `eloKnown: false` =
+ * « inconnu » : l'UI affiche `—`, jamais la sentinelle 1500.
+ */
+export type LivePlayerBrief = {
+  name: string;
+  /** Rang ATP/WTA officiel (0 = inconnu). */
+  rank: number;
+  /** Elo global issu de la base ; 0 = inconnu. */
+  elo: number;
+  eloKnown: boolean;
+  /** Elo surface (prioritaire pour l'UI). */
+  surfaceElo: number;
+  /** Forme récente W/L ([] si inconnue). */
+  form: ("W" | "L")[];
+  sps: number | null;
+  spsRank: number | null;
+  drMoyen5m: number | null;
+  photoUrl: string;
+};
+
 /** Score d'un côté (sets, jeux, points) — shape utilisée par les cartes live. */
 export type SideScore = {
   sets: number[];
@@ -50,8 +75,8 @@ export type LiveMatchState = {
 /** Shape minimale commune aux matchs live des 2 sources (SSE + REST). */
 export type RawLiveMatch = {
   id: string;
-  playerA: { name: string };
-  playerB: { name: string };
+  playerA: LivePlayerBrief;
+  playerB: LivePlayerBrief;
   setsDetail: Array<{ p1: number; p2: number }>;
   currentGame: { p1: number; p2: number };
   currentPoint: { p1: number; p2: number };
@@ -70,8 +95,8 @@ export type RawLiveMatch = {
 
 export type LiveListItem = {
   id: string;
-  playerA: { name: string };
-  playerB: { name: string };
+  playerA: LivePlayerBrief;
+  playerB: LivePlayerBrief;
   isLive: boolean;
   tournamentName?: string;
   roundName?: string;

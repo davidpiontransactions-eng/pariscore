@@ -11,10 +11,12 @@
 // le dernier le ferme. Chaque payload (snapshot/update) est typé et dispatché à tous
 // les listeners. Reconnexion native EventSource (retry auto sur coupure réseau).
 
+import type { LivePlayerBrief } from "@/lib/live-state-builder";
+
 export type LiveStreamMatch = {
   id: string;
-  playerA: { name: string };
-  playerB: { name: string };
+  playerA: LivePlayerBrief;
+  playerB: LivePlayerBrief;
   setsDetail: Array<{ p1: number; p2: number }>;
   currentGame: { p1: number; p2: number };
   currentPoint: { p1: number; p2: number };

@@ -833,11 +833,18 @@ function BroadcastPlayerColumn({
   isContender?: boolean;
 }) {
   // Résolution métriques (depuis player-statline.tsx, format vertical)
-  const elo = Math.round(stats?.elo ?? player.elo);
+  // R7.9 : `stats` peut être absent ET le joueur inconnu (`eloKnown: false`) →
+  // on affiche `—` au lieu de la sentinelle 1500 / `#0`.
+  const eloRaw = stats?.elo ?? (player.eloKnown ? player.elo : 0);
+  const elo = eloRaw > 0 ? Math.round(eloRaw) : null;
   // Rang : DB (stats enrichies) en priorité, repli sur le rang serveur
   // (BSD current_ranking / fallback DB atpRank/wtaRank dans bsd-fetcher).
-  const rank = stats?.atpRank ?? stats?.wtaRank ?? (player.rank > 0 ? player.rank : null);
-  const circuitLabel = stats?.atpRank != null ? "ATP" : stats?.wtaRank != null ? "WTA" : null;
+  // `> 0` obligatoire : un rang 0 en base est « inconnu », pas le classement n°0.
+  const atpRank = stats?.atpRank ?? 0;
+  const wtaRank = stats?.wtaRank ?? 0;
+  const dbRank = atpRank > 0 ? atpRank : wtaRank > 0 ? wtaRank : 0;
+  const rank = dbRank > 0 ? dbRank : player.rank > 0 ? player.rank : null;
+  const circuitLabel = atpRank > 0 ? "ATP" : wtaRank > 0 ? "WTA" : null;
   const sps = stats?.sps ?? null;
   const spsRank = stats?.spsRank ?? null;
   // DR Moyen (5M) — médiane TennisAbstract filtrée surface (cache JSON).
@@ -873,7 +880,7 @@ function BroadcastPlayerColumn({
           {rank != null ? `#${rank} ${circuitLabel ?? ""}` : `#${EM_DASH}`}
         </span>
         {/* Ligne 2 : Elo */}
-        <span className="text-white/80">Elo {elo}</span>
+        <span className="text-white/80">Elo {elo ?? EM_DASH}</span>
         {/* Ligne 3 : SPS + rang */}
         {sps != null ? (
           <span className="text-white/80">

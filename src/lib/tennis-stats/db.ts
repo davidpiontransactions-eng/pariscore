@@ -69,7 +69,7 @@ function getDb(): BSD | null {
  * Dupliquée ici (plutôt qu'importée) pour garder ce module autonome côté
  * serveur sans tirer player-matcher.ts (qui importe elo-data.json).
  */
-function normalizeName(s: string): string {
+export function normalizeName(s: string): string {
   return s
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -77,6 +77,35 @@ function normalizeName(s: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+/**
+ * Formes de nom à essayer contre `tennis_players_elo.player_name`, de la plus
+ * précise à la plus large.
+ *
+ * Les APIs sources servent les joueurs en « Prénom N. » / « N. Prénom »
+ * (« Tsitsipas S. ») alors que la base stocke le nom complet
+ * (« Stefanos Tsitsipas ») : l'égalité stricte ne matchait rien et la carte
+ * retombait sur `Elo 1500 / #— / SPS —`. Exportée pour les tests.
+ */
+export function playerNameCandidates(name: string): string[] {
+  const base = normalizeName(name);
+  if (!base) return [];
+  const parts = base.split(" ").filter(Boolean);
+  const out = [base];
+  // « tsitsipas s » → « s tsitsipas » (initiales remontées devant).
+  const initials = parts.filter((p) => p.length === 1);
+  const surnames = parts.filter((p) => p.length > 1);
+  if (initials.length > 0 && surnames.length > 0) {
+    out.push(`${initials.join(" ")} ${surnames.join(" ")}`);
+  }
+  // Nom de famille = token le plus long, pas le dernier : les APIs écrivent
+  // « Tsitsipas S. » comme « S. Tsitsipas », donc « s » peut finir la liste.
+  const family = parts
+    .filter((p) => p.length >= 4)
+    .sort((a, b) => b.length - a.length)[0];
+  if (family && parts.length > 1) out.push(family);
+  return [...new Set(out)];
 }
 
 /** Mapping surface UI (FR) → surface base (EN, format Sackmann). */
@@ -215,14 +244,46 @@ export function getPlayerStats(
   // FIX 2026-07-19 : certains joueurs ont 2 entrées dans tennis_players_elo
   // (IDs différents selon la source). On prend la plus récente (updated_at DESC)
   // et on retente avec la meilleure si aucune SPS n'est trouvée.
-  const allOveralls = db
-    .prepare(
-      `SELECT player_id, player_name, elo_rating, atp_rank, wta_rank, circuit
-       FROM tennis_players_elo
-       WHERE LOWER(player_name) = ?
-       ORDER BY elo_rating DESC`
-    )
-    .all(normName) as OverallRow[];
+  // Les noms sources sont abrégés (« Tsitsipas S. ») : on essaie chaque variante
+  // de playerNameCandidates avant de tomber sur un LIKE ancré sur le nom de
+  // famille (le nom complet de la base ne matche aucune égalité).
+  const overallStmt = db.prepare(
+    `SELECT player_id, player_name, elo_rating, atp_rank, wta_rank, circuit
+     FROM tennis_players_elo
+     WHERE LOWER(player_name) = ?
+     ORDER BY elo_rating DESC`
+  );
+  let allOveralls: OverallRow[] = [];
+  let matchedName = normName;
+  for (const candidate of playerNameCandidates(name)) {
+    const rows = overallStmt.all(candidate) as OverallRow[];
+    if (rows.length > 0) {
+      allOveralls = rows;
+      matchedName = candidate;
+      break;
+    }
+  }
+  if (allOveralls.length === 0) {
+    // ponytail: LIKE sur le nom de famille en dernier recours — suffit pour les
+    // variantes d'écriture restantes ; passer à un fuzzy edit-distance si les
+    // captures « #— » persistent sur des noms sans famille recognizable.
+    const surname = normName.split(" ").filter((p) => p.length >= 4).pop();
+    if (surname) {
+      const rows = db
+        .prepare(
+          `SELECT player_id, player_name, elo_rating, atp_rank, wta_rank, circuit
+           FROM tennis_players_elo
+           WHERE LOWER(player_name) LIKE ?
+           ORDER BY elo_rating DESC
+           LIMIT 3`
+        )
+        .all(`%${surname}%`) as OverallRow[];
+      if (rows.length > 0) {
+        allOveralls = rows;
+        matchedName = normalizeName(rows[0].player_name);
+      }
+    }
+  }
   const overall = allOveralls[0];
 
   // 2. Elo Surface (sur la surface du match).
@@ -231,7 +292,7 @@ export function getPlayerStats(
   if (dbSurface) {
     const surfRows = getSurfaceEloIndex(db, dbSurface);
     const matchIdx = surfRows.findIndex(
-      (r) => normalizeName(r.player_name) === normName
+      (r) => normalizeName(r.player_name) === matchedName
     );
     if (matchIdx >= 0) {
       eloSurface = surfRows[matchIdx].elo;
@@ -279,13 +340,15 @@ export function getPlayerStats(
 
   // 4. DR Moyen (5M) — médiane TennisAbstract filtrée surface (cache JSON).
   // lookupDrMoyen retourne null si joueur absent du cache ; on ignore alors.
-  const drMoyen5m = dbSurface ? lookupDrMoyen(name, dbSurface) : null;
+  // On interroge avec `matchedName` (nom résolu en base) : les resolvers JSON
+  // n'ont pas de repli sur les noms abrégés (« Tsitsipas S. » → null).
+  const drMoyen5m = dbSurface ? lookupDrMoyen(matchedName, dbSurface) : null;
 
   // 5. Stats de service (modèles Over/Under Games + Most Aces). lookupServeStats
   //    renvoie { servePtsWonPct, returnPtsWonPct, acesPct, dfPct } depuis le
   //    cache DR étendu (médianes 5 et 10 derniers matchs surface).
   const serveStats = dbSurface
-    ? lookupServeStats(name, dbSurface)
+    ? lookupServeStats(matchedName, dbSurface)
     : { servePtsWonPct: null, returnPtsWonPct: null, acesPct: null, dfPct: null };
 
   // Si on n'a absolument rien (joueur absent), on retourne null pour que
