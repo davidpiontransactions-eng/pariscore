@@ -4,7 +4,7 @@
     "leagueId": "superleague_greece",
     "leagueName": "Greece",
     "season": "2026/27",
-    "lastUpdated": "2026-10-07T11:14:46.986832Z",
+    "lastUpdated": "2026-10-08T11:32:20.786155Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -20,15 +20,6 @@
       "l": 1,
       "gf": 6,
       "ga": 4
-    },
-    {
-      "teamName": "Paok",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 6,
-      "ga": 0
     },
     {
       "teamName": "Aek Athens",
@@ -49,6 +40,15 @@
       "ga": 2
     },
     {
+      "teamName": "Paok",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 6,
+      "ga": 0
+    },
+    {
       "teamName": "Panathinaikos",
       "gp": 3,
       "w": 3,
@@ -60,13 +60,13 @@
   ],
   "away": [
     {
-      "teamName": "Olympiakos",
+      "teamName": "Aek Athens",
       "gp": 3,
-      "w": 2,
-      "d": 1,
+      "w": 1,
+      "d": 2,
       "l": 0,
-      "gf": 3,
-      "ga": 1
+      "gf": 4,
+      "ga": 3
     },
     {
       "teamName": "Paok",
@@ -78,13 +78,13 @@
       "ga": 5
     },
     {
-      "teamName": "Aek Athens",
-      "gp": 3,
-      "w": 1,
-      "d": 2,
+      "teamName": "Panathinaikos",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
       "l": 0,
-      "gf": 4,
-      "ga": 3
+      "gf": 3,
+      "ga": 0
     },
     {
       "teamName": "Iraklis",
@@ -96,13 +96,13 @@
       "ga": 5
     },
     {
-      "teamName": "Panathinaikos",
-      "gp": 2,
+      "teamName": "Olympiakos",
+      "gp": 3,
       "w": 2,
-      "d": 0,
+      "d": 1,
       "l": 0,
       "gf": 3,
-      "ga": 0
+      "ga": 1
     }
   ]
 }

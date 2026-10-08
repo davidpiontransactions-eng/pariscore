@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-10-07T11:15:01.370063Z",
+    "lastUpdated": "2026-10-08T11:32:33.862861Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -20,15 +20,6 @@
       "l": 0,
       "gf": 17,
       "ga": 3
-    },
-    {
-      "teamName": "U. Cluj",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 11,
-      "ga": 6
     },
     {
       "teamName": "Rapid Bucharest",
@@ -49,6 +40,15 @@
       "ga": 2
     },
     {
+      "teamName": "U. Cluj",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 11,
+      "ga": 6
+    },
+    {
       "teamName": "Univ. Craiova",
       "gp": 6,
       "w": 5,
@@ -60,13 +60,13 @@
   ],
   "away": [
     {
-      "teamName": "Cornivul H.",
-      "gp": 5,
-      "w": 1,
+      "teamName": "Rapid Bucharest",
+      "gp": 4,
+      "w": 2,
       "d": 2,
-      "l": 2,
-      "gf": 3,
-      "ga": 6
+      "l": 0,
+      "gf": 4,
+      "ga": 1
     },
     {
       "teamName": "Din. Bucharest",
@@ -78,13 +78,13 @@
       "ga": 4
     },
     {
-      "teamName": "Rapid Bucharest",
-      "gp": 4,
-      "w": 2,
+      "teamName": "Cornivul H.",
+      "gp": 5,
+      "w": 1,
       "d": 2,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
+      "l": 2,
+      "gf": 3,
+      "ga": 6
     },
     {
       "teamName": "Petrolul",

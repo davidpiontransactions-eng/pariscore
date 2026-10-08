@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-10-07T11:15:21.950411Z",
+    "lastUpdated": "2026-10-08T11:32:52.655904Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,22 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Cincinnati",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 25,
-      "ga": 17
-    },
-    {
-      "teamName": "St. Louis City",
+      "teamName": "Philadelphia",
       "gp": 8,
       "w": 6,
       "d": 2,
       "l": 0,
-      "gf": 20,
-      "ga": 10
+      "gf": 21,
+      "ga": 8
     },
     {
       "teamName": "Colorado Rapids",
@@ -40,6 +31,15 @@
       "ga": 5
     },
     {
+      "teamName": "Cincinnati",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 25,
+      "ga": 17
+    },
+    {
       "teamName": "Nashville Sc",
       "gp": 8,
       "w": 8,
@@ -49,16 +49,34 @@
       "ga": 4
     },
     {
-      "teamName": "Philadelphia",
+      "teamName": "St. Louis City",
       "gp": 8,
       "w": 6,
       "d": 2,
       "l": 0,
-      "gf": 21,
-      "ga": 8
+      "gf": 20,
+      "ga": 10
     }
   ],
   "away": [
+    {
+      "teamName": "Philadelphia",
+      "gp": 8,
+      "w": 4,
+      "d": 1,
+      "l": 3,
+      "gf": 24,
+      "ga": 19
+    },
+    {
+      "teamName": "Inter Miami",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 17,
+      "ga": 14
+    },
     {
       "teamName": "Charlotte",
       "gp": 8,
@@ -85,24 +103,6 @@
       "l": 3,
       "gf": 16,
       "ga": 10
-    },
-    {
-      "teamName": "Philadelphia",
-      "gp": 8,
-      "w": 4,
-      "d": 1,
-      "l": 3,
-      "gf": 24,
-      "ga": 19
-    },
-    {
-      "teamName": "Inter Miami",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 17,
-      "ga": 14
     }
   ]
 }
