@@ -59,7 +59,9 @@ export function dataDirCandidates(): string[] {
   // standalone (`<repo>/.next/standalone/data`, classé copie).
   let dir = process.cwd();
   for (let i = 0; i < 6; i++) {
-    const candidate = join(dir, "data");
+    // turbopackIgnore : `dir` est calculé (cwd remonté) — l'annotation doit
+    // porter sur l'ASSEMBLAGE du chemin, pas seulement l'appel FS (rapport 224).
+    const candidate = join(/*turbopackIgnore: true*/ dir, "data");
     try {
       // turbopackIgnore : candidats calculés (cwd remonté) — sans cette
       // annotation Turbopack trace le projet entier (bead ParisScorebis-r4g8).
@@ -83,7 +85,7 @@ export function dataDirCandidates(): string[] {
  */
 export function resolveDataFile(relativePath: string): string | null {
   for (const root of dataDirCandidates()) {
-    const file = join(root, relativePath);
+    const file = join(/*turbopackIgnore: true*/ root, /*turbopackIgnore: true*/ relativePath);
     try {
       // turbopackIgnore : chemin assemblé à l'exécution (cf. dataDirCandidates).
       if (existsSync(/*turbopackIgnore: true*/ file)) return file;
@@ -100,6 +102,9 @@ export function resolveDataFile(relativePath: string): string | null {
  * `DATA_DIR || cwd/data` des lecteurs existants.
  */
 export function getDataPath(relativePath: string): string {
+  // turbopackIgnore sur les DEUX arguments : sans eux Turbopack trace le projet
+  // entier (toutes les sources + public/) → build VPS tué pendant la phase de
+  // tracing (exit 1, 0 erreur, aucune ligne « Collecting page data »).
   const root = process.env.DATA_DIR || join(process.cwd(), "data");
-  return join(root, relativePath);
+  return join(/*turbopackIgnore: true*/ root, /*turbopackIgnore: true*/ relativePath);
 }
