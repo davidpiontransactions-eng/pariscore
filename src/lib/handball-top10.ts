@@ -73,6 +73,16 @@ export type TopMatchStrategy = {
   odds: number | null;
   /** true si la ligne respecte P ≥ 65 % ET cote ≥ 1.15. */
   qualifies: boolean;
+  /**
+ * Ligne de total en POINTS, telle que sortie par le modèle CMP.
+ *
+ * `null` = aucune ligne de total (stratégie favori 1N2, ou rien ne qualifie).
+ * Elle est exposée comme nombre, et non reconstruite depuis `label` : parser
+ * « Over 54.5 » pour en extraire 54.5 serait fragile (séparateur décimal,
+ * espaces) et créerait une DEUXIÈME source de vérité. `label` reste l'affichage,
+ * `totalLine` la donnée.
+ */
+  totalLine: number | null;
   /** Score prédit (optionnel, informatif). */
   predictedHome?: number | null;
   predictedAway?: number | null;
@@ -144,7 +154,7 @@ export type Top10InputMatch = {
  */
 export function buildTopMatchStrategy(
   input: Top10InputMatch,
-): Pick<TopMatchStrategy, "kind" | "label" | "prob" | "odds" | "qualifies"> {
+): Pick<TopMatchStrategy, "kind" | "label" | "prob" | "odds" | "qualifies" | "totalLine"> {
   const opts = { nu: CALIBRATED_NU, oddsByLine: input.totalOdds };
   const over = calculateOptimalOverGoals(input.homeStats, input.awayStats, 65, opts);
   const under = calculateOptimalUnderGoals(input.homeStats, input.awayStats, 65, opts);
@@ -161,6 +171,8 @@ export function buildTopMatchStrategy(
       prob: best.prob,
       odds: best.odds,
       qualifies: true,
+      // Ligne du modèle, exposée telle quelle : l'UI n'a rien à recalculer.
+      totalLine: best.line,
     };
   }
 
@@ -182,10 +194,13 @@ export function buildTopMatchStrategy(
       prob,
       odds: odd,
       qualifies: true,
+      // Marché 1N2 : il n'y a pas de ligne de total. `null` — et non une
+      // reconversion de la probabilité, qui serait une ligne inventée.
+      totalLine: null,
     };
   }
 
-  return { kind: "none", label: "—", prob: null, odds: null, qualifies: false };
+  return { kind: "none", label: "—", prob: null, odds: null, qualifies: false, totalLine: null };
 }
 
 function clamp01(v: number): number {

@@ -217,3 +217,54 @@ describe("buildTop10", () => {
     }
   });
 });
+
+/**
+ * `totalLine` — la ligne de total EXPOSÉE par le modèle, pas reconstruite.
+ *
+ * Le badge « Over 54.5 pts » de l'UI lit ce nombre. Il ne doit donc jamais :
+ *   • diverger du libellé affich�� (deux vérités qui divergent) ;
+ *   • exister pour une stratégie 1N2, qui n'a pas de marché de total ;
+ *   • apparaître sans probabilité associée.
+ */
+describe("totalLine — ligne du modèle exposée, jamais reconstruite", () => {
+  const lignes = buildTop10(matches, 20);
+
+  test("Over/Under : totalLine est un nombre fini et cohérent avec le libellé", () => {
+    const totaux = lignes.filter((r) => r.kind === "over" || r.kind === "under");
+    expect(totaux.length).toBeGreaterThan(0);
+    for (const r of totaux) {
+      expect(typeof r.totalLine).toBe("number");
+      expect(Number.isFinite(r.totalLine!)).toBe(true);
+      // Cohérence AVEC le libellé : c'est le test qui empêche les deux
+      // représentations de diverger si l'une change un jour.
+      expect(r.label).toBe(`${r.kind === "over" ? "Over" : "Under"} ${r.totalLine}`);
+    }
+  });
+
+  test("1N2 : aucune ligne de total — null, jamais une reconversion", () => {
+    for (const r of lignes.filter((x) => x.kind === "favorite")) {
+      expect(r.totalLine).toBeNull();
+    }
+  });
+
+  test("aucune ligne de total sans probabilité associée", () => {
+    for (const r of lignes) {
+      if (r.totalLine != null) expect(r.prob).not.toBeNull();
+    }
+  });
+
+  test("le repli 1N2 ne fabrique pas de ligne quand le total est bloqué", () => {
+    const base = fixture.casLimites.coteTropBasse as unknown as Top10InputMatch;
+    const bloque = buildTopMatchStrategy({
+      ...base,
+      totalOdds: Object.fromEntries(
+        Array.from({ length: 60 }, (_, i) => {
+          const line = (38 + i * 0.5).toFixed(1);
+          return [line, { over: 1.02, under: 1.02 }];
+        }),
+      ),
+    });
+    expect(bloque.kind).toBe("none");
+    expect(bloque.totalLine).toBeNull();
+  });
+});
