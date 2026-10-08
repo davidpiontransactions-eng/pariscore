@@ -12,7 +12,21 @@
 // le joueur introuvable, elle retourne `null`. L'UI affiche alors un fallback
 // `—` plutôt qu'une valeur trompeuse (#0 / Elo 1500).
 
+// Le runtime de prod est Bun (`/proc/PID/exe = .bun/bin/bun`), où
+// `better-sqlite3` est REFUSÉ (« 'better-sqlite3' is not yet supported in Bun »)
+// : le module est bloqué à la source, ce n'est pas un conflit d'ABI corrigeable
+// par un rebuild. Mesuré en prod le 2026-10-08 : l'ouverture échouait en
+// SILENCE (le catch ne loguait qu'en dev), `getDb()` renvoyait null et TOUT le
+// chemin DB était mort (Elo surface, rang SPS, SPS, DR) alors que la base
+// contient 28 585 lignes SPS. Le sous-ensemble L10 (Prisma) marchait, ce qui
+// faisait croire à une absence de données.
+//
+// Pattern établi par les modules frères (handball-history-db.ts,
+// basketball-history-db.ts, snooker-history-db.ts) : `bun:sqlite` d'abord (le
+// SEUL chemin qui fonctionne sous Bun), `better-sqlite3` en repli (node).
+
 import path from "node:path";
+import { existsSync } from "node:fs";
 import type {
   PlayerStats,
   PlayerStatsMap,
@@ -21,8 +35,7 @@ import type {
 } from "./types";
 import { lookupDrMoyen, lookupServeStats } from "@/lib/tennis-dr/lookup";
 
-// better-sqlite3 est un module natif CJS — import dynamique pour ne pas
-// casser le bundler Next.js en dev et éviter de le charger côté client.
+// better-sqlite3 est un module natif CJS — repli node uniquement.
 type BSD = {
   prepare: (sql: string) => { all: (...params: unknown[]) => unknown[] };
   close: () => void;
@@ -43,24 +56,69 @@ let _dbUnavailable = false;
 function getDb(): BSD | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as unknown as {
-      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
-    };
-    _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
-    return _db;
-  } catch (err) {
-    // Base absente en local dev → on ne retente pas à chaque appel.
+  // Fichier absent : échec DISTINCT et nommé (cf. handball-history-db.ts).
+  // turbopackIgnore : chemin calculé (DATABASE_PATH / cwd) — sans cette
+  // annotation Turbopack trace le projet entier (bead ParisScorebis-r4g8).
+  if (!existsSync(/*turbopackIgnore: true*/ SQLITE_FILE)) {
     _dbUnavailable = true;
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        `[tennis-stats] pariscore.db non lisible (${SQLITE_FILE}) — ` +
-          `stats désactivées. Détail: ${(err as Error).message}`
-      );
-    }
+    console.warn(
+      `[tennis-stats] pariscore.db introuvable : ${SQLITE_FILE} ` +
+        `(cwd=${process.cwd()}, DATABASE_PATH=${process.env.DATABASE_PATH ?? "non défini"}). ` +
+        "Stats tennis désactivées (SPS / DR / rang surface) — l'UI affiche `—`."
+    );
     return null;
   }
+  try {
+    _db = openNativeSqlite();
+    return _db;
+  } catch (bunErr) {
+    try {
+      // Runtime Node : `bun:sqlite` n'existe pas, `better-sqlite3` est le seul
+      // pilote et fonctionne (binding N-API compile pour l'ABI du Node courant).
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Database = require("better-sqlite3") as unknown as {
+        new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
+      };
+      _db = new Database(SQLITE_FILE, { readonly: true, fileMustExist: true });
+      return _db;
+    } catch (nodeErr) {
+      _dbUnavailable = true;
+      // Les DEUX erreurs sont journalisées, TOUJOURS (pas de guard NODE_ENV) :
+      // c'est l'échec silencieux en prod qui a coûté toute la mission SPS/DR —
+      // l'API annonçait « — » alors que la base était pleinement peuplée.
+      console.warn(
+        `[tennis-stats] Aucun pilote SQLite n'a pu ouvrir ${SQLITE_FILE} — ` +
+          `bun:sqlite: ${errMessage(bunErr)} · better-sqlite3: ${errMessage(nodeErr)}. ` +
+          `(cwd=${process.cwd()}, DATABASE_PATH=${process.env.DATABASE_PATH ?? "non défini"}). ` +
+          "Stats tennis désactivées (SPS / DR / rang surface)."
+      );
+      return null;
+    }
+  }
+}
+
+function errMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  // Les deux pilotes renvoient des messages multi-lignes très verbeux (liste de
+  // tous les chemins de binding candidats) : on garde la première ligne.
+  return m.split("\n")[0].slice(0, 200);
+}
+
+/**
+ * Ouvre la base avec `bun:sqlite`, en contournant l'analyse statique du bundler.
+ *
+ * `eval("require")` rend l'appel invisible à l'analyse statique : le bundler
+ * laisse la résolution au runtime, qui sait charger `bun:sqlite` nativement.
+ * C'est le contournement standard pour charger un module runtime dans un bundle
+ * — et LE chemin qui fonctionne sous Bun, où `require("bun:sqlite")` littéral
+ * était réécrit en résolution Node (et échouait).
+ */
+function openNativeSqlite(): BSD {
+  const req = eval("require") as NodeRequire;
+  const { Database } = req("bun:sqlite") as {
+    Database: new (file: string, opts?: object) => BSD;
+  };
+  return new Database(SQLITE_FILE, { readonly: true });
 }
 
 /**
