@@ -56,7 +56,10 @@ rm -rf "$DATA_BACKUP"
 CURR="$(git rev-parse HEAD)"
 
 # Nothing to deploy? Exit fast (idempotent re-run).
-if [ -n "$PREV" ] && [ "$PREV" = "$CURR" ]; then
+# FORCE_BUILD=1 court-circuite cette sortie : reconstruit même si git est à
+# jour (cas .next cassé par un build avorté — constat 2026-10-08 : un build
+# avorté laisse .next/static incohérent, pm2 sert un HTML à chunks 404).
+if [ -z "${FORCE_BUILD:-}" ] && [ -n "$PREV" ] && [ "$PREV" = "$CURR" ]; then
   echo "Already up to date ($CURR). Nothing to deploy."
   echo "--- VPS_DEPLOY_OK ---"
   echo "build_ran: 0"
