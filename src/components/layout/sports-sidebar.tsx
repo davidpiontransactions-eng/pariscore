@@ -1664,14 +1664,15 @@ export function SportsSidebarUrlSync() {
   const modes = useSportsSidebarStore((s) => s.modes);
   const treeStatus = useSportsSidebarStore((s) => s.treeStatus);
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+  const sportSubTabs = useSportsSidebarStore((s) => s.sportSubTabs);
 
   useEffect(() => {
     hydrateStoreFromUrl();
   }, []);
 
   useEffect(() => {
-    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds });
-  }, [selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds]);
+    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds, sportSubTabs });
+  }, [selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds, sportSubTabs]);
 
   return null;
 }
