@@ -39,6 +39,12 @@ const BasketballCalendar = dynamic(
   { ssr: false },
 );
 
+/** Opportunités (SQLite côté serveur) — chargé à la demande, pas au premier render. */
+const BasketballTop10 = dynamic(
+  () => import("./basketball-top10").then((m) => m.BasketballTop10),
+  { ssr: false },
+);
+
 const BasketballStandings = dynamic(
   () => import("./basketball-standings").then((m) => m.BasketballStandings),
   { ssr: false },
@@ -313,6 +319,10 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
           ))}
         </div>
       )}
+
+      {/* Opportunités — visible dans toutes les vues, au-dessus du contenu.
+          Source SQLite via API (bun:sqlite n'existe pas côté navigateur). */}
+      <BasketballTop10 limit={10} />
 
       {/* Vue Calendrier (style Flashscore/FotMob, 4 ligues) */}
       {pageView === "calendrier" && (
