@@ -34,7 +34,7 @@ const PICKS_BODY = {
       probabilityLabel: "our prediction",
       modelProbabilityPct: 61.5,
       fairOdds: 1.88,
-      confidence: "LEAN" as const,
+      confidence: "LEAN",
       verdict:
         "As of Oct 8, 2026, Bet Better's model rates Hull City a 61.5% chance to land, which is fair value at odds of 1.88. Confidence: LEAN.",
       locked: false,
@@ -50,7 +50,7 @@ const PICKS_BODY = {
       probabilityLabel: "our prediction",
       modelProbabilityPct: 31.5,
       fairOdds: 3.5,
-      confidence: "LONG-SHOT" as const,
+      confidence: "LONG-SHOT",
       verdict: "As of Oct 8, 2026, Bet Better's model rates Bournemouth a 31.5% chance to land. Confidence: LONG-SHOT.",
       locked: false,
       unlocksAtUtc: null,
@@ -64,12 +64,12 @@ const PICKS_BODY = {
       line: null,
       modelProbabilityPct: null,
       fairOdds: null,
-      confidence: "" as const,
+      confidence: "",
       verdict: "",
       locked: true,
       unlocksAtUtc: "2026-10-18T16:30:00.0000000Z",
     },
-  ],
+  ] satisfies BetBetterPick[],
 };
 
 // Payload réel observé le 2026-10-08 sur /predicted-scores/soccer?format=json
