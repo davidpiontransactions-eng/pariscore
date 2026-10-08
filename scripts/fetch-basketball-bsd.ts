@@ -30,6 +30,21 @@ import {
   sanitizeBasketballPrediction,
 } from "../src/lib/api/bzzoiro-client";
 import { devigTwoWay, type BsdCache, type CachedOdds } from "../src/lib/basketball-bsd-cache";
+import { selectLiquidLine, type RawMarket, type SelectedLine } from "../src/lib/basketball-market-line";
+
+/** Forme d'une ligne persistée — alignée sur `CachedFixture.ah` / `.ou`. */
+function toPersisted(l: SelectedLine | null): BsdCache["fixtures"][number]["ah"] {
+  if (!l) return null;
+  return {
+    line: l.line,
+    books: l.books,
+    fairFirst: Number(l.fairFirst.toFixed(4)),
+    fairSecond: Number(l.fairSecond.toFixed(4)),
+    vigPct: Number(l.vigPct.toFixed(2)),
+    bestFirst: l.bestFirst,
+    bestSecond: l.bestSecond,
+  };
+}
 
 // .env chargé à la main (bun ne lit pas .env dans un script arbitraire)
 const envPath = path.join(process.cwd(), ".env");
@@ -126,9 +141,20 @@ async function main() {
 
     // ── odds ──
     let odds: CachedOdds[] = [];
+    // Lignes AH / OU : null tant que la source ne les livre pas — jamais une
+    // ligne de repli. Sélection : basketball-market-line.ts (la plus liquide,
+    // `market_line` non nul, ≥2 books).
+    let ahLine: SelectedLine | null = null;
+    let ouLine: SelectedLine | null = null;
     if (WITH_ODDS) {
       await sleep(1000);
       const raw = await getBasketballOdds(ev.id);
+      // `markets` est déclaré `unknown[]` par le client (schéma non normalisé
+      // côté BSD) : on le resserre ici, après vérification du format réel
+      // (2026-10-08, event 7504). selectLiquidLine re-valide chaque entrée.
+      const markets = raw?.markets as RawMarket[] | undefined;
+      ahLine = selectLiquidLine(markets, "AH");
+      ouLine = selectLiquidLine(markets, "OU");
       if (!raw || !Array.isArray(raw.bookmakers)) {
         sansOdds++;
       } else {
@@ -206,6 +232,8 @@ async function main() {
         : null,
       odds,
       oddsSource: odds.length > 0 ? "bsd" : null,
+      ah: toPersisted(ahLine),
+      ou: toPersisted(ouLine),
     });
 
     process.stdout.write(

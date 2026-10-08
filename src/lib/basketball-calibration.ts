@@ -39,7 +39,18 @@ export const BASKET_LEAGUE_CALIBRATION: Record<string, BasketLeagueCalibration> 
   EuroCup: { totalLine: 166, sdTotal: 17.9, sdMargin: 15.0, homeEdgePts: 2.86, homeWinRate: 0.585, sampleSize: 739 },
 };
 
-/** Calibration d'une ligue, ou null si elle n'a aucune base mesurée. */
+/**
+ * Index en minuscules : BSD écrit `leagueName: "Euroleague"`, la table est
+ * codée `"EuroLeague"`. Un lookup exact rejetait donc TOUTE l'Euroleague — le
+ * garde de calibrage tombait, et `basketballOpportunities()` renvoyait vide
+ * même pour une ligue mesurée. Piège trouvé par le test le 2026-10-08.
+ */
+const BY_LOWER: Record<string, BasketLeagueCalibration> = Object.fromEntries(
+  Object.entries(BASKET_LEAGUE_CALIBRATION).map(([k, v]) => [k.toLowerCase(), v]),
+);
+
+/** Calibration d'une ligue, ou null si elle n'a aucune base mesurée.
+ *  Insensible à la casse pour absorber les conventions des sources tierces. */
 export function basketCalibration(league: string): BasketLeagueCalibration | null {
-  return BASKET_LEAGUE_CALIBRATION[league] ?? null;
+  return BY_LOWER[league.trim().toLowerCase()] ?? null;
 }
