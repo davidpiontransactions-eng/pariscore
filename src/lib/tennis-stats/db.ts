@@ -215,7 +215,7 @@ function getSpsIndex(
     .prepare(
       `SELECT player_id, sps
        FROM player_surface_scores
-       WHERE surface = ? AND sps IS NOT NULL
+       WHERE surface = ? COLLATE NOCASE AND sps IS NOT NULL
        GROUP BY player_id
        HAVING MAX(computed_at)
        ORDER BY sps DESC`
@@ -314,7 +314,7 @@ export function getPlayerStats(
     const spsStmt = db.prepare(
       `SELECT sps, confidence_full, matches_played
        FROM player_surface_scores
-       WHERE surface = ? AND player_id = ?
+       WHERE surface = ? COLLATE NOCASE AND player_id = ?
        ORDER BY computed_at DESC
        LIMIT 1`
     );
