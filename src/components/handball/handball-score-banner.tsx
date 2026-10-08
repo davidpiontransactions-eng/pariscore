@@ -79,7 +79,12 @@ function TeamColumn({
             était illisible (rapproché 2.9:1, sous le seuil WCAG AA 4.5:1).
             Le fond translucide + le blanc plein montent le texte à ~9:1 et
             le remplissage par la valeur double les canaux : on lit le niveau
-            sans lire le nombre. */}
+            sans lire le nombre.
+
+            `flex-wrap` + `min-w-[…]` sur chaque badge : sans ce plancher, les
+            deux badges se partagent la largeur de la colonne (~70 px) au lieu de
+            passer à la ligne, et leur texte se réduisait à « P… » / « F… » — un
+            badge illisible est pire que pas de badge du tout. */}
         <div className="mt-1 flex flex-wrap items-center gap-1">
           {metrics ? (
             <>
@@ -148,7 +153,7 @@ function Meter({ pct, bar, align }: { pct: number; bar: string; align: "left" | 
 function PowerBadge({ power, align }: { power: number; align: "left" | "right" }) {
   return (
     <span
-      className="flex min-w-0 flex-1 flex-col rounded-md bg-sky-400/20 px-1.5 py-0.5 ring-1 ring-sky-300/40"
+      className="flex min-w-[4.75rem] flex-1 flex-col rounded-md bg-sky-400/20 px-1.5 py-0.5 ring-1 ring-sky-300/40"
       title={`Team Power ${power}/100 — rapportée à la moyenne de la ligue (50 = niveau moyen)`}
     >
       <span className="truncate text-[10px] font-bold tabular-nums text-white">
@@ -164,7 +169,7 @@ function FormBadge({ formPct, align }: { formPct: number; align: "left" | "right
   const tone = FORM_BADGE_TONE.find((t) => formPct < t.max) ?? FORM_BADGE_TONE[FORM_BADGE_TONE.length - 1];
   return (
     <span
-      className={`flex min-w-0 flex-1 flex-col rounded-md px-1.5 py-0.5 ring-1 ${tone.chip}`}
+      className={`flex min-w-[5.25rem] flex-1 flex-col rounded-md px-1.5 py-0.5 ring-1 ${tone.chip}`}
       title={`Forme Calculée ${formPct}% — points/match pondérés par la récence, le lieu et l'écart de buts`}
     >
       <span className="truncate text-[10px] font-bold tabular-nums">
@@ -239,7 +244,7 @@ export function HandballScoreBanner({
         </time>
       </header>
 
-      <div className="mt-2.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
         <TeamColumn
           metrics={prediction.home}
           logoName={homeName}

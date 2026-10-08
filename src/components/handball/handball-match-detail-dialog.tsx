@@ -1646,8 +1646,24 @@ const params = new URLSearchParams({
           variante max-sm : aucun conflit d'ordre avec les classes base),
           hauteur bornée en dvh (viewport dynamique = barre navigateur
           déduite) avec scroll interne, padding réduit et safe-area iOS.
-          Desktop : centré par défaut (max-w-lg), inchangé. */}
-          <DialogContent className="bg-[#fafafa] dark:bg-[#1D1D1D] max-w-lg max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[88dvh] max-sm:gap-3 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          Desktop : centré par défaut (max-w-lg), inchangé.
+
+⚠️ `grid-cols-[minmax(0,1fr)]` — SANS CETTE CLASSE, le pop-up déborde de
+19 px sur mobile et la colonne droite est COUPÉE (nom d'équipe tronqué, « MB »
+à moitié, cotes illisibles). Mesuré à 430 px : la boîte fait 430 px mais
+`scrollWidth` 464 px, et `gridTemplateColumns` vaut 431.984 px pour un contenu
+utile de 398 px (430 − 2×16 de padding). Raison : `DialogContent` est
+`display: grid` SANS gabarit explicite, donc ses enfants tombent dans une
+piste implicite dimensionnée `auto` — c'est-à-dire à la largeur MAX-CONTENT de
+l'enfant le plus large. La piste dépasse alors la boîte et toute la grille
+pousse vers la droite.
+
+`minmax(0, 1fr)` force le minimum de la piste à 0 : elle prend la largeur du
+contenu et ne peut plus le dépasser, quel que soit le `min-width: auto` des
+descendants (les `min-w-0` locaux deviennent inutiles). C'est le correctif
+racine, ici plutôt qu'un `overflow-x: hidden` qui aurait seulement MASQUÉ la
+perte d'information. */}
+          <DialogContent className="bg-[#fafafa] dark:bg-[#1D1D1D] max-w-lg grid-cols-[minmax(0,1fr)] max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[88dvh] max-sm:gap-3 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-zinc-300 sm:hidden" />
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2">
