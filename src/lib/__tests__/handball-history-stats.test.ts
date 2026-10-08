@@ -14,6 +14,8 @@ import {
   poissonAtLeast,
   resolveTeamKey,
   scorerProbs,
+  shrinkMean,
+  matchLambdasFromSeries,
   teamKey,
   type HistoryMatch,
 } from "../handball-history-stats";
@@ -137,6 +139,81 @@ describe("meanTotal + matchModel", () => {
     expect(b.lambdaH).toBeCloseTo(a.lambdaH * 1.1, 3);
     expect(b.lambdaA).toBeCloseTo(a.lambdaA * 1.1, 3);
     expect(b.scale).toBeCloseTo(1.1, 3);
+  });
+});
+
+/**
+ * Le shrinkage est l'ESTIMATEUR DE FORCE D'ÉQUIPE du projet : il doit rester
+ * borné et progressif, sinon une équipe à 10 buts sur un seul match ferait
+ * sauter toute la distribution (le bug « 28 : 28 » remplacée par son inverse,
+ * « 14 : 30 »).
+ */
+describe("shrinkMean / matchLambdasFromSeries — force d'équipe bornée", () => {
+  test("0 match → la base de ligue pure", () => {
+    expect(shrinkMean([], 30)).toBe(30);
+    expect(shrinkMean([], 25.6)).toBe(25.6);
+  });
+
+  test("1 match pèse exactement 1/4, la base 3/4 (PRIOR_N = 3)", () => {
+    // (1×20 + 3×30) / 4 = 27.5
+    expect(shrinkMean([20], 30)).toBeCloseTo(27.5, 10);
+    // (1×40 + 3×30) / 4 = 32.5
+    expect(shrinkMean([40], 30)).toBeCloseTo(32.5, 10);
+  });
+
+  test("la fenêtre est plafonnée à 10 matchs (pas de moyenne carrière)", () => {
+    const long = Array(30).fill(40);
+    expect(shrinkMean(long, 30)).toBeCloseTo(shrinkMean(long.slice(-10), 30), 10);
+  });
+
+  test("l'estimateur converge vers la moyenne OBSERVÉE quand n grandit", () => {
+    // Sens physique du shrinkage : plus on observe, moins on revient à la
+    // base. Avec des matchs tous à 20 et une base à 30 :
+    //   n=1 → (1×20 + 3×30)/4 = 27.5   n=3 → 25   n=10 → 22
+    // L'estimation DESCEND donc vers 20 — elle s'éloigne de la base.
+    const one = shrinkMean([20], 30);
+    const three = shrinkMean([20, 20, 20], 30);
+    const ten = shrinkMean(Array(10).fill(20), 30);
+    expect(one).toBeGreaterThan(three);
+    expect(three).toBeGreaterThan(ten);
+    expect(ten).toBeGreaterThan(20);
+    // …et l'inverse pour une équipe au-dessus de la base.
+    expect(shrinkMean([40], 30)).toBeLessThan(shrinkMean([40, 40, 40], 30));
+  });
+
+  test("λ de match : deux équipes dissymétriques → λ distincts, en ν = 1", () => {
+    // CSM : 36/40 puis 30/38 (39 encaissés). Minaur : 27/19 puis 25/25 (22 encaissés).
+    const csM = { scored: [36, 30], conceded: [40, 38] };
+    const minaur = { scored: [27, 25], conceded: [19, 25] };
+    const { lambdaH, lambdaA } = matchLambdasFromSeries(csM, minaur, 30.1);
+    // λ sont des MOYENNES de buts (ν = 1) : pas de passage par cmpMean.
+    expect(lambdaA).toBeGreaterThan(lambdaH);
+    expect(lambdaH + lambdaA).toBeGreaterThan(55);
+    expect(lambdaH + lambdaA).toBeLessThan(66);
+  });
+
+  test("équipes identiques → seul l'avantage du terrain sépare les λ", () => {
+    const same = { scored: [28, 30], conceded: [27, 29] };
+    const { lambdaH, lambdaA } = matchLambdasFromSeries(same, same, 28.5);
+    // +0.9 sur le local, −0.45 sur le visiteur : écart = 1.35.
+    expect(lambdaH - lambdaA).toBeCloseTo(1.35, 10);
+  });
+
+  test("1 match vs 20 matchs : l'écart reste mesuré, jamais explosé", () => {
+    const terrible = { scored: [8], conceded: [42] };
+    const moyen = { scored: Array(20).fill(28), conceded: Array(20).fill(28) };
+    const { lambdaH, lambdaA } = matchLambdasFromSeries(terrible, moyen, 28.5);
+    // Plancher à 5, plafond : un 8-42 sur 1 match ne peut pas sortir à 0.
+    expect(lambdaH).toBeGreaterThanOrEqual(5);
+    expect(lambdaA).toBeGreaterThan(lambdaH);
+    expect(lambdaA - lambdaH).toBeLessThan(15);
+  });
+
+  test("équipe absente → la base de ligue, jamais 0", () => {
+    const { lambdaH, lambdaA } = matchLambdasFromSeries(null, null, 30);
+    expect(lambdaH).toBeGreaterThan(0);
+    expect(lambdaA).toBeGreaterThan(0);
+    expect(lambdaH - lambdaA).toBeCloseTo(1.35, 10);
   });
 });
 

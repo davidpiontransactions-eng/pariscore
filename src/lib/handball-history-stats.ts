@@ -51,8 +51,26 @@ export const WINDOWS = [5, 10] as const;
 /** λ neutre buts/équipe/match quand l'historique manque (~60 pts au total). */
 export const NEUTRAL_TEAM_LAMBDA = 30;
 
-/** Prior de shrinkage (matchs) vers la moyenne mondiale — miroir handball-cmp. */
-const PRIOR_N = 3;
+/**
+ * Prior de shrinkage (matchs) vers la base de la ligue — miroir handball-cmp
+ * (`CMP_MIN_HISTORY`). Un match observé ne pèse donc que 25 % de l'estimation,
+ * la base de ligue 75 %. C'est ce qui permet au moteur Pariscore de
+ * DIFFÉRENCIER deux équipes sur 1-2 matchs au lieu de retomber sur un prior
+ * 50/50 (cf. `matchLambdasFromSeries`).
+ */
+export const PRIOR_N = 3;
+
+/** Fenêtre de shrink : les 10 derniers matchs d'une série. */
+const SHRINK_WINDOW = 10;
+
+/** Plancher de λ équipe (une équipe à 0 buts resterait sinon dégénérée). */
+const MIN_TEAM_LAMBDA = 5;
+
+/**
+ * Avantage domicile en buts (convention handball-strategy-top8 :
+ * `HOME_ADV = 1.8` → +0.9 sur le local, −0.45 sur le visiteur).
+ */
+const HOME_ADV = 0.9;
 
 // ─── Types ───
 
@@ -121,6 +139,14 @@ export type TeamHistoryStats = {
   scoredSeries: number[];
   /** Buts encaissés chronologiques (λ défense — moteur CMP). */
   concededSeries: number[];
+  /**
+   * Lieu du iᵉ match, aligné index pour index sur `scoredSeries`
+   * (true = l'équipe reçoit). Alimente la Forme Calculée pondérée du moteur
+   * Pariscore, qui crédite une victoire à l'extérieur 0.92 contre 1.0 à
+   * domicile : sans cette colonne, un profil issu de l'historique SQLite perd
+   * cette pondération terrain.
+   */
+  atHomeSeries: boolean[];
 };
 
 /** Une ligne de l'échelle Over : proba + jouabilité au seuil 55 %. */
@@ -270,15 +296,72 @@ export function computeTeamStats(
     lastSeq: seqOf(games, 5),
     scoredSeries: games.map((g) => g.gf),
     concededSeries: games.map((g) => g.ga),
+    atHomeSeries: games.map((g) => g.side === "home"),
   };
 }
 
-/** Moyenne pondérée d'une série (shrinkage prior PRIOR_N vers `globalMean`). */
-function shrinkMean(series: number[], globalMean: number): number {
+/**
+ * Moyenne d'une série, shrinkée vers `globalMean` (fenêtre SHRINK_WINDOW,
+ * prior PRIOR_N matchs).
+ *
+ * Exportée : c'est le SEUL estimateur de force d'équipe du projet. Le moteur
+ * Pariscore (`handball-pariscore.resolveLambdas`) l'utilise sur le form-store
+ * quand l'historique est trop court pour un fit CMP — deux implémentations
+ * divergeraient sur les mêmes données.
+ */
+export function shrinkMean(series: readonly number[], globalMean: number): number {
   if (!series.length) return globalMean;
-  const trimmed = series.slice(-10);
+  const trimmed = series.slice(-SHRINK_WINDOW);
   const m = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
   return (trimmed.length * m + PRIOR_N * globalMean) / (trimmed.length + PRIOR_N);
+}
+
+/** Attaque / défense shrinkées d'une équipe, à partir de ses séries brutes. */
+export function shrunkAttackDefense(
+  scored: readonly number[],
+  conceded: readonly number[],
+  globalMean: number,
+): { attack: number; defense: number } {
+  return {
+    attack: shrinkMean(scored, globalMean),
+    defense: shrinkMean(conceded, globalMean),
+  };
+}
+
+/** Séries brutes d'une équipe (forme du store ou profil d'historique DB). */
+export type GoalSeries = {
+  /** Buts marqués, du plus ancien au plus récent. */
+  scored: readonly number[];
+  /** Buts encaissés, aligné index pour index sur `scored`. */
+  conceded: readonly number[];
+};
+
+/**
+ * λs du match (BUTS/ÉQUIPE, donc utilisables tels quels à ν = 1) depuis les
+ * séries brutes des deux équipes : attaque moyenne contre défense moyenne,
+ * chaque composante shrinkée vers la base de ligue, plus l'avantage du terrain.
+ *
+ * Robuste PAR CONSTRUCTION quand l'historique est court : `shrinkMean` pondère
+ * chaque match à `n / (n + PRIOR_N)`, donc 1 match observed donne déjà 25 % de
+ * poids à la donnée réelle et 75 % à la base — jamais 0 %, jamais 100 %. Un
+ * prior « neutre » appliqué à l'aveugle ne ferait qu'effacer l'écart entre deux
+ * équipes dont on a pourtant la Forme et le Team Power.
+ *
+ * Équipe absente (`null`) : ses deux composantes retombent sur la base, comme
+ * avant (pas de 0 inventé).
+ */
+export function matchLambdasFromSeries(
+  home: GoalSeries | null | undefined,
+  away: GoalSeries | null | undefined,
+  globalMean: number = NEUTRAL_TEAM_LAMBDA,
+): { lambdaH: number; lambdaA: number } {
+  const g = Number.isFinite(globalMean) && globalMean > 0 ? globalMean : NEUTRAL_TEAM_LAMBDA;
+  const h = home ? shrunkAttackDefense(home.scored, home.conceded, g) : { attack: g, defense: g };
+  const a = away ? shrunkAttackDefense(away.scored, away.conceded, g) : { attack: g, defense: g };
+  return {
+    lambdaH: Math.max((h.attack + a.defense) / 2 + HOME_ADV, MIN_TEAM_LAMBDA),
+    lambdaA: Math.max((a.attack + h.defense) / 2 - HOME_ADV / 2, MIN_TEAM_LAMBDA),
+  };
 }
 
 /** Moyenne des totaux d'une série de matchs (calibration de l'échelle). */
@@ -290,8 +373,8 @@ export function meanTotal(rows: readonly HistoryMatch[]): number | null {
 
 /**
  * λ du match : moyennes attaque/défense shrinkées (fenêtre 10, prior
- * PRIOR_N vers la moyenne mondiale) + avantage domicile, puis calibration
- * globale `scale` (base 60 / moyenne observée).
+ * PRIOR_N vers la moyenne de ligue — cf. `matchLambdasFromSeries`) puis
+ * calibration globale `scale` (base 60 / moyenne observée).
  *
  * On N'UTILISE PAS fitCMP/teamStrength ici : le MLE Newton ne converge pas
  * sur des fenêtres de 10 matchs et renvoie alors λ=48 pour une moyenne
@@ -310,17 +393,12 @@ export function matchModel(
   scale: number;
   expectedTotal: number;
 } {
-  const g = Number.isFinite(globalTeamGoals) && globalTeamGoals > 0 ? globalTeamGoals : NEUTRAL_TEAM_LAMBDA;
-  const attH = home ? shrinkMean(home.scoredSeries, g) : g;
-  const defH = home ? shrinkMean(home.concededSeries, g) : g;
-  const attA = away ? shrinkMean(away.scoredSeries, g) : g;
-  const defA = away ? shrinkMean(away.concededSeries, g) : g;
-
-  // Avantage domicile (convention handball-strategy-top8 : HOME_ADV = 1.8 →
-  // +0.9 sur le local, −0.45 sur le visiteur).
+  const seriesOf = (t: TeamHistoryStats | null): GoalSeries | null =>
+    t ? { scored: t.scoredSeries, conceded: t.concededSeries } : null;
+  const base = matchLambdasFromSeries(seriesOf(home), seriesOf(away), globalTeamGoals);
   const k = Number.isFinite(scale) && scale > 0 ? scale : 1;
-  const lambdaH = Math.max(((attH + defA) / 2 + 0.9) * k, 5);
-  const lambdaA = Math.max(((attA + defH) / 2 - 0.45) * k, 5);
+  const lambdaH = Math.max(base.lambdaH * k, MIN_TEAM_LAMBDA);
+  const lambdaA = Math.max(base.lambdaA * k, MIN_TEAM_LAMBDA);
 
   return {
     lambdaH,

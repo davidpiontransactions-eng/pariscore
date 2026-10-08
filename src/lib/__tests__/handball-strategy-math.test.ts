@@ -10,6 +10,8 @@ import {
   ppg,
   formSummaryStr,
   teamFormFromSeries,
+  mergeFormStoreWithHistory,
+  type HandballTeamForm,
 } from "../handball-strategy-top8";
 import type { HandballMatch } from "../handball-data";
 
@@ -156,5 +158,92 @@ describe("teamFormFromSeries - repli DB coupe (serie chronologique)", () => {
     expect(f!.gf).toEqual([30]); // tronque au plus court
     expect(f!.ga).toEqual([25]);
     expect(f!.wins).toBe(1);
+  });
+
+  test("atHomeSeries alimente la ponderation terrain, absente -> neutre", () => {
+    const withVenue = teamFormFromSeries([30, 25], [20, 20], [true, false])!;
+    expect(withVenue.atHome).toEqual([true, false]);
+    // Tronquee a la longueur commune, comme gf/ga.
+    const shorter = teamFormFromSeries([30, 25, 28], [20, 20], [true, false])!;
+    expect(shorter.atHome).toEqual([true, false]);
+    // Pas de colonne de lieu -> liste vide = ponderation neutre (computeFormPctWeighted).
+    expect(teamFormFromSeries([30], [20])!.atHome).toEqual([]);
+  });
+});
+
+/**
+ * Régression du sourcing : la fenêtre Flashscore (~8 jours) ne doit plus
+ * ÉCRASER l'historique SQLite (2 saisons). Symptôme mesuré en prod le
+ * 2026-10-08 : CSM Bucuresti (14 matchs en table) et Minaur Baia Mare (14)
+ * tombaient à 1-2 matchs de fenêtre, sous CMP_MIN_HISTORY, donc prior neutre.
+ */
+describe("mergeFormStoreWithHistory — la source la plus longue gagne", () => {
+  const profile = (gf: number[], ga: number[]) => ({
+    scoredSeries: gf,
+    concededSeries: ga,
+    atHomeSeries: gf.map(() => true),
+  });
+
+  test("2 matchs de fenetre < 14 matchs de table -> la table gagne", () => {
+    const base = new Map<string, HandballTeamForm>([
+      [
+        "101",
+        {
+          gf: [36, 30],
+          ga: [40, 38],
+          wins: 0,
+          draws: 0,
+          losses: 2,
+          htLeads: 0,
+          htTrails: 0,
+          atHome: [true, true],
+        },
+      ],
+    ]);
+    const merged = mergeFormStoreWithHistory(
+      base,
+      new Map([[101, profile([30, 38, 29, 31, 39, 33, 31, 24, 33, 23, 51, 28, 36, 30], [38, 28, 27, 29, 30, 29, 24, 34, 25, 34, 34, 23, 40, 38])]]),
+    );
+    expect(merged.get("101")!.gf).toHaveLength(14);
+  });
+
+  test("fenetre plus longue que la table -> la fenetre est conservee", () => {
+    const base = new Map<string, HandballTeamForm>([
+      [
+        "101",
+        {
+          gf: [30, 31],
+          ga: [28, 29],
+          wins: 2,
+          draws: 0,
+          losses: 0,
+          htLeads: 0,
+          htTrails: 0,
+          atHome: [true, true],
+        },
+      ],
+    ]);
+    const merged = mergeFormStoreWithHistory(base, new Map([[101, profile([30], [20])]]));
+    expect(merged.get("101")!.gf).toEqual([30, 31]);
+  });
+
+  test("base nulle + profil DB -> store_peuple (equipe hors fenetre Flashscore)", () => {
+    const merged = mergeFormStoreWithHistory(
+      null,
+      new Map([[202, profile([27, 25, 32, 28], [19, 25, 28, 36])]]),
+    );
+    expect(merged.get("202")!.gf).toHaveLength(4);
+  });
+
+  test("aucune source -> store vide (jamais de TeamForm fantome)", () => {
+    expect(mergeFormStoreWithHistory(null, new Map()).size).toBe(0);
+  });
+
+  test("profil sans resultat ignore, store de base intact", () => {
+    const merged = mergeFormStoreWithHistory(
+      null,
+      new Map([[303, profile([], [])]]),
+    );
+    expect(merged.has("303")).toBe(false);
   });
 });

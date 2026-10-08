@@ -10,6 +10,7 @@
 // avec les 3 paris prédictifs du popup et avec le backtest.
 
 import {
+  CMP_MIN_HISTORY,
   CMP_NEUTRAL_LAMBDA,
   cmpLambdaForMean,
   cmpMean,
@@ -18,6 +19,7 @@ import {
   teamStrength,
   type CmpTeam,
 } from "./handball-cmp";
+import { matchLambdasFromSeries } from "./handball-history-stats";
 import { skellamMatchProbs } from "./handball-skellam";
 import { buildFormStore, type HandballFormStore } from "./handball-strategy-top8";
 import type { HandballMatch } from "./handball-data";
@@ -110,6 +112,13 @@ export type PariscorePrediction = {
   total: PariscoreTotalPick | null;
   /** true si l'historique des 2 équipes est suffisant (≥ CMP_MIN_HISTORY). */
   hasForm: boolean;
+  /**
+   * true si au moins une équipe a au moins 1 résultat exploitable — donc si
+   * les λs portent un signal. `false` ⇒ l'UI affiche un état NEUTRE
+   * (« — : — », « Données insuffisantes ») au lieu de publier un 1N2 qui
+   * serait la moyenne de ligue déguisée en prédiction.
+   */
+  hasSignal: boolean;
   /** Note de méthode affichée sous les métriques (traçabilité du calcul). */
   note: string;
 };
@@ -304,32 +313,69 @@ export function computePariscoreIndex(
 // ─── Score prédit ───
 
 /**
- * λs de la rencontre depuis les forces CMP des deux équipes.
+ * λs de la rencontre, en 3 régimes — du plus au moins contraint en données.
  *
- * Historique insuffisant → prior neutre symétrique en **Poisson (ν = 1)**,
- * convention du codebase (resolveLambdas de handball-predictive-bets.ts) :
- * à ν = 1, λ EST la moyenne de buts, donc le λ neutre s'utilise tel quel. Le
- * prior est calé sur la MOYENNE DE LA LIGUE (pas sur le 28.5 tous
- * championnats) → le prior neutre d'un match D2 féminin sort à ~25.6 buts
- * par équipe au lieu de 28.5.
+ * 1. **AUCUNE équipe connue** → prior neutre symétrique en Poisson (ν = 1).
+ *    Aucun signal, donc aucune différenciation à inventer : `hasSignal: false`
+ *    et l'UI affiche un état neutre explicite (« — : — / Données
+ *    insuffisantes ») au lieu de probas qui ressembleraient à une prédiction.
  *
- * Le modèle ajusté (teamStrength) ramène lui aussi ν ≈ 1.3 et des λs qui,
- * eux, sont des TAUX — d'où le cmpMean() avant tout affichage.
+ * 2. **Historique suffisant des DEUX côtés** (≥ `CMP_MIN_HISTORY`) → forces
+ *    CMP (`teamStrength` + `matchLambdas`), λ = TAUX, ν ≈ 1.3. La moyenne
+ *    affichée repasse par `cmpMean` (cf. `computePariscorePrediction`).
+ *
+ * 3. **Historique court mais réel** (1..`CMP_MIN_HISTORY` − 1, cas le plus
+ *    fréquent en production : une équipe qui vient d'arriver, une fenêtre
+ *    Flashscore de 8 jours qui n'a capté que 1-2 rencontres) → l'écart mesuré
+ *    est réinjecté via `matchLambdasFromSeries` : moyennes d'attaque et de
+ *    défense shrinkées vers la MOYENNE DE LA LIGUE (prior de 3 matchs, ν = 1
+ *    donc λ = moyenne) + avantage du terrain.
+ *
+ * ⚠️ Le régime 3 est le correctif du bug « 28 : 28 / 47.4 %-5.3 %-47.4 % ».
+ * L'ancien code exigeait 3 matchs des DEUX côtés et retombait sinon sur un
+ * prior perfectly symétrique — alors que la Forme Calculée (2.6 % contre
+ * 71.7 %) et le Team Power (31.6 contre 60.1) étaient déjà calculés et
+ * affichés juste au-dessus. Un 10-10 cystique sur deux équipes aussi
+ * dissymétriques est une absence de modèle, pas une prédiction. Le
+ * shrinkage garantit qu'un seul match ne suffit pas à faire basculer un
+ * écart de 20 buts : il pèse 25 %, la base de ligue 75 %.
  */
 function resolveLambdas(
   homeForm: HandballFormStore | undefined,
   match: HandballMatch,
   leagueMean: number,
-): { lambdaH: number; lambdaE: number; nuH: number; nuE: number; hasForm: boolean } {
+): {
+  lambdaH: number;
+  lambdaE: number;
+  nuH: number;
+  nuE: number;
+  hasForm: boolean;
+  hasSignal: boolean;
+} {
   const h = homeForm?.get(String(match.home.id));
   const a = homeForm?.get(String(match.away.id));
   const neutral = leagueMean > 0 ? leagueMean : CMP_NEUTRAL_LAMBDA;
-  if (!h || !a || h.gf.length < 3 || a.gf.length < 3) {
-    return { lambdaH: neutral, lambdaE: neutral, nuH: 1, nuE: 1, hasForm: false };
+  if (!h || !a || h.gf.length === 0 || a.gf.length === 0) {
+    return { lambdaH: neutral, lambdaE: neutral, nuH: 1, nuE: 1, hasForm: false, hasSignal: false };
   }
-  const home: CmpTeam = teamStrength(h.gf, h.ga);
-  const away: CmpTeam = teamStrength(a.gf, a.ga);
-  return { ...matchLambdas(home, away), hasForm: true };
+  if (h.gf.length >= CMP_MIN_HISTORY && a.gf.length >= CMP_MIN_HISTORY) {
+    const home: CmpTeam = teamStrength(h.gf, h.ga);
+    const away: CmpTeam = teamStrength(a.gf, a.ga);
+    return { ...matchLambdas(home, away), hasForm: true, hasSignal: true };
+  }
+  const shrunk = matchLambdasFromSeries(
+    { scored: h.gf, conceded: h.ga },
+    { scored: a.gf, conceded: a.ga },
+    neutral,
+  );
+  return {
+    lambdaH: shrunk.lambdaH,
+    lambdaE: shrunk.lambdaA,
+    nuH: 1,
+    nuE: 1,
+    hasForm: false,
+    hasSignal: true,
+  };
 }
 
 /**
@@ -394,9 +440,9 @@ export function pickTotalThreshold(
  * Prédiction Pariscore complète d'une rencontre : métriques par équipe, Index,
  * score prédit, winrate 1N2 et seuil de total.
  *
- * Ne throw jamais : historique absent → λ neutre, `hasForm: false`, note
- * explicite. Les métriques d'équipe renvoient null (affichage « — ») plutôt
- * qu'un 0 qui ferait croire à une équipe nulle.
+ * Ne throw jamais : historique absent → λ neutre, `hasForm: false`,
+ * `hasSignal: false`, note explicite. Les métriques d'équipe renvoient null
+ * (affichage « — ») plutôt qu'un 0 qui ferait croire à une équipe nulle.
  */
 export function computePariscorePrediction(
   match: HandballMatch,
@@ -421,7 +467,7 @@ export function computePariscorePrediction(
     opts.leagueMean != null && opts.leagueMean > 0 ? opts.leagueMean : CMP_NEUTRAL_LAMBDA;
   const store =
     opts.formStore ?? (opts.finished?.length ? buildFormStore(opts.finished) : null);
-  const { lambdaH, lambdaE, nuH, nuE, hasForm } = resolveLambdas(
+  const { lambdaH, lambdaE, nuH, nuE, hasForm, hasSignal } = resolveLambdas(
     store ?? undefined,
     match,
     leagueMean,
@@ -466,8 +512,11 @@ export function computePariscorePrediction(
     expectedTotal: round1(meanH + meanE),
     total,
     hasForm,
+    hasSignal,
     note: hasForm
       ? `CMP/Skellam sur forme L${PARISCORE_WINDOW} pondérée (lieu + écart), ${base} — ${match.league.name}`
-      : `Prior neutre ${base} (historique < 3 matchs) — ${match.league.name}`,
+      : hasSignal
+        ? `Moyennes d'attaque/défense shrinkées vers la ${base} (historique < ${CMP_MIN_HISTORY} matchs, ν = Poisson) — ${match.league.name}`
+        : `Prior neutre ${base} — aucun résultat en base pour ces équipes — ${match.league.name}`,
   };
 }

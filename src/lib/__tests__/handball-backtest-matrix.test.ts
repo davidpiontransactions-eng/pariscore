@@ -221,5 +221,10 @@ describe("cas limites", () => {
     expect(keysFull).toBe(keysD30);
     expect(full.markets.map((m) => m.key)).toContain("over55");
     expect(full.markets).toHaveLength(8);
-  });
+    // Budget 30 s, pas le défaut 5 s : ce test fait tourner la matrice 2× sur
+    // 30 matchs (runHandballBacktest × 8 marchés), soit ~2.7 s seul. Sous la
+    // suite complète (39 fichiers en parallèle) il dépassait 5 s et échouait
+    // en timeout — un faux négatif de contention CPU, pas un défaut de la
+    // matrice. Le fichier passe 12/12 isolé.
+  }, 30_000);
 });

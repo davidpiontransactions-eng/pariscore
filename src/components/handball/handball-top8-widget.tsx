@@ -61,9 +61,16 @@ function filterByDateWindow<T>(
 }
 
 /**
- * Date & heure de coup d'envoi d'une ligne : « Aujourd'hui | 20:45 » pour les
- * 2 prochains jours, « 07/10 | 20:45 » au-delà. Jamais de date inventée — un
+ * Date & heure de coup d'envoi d'une ligne : « 📅 Aujourd'hui · 20:45 » pour les
+ * 2 prochains jours, « 📅 07/10 · 20:45 » au-delà. Jamais de date inventée — un
  * horodatage illisible affiche « — ».
+ *
+ * Typographie : badge `slate` à fond opaque, texte slate-800/slate-100 en
+ * `font-bold tabular-nums`. L'ancien rendu (texte `#717171` de 12 px, au
+ * même poids que le nom de ligue) passait sous le seuil de lisibilité — la
+ * colonne « quand » est pourtant LA donnée qui décide si un pari est encore
+ * jouable. Le fond opaque le détache aussi du fond de carte en dark mode, où
+ * le gris `#717171` disparaissait presque.
  */
 function KickoffCell({ kickoff }: { kickoff?: string }) {
   const f = kickoff ? formatTop10DateTime(kickoff) : null;
@@ -76,11 +83,12 @@ function KickoffCell({ kickoff }: { kickoff?: string }) {
   }
   return (
     <span
-      className="whitespace-nowrap text-xs font-medium tabular-nums text-[#717171]"
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-800 dark:bg-slate-800 dark:text-slate-100"
       title={`Coup d'envoi le ${f.day} à ${f.time} (Europe/Paris)`}
     >
+      <span aria-hidden="true">📅</span>
       {f.relative ?? f.day}
-      <span className="mx-1 opacity-50">|</span>
+      <span className="opacity-50">·</span>
       {f.time}
     </span>
   );

@@ -28,7 +28,7 @@ function payload(overrides: Partial<HandballAnalysisPayload> = {}): HandballAnal
     ok: true,
     match: { home: "Kiel", away: "Flensburg-H.", date: "2026-09-26T16:00:00.000Z", league: "Bundesliga" },
     meta: { n: 7734, minDate: "2026-02-27", maxDate: "2026-09-25", lastRun: "2026-09-25T17:25:00.000Z" },
-    model: { base: 60, observedMean: 59.2, scale: 1.014, lambdaH: 33.1, lambdaA: 31.1, nu: 1.3, expectedTotal: 64.3 },
+    model: { base: 60, observedMean: 59.2, leagueMeanPerTeam: 29.6, scale: 1.014, lambdaH: 33.1, lambdaA: 31.1, nu: 1.3, expectedTotal: 64.3 },
     over: {
       floor: 0.55,
       lines: [

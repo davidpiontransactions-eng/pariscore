@@ -560,3 +560,53 @@ export function leagueGoalsPerMatch(leagueId: string): number | null {
     return null;
   }
 }
+
+/**
+ * Moyenne de buts PAR ÉQUIPE ET PAR MATCH d'une ligue, mesurée sur sa propre
+ * histoire — sans passer par le registre.
+ *
+* Pourquoi une seconde porte d'entrée : `leagueGoalsPerMatch` exige un `id` du
+ * registre, donc une ligue couverte par le CRON. Or le calendrier handball
+ * affiche des championnats que le cron ne scrape pas : la Liga Nationala RO
+ * masculine n'est au registre que dans sa variante Women. Pour ces ligues, le
+ * seul moyen d'avoir une VRAIE base au lieu du `CMP_NEUTRAL_LAMBDA` générique
+ * (28.5) est de la mesurer sur ce que la table contient déjà — mesuré : Liga
+ * Nationala RO hommes = 30.1 buts/équipe, soit 5.5 % au-dessus du 28.5.
+ *
+ * La colonne `league` mélange deux écritures selon le scraper (`Pays: Ligue`
+ * pour BetExplorer, `Ligue` pour Flashscore — cf. handball-league-registry) :
+ * on teste donc les deux formes. `country` est optionnel ; sans lui, seul le
+ * nom nu est cherché, ce qui laisse agréger des ligues homonymes de pays
+ * différents — d'où le conseil de le passer quand on le connaît.
+ *
+ * Renvoie des buts PAR ÉQUIPE (la moitié du total par match), l'unité qu'attend
+ * le moteur Pariscore. `null` si la ligue n'a aucun match exploitable.
+ */
+export function leagueGoalsPerTeam(
+  leagueName: string,
+  country?: string | null,
+): number | null {
+  const db = getDb();
+  if (!db || !leagueName.trim()) return null;
+  const bare = leagueName.trim();
+  // Ordre de préséance : le nom canonique `Pays: Ligue`, puis le nom nu.
+  const variants = country?.trim()
+    ? [`${country.trim()}: ${bare}`, bare]
+    : [bare];
+  const placeholders = variants.map(() => "?").join(",");
+  try {
+    const r = db
+      .prepare(
+        `SELECT AVG(total) / 2.0 AS avg_team
+           FROM (SELECT (home_goals + away_goals) AS total
+                   FROM handball_match_history
+                  WHERE league IN (${placeholders})
+                    AND home_goals IS NOT NULL AND away_goals IS NOT NULL)`,
+      )
+      .get(...variants) as Record<string, unknown> | undefined;
+    const v = r?.avg_team != null ? Number(r.avg_team) : NaN;
+    return Number.isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : null;
+  } catch {
+    return null;
+  }
+}

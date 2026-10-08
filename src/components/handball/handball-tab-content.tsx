@@ -803,9 +803,19 @@ export function HandballTabContent() {
 
         {/* 📊 4. Backtesting — historique des prédictions, taux de réussite, ROI.
               Ne dépend pas de `filtered` : c'est un audit, pas une liste de
-              matchs — les filtres calendrier ne s'y appliquent pas. */}
-          <TabsContent value="backtesting" className="mt-3">
+              matchs — les filtres calendrier ne s'y appliquent pas.
+
+              Les 2 tableaux d'AUDIT (ROI visuel par stratégie + matrice
+              8 marchés × championnats) sont ici, pas dans « Stratégie Top 10 ».
+              Ils étaient rendus en FRÈRE du <Tabs>, donc sous le sous-onglet
+              ouvert : dans « Stratégie Top 10 » ils se lisaient comme la
+              justification des picks du jour, et sur mobile ils repoussaient
+              le tableau des paris de ~1 200 px plus bas. Un audit appartient
+              à l'onglet d'audit. */}
+          <TabsContent value="backtesting" className="mt-3 space-y-3">
             <HandballBacktestingView />
+            <HandballBacktestWidget />
+            <HandballBacktestMatrix />
           </TabsContent>
 
           {/* 📆 6. Résultats — backtest des 8 stratégies du jour + résultats 7 j
@@ -996,14 +1006,9 @@ export function HandballTabContent() {
       <HandballVitibetTop10 />
 
       {/* Backtest Vitibet (zone Vitibet) : taux de réussite des tips FT —
-          distinct de HandballBacktestWidget (ROI des stratégies maison). */}
+          distinct de HandballBacktestWidget (ROI des stratégies maison),
+          désormais rangé dans le sous-onglet Backtesting. */}
       <HandballVitibetBacktest />
-
-      {/* Backtest ROI visuel (cotes simulées) */}
-      <HandballBacktestWidget />
-
-      {/* Matrice backtest 8 marchés × championnats (source DB historique) */}
-      <HandballBacktestMatrix />
 
       {/* Actus handball (5 sources RSS) */}
       <HandballNews />

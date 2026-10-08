@@ -5,7 +5,6 @@ import {
   PARISCORE_MIN_ODDS,
   PARISCORE_MIN_PROB_PCT,
 } from "@/lib/handball-pariscore";
-import { MatchCard3D } from "./handball-3d-art";
 
 // ─── Winrate 1N2 ───
 
@@ -40,13 +39,16 @@ function WinrateCard({
   odds,
   homeName,
   awayName,
+  hasSignal = true,
 }: {
   winrate: PariscoreWinrate;
   odds?: { home?: number; draw?: number; away?: number };
   homeName: string;
   awayName: string;
+  /** false → aucun résultat en base : pas de probabilité à publier. */
+  hasSignal?: boolean;
 }) {
-  const fav = favoriteSide(winrate, odds);
+  const fav = hasSignal ? favoriteSide(winrate, odds) : null;
   const rows: Array<{ side: Side; label: string }> = [
     { side: "home", label: homeName },
     { side: "draw", label: "Nul" },
@@ -79,29 +81,36 @@ function WinrateCard({
         ))}
       </div>
 
-      <ul className="space-y-1">
-        {rows.map(({ side, label }) => (
-          <li key={side} className="flex items-center justify-between gap-2 text-xs">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span
-                aria-hidden="true"
-                className={`inline-block h-2 w-2 shrink-0 rounded-full ${SIDE_COLOR[side].bar}`}
-              />
-              <span className="truncate text-[#717171]" title={label}>
-                {label}
+      {!hasSignal ? (
+        <p className="text-[11px] leading-snug text-[#717171]">
+          Données insuffisantes — le 1N2 affiché serait la moyenne de la ligue,
+          pas une probabilité de ce match.
+        </p>
+      ) : (
+        <ul className="space-y-1">
+          {rows.map(({ side, label }) => (
+            <li key={side} className="flex items-center justify-between gap-2 text-xs">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={`inline-block h-2 w-2 shrink-0 rounded-full ${SIDE_COLOR[side].bar}`}
+                />
+                <span className="truncate text-[#717171]" title={label}>
+                  {label}
+                </span>
               </span>
-            </span>
-            <span className="shrink-0 tabular-nums">
-              <span className={`font-bold ${SIDE_COLOR[side].text}`}>
-                {winrate[side].toFixed(1)}%
+              <span className="shrink-0 tabular-nums">
+                <span className={`font-bold ${SIDE_COLOR[side].text}`}>
+                  {winrate[side].toFixed(1)}%
+                </span>
+                <span className="ml-2 text-[#717171]">
+                  {odds?.[side] != null ? odds[side]!.toFixed(2) : "—"}
+                </span>
               </span>
-              <span className="ml-2 text-[#717171]">
-                {odds?.[side] != null ? odds[side]!.toFixed(2) : "—"}
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -111,6 +120,7 @@ function WinrateCard({
 /** Carte « Total Over Goals » : seuil optimal du modèle, ou motif de refus. */
 function TotalCard({ prediction }: { prediction: PariscorePrediction }) {
   const { total } = prediction;
+  const noSignal = !prediction.hasSignal;
   return (
     <section className="space-y-2 rounded-xl border border-[#f0f0f0] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
       <header className="flex items-center justify-between gap-2">
@@ -124,7 +134,12 @@ function TotalCard({ prediction }: { prediction: PariscorePrediction }) {
         )}
       </header>
 
-      {total ? (
+      {noSignal ? (
+        <p className="text-[11px] leading-snug text-[#717171]">
+          Données insuffisantes — aucun résultat en base pour ces deux équipes,
+          donc aucune probabilité de total n&apos;est calculable.
+        </p>
+      ) : total ? (
         <>
           <p className="font-mono text-2xl font-black leading-none tabular-nums text-[#222222] dark:text-white">
             {total.side === "over" ? "Over" : "Under"} {total.line}
@@ -164,12 +179,16 @@ function TotalCard({ prediction }: { prediction: PariscorePrediction }) {
 
 /**
  * Cartes Prédiction IA — Winrate 1N2 + Total de buts.
- * Alimentent les pastilles du popup Calendrier quand le tip Vitibet manque :
- * le modèle parle toujours (prior CMP neutre si l'historique est court).
  *
- * `MatchCard3D` en-tête ces cartes avec le joueur en illustration flottante à
- * droite du score prédit. Décoratif (`aria-hidden`), il ne recouvre jamais le
- * texte — voir le composant pour les détails d'accessibilité.
+ * Alimentent le pop-up match ET les pastilles du Calendrier quand le tip
+ * Vitibet manque : le modèle parle toujours (prior neutre s'il n'y a vraiment
+ * aucune donnée, voir `PariscorePrediction.hasSignal`).
+ *
+ * ⚠️ Plus de `MatchCard3D` ici : le score prédit est déjà dans l'en-tête bleu
+ * (`HandballScoreBanner`). L'afficher une troisième fois dans le même écran —
+ * étiquette « Score prédit Pariscore (CMP + Skellam) », 28 - 28 — était
+ * exactement la redondance signalée : sur mobile il fallait faire défiler
+ * 200 px pour lire un chiffre déjà lu 6 lignes plus haut.
  */
 export function HandballPredictionCards({
   prediction,
@@ -183,22 +202,15 @@ export function HandballPredictionCards({
   awayName: string;
 }) {
   return (
-    <div className="space-y-2">
-      <MatchCard3D
-        home={homeName}
-        away={awayName}
-        score={`${prediction.scoreHome} - ${prediction.scoreAway}`}
-        hint="Score prédit Pariscore (CMP + Skellam)"
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <WinrateCard
+        winrate={prediction.winrate}
+        odds={odds}
+        homeName={homeName}
+        awayName={awayName}
+        hasSignal={prediction.hasSignal}
       />
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <WinrateCard
-          winrate={prediction.winrate}
-          odds={odds}
-          homeName={homeName}
-          awayName={awayName}
-        />
-        <TotalCard prediction={prediction} />
-      </div>
+      <TotalCard prediction={prediction} />
     </div>
   );
 }

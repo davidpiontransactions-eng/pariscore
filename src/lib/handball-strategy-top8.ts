@@ -143,10 +143,17 @@ export function buildFormStore(finished: HandballMatch[]): FormStore {
  * (8 jours) : clubs de coupe ou hors championnat, aucun match terminé dans
  * `finished` → forme/moyennes/lambdas CMP alimentés par SQLite à la place.
  * htLeads/htTrails = 0 (pas de données mi-temps dans les séries brutes).
- * atHome = [] (lieu inconnu → la Forme Calculée n'applique pas la pondération
- * terrain, cf. computeFormPctWeighted).
+ *
+ * `atHomeSeries` est OPTIONNEL : la table `handball_match_history` sait pour
+ * chaque ligne si l'équipe recevait, et cette colonne alimente la pondération
+ * terrain de la Forme Calculée. Absente (séries sans lieu), on retombe sur
+ * `atHome: []` = pondération neutre, jamais d'erreur.
  */
-export function teamFormFromSeries(gf: number[], ga: number[]): HandballTeamForm | null {
+export function teamFormFromSeries(
+  gf: number[],
+  ga: number[],
+  atHomeSeries?: boolean[],
+): HandballTeamForm | null {
   const n = Math.min(gf.length, ga.length);
   if (n === 0) return null;
   const goalsFor = gf.slice(0, n);
@@ -159,7 +166,49 @@ export function teamFormFromSeries(gf: number[], ga: number[]): HandballTeamForm
     else if (goalsFor[i] === goalsAgainst[i]) draws++;
     else losses++;
   }
-  return { gf: goalsFor, ga: goalsAgainst, wins, draws, losses, htLeads: 0, htTrails: 0, atHome: [] };
+  return {
+    gf: goalsFor,
+    ga: goalsAgainst,
+    wins,
+    draws,
+    losses,
+    htLeads: 0,
+    htTrails: 0,
+    atHome: atHomeSeries?.slice(0, n) ?? [],
+  };
+}
+
+/**
+ * Fusionne la forme du SNAPSHOT courant avec les profils de l'HISTORIQUE DB,
+ * en gardant **la source la plus longue** pour chaque équipe.
+ *
+ * ⚠️ Pourquoi pas « le snapshot gagne » : la fenêtre Flashscore ne couvre que
+ * ~8 jours. Une seule rencontre terminée suffisait donc à peupler le store et
+ * à court-circuiter le repli SQLite, effaçant 2 saisons d'historique (14
+ * matchs pour CSM Bucuresti au 2026-10-08). Le store retombait sous
+ * `CMP_MIN_HISTORY`, le moteur basculait sur son prior neutre, et la fiche
+ * match affichait « 28 : 28 / 47.4 %-5.3 %-47.4 % » pendant que le Team Power
+ * affichait 31.6 contre 60.1. Les deux séries sont chronologiques et se
+ * recouvrent (le cron SQLite ré-ingère la fenêtre) : les concaténer
+ * compterait deux fois les mêmes matchs, on prend donc celle qui couvre le
+ * plus de rencontres.
+ *
+ * @param base     Store du snapshot (`buildFormStore`), éventuellement vide.
+ * @param profiles Profils d'historique par id d'équipe, déjà résolus en clé.
+ */
+export function mergeFormStoreWithHistory(
+  base: FormStore | null | undefined,
+  profiles: ReadonlyMap<number, { scoredSeries: number[]; concededSeries: number[]; atHomeSeries: boolean[] }>,
+): FormStore {
+  const merged = new Map(base ?? []);
+  for (const [id, p] of profiles) {
+    const entry = teamFormFromSeries(p.scoredSeries, p.concededSeries, p.atHomeSeries);
+    if (!entry) continue;
+    const current = merged.get(String(id));
+    if (current && current.gf.length >= entry.gf.length) continue;
+    merged.set(String(id), entry);
+  }
+  return merged;
 }
 
 /** Moyenne des N dernières valeurs */

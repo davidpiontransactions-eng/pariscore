@@ -13,7 +13,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { HandballTableCaption } from "./handball-table-caption";
 import { HandballLiveCommentaryPanel } from "./handball-live-commentary-panel";
 import type { HandballMatch } from "@/lib/handball-data";
-import { buildFormStore, formSummaryStr, teamFormFromSeries } from "@/lib/handball-strategy-top8";
+import {
+  buildFormStore,
+  formSummaryStr,
+  mergeFormStoreWithHistory,
+} from "@/lib/handball-strategy-top8";
 import {
   computeHandballPredictiveBets,
   devigHandball1x2,
@@ -101,6 +105,8 @@ type AnalysisPayload = {
   model: {
     base: number;
     observedMean: number | null;
+    /** Moyenne de buts/équipe MESURÉE sur l'historique de cette ligue. */
+    leagueMeanPerTeam: number | null;
     scale: number;
     lambdaH: number;
     lambdaA: number;
@@ -736,7 +742,7 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
         <table className="w-full text-[10px] tabular-nums">
           <HandballTableCaption>Forme L5/L10 — domicile et extérieur</HandballTableCaption>
           <thead>
-            <tr className="text-[#717171]">
+            <tr className="text-muted-foreground">
               <th className="pb-1 pr-1 text-left font-medium">Situation</th>
               <th className="pb-1 px-1 text-right font-medium">L5 dom</th>
               <th className="pb-1 px-1 text-right font-medium">L5 ext</th>
@@ -744,20 +750,20 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
               <th className="pb-1 pl-1 text-right font-medium">L10 ext</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#f0f0f0]/60">
+          <tbody className="divide-y divide-border/60">
             {rows.map((r) => (
               <tr key={r.label}>
-                <td className="py-0.5 pr-1 text-left text-[#717171]">{r.label}</td>
-                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
+                <td className="py-0.5 pr-1 text-left text-muted-foreground">{r.label}</td>
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
                   {r.get(stats, "l5", "home")}
                 </td>
-                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
                   {r.get(stats, "l5", "away")}
                 </td>
-                <td className="py-0.5 px-1 text-right font-semibold text-[#222222]">
+                <td className="py-0.5 px-1 text-right font-semibold text-foreground">
                   {r.get(stats, "l10", "home")}
                 </td>
-                <td className="py-0.5 pl-1 text-right font-semibold text-[#222222]">
+                <td className="py-0.5 pl-1 text-right font-semibold text-foreground">
                   {r.get(stats, "l10", "away")}
                 </td>
               </tr>
@@ -765,28 +771,33 @@ function SplitTable({ stats, variant }: { stats: TeamHistoryStats | null; varian
           </tbody>
         </table>
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[#717171]">
+      {/* Winrate + forme + légende.
+          Couleurs SEMANTIQUES (`text-muted-foreground` / `text-foreground`) et
+          non du hexadécimal figé : `#717171` vaut 4.88:1 sur blanc mais
+          ~2.5:1 sur le fond sombre de la modal — d'où les libellés ton sur ton
+          signalés en thème sombre. Les tokens suivent le thème automatiquement. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
         <span>
           Winrate{" "}
-          <span className="font-semibold text-[#222222]">
+          <span className="font-semibold text-foreground">
             {stats.winrate == null ? "—" : `${Math.round(stats.winrate * 100)}%`}
           </span>
         </span>
         <span>
           dom{" "}
-          <span className="font-semibold text-[#222222]">
+          <span className="font-semibold text-foreground">
             {stats.winrateHome == null ? "—" : `${Math.round(stats.winrateHome * 100)}%`}
           </span>
         </span>
         <span>
           ext{" "}
-          <span className="font-semibold text-[#222222]">
+          <span className="font-semibold text-foreground">
             {stats.winrateAway == null ? "—" : `${Math.round(stats.winrateAway * 100)}%`}
           </span>
         </span>
         <span className="ml-auto">Forme {stats.lastSeq || "—"}</span>
       </div>
-      <p className="mt-0.5 text-[9px] leading-tight text-[#717171]/70">
+      <p className="mt-0.5 text-[9px] leading-tight text-muted-foreground/80">
         dom = l&apos;équipe reçoit ({stats.home.l5.n}L5/{stats.home.l10.n}L10) · ext = elle est
         reçue ({stats.away.l5.n}L5/{stats.away.l10.n}L10)
       </p>
@@ -1267,19 +1278,24 @@ export function HandballMatchDetailDialog({
     // Garde-fou : sans ids d'équipe, toutes les équipes tomberaient dans le
     // même bucket "undefined" → on saute la forme plutôt que d'afficher du faux.
     // Garde ids : base = null si un id d'equipe manque (ancien comportement).
-    if (!analysis || !match) return base;
-    // Repli historique DB : sans match termine dans la fenetre Flashscore,
-    // les series SQLite (deja fetchees pour l'onglet Stats) completent le
-    // store - forme recente, moyennes prematch et verdict modele.
-    const merged = new Map(base ?? []);
-    const fill = (id: number | null | undefined, team: TeamHistoryStats | null) => {
-      if (id == null || !team || merged.has(String(id))) return;
-      const entry = teamFormFromSeries(team.scoredSeries, team.concededSeries);
-      if (entry) merged.set(String(id), entry);
+if (!analysis || !match) return base;
+    // Repli historique DB : la fenêtre Flashscore ne couvre que ~8 jours, donc
+    // l'historique SQLite (2 saisons, nourri par cron) complète le store —
+    // en gardant la source la PLUS LONGUE par équipe. Voir
+    // `mergeFormStoreWithHistory` pour le pourquoi du longest-wins : sans ça,
+    // 1-2 matchs de la fenêtre effaçaient 14 matchs de table et le moteur
+    // retombait sur son prior neutre (« 28 : 28 »).
+    const profiles = new Map<
+      number,
+      Pick<TeamHistoryStats, "scoredSeries" | "concededSeries" | "atHomeSeries">
+    >();
+    const push = (id: number | null | undefined, team: TeamHistoryStats | null) => {
+      if (id == null || !team) return;
+      profiles.set(id, team);
     };
-    fill(match.home.id, analysis.teams.home);
-    fill(match.away.id, analysis.teams.away);
-    return merged.size > 0 ? merged : null;
+    push(match.home.id, analysis.teams.home);
+    push(match.away.id, analysis.teams.away);
+    return mergeFormStoreWithHistory(base, profiles);
   }, [finished, analysis, match]);
   // 3 paris prédictifs — pur (match + form-store), ne throw jamais (G3).
   const bets = useMemo(
@@ -1318,18 +1334,23 @@ export function HandballMatchDetailDialog({
   // total) — MÊME form-store que les 3 paris : les λs ne peuvent pas diverger
   // entre le banner et l'onglet Bets.
   //
-  // Base de buts de la ligue : les ligues couvertes par Vitibet (3 danoises +
-  // MOL Liga Women) ont des bases très étalées (25.6 → 31.8 buts/équipe).
-  // Comparer une D2 féminine au 28.5 « tous championnats » décalerait tout le
-  // Team Power → on interroge les 2 games de ligues, sinon défaut du modèle.
-  // Base de buts de la ligue : les ligues couvertes par Vitibet (3 danoises,
-  // MOL Liga Women, Superlig TR, Liga NA Women RO) ont des bases très étalées
-  // (25.6 → 33.5 buts/équipe). Comparer une Superlig au 28.5 « tous
-  // championnats » décalerait tout le Team Power de 17 % → on interroge le
-  // résolveur Vitibet, sinon défaut du modèle.
+  // Base de buts de la ligue, 2 sources dans cet ordre :
+  //   1. Snapshots Vitibet (3 danoises, MOL Liga, Superlig TR, Liga NA Women
+  //      RO) : bases très étalées (25.6 → 33.5 buts/équipe). Comparer une
+  //      Superlig au 28.5 « tous championnats » décalerait tout le Team Power
+  //      de 17 %.
+  //   2. Historique SQLite de LA LIGUE, mesuré par `/api/handball/analysis`
+  //      (30.1 pour la Liga Nationala RO hommes, +5.5 % sur le 28.5). C'est le
+  //      seul moyen d'avoir une vraie base pour une ligue que le cron ne
+  //      scrape pas et que Vitibet ne couvre pas.
+  //   3. `undefined` → le moteur retombe sur CMP_NEUTRAL_LAMBDA (28.5), ce que
+  //      la note affichée annonce explicitement.
   const leagueMean = useMemo(
-    () => vitibetCoveredBaseline(match?.league.name ?? "") ?? undefined,
-    [match?.league.name],
+    () =>
+      vitibetCoveredBaseline(match?.league.name ?? "") ??
+      analysis?.model.leagueMeanPerTeam ??
+      undefined,
+    [match?.league.name, analysis?.model.leagueMeanPerTeam],
   );
   const pariscore = useMemo(
     () =>
@@ -1342,14 +1363,17 @@ export function HandballMatchDetailDialog({
     [match, formStore, leagueMean],
   );
 
-  // Stats classiques de saison pour le tableau de l'onglet Analyse. Pour une
-  // ligue couverte (danoise ou MOL Liga) on les tire du classement Vitibet (avec
-  // splits dom./ext.) ; pour les autres ligues on garde l'historique DB
-  // (SplitTable existant).
-  // Stats classiques de saison pour le tableau de l'onglet Analyse. Pour une
-  // ligue couverte par Vitibet (danoises, MOL Liga, Superlig TR, Liga NA Women
-  // RO) on les tire du classement Vitibet (avec splits dom./ext.) ; pour les
-  // autres ligues on garde l'historique DB (SplitTable existant).
+  // Stats classiques de saison pour le tableau de l'onglet Analyse.
+  //
+  // 1er choix : le CLASSEMENT Vitibet (danoises, MOL Liga, Superlig TR, Liga NA
+  // Women RO) — il porte les splits dom./ext. de saison.
+  // 2e choix, sinon : le PROFIL D'HISTORIQUE SQLite (`analysis.teams.*`), qui
+  // existe pour les ~150 ligues de la table, Vitibet ou non. Avant ce repli,
+  // une Liga Nationala RO affichait « — » sur Matchs joués / Victoires / Nuls /
+  // Défaites / Points alors que les 14 matchs de la table suffisaient à les
+  // remplir — les moyennes de buts, elles, s'affichaient (repli
+  // `prediction.home.scoredAvg`), ce qui rendait le tableau incohérent avec
+  // lui-même. Points = 2V + 1N, la convention du projet (`pointsOf`).
   //
   // Un seul `findVitibetCoveredLeague` remplace les chaînes danoise puis MOL :
   // les deux appelaient le même `findTeamStats` sur le même type
@@ -1381,11 +1405,40 @@ export function HandballMatchDetailDialog({
       scoredAvg: s.scoredAvg,
       concededAvg: s.concededAvg,
     });
-    return {
-      home: vitibetSeasonStats.home ? toClassic(vitibetSeasonStats.home) : null,
-      away: vitibetSeasonStats.away ? toClassic(vitibetSeasonStats.away) : null,
+
+    // Profil historique SQLite → même contrat de lignes, mais sur la fenêtre
+    // réellement historisée (les splits D/E viennent des blocs `home`/`away`).
+    const fromHistory = (t: TeamHistoryStats | null | undefined): HandballClassicStats | null => {
+      if (!t) return null;
+      const all = t.overall.all;
+      const split = (s: typeof all) =>
+        s.n > 0
+          ? { played: s.n, goalsFor: Math.round((s.scored ?? 0) * s.n), goalsAgainst: Math.round((s.conceded ?? 0) * s.n) }
+          : null;
+      return {
+        played: t.n,
+        wins: t.wins,
+        draws: t.draws,
+        losses: t.losses,
+        goalsFor: Math.round((all.scored ?? 0) * all.n),
+        goalsAgainst: Math.round((all.conceded ?? 0) * all.n),
+        points: t.wins * 2 + t.draws,
+        home: split(t.home.all),
+        away: split(t.away.all),
+        scoredAvg: all.scored,
+        concededAvg: all.conceded,
+      };
     };
-  }, [vitibetSeasonStats]);
+
+    return {
+      home: vitibetSeasonStats.home
+        ? toClassic(vitibetSeasonStats.home)
+        : fromHistory(analysis?.teams.home),
+      away: vitibetSeasonStats.away
+        ? toClassic(vitibetSeasonStats.away)
+        : fromHistory(analysis?.teams.away),
+    };
+  }, [vitibetSeasonStats, analysis]);
 
   // Tip Vitibet du match (badge « TIP » du banner). Même clé SWR que la carte du
   // calendrier → 0 requête supplémentaire, simple lecture du cache.
@@ -1403,10 +1456,12 @@ export function HandballMatchDetailDialog({
   // URL du DTO joueurs (params = noms d'équipes + ligue pour le filtre pokal).
   const playersUrl = useMemo(() => {
     if (!match) return null;
-    const params = new URLSearchParams({
+const params = new URLSearchParams({
       home: match.home.name,
       away: match.away.name,
       league: match.league.name,
+      country: match.league.country,
+      date: match.kickoff,
     });
     return `/api/handball/players?${params.toString()}`;
   }, [match]);
@@ -1613,8 +1668,10 @@ export function HandballMatchDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* ══ Score Prédit (banner marine) — AVANT les onglets : première
-            réponse à « quel score ? », disponible même sans tip Vitibet. ══ */}
+        {/* ══ EN-TÊTE UNIQUE : équipes + score prédit + badges (banner marine).
+            Il remplace l'ancien duo « banner bleu » + « ligne d'équipes »
+            qui répétait nom et blason deux fois dans la même seconde de
+            lecture, et il porte désormais l'affordance « analyse du duel ». ══ */}
         {pariscore && match && (
           <HandballScoreBanner
             kickoff={match.kickoff}
@@ -1624,66 +1681,29 @@ export function HandballMatchDetailDialog({
             awayShort={match.away.shortName}
             prediction={pariscore}
             hasTip={hasTip}
+            onDuel={() => setDuelOpen(true)}
+            actualScore={match.score ? { home: match.score.home, away: match.score.away } : null}
+            liveBadge={
+              isLive ? (match.status === "halftime" ? "MT" : `${match.minute || 0}'`) : null
+            }
           />
         )}
 
-        {/* Score / Équipes (logos + score si joué). Blason et nom = déclencheur de
-            l'analyse du duel (bead f9p6.3). Le score reste HORS du bouton :
-            l'aire cliquable ne porte que l'identité du club. */}
-        <div className="flex items-center justify-between py-3">
-          <div className="text-center flex-1">
-            <button
-              type="button"
-              onClick={() => setDuelOpen(true)}
-              aria-label={`Analyser le duel ${match.home.name} contre ${match.away.name}`}
-              className="w-full rounded-lg px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
-            >
-              <span className="flex justify-center">
-                <HandballTeamLogo name={match.home.name} size={30} />
-              </span>
-              <span className="mt-1 block text-base font-bold leading-tight">
-                {match.home.name}
-              </span>
-            </button>
-            {match.score && (
-              <div className="text-3xl font-bold mt-0.5">{match.score.home}</div>
-            )}
-          </div>
-          <div className="text-center px-4">
-            {isLive ? (
-              <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded animate-pulse">
-                {match.status === "halftime" ? "MT" : `${match.minute || 0}'`}
-              </span>
-            ) : match.score ? (
-              <span className="text-[#717171]">—</span>
-            ) : (
-              <span className="text-sm text-[#717171]">vs</span>
-            )}
-          </div>
-          <div className="text-center flex-1">
-            <button
-              type="button"
-              onClick={() => setDuelOpen(true)}
-              aria-label={`Analyser le duel ${match.away.name} contre ${match.home.name}`}
-              className="w-full rounded-lg px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e676]"
-            >
-              <span className="flex justify-center">
-                <HandballTeamLogo name={match.away.name} size={30} />
-              </span>
-              <span className="mt-1 block text-base font-bold leading-tight">
-                {match.away.name}
-              </span>
-            </button>
-            {match.score && (
-              <div className="text-3xl font-bold mt-0.5">{match.score.away}</div>
-            )}
-          </div>
-        </div>
-        <p className="-mt-1 pb-2 text-center text-[10px] text-[#717171]">
-          Cliquez un club pour l&apos;analyse du duel
-        </p>
+        {/* ══ Winrate 1N2 + seuil de total + cotes : SOUS l'en-tête, hors
+            onglets. C'est la réponse « sur quel pari ? » — la laisser dans
+            l'onglet Analyse la faisait attendre un changement d'onglet pour
+            être lue. On ne la duplique pas dans l'onglet : c'est le même
+            objet `pariscore`, affiché une fois. ══ */}
+        {pariscore && (
+          <HandballPredictionCards
+            prediction={pariscore}
+            odds={match.odds}
+            homeName={match.home.name}
+            awayName={match.away.name}
+          />
+        )}
 
-        {/* Mi-temps */}
+        {/* Mi-temps (le score réel est désormais sous le score prédit). */}
         {match.score?.homeHalf != null && (
           <div className="text-center text-sm text-[#717171]">
             Mi-temps : {match.score.homeHalf} - {match.score.awayHalf}
@@ -1702,31 +1722,36 @@ export function HandballMatchDetailDialog({
         )}
 
         <Tabs value={tab} onValueChange={setTab} className="mt-1">
-          {/* Jusqu'à 7 onglets (Score si terminé) : sur mobile la barre défile
-              horizontalement plutôt que d'écraser les libellés (360 px). */}
-          <TabsList className="h-auto w-full p-1 dark:bg-white/[0.07] max-sm:overflow-x-auto max-sm:flex-nowrap">
+          {/* Carrousel tactile : jusqu'à 7 onglets (Score si terminé) sur une
+              largeur de 360-430 px. `snap-x` + `snap-start` fait caler chaque
+              onglet sur un bord au lieu de le laisser s'arrêter au milieu ;
+              `scroll-smooth` rend le saut d'onglet animé. `scrollbar` n'est
+              pas masqué : une barre de scroll fine reste le seul indice
+              visuel fiable qu'il y a PLUS d'onglets à droite, et la cacher
+              ferait croire que la liste est complète. */}
+          <TabsList className="h-auto w-full snap-x snap-mandatory overflow-x-auto scroll-smooth p-1 dark:bg-white/[0.07] max-sm:flex-nowrap">
             {/* Onglet Score : réservé aux matchs terminés (score final) */}
             {isFinished && (
-              <TabsTrigger value="score" className="flex-1 whitespace-nowrap">
+              <TabsTrigger value="score" className="flex-1 shrink-0 snap-start whitespace-nowrap">
                 Score
               </TabsTrigger>
             )}
-            <TabsTrigger value="analyse" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="analyse" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               Analyse
             </TabsTrigger>
-            <TabsTrigger value="stats" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="stats" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               Stats
             </TabsTrigger>
-            <TabsTrigger value="over" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="over" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               Over &amp; Buteurs
             </TabsTrigger>
-            <TabsTrigger value="bets" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="bets" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               Bets
             </TabsTrigger>
-            <TabsTrigger value="ia" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="ia" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               ✨ IA
             </TabsTrigger>
-            <TabsTrigger value="stats-bt" className="flex-1 whitespace-nowrap">
+            <TabsTrigger value="stats-bt" className="flex-1 shrink-0 snap-start whitespace-nowrap">
               📊 Backtest
             </TabsTrigger>
           </TabsList>
@@ -1738,18 +1763,11 @@ export function HandballMatchDetailDialog({
             </TabsContent>
           )}
 
-          {/* ── Onglet 1 : Analyse (forme, cotes, verdict modèle) ── */}
+          {/* ── Onglet 1 : Analyse (stats d'équipe, forme, verdict Vitibet) ── */}
           <TabsContent value="analyse" className="space-y-3">
-            {/* Cards Prédiction IA — winrate 1N2 + seuil de total.Alimentent
-                les pastilles même quand le tip Vitibet est absent. */}
-            {pariscore && (
-              <HandballPredictionCards
-                prediction={pariscore}
-                odds={match.odds}
-                homeName={match.home.name}
-                awayName={match.away.name}
-              />
-            )}
+            {/* Winrate 1N2 + seuil de total sont désormais SOUS l'en-tête
+                (hors onglets) : les dupliquer ici afficherait le même objet
+                `pariscore` deux fois à l'écran. */}
 
             {/* Tableau Statistiques d'équipe — lignes Pariscore surlignées
                 en tête, puis stats classiques (splits dom./ext. inclus dès

@@ -372,14 +372,24 @@ describe("computePariscorePrediction — 2. Bundesliga (fixture Vitibet 43)", ()
     expect(Math.abs(sum - 100)).toBeLessThan(0.35);
   });
 
-  test("Hagen : meilleure attaque du classement → score domicile le plus élevé", () => {
-    const hagen = computePariscorePrediction(makeMatch("Hagen", 340, "Nordhorn-Lingen", 371), {
-      formStore: storeOf(["Hagen", 340, F["Hagen"]], ["Nordhorn-Lingen", 371, F["Nordhorn-Lingen"]]),
-    });
-    const elb = computePariscorePrediction(makeMatch("Elbflorenz", 336, "Huttenberg", 342), {
-      formStore: storeOf(["Elbflorenz", 336, F["Elbflorenz"]], ["Huttenberg", 342, { gf: [24], ga: [28] }]),
-    });
-    expect(hagen.scoreHome).toBeGreaterThan(elb.scoreHome);
+  test("la meilleure attaque du classement sort le score domicile le plus élevé", () => {
+    // Adversaire IDENTIQUE des trois côtés : la seule variable est l'attaque
+    // propre de l'équipe à domicile. Le test utilisait auparavant Huttenberg
+    // (1 seul match d'historique, que l'ancien prior ignorait) face à
+    // Elbflorenz : il passait par une NEUTRALISATION accidentelle, pas parce
+    // qu'Elbflorenz était faible. Sur cette fixture Elbflorenz marque 39.0
+    // buts/match contre 34.0 pour Hagen — l'ordre était inversé.
+    const vsNordhorn = (id: number, name: string, series: Series) =>
+      computePariscorePrediction(makeMatch(name, id, "Nordhorn-Lingen", 371), {
+        formStore: storeOf([name, id, series], ["Nordhorn-Lingen", 371, F["Nordhorn-Lingen"]]),
+      });
+
+    const elb = vsNordhorn(336, "Elbflorenz", F["Elbflorenz"]);
+    const hagen = vsNordhorn(340, "Hagen", F["Hagen"]);
+    const ferndorf = vsNordhorn(337, "Ferndorf", F["Ferndorf"]);
+
+    expect(elb.scoreHome).toBeGreaterThan(hagen.scoreHome);
+    expect(elb.scoreHome).toBeGreaterThan(ferndorf.scoreHome);
   });
 
   test("historique absent → hasForm=false, λ neutre (57 buts de total), jamais de throw", () => {
@@ -396,11 +406,25 @@ describe("computePariscorePrediction — 2. Bundesliga (fixture Vitibet 43)", ()
     expect(p.note).toContain("neutre");
   });
 
-  test("historique partiel (1 équipe seulement) → repli neutre", () => {
+  test("historique court mais réel des 2 côtés → hasForm=false, hasSignal=true (pas de 50/50)", () => {
     const m = makeMatch("Potsdam", 347, "Inconnue", 999);
     const p = computePariscorePrediction(m, {
       formStore: storeOf(["Potsdam", 347, F["Potsdam"]], ["Inconnue", 999, { gf: [10], ga: [10] }]),
     });
+    // 1 match < CMP_MIN_HISTORY : pas de fit CMP possible…
+    expect(p.hasForm).toBe(false);
+    // …mais les 2 équipes ont une donnée, donc le modèle parle. Une équipe à
+    // 10-10 ne peut pas sortir à 28-28 contre une.invaincue à 30 de moyenne.
+    expect(p.hasSignal).toBe(true);
+    expect(p.winrate.home).not.toBe(p.winrate.away);
+    expect(p.scoreHome).toBeGreaterThan(p.scoreAway);
+  });
+
+  test("aucune équipe connue → hasSignal=false (l'UI affiche l'état neutre)", () => {
+    const p = computePariscorePrediction(makeMatch("Dormagen", 334, "Coburg 2000", 366), {
+      formStore: null,
+    });
+    expect(p.hasSignal).toBe(false);
     expect(p.hasForm).toBe(false);
   });
 
@@ -453,5 +477,99 @@ describe("computePariscorePrediction — 2. Bundesliga (fixture Vitibet 43)", ()
     expect(p.home!.formPct).toBeGreaterThan(p.away!.formPct);
     // 2e du classement (invaincu) au moins aussi fort que le champion à 1 défaite.
     expect(second.team).toBe("Potsdam");
+  });
+});
+
+// ─── Régression « 28 : 28 / 47.4 %-5.3 %-47.4 % » ─────────────────────────────
+//
+// Constaté en prod le 2026-10-08 sur CSM Bucuresti vs Minaur Baia Mare
+// (Liga Nationala RO). Le banner affichait « 28 : 28 », « 47.4 % / 5.3 % /
+// 47.4 % » et « Under 60 » alors que, juste au-dessus, le Team Power disait
+// 31.6 contre 60.1 et la Forme 2.6 % contre 71.7 %. Deux causes cumulées :
+//   (1) le form-store du dialog ne gardait que 1-2 matchs de la fenêtre
+//       Flashscore et effaçait les 14 matchs SQLite (corrigé côté dialog) ;
+//   (2) `resolveLambdas` exigeait 3 matchs DES DEUX côtés et retombait sinon
+//       sur un prior parfaitement symétrique — alors que Forme et Power
+//       étaient déjà calculés (corrigé ici).
+//
+// Les séries ci-dessous sont les 2 derniers matchs de la fenêtre Flashscore,
+// telles que la base les stocke (chronologiques, lu sur
+// `handball_match_history`, lignes du 2026-09-25 et du 2026-09-26).
+describe("computePariscorePrediction — régression du prior neutre aveugle", () => {
+  const ROMANIA_MEAN = 30.1; // leagueGoalsPerTeam("Liga Nationala") mesuré en base
+
+  const csm: Series = { gf: [36, 30], ga: [40, 38] }; // 2 défaites, 33 marqués
+  const minaur: Series = { gf: [27, 25], ga: [19, 25] }; // 1V 1N, 26 marqués
+
+  function predict() {
+    const m: HandballMatch = {
+      id: 777_001,
+      league: { id: 161, name: "Liga Nationala", country: "Romania", countryCode: "RO" },
+      home: { id: 101, name: "CSM Bucuresti" },
+      away: { id: 102, name: "Minaur Baia Mare" },
+      kickoff: "2026-10-08T15:00:00+02:00",
+      status: "not_started",
+    };
+    return computePariscorePrediction(m, {
+      formStore: storeOf(["CSM Bucuresti", 101, csm], ["Minaur Baia Mare", 102, minaur]),
+      leagueMean: ROMANIA_MEAN,
+    });
+  }
+
+  test("2 matchs d'historique ne produisent plus un score symétrique", () => {
+    const p = predict();
+    // AVANT : lambdaH === lambdaE → scoreHome === scoreAway. C'est exactement
+    // le symptôme « 28 : 28 » du rapport.
+    expect(p.scoreHome).not.toBe(p.scoreAway);
+    // CSM encaisse 39 buts/match, Minaur 22 : l'écart de défense doit se voir.
+    expect(p.scoreAway).toBeGreaterThan(p.scoreHome);
+  });
+
+  test("le winrate 1N2 est différencié, pas 47.4 / 5.3 / 47.4", () => {
+    const p = predict();
+    expect(p.winrate.away).toBeGreaterThan(p.winrate.home);
+    // L'écart domicile/extérieur doit excéder le 0.0 du prior neutre.
+    expect(p.winrate.away - p.winrate.home).toBeGreaterThan(3);
+    const sum = p.winrate.home + p.winrate.draw + p.winrate.away;
+    expect(Math.abs(sum - 100)).toBeLessThan(0.35);
+  });
+
+  test("l'écart de Team Power observé (31.6 vs 60.1) tire bien le modèle", () => {
+    const p = predict();
+    // Team Power reproduit depuis les mêmes séries : CSM nettement plus faible.
+    expect(p.home!.power).toBeLessThan(p.away!.power);
+    expect(p.away!.power - p.home!.power).toBeGreaterThan(15);
+    expect(p.index).toBeLessThan(0);
+  });
+
+  test("la base de ligue est reprise telle quelle (30.1, pas le 28.5 générique)", () => {
+    const p = predict();
+    expect(p.note).toContain("30.1");
+    expect(p.note).not.toContain("28.5");
+    // Total attendu cohérent avec une base à ~30 buts/équipe.
+    expect(p.expectedTotal).toBeGreaterThan(54);
+    expect(p.expectedTotal).toBeLessThan(66);
+  });
+
+  test("shrinkage : 1 seul match ne peut pas faire basculer un écart de 20 buts", () => {
+    // Même rencontre, mais l'adversaire n'a qu'un match : la base de ligue
+    // pèse 75 % du λ, la donnée 25 %. L'écart existe, il reste borné.
+    const m: HandballMatch = {
+      id: 777_002,
+      league: { id: 161, name: "Liga Nationala", country: "Romania", countryCode: "RO" },
+      home: { id: 101, name: "CSM Bucuresti" },
+      away: { id: 102, name: "Minaur Baia Mare" },
+      kickoff: "2026-10-08T15:00:00+02:00",
+      status: "not_started",
+    };
+    const p = computePariscorePrediction(m, {
+      formStore: storeOf(
+        ["CSM Bucuresti", 101, csm],
+        ["Minaur Baia Mare", 102, { gf: [25], ga: [25] }],
+      ),
+      leagueMean: ROMANIA_MEAN,
+    });
+    expect(p.hasSignal).toBe(true);
+    expect(Math.abs(p.scoreAway - p.scoreHome)).toBeLessThanOrEqual(3);
   });
 });

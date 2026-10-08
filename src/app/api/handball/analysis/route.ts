@@ -29,7 +29,7 @@ import {
   type ScorerThreshold,
   type TeamHistoryStats,
 } from "@/lib/handball-history-stats";
-import { historyMeta, listTeamKeys, loadRecentTotals, loadTeamRows } from "@/lib/handball-history-db";
+import { historyMeta, leagueGoalsPerTeam, listTeamKeys, loadRecentTotals, loadTeamRows } from "@/lib/handball-history-db";
 import { loadHandballPlayers, playersForLeague, topPlayersForTeam } from "@/lib/handball-players";
 import { skellamMatchProbs } from "@/lib/handball-skellam";
 import {
@@ -92,6 +92,14 @@ export type HandballAnalysisPayload = {
     base: number;
     /** Moyenne observée sur la fenêtre de calibration. */
     observedMean: number | null;
+    /**
+     * Moyenne de buts PAR ÉQUIPE mesurée sur l'historique de CETTE ligue, ou
+     * null si la table n'a rien pour elle. Sert de prior au moteur Pariscore :
+     * sans elle, une ligue hors snapshots Vitibet retombe sur le 28.5
+     * « tous championnats » (la Liga Nationala RO vaut 30.1 — 5.5 % d'écart,
+     * assez pour décaler tout le Team Power et le seuil de total).
+     */
+    leagueMeanPerTeam: number | null;
     /** Facteur de calibration appliqué. */
     scale: number;
     lambdaH: number;
@@ -158,6 +166,7 @@ export async function GET(request: Request) {
   const home = searchParams.get("home") ?? "";
   const away = searchParams.get("away") ?? "";
   const league = searchParams.get("league") ?? "";
+  const country = searchParams.get("country");
   const date = searchParams.get("date");
 
   if (!home || !away) {
@@ -186,6 +195,11 @@ export async function GET(request: Request) {
   // Calibration : base 60 / moyenne observée (fenêtre 30 j) ; moyenne
   // équipe mondiale = moitié du total observé (≈ 29.6 buts/équipe).
   const model = matchModel(homeStats, awayStats, scale, observedMean ? observedMean / 2 : undefined);
+  // Base de buts PAR ÉQUIPE de la ligue elle-même, mesurée sur son historique.
+  // `league` est le nom du calendrier (« Liga Nationala ») ; la colonne
+  // historique est « Romania: Liga Nationala » — les deux écritures sont
+  // testées côté DB.
+  const leagueMeanPerTeam = league ? leagueGoalsPerTeam(league, country) : null;
   const lines = overLadder(model.lambdaH, nu, model.lambdaA, nu, DEFAULT_OVER_LINES);
   const pick = pickPlayableLine(lines);
   const p1x2 = skellamMatchProbs(model.lambdaH, model.lambdaA);
@@ -306,6 +320,7 @@ export async function GET(request: Request) {
     model: {
       base: BASE_TOTAL,
       observedMean,
+      leagueMeanPerTeam,
       scale: Math.round(scale * 1000) / 1000,
       lambdaH: model.lambdaH,
       lambdaA: model.lambdaA,
