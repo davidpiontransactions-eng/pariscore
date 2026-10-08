@@ -91,6 +91,31 @@ export type CachedFixture = {
 
   odds: CachedOdds[];
   oddsSource: FieldSource | null;
+
+  /**
+   * Lignes AH / OU — `null` si la source n'en a pas (jamais 0, jamais une
+   * ligne de repli). Sélection de la ligne la plus liquide :
+   * `selectLiquidLine` (basketball-market-line.ts), qui refuse
+   * `market_line: null` et exige ≥ 2 bookmakers.
+   */
+  ah: {
+    line: number;
+    books: number;
+    fairFirst: number;
+    fairSecond: number;
+    vigPct: number;
+    bestFirst: number;
+    bestSecond: number;
+  } | null;
+  ou: {
+    line: number;
+    books: number;
+    fairFirst: number;
+    fairSecond: number;
+    vigPct: number;
+    bestFirst: number;
+    bestSecond: number;
+  } | null;
 };
 
 export type BsdCache = {
