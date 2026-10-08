@@ -45,10 +45,23 @@ export const DEFAULT_TENNIS_SUB_TAB: TennisSubTabId = "prematch";
  * devenues de vrais sous-onglets de tête (rangée Flashscore) au lieu d'un
  * `useState` local. Un utilisateur qui a `today` en persistance doit retomber
  * sur la bonne vue, pas sur le défaut.
+ *
+ * ⚠️ Les 5 derniers (`calendrier`/`top10`/`resultats`/`stats`/`backtesting`)
+ * sont l'ancien jeu d'ids **de la rangée interne** (`tennis-sub-tabs.tsx`),
+ * qui coexistait avec celui-ci sans jamais le lire. Leur persistance est donc
+ * réelle : sans ces alias, un utilisateur sur `calendrier` retomberait sur le
+ * défaut `prematch` au lieu de la vue qu'il avait choisie.
  */
 const LEGACY_SUB_TAB_ALIASES: Record<string, TennisSubTabId> = {
   today: "prematch",
   calendar: "strategies",
+  calendrier: "prematch",
+  top10: "strategies",
+  resultats: "list",
+  stats: "rankings",
+  // Backtesting n'a pas d'équivalent canonique ; la vue liste synthétique est
+  // la destination la plus proche (et les deux panneaux étaient déjà vides).
+  backtesting: "list",
 };
 
 /** Métadonnées d'affichage d'un sous-onglet tennis. */

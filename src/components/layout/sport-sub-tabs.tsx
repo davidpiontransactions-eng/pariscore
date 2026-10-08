@@ -57,6 +57,23 @@ export const SPORT_SUB_TABS: Record<string, SportSubTab[]> = {
     { id: "classement", label: "Classement & Stats" },
     { id: "resultats", label: "Résultats" },
   ],
+  // ⚠️ SOURCE UNIQUE : `src/lib/tennis-sub-tab-ids.ts` (`TENNIS_SUB_TABS`).
+  // Cette branche ne porte QUE l'ordre d'affichage — les ids, le contrat de
+  // position et la table de migration vivent dans le module canonique, importé
+  // par `tennis-sub-tabs.tsx` (rangée interne). Les deux rangées lisent la même
+  // clé `sportSubTabs.tennis` : si les ids divergeaient, un clic ici produirait
+  // un onglet actif que l'autre rangée ne trouve pas → page vide.
+  // ponytail: labels dupliqués ici et dans `tennis-sub-tabs.tsx` — un seul jeu
+  // d'imports si la headbar doit un jour afficher les libellés i18n `subTab*`.
+  tennis: [
+    { id: "prematch", label: "Calendrier" },
+    { id: "live", label: "Live" },
+    { id: "cards", label: "Fiches Duels" },
+    { id: "tournaments", label: "Tournois" },
+    { id: "list", label: "Liste" },
+    { id: "rankings", label: "Statistiques" },
+    { id: "strategies", label: "TOP 10 Matchs" },
+  ],
 };
 
 /**

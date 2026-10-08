@@ -6,11 +6,18 @@ import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, F
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
-import { MatchCard } from "@/components/tennis/match-card";
 import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
-import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
-import { TennisTop10Section } from "@/components/tennis/tennis-top10-section";
+import {
+  TennisSubTabs,
+  TennisSubTabPanel,
+  parseTennisSubTab,
+  type TennisSubTab,
+} from "@/components/tennis/tennis-sub-tabs";
+import { TennisCalendarPanel } from "@/components/tennis/panels/tennis-calendar-panel";
+import { TennisLivePanel } from "@/components/tennis/panels/tennis-live-panel";
+import { TennisTop10Panel } from "@/components/tennis/panels/tennis-top10-panel";
+import type { TopFocus } from "@/components/tennis/tennis-top10-matches-widget";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
 import {
@@ -56,6 +63,7 @@ import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list
 import { TennisCalendarStrategyView } from "@/components/tennis/tennis-calendar-strategy-view";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
+import { sameBsdMatch } from "@/lib/bsd-id";
 import {
   AB_TEST_DEFAULT_VARIANT,
   AB_TEST_FLAG_KEY,
@@ -181,7 +189,7 @@ export function TennisTabContent() {
   const tTennis = useTranslations("tennis");
   const tStatsLb = useTranslations("tennis.statsLeaderboard");
 
-  const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
+  const { data, error, isLoading, mutate } = usePrematchMatches();
   // Mode dégradé : la route sert du mock local ou du cache périmé, ou la
   // route elle-même est injoignable → bandeau ambre non-bloquant au lieu de
   // l'erreur pleine page. Rose uniquement si AUCUNE donnée à afficher.
@@ -340,6 +348,32 @@ export function TennisTabContent() {
       const nameB = lm.playerB?.name ?? "Joueur 2";
       const shortA = nameA.split(" ").slice(-1)[0].toUpperCase();
       const shortB = nameB.split(" ").slice(-1)[0].toUpperCase();
+      // R7.9 : Elo / rang / forme viennent du flux live enrichi (serveur).
+      // `eloKnown: false` → on ne FABRIQUE plus de 1500 : l'UI affiche `—`
+      // plutôt qu'un faux Elo qui masquait l'absence de donnée.
+      const briefA = lm.playerA;
+      const briefB = lm.playerB;
+      const mkPlayer = (
+        brief: typeof briefA,
+        name: string,
+        short: string,
+      ): TennisMatch["playerA"] => ({
+        id: name.toLowerCase().replace(/\s+/g, "_"),
+        name,
+        shortName: short,
+        rank: brief?.rank ?? 0,
+        elo: brief?.eloKnown ? brief.elo : 0,
+        eloKnown: brief?.eloKnown ?? false,
+        surfaceElo: brief?.eloKnown ? brief.surfaceElo : 0,
+        sps: brief?.sps ?? undefined,
+        spsRank: brief?.spsRank ?? undefined,
+        // R4 hotfix (2026-07-21) : résolution photo réelle via
+        // resolvePlayerPhoto (6 stars OSS + ~90 joueurs Tennis Warehouse
+        // + fallback DiceBear). Avant : "" → AvatarFallback initiales.
+        photoUrl: brief?.photoUrl || resolvePlayerPhoto(name),
+        color: hashColor(name),
+        form: brief?.form?.length ? brief.form : [],
+      });
 
       synthetic.push({
         id: lm.id,
@@ -348,29 +382,8 @@ export function TennisTabContent() {
         tournament: lm.tournamentName || "Live",
         round: lm.roundName || "En direct",
         scheduledAt: new Date().toISOString(),
-        playerA: {
-          id: nameA.toLowerCase().replace(/\s+/g, "_"),
-          name: nameA,
-          shortName: shortA,
-          rank: 0,
-          elo: 1500,
-          // R4 hotfix (2026-07-21) : résolution photo réelle via
-          // resolvePlayerPhoto (6 stars OSS + ~90 joueurs Tennis Warehouse
-          // + fallback DiceBear). Avant : "" → AvatarFallback initiales.
-          photoUrl: resolvePlayerPhoto(nameA),
-          color: hashColor(nameA),
-          form: ["W", "L", "W", "L", "W", "L"],
-        },
-        playerB: {
-          id: nameB.toLowerCase().replace(/\s+/g, "_"),
-          name: nameB,
-          shortName: shortB,
-          rank: 0,
-          elo: 1500,
-          photoUrl: resolvePlayerPhoto(nameB),
-          color: hashColor(nameB),
-          form: ["L", "W", "L", "W", "L", "W"],
-        },
+        playerA: mkPlayer(briefA, nameA, shortA),
+        playerB: mkPlayer(briefB, nameB, shortB),
         probA: 50,
         probB: 50,
         stats: {
@@ -470,6 +483,18 @@ return [...matches, ...synthetic];
     return filterBySelection(list, selectedMatchIds, (m) => m.id);
   }, [matchesWithLive, selectedTournament, selectedCountryId, selectedMatchIds]);
 
+  // Match ciblé par le bouton « Widget live » : le match ouvert en détail, sinon
+  // l'unique match sélectionné dans la sidebar. Sans ce focus le widget s'ouvrait
+  // vide (il ne listait que les favoris en direct) alors que l'utilisateur venait
+  // de choisir un match. `sameBsdMatch` car la sidebar et le flux live n'utilisent
+  // pas le même préfixe d'id.
+  const pipFocusMatch = useMemo(() => {
+    if (detailMatch) return detailMatch;
+    if (selectedMatchIds.length !== 1) return null;
+    const selectedId = selectedMatchIds[0];
+    return matchesWithLive.find((m) => sameBsdMatch(m.id, selectedId)) ?? null;
+  }, [detailMatch, selectedMatchIds, matchesWithLive]);
+
   const { filtered, valueBetCount } = useMatchFilter(matchesWithScoped, filter, favorites, sortKey);
 
   // R8 curation : sépare les matchs phares de la semaine (featured) du reste.
@@ -477,43 +502,33 @@ return [...matches, ...synthetic];
   // ne contient plus que le reste pour éviter le doublon.
   const curation = useMatchCuration(filtered);
 
-  // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
-  const [subTab, setSubTab] = useState<TennisSubTab>("today");
+  // ─── Sous-onglet actif ───
+  // Source de vérité UNIQUE : `useSportsSidebarStore.sportSubTabs.tennis`.
+  // La rangée du header (`SportSubTabs`) lit/écrit la MÊME clé → les deux
+  // rangées sont alignées et `?sub=` se partage. Même contrat que football.
+  //
+  // Le sous-onglet « Live » est INDÉPENDANT du mode de la sidebar : cliquer
+  // « Live » ici ne bascule pas `modes.tennis`. Décision utilisateur : le
+  // tennis se comporte comme le football, où le sous-onglet et le mode sidebar
+  // sont deux commandes séparées.
+  const subTab = parseTennisSubTab(useSportsSidebarStore((s) => s.sportSubTabs.tennis));
+  const setTennisSubTab = useSportsSidebarStore((s) => s.setSubTab);
+  const handleSubTabChange = useCallback(
+    (tab: TennisSubTab) => {
+      setTennisSubTab("tennis", tab);
+    },
+    [setTennisSubTab],
+  );
 
-  // Sync modes.tennis (store sidebar) → subTab (local state)
-  // Ne pas override si l'utilisateur a manuellement sélectionné un sous-onglet interne
-  const modesTennis = useSportsSidebarStore((s) => s.modes["tennis"]);
-  const setModeTennis = useSportsSidebarStore((s) => s.setMode);
-  const [userPickedInternalTab, setUserPickedInternalTab] = useState(false);
-  useEffect(() => {
-    if (userPickedInternalTab) return;
-    if (modesTennis === "live") setSubTab("live");
-    else if (modesTennis === "prematch" || modesTennis === "today") setSubTab("today");
-  }, [modesTennis, userPickedInternalTab]);
-
-  // Sync subTab → modes.tennis (quand l'utilisateur change localement)
-  const setSubTabSynced = useCallback((tab: TennisSubTab) => {
-    setSubTab(tab);
-    // Marquer les onglets internes pour bloquer le reset par le store
-    if (tab === "rankings" || tab === "tournaments" || tab === "list") {
-      setUserPickedInternalTab(true);
-    } else {
-      setUserPickedInternalTab(false);
-      // Écrire dans le store pour que la sidebar reflète le changement
-      if (tab === "live") setModeTennis("tennis", "live");
-      else if (tab === "today") setModeTennis("tennis", "prematch");
-    }
-  }, [setModeTennis]);
-
-  // Sync subTab from URL ?view=live|prematch on mount (independent of sidebar treeStatus)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const view = params.get("view");
-    console.log("[TennisTabContent] URL view param:", view, "-> setting subTab to:", view === "live" ? "live" : "today");
-    if (view === "live") setSubTabSynced("live");
-    else if (view === "prematch") setSubTabSynced("today");
-  }, []);
+  // Focus « TOP 10 » demandé depuis une pastille du calendrier.
+  const [topFocus, setTopFocus] = useState<TopFocus | null>(null);
+  const focusTop10 = useCallback((focus: TopFocus) => {
+    setTopFocus(focus);
+    // Id canonique `strategies` (l'ancien `top10` est migré par
+    // `parseTennisSubTab`, mais écrire un alias ici le ferait revenir au
+    // même tour).
+    setTennisSubTab("tennis", "strategies");
+  }, [setTennisSubTab]);
 
   // Sélection sidebar : auto-scroll vers la carte sélectionnée (sinon elle
   // tombe sous le fold et semble « absente »). Poll résilient : la carte peut
@@ -549,26 +564,9 @@ return [...matches, ...synthetic];
     [liveMatchList],
   );
 
-    // Auto-switch onglet "live" quand un match live est sélectionné dans la
-  // sidebar — sinon scopeByTime l'exclut de l'onglet "today" (par défaut).
-  // Triple fallback : liveStates (SSE) → liveMatchIdSet (polling) → tree (SWR)
-  // Garde-fou : ne se déclenche que sur un CHANGEMENT de sélection — sinon le
-  // re-run via la dep `subTab` rebasculait en boucle sur live (clic pre-match
-  // inerte dès qu'un match sélectionné devient live).
-  const prevSelectedIdsRef = useRef<string[]>([]);
-  useEffect(() => {
-    const idsChanged =
-      prevSelectedIdsRef.current.length !== selectedMatchIds.length ||
-      prevSelectedIdsRef.current.some((id, i) => id !== selectedMatchIds[i]);
-    prevSelectedIdsRef.current = selectedMatchIds;
-    if (!idsChanged) return;
-    const hasLiveSelected = selectedMatchIds.some(
-      (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id) || isInTreeAsLive(id),
-    );
-    if (hasLiveSelected && subTab !== "live") {
-      setSubTabSynced("live");
-    }
-  }, [selectedMatchIds, liveStates, liveMatchIdSet, isInTreeAsLive, subTab, setSubTabSynced]);
+    // Pas d'auto-bascule vers « Live » quand la sidebar sélectionne un match live :
+  // ce comportementalamoutait le sous-onglet par-dessus le choix de
+  // l'utilisateur. Le sous-onglet ne bouge que sur action explicite.
 
   /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en gardant le live visible. */
   const scopeByTime = useCallback(
@@ -613,19 +611,25 @@ return [...matches, ...synthetic];
     return scopeByTime(filtered); // "today" = tout (hors filtre horaire)
   }, [subTab, filtered, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
 
-  // Version "rest" filtrée par sous-onglet (pour la grille principale).
-  // En live, on garde featured + rest (sinon les matchs phares live
-  // disparaîtraient du sous-onglet live). En "today", la grille n'affiche
-  // que `rest` car featured est déjà dans le carrousel.
-  const restForGrid = useMemo(() => {
-    if (subTab === "live") {
-      const liveOnly = curation.rest.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
-      // Les lives ne sont PAS filtrés par le filtre temporel
-      if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
-      return liveOnly;
-    }
-    return scopeByTime(curation.rest);
-  }, [subTab, curation.rest, liveStates, liveMatchIdSet, scopeByTime, timeToday]);
+  // Grille du sous-onglet « Live » : `curation.rest` filtré sur l'état live.
+  // Le filtre temporel ne s'applique pas — un match commencé il y a 3h et
+  // toujours en cours doit rester visible.
+  const liveMatches = useMemo(() => {
+    const liveOnly = curation.rest.filter(
+      (m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id),
+    );
+    if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
+    return liveOnly;
+  }, [curation.rest, liveStates, liveMatchIdSet, timeToday]);
+
+  // Featured live du carrousel (indépendant de la grille).
+  const liveFeatured = useMemo(() => {
+    const liveOnly = curation.featured.filter(
+      (m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id),
+    );
+    if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
+    return liveOnly;
+  }, [curation.featured, liveStates, liveMatchIdSet, timeToday]);
 
   // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
   // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
@@ -633,43 +637,14 @@ return [...matches, ...synthetic];
   // (la carte memo ne voit jamais un objet neuf si rien n'a changé).
   const onexRequest = useMemo(
     () =>
-      restForGrid.map((m) => ({
+      liveMatches.map((m) => ({
         matchId: m.id,
         nameA: m.playerA.name,
         nameB: m.playerB.name,
       })),
-    [restForGrid],
+    [liveMatches],
   );
   const onexLive = useOnexLiveOdds(onexRequest, liveStates);
-
-  // Featured filtré par sous-onglet (en live, on ne montre en carrousel que
-  // les featured live ; en "today", tous les featured).
-  const featuredForMarquee = useMemo(() => {
-    if (subTab === "live") {
-      const liveOnly = curation.featured.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
-      // Les lives ne sont PAS filtrés par le filtre temporel
-      if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
-      return liveOnly;
-    }
-    return scopeByTime(curation.featured);
-  }, [subTab, curation.featured, liveStates, liveMatchIdSet, scopeByTime, timeToday]);
-
-  // DEBUG: expose live data to window for test verification
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    (window as any).__TENNIS_DEBUG__ = {
-      subTab,
-      liveMatchList: liveMatchList.map(m => ({ id: m.id, isLive: m.isLive, nameA: m.playerA.name, nameB: m.playerB.name })),
-      liveStates: Object.fromEntries(Object.entries(liveStates).map(([k, v]) => [k, { isLive: v.isLive, lastUpdate: v.lastUpdate }])),
-      restForGrid: restForGrid.map(m => ({ id: m.id, isLive: m.synthetic ? true : false })),
-      time: Date.now(),
-    };
-  }, [subTab, liveMatchList, liveStates, restForGrid]);
-
-  const handleSubTabChange = (tab: TennisSubTab) => {
-    setSubTabSynced(tab);
-    track("sub_tab_click", { tab });
-  };
 
   const handleFilter = (key: StrategyFilter) => {
     setFilter(key);
@@ -680,12 +655,6 @@ return [...matches, ...synthetic];
     mutate();
     track("manual_refresh");
   };
-
-  // Vue dédiée "Stratégies" (calendar) — placée APRÈS tous les hooks
-  // (un return avant les hooks casse React : "Rendered fewer hooks").
-  if (subTab === "calendar") {
-    return <TennisCalendarStrategyView />;
-  }
 
   return (
     <TennisErrorBoundary>
@@ -767,7 +736,7 @@ return [...matches, ...synthetic];
                 {pip.supported && (
                   <button
                     type="button"
-                    onClick={() => pip.open(<MatchPipWidget />)}
+                    onClick={() => pip.open(<MatchPipWidget focusMatch={pipFocusMatch} />)}
                     title={
                       pip.mode === "pip"
                         ? "Ouvrir le widget live en fenêtre always-on-top (reste au-dessus du bookmaker)"
@@ -956,168 +925,50 @@ return [...matches, ...synthetic];
           automatiquement si la semaine n'a pas de marquee configuré. */}
       <BentoTile size="wide" variant="glass">
       <FeaturedMatchesMarquee
-        featured={featuredForMarquee}
+        featured={curation.featured}
         marquee={curation.marquee}
         liveStates={liveStates}
-        hasFeatured={curation.hasFeatured && featuredForMarquee.length > 0}
+        hasFeatured={curation.hasFeatured}
         onOpenDetail={openDetail}
         onBetClick={openBet}
       />
       </BentoTile>
 
       {/* Phase 7 — Sous-onglets Live / Aujourd'hui / Tournois — Bento Grid : tile standard (1×1) */}
-      <BentoTile size="standard" variant="glass">
+      {/* Rangée de sous-onglets — TILE WIDE. La rangée était en `size="standard"`
+          (1×1) sur une BentoGrid à 2 colonnes : la moitié de la largeur, rangée
+          contrainte à `overflow-x-auto`, 2 onglets sur 6 hors écran. Elle
+          commande le contenu → elle doit occuper la largeur du contenu. */}
+      <BentoTile size="wide" variant="glass">
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
         <TennisSubTabs
           activeSubTab={subTab}
           onSubTabChange={handleSubTabChange}
-          liveCount={liveCount}
-          todayCount={todayCount}
         />
-
-        {/* Filtre par heure de début — vues pre-match uniquement */}
-        {subTab !== "live" && subTab !== "tournaments" && (
-          <div className="mt-3">
-            <TimeRangeFilter value={timeKey} onChange={setTimeKey} />
-          </div>
-        )}
       </div>
       </BentoTile>
 
-      {/* Match list / Tournaments list / Flashscore list / Top 10 Rankings — Bento Grid : tile wide (2×1) */}
+      {/* Panneau du sous-onglet actif — Bento Grid : tile wide (2×1) */}
       <BentoTile size="wide" variant="glass">
       <main className="w-full flex-1 px-4 py-6 sm:px-6">
-      {subTab === "rankings" ? (
-        <div className="mx-auto max-w-4xl">
-          <TennisTop10Section />
-        </div>
-      ) : subTab === "tournaments" ? (
-        <TournamentsList />
-      ) : subTab === "list" ? (
-        <FlashscoreTennisList
-          matches={subFiltered}
+      {subTab === "prematch" ? (
+        <TennisCalendarPanel onFocusTop10={focusTop10} />
+      ) : subTab === "live" ? (
+        <TennisLivePanel
+          matches={liveMatches}
+          featured={liveFeatured}
+          marquee={curation.marquee}
           liveStates={liveStates}
-          favoriteIds={favorites}
-          onToggleFavorite={toggleFavorite}
-          onOpenDetail={openDetail}
+          liveOdds={onexLive.odds}
+          disconnected={connectionStatus === "disconnected"}
           isLoading={isLoading}
-          error={error?.message ?? null}
-          onRetry={() => mutate()}
+          onOpenDetail={openDetail}
+          onBetClick={openBet}
         />
+      ) : subTab === "strategies" ? (
+        <TennisTop10Panel focused={topFocus} />
       ) : (
-        <>
-        {degraded && (
-          <div
-            className={cn(
-              "mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm",
-              !data
-                ? "border-rose-500/40 bg-rose-500/5 text-rose-700 dark:text-rose-300"
-                : "border-amber-500/40 bg-amber-500/5 text-amber-800 dark:text-amber-300",
-            )}
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-semibold">
-                {data ? t("degradedTitle") : t("errorTitle")}
-              </p>
-              <p className="mt-0.5 text-xs">
-                {data ? t("degradedBody") : t("errorBody")}{" "}
-                <button onClick={() => mutate()} className="underline underline-offset-2 font-semibold">
-                  {t("retry")}
-                </button>
-              </p>
-              {data?.source && (
-                <p className="mt-1 text-[10px] opacity-70">
-                  Source: {data.source} · Dernière MAJ: {new Date(data.updatedAt).toLocaleTimeString("fr-FR")}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            {[0, 1, 2, 3].map((i) => <MatchCardSkeleton key={i} />)}
-          </div>
-        ) : (
-          <>
-            {valueBetCount > 0 && (
-              <button
-                onClick={() => track("value_bet_banner_click", { count: valueBetCount })}
-                className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
-              >
-                <span className="animate-pulse">💎</span>
-                {valueBetCount} value bet{valueBetCount > 1 ? "s" : ""} détecté{valueBetCount > 1 ? "s" : ""} — trié{valueBetCount > 1 ? "s" : ""} par edge décroissant
-              </button>
-            )}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              {restForGrid.map((match, idx) => {
-                const isSelected = selectedIdSet.has(match.id);
-                return (
-                  <div
-                    key={match.id}
-                    data-selected-match={isSelected || undefined}
-                    className={cn(
-                      "rounded-2xl",
-                      isSelected &&
-                        "ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-background transition-shadow",
-                    )}
-                  >
-                    <MemoMatchCardBroadcastItem
-                      match={match}
-                      chipsCollapsedByDefault={variant === "chips_collapsed"}
-                      liveState={liveStates[match.id]}
-                      liveOdds={onexLive.odds[match.id] ?? null}
-                      disconnected={connectionStatus === "disconnected"}
-                      onOpenDetail={openDetail}
-                      onBetClick={openBet}
-                      priority={idx < 2}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {!isLoading && featuredForMarquee.length + restForGrid.length === 0 && !error && (
-          <div className="mt-16 flex flex-col items-center justify-center gap-3 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Trophy className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium">
-              {subTab === "live" ? tTennis("noLiveMatches") : t("noMatchTitle")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("noMatchHint")}
-              {selectedCountryId && (
-                <span className="mt-1 block text-emerald-400">
-                  Filtre actif : {selectedCountryId} —{" "}
-                  <button
-                    type="button"
-                    onClick={() => useSportsSidebarStore.getState().selectCountry(null)}
-                    className="underline underline-offset-2 hover:text-emerald-300"
-                  >
-                    réinitialiser
-                  </button>
-                </span>
-              )}
-              {timeKey !== "all" && (
-                <span className="mt-1 block text-emerald-400">
-                  Fenêtre horaire : {timeKey} —{" "}
-                  <button
-                    type="button"
-                    onClick={() => setTimeKey("all")}
-                    className="underline underline-offset-2 hover:text-emerald-300"
-                  >
-                    réinitialiser
-                  </button>
-                </span>
-              )}
-            </p>
-          </div>
-        )}
-        </>
+        <TennisSubTabPanel sub={subTab} />
       )}
       </main>
       </BentoTile>

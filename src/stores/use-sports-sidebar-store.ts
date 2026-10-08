@@ -81,6 +81,8 @@ interface SportsSidebarState {
   clearFilters: () => void;
   /** Ajoute/retire un match de la sélection (multi-sélection sidebar). */
   toggleMatchSelection: (matchId: string) => void;
+  /** Retire un id de la sélection — idempotent (ne le rajoute jamais). */
+  removeMatchSelection: (matchId: string) => void;
   /** Vide la sélection de matchs. */
   clearMatchSelection: () => void;
   /** Sauvegarde les favoris courants sous un nom d'ensemble. */
@@ -118,7 +120,11 @@ const DEFAULTS = {
   teamsCustomized: false,
   collapsed: false,
   headerMode: "prematch" as "prematch" | "live",
-  sportSubTabs: { basketball: "matchs" } as Record<string, string>,
+  sportSubTabs: {
+    basketball: "matchs",
+    football: "calendrier",
+    tennis: "calendrier",
+  } as Record<string, string>,
 };
 
 const DEFAULT_NAMED_SETS: Record<string, string[]> = {
@@ -224,7 +230,15 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
 
       setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
-      clearFilters: () => set({ ...DEFAULTS, selectedCountryId: null }),
+      clearFilters: () =>
+        set((s) => ({
+          ...DEFAULTS,
+          selectedCountryId: null,
+          // Les sous-onglets décrivent une NAVIGATION, pas un filtre :
+          // réinitialiser les filtres ne doit pas renvoyer l'utilisateur
+          // au premier onglet du sport.
+          sportSubTabs: s.sportSubTabs,
+        })),
 
       toggleMatchSelection: (matchId) =>
         set((s) => ({
@@ -232,6 +246,16 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
             ? s.selectedMatchIds.filter((id) => id !== matchId)
             : [...s.selectedMatchIds, matchId],
         })),
+
+      // Dé-sélection idempotente : le widget « PariScore Live » dépingle un match
+      // déjà épinglé (★ + sidebar), un simple `toggleMatchSelection` le
+      // REMETTRAIT dans la sélection au lieu de l'enlever.
+      removeMatchSelection: (matchId) =>
+        set((s) =>
+          s.selectedMatchIds.includes(matchId)
+            ? { selectedMatchIds: s.selectedMatchIds.filter((id) => id !== matchId) }
+            : {},
+        ),
 
       clearMatchSelection: () => set({ selectedMatchIds: [] }),
 
@@ -346,6 +370,16 @@ export function hydrateStoreFromUrl(): void {
   if (ids) {
     patch.selectedMatchIds = ids.split(",").filter(Boolean);
   }
+  // Sous-onglet actif (?sub=backtesting) : porté par le sport explicite de
+  // l'URL, sinon par le préfixe de la ligue, sinon football (sport de repli).
+  const sub = params.get("sub");
+  if (sub) {
+    const subSport = sport ?? (league ? league.split(":")[0] : null) ?? "football";
+    patch.sportSubTabs = {
+      ...useSportsSidebarStore.getState().sportSubTabs,
+      [subSport]: sub,
+    };
+  }
   if (Object.keys(patch).length > 0) useSportsSidebarStore.setState(patch);
 }
 
@@ -359,6 +393,7 @@ export function syncStoreToUrl(state: {
   modes: Record<string, MatchViewMode>;
   treeStatus: "all" | "live" | "prematch";
   selectedMatchIds: string[];
+  sportSubTabs: Record<string, string>;
 }): void {
   if (typeof window === "undefined" || !window.history?.replaceState) return;
   const params = new URLSearchParams();
@@ -369,6 +404,11 @@ export function syncStoreToUrl(state: {
   if (state.searchQuery.trim().length >= 2) params.set("q", state.searchQuery.trim());
   if (state.treeStatus !== "all") params.set("view", state.treeStatus);
   if (state.selectedMatchIds.length > 0) params.set("ids", state.selectedMatchIds.join(","));
+  // Sous-onglet : seulement s'il dévie du défaut du sport, pour ne pas
+  // saluer chaque URL d'un paramètre inutile.
+  const subSport = state.selectedSportId ?? "football";
+  const sub = state.sportSubTabs[subSport];
+  if (sub && sub !== DEFAULTS.sportSubTabs[subSport]) params.set("sub", sub);
   const qs = params.toString();
   const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
   if (next !== `${window.location.pathname}${window.location.search}`) {
