@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MatchShell } from "@/components/shared/match-shell";
+import { basketballViewState } from "@/lib/match-state-adapters";
 import { LEAGUE_CONFIGS } from "@/lib/basketball-league-config";
 import type { BasketballLeagueId } from "@/lib/basketball-data";
 
@@ -39,6 +41,10 @@ type BasketballMatchCardMatch = {
   id: string;
   league: string;
   status: string;
+  /** Coup d'envoi ISO. Présent dans `use-basketball-matches` (ligne 164 : `raw.date ?? ""`)
+   *  mais absent de ce type local — déclaré ici pour que le `MatchShell` puisse rendre
+   *  l'identité du match. */
+  scheduledAt?: string;
   home: MatchTeam;
   away: MatchTeam;
   odds?: MatchOdds;
@@ -119,7 +125,7 @@ export function hasVitibetSignals(signals: ReturnType<typeof vitibetCardSignals>
 
 export function BasketballMatchCard({ match, onClick, onDetailRequest, className }: BasketballMatchCardProps) {
   const isLive = match.status === "in-progress";
-  const isPost = match.status === "post" || match.status === "finished";
+  const state = basketballViewState(match.status, match.scheduledAt);
   const pHome =
     match.predictions?.blended?.p_home ?? match.predictions?.win_prob?.p_home ?? match.pHome ?? null;
   const pAway =
@@ -135,8 +141,8 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
   return (
     <div
       className={cn(
-        "group relative rounded-lg border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-sm",
-        isLive && "border-emerald-500/30",
+        "group relative",
+        isLive && "ring-1 ring-emerald-500/30",
         className,
       )}
       onClick={handleClick}
@@ -144,29 +150,18 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && handleClick()}
     >
-      {/* Header */}
-      <div className="mb-2 flex items-center justify-between">
-        <Badge variant="outline" className="text-[10px]">
-          {leagueLabel(match.league)}
-        </Badge>
-        {isLive && (
-          <Badge variant="default" className="bg-emerald-500 text-[10px]">
-            LIVE
-          </Badge>
-        )}
-        {isPost && (
-          <Badge variant="secondary" className="text-[10px]">
-            Final
-          </Badge>
-        )}
-      </div>
-
-      {/* Teams */}
-      <div className="mb-2 flex items-center justify-between">
-        <TeamRow team={match.home} pHome={pHome} />
-        <span className="mx-2 text-xs text-muted-foreground">@</span>
-        <TeamRow team={match.away} pHome={pAway} />
-      </div>
+      <MatchShell
+        state={state}
+        competition={{ name: leagueLabel(match.league) }}
+        startTime={match.scheduledAt ?? ""}
+        className="cursor-pointer"
+      >
+        {/* Teams */}
+        <div className="mb-2 flex items-center justify-between">
+          <TeamRow team={match.home} pHome={pHome} />
+          <span className="mx-2 text-xs text-muted-foreground">@</span>
+          <TeamRow team={match.away} pHome={pAway} />
+        </div>
 
       {/* Win probability bar */}
       {pHome != null && pAway != null && (
@@ -261,6 +256,7 @@ export function BasketballMatchCard({ match, onClick, onDetailRequest, className
           )}
         </div>
       )}
+      </MatchShell>
     </div>
   );
 }

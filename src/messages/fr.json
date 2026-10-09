@@ -230,6 +230,18 @@
     "timeTomorrow": "Demain",
     "timeWeekend": "Ce week-end"
   },
+  "matchState": {
+    "scheduled": "À venir",
+    "live": "Live",
+    "halftime": "Mi-temps",
+    "suspended": "Suspendu",
+    "odds-changed": "Cote modifiée",
+    "finished": "Terminé",
+    "postponed": "Reporté",
+    "canceled": "Annulé",
+    "reasonLabel": "État du match",
+    "reasonMissing": "Raison non communiquée par le flux"
+  },
   "sportsSidebar": {
     "title": "Filtres sports",
     "searchPlaceholder": "Équipe ou championnat…",

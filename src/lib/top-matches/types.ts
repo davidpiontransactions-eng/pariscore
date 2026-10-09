@@ -141,7 +141,7 @@ export interface SportAdapter {
 /* ─── Normalisation des statuts live ─── */
 
 /** Statuts source API considérés comme "en cours" par sport */
-const LIVE_STATUS_PATTERNS: Record<string, RegExp[]> = {
+export const LIVE_STATUS_PATTERNS: Record<string, RegExp[]> = {
   football: [/^live$/i, /^in_play$/i, /^1h$/i, /^2h$/i, /^ht$/i, /^et$/i, /^pen$/i, /^extra_time$/i, /^half[_\s-]?time$/i],
   tennis:   [/^live$/i, /^set[1-5]$/i, /^break$/i, /^tiebreak$/i, /^in_play$/i, /^match[_\s-]?point$/i],
   nba:      [/^live$/i, /^is_live$/i, /^in_play$/i, /^in$/i, /^in[-_\s]?progress$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],

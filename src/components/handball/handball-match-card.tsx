@@ -5,6 +5,9 @@ import type { VitibetTip } from "@/lib/vitibet/types";
 import { fmtIndex, indexTone } from "@/lib/vitibet/format";
 import { HandballLeagueBadge } from "@/components/handball/handball-league-badge";
 import { HandballTeamLogo } from "@/components/handball/handball-team-logo";
+import { MatchShell } from "@/components/shared/match-shell";
+import { MatchStateBadge } from "@/components/shared/match-state-badge";
+import { handballMatchStateSafe } from "@/lib/match-state-adapters";
 
 const INDEX_CHIP_CLASS: Record<ReturnType<typeof indexTone>, string> = {
   home: "bg-emerald-500/10 text-emerald-600",
@@ -23,30 +26,44 @@ export function HandballMatchCard({
   /** Pronostic Vitibet rapproché (badge INDEX + probas) — absent si non matché. */
   tip?: VitibetTip | null;
 }) {
+  // `status` est une union fermée côté `handball-data` → switch exhaustif côté adaptateur.
+  const state = handballMatchStateSafe({ status: match.status, kickoff: match.kickoff });
   return (
     // Carte cliquable accessible : bouton natif (clavier Enter/Espace inclus)
     <button
       type="button"
-      className="rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-pointer hover:border-primary/30 focus-visible:ring-2 ring-[#00e676] text-left w-full"
+      className="w-full cursor-pointer text-left ring-[#00e676] focus-visible:ring-2"
       onClick={() => onClick?.(match)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onClick?.(match);
       }}
     >
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-        <HandballLeagueBadge leagueName={match.league.name} country={match.league.country} />
-        <span>
-          {new Date(match.kickoff).toLocaleDateString("fr-FR", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Europe/Paris",
-          })}
-        </span>
-      </div>
-
-      <div className="space-y-1">
+      <MatchShell
+        state={state}
+        competition={{ name: match.league.name }}
+        startTime={match.kickoff}
+        banner={
+          /* La carte handball affichait un drapeau SVG (`HandballLeagueBadge` → `CountryFlag`),
+             pas un emoji. Passer par `banner` le préserve : `competition.flagIso` du shell
+             rendrait un emoji, donc un second drapeau différent du même pays. */
+          <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground">
+            <HandballLeagueBadge leagueName={match.league.name} country={match.league.country} />
+            <div className="flex items-center gap-1.5">
+              <time dateTime={match.kickoff} className="tabular-nums">
+                {new Date(match.kickoff).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Europe/Paris",
+                })}
+              </time>
+              <MatchStateBadge state={state} />
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="font-medium text-sm inline-flex items-center gap-1.5 min-w-0">
             <HandballTeamLogo name={match.home.name} size={18} />
@@ -106,6 +123,7 @@ export function HandballMatchCard({
           </span>
         </div>
       )}
+      </MatchShell>
     </button>
   );
 }

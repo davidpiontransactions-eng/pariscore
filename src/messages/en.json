@@ -230,6 +230,18 @@
     "timeTomorrow": "Tomorrow",
     "timeWeekend": "This weekend"
   },
+  "matchState": {
+    "scheduled": "Upcoming",
+    "live": "Live",
+    "halftime": "Half-time",
+    "suspended": "Suspended",
+    "odds-changed": "Odds changed",
+    "finished": "Finished",
+    "postponed": "Postponed",
+    "canceled": "Canceled",
+    "reasonLabel": "Match status",
+    "reasonMissing": "No reason provided by the feed"
+  },
   "sportsSidebar": {
     "title": "Sports filters",
     "searchPlaceholder": "Team or championship…",
