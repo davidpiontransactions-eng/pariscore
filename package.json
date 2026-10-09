@@ -18,6 +18,7 @@
     "skills:sync:mp": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-mattpocock-skills.ps1 -Apply",
     "skills:sync:mp:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-mattpocock-skills.ps1 -Check",
     "test": "node scripts/run-bun.js test",
+    "test:visual": "playwright test tests/pip-visual.spec.ts tests/bento-visual-qa.spec.ts tests/match-cards-visual.spec.ts",
     "qa:node": "node scripts/qa-node-check.js",
     "qa:press-review": "bun run scripts/qa-press-review.ts",
     "ecc:scan": "npx -y ecc-agentshield@1.4.0 scan",

@@ -19,8 +19,14 @@ import { test, expect } from "@playwright/test";
 const LIVE_TABS_LIST = `[role="tablist"][aria-label="Filtrer par statut de match"]`;
 
 async function openSportTab(page: import("@playwright/test").Page, name: string) {
-  const tab = page.locator('nav[role="tablist"]').first().getByRole("tab", { name: new RegExp(name, "i") });
-  await tab.click();
+  // Même correction que tennis-mobile.spec.ts : le tablist sport est un <LiquidGlass>
+  // → <div> (sport-tabs.tsx:188-200), jamais un <nav>. Le sélecteur antérieur ne
+  // matchait rien et le test échouait avant toute assertion.
+  const tab = page
+    .locator('[role="tablist"][aria-label="Navigation par sport"]')
+    .first()
+    .getByRole("tab", { name: new RegExp(name, "i") });
+  await tab.click({ timeout: 20_000 });
 }
 
 test.describe("Live | Pre-match — Football", () => {

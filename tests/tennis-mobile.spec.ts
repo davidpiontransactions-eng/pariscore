@@ -26,7 +26,15 @@ async function openTennisTab(page: import("@playwright/test").Page) {
   } catch {
     // Banner déjà accepté ou absent — pas bloquant.
   }
-  const tab = page.locator('nav[role="tablist"]').first().getByRole("tab", { name: /Tennis/i });
+  // Le tablist est un <LiquidGlass> → <div>, PAS un <nav> : sport-tabs.tsx:188-200
+  // pose role="tablist" + aria-label sur cette div. Le sélecteur `nav[role="tablist"]`
+  // ne pouvait donc jamais matcher, et ce test échouait avant toute assertion —
+  // c'est la même forme que celle déjà employée par pip-visual.spec.ts et
+  // match-cards-visual.spec.ts.
+  const tab = page
+    .locator('[role="tablist"][aria-label="Navigation par sport"]')
+    .first()
+    .getByRole("tab", { name: /Tennis/i });
   await tab.click({ timeout: 20_000 });
   await page.waitForTimeout(4_000);
 }
