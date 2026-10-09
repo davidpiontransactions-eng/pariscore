@@ -143,15 +143,17 @@ export function setWinProb(
   else if (gamesB >= 6 && gamesB - gamesA >= 2) {
     result = 0.0;
   }
-  // Tiebreak à 6-6 : approximation statique
-  else if (gamesA === 6 && gamesB === 6) {
-    // Probabilité de TB : approximation pondérée
-    // On utilise la probabilité que le serveur au TB gagne
-    // En TB, les joueurs alternent les services
-    // Approximation : prob moyenne des deux joueurs
+  // Tiebreak et AU-DELÀ : approximation statique.
+  //
+  // ⚠️ Le test doit porter sur `>= 6 && >= 6`, PAS sur `=== 6 && === 6` :
+  // en tie-break BSD émet `current_game = 7-6` (ou 6-7, 7-7) de façon
+  // transitoire, et aucun cas terminal ne couvrait ces états — la récursion
+  // (gamesA+1 / gamesB+1) ne redescendait jamais et partait en
+  // « Maximum call stack size exceeded » AU RENDU (l.165-166). Le set est
+  // pourtant terminé : le tie-break l'a départagé.
+  else if (gamesA >= 6 && gamesB >= 6) {
+    // En TB les joueurs alternent les services → prob moyenne des deux.
     const pTB = 0.5 * holdA + 0.5 * holdB;
-    // Le TB est un jeu normalisé — on approxime avec gameWinProb
-    // mais avec un facteur de correction (le TB est plus serré)
     result = gameWinProb(pTB);
   }
   // Récursion classique
@@ -426,6 +428,49 @@ export function expectedRemainingSets(
 // ---------------------------------------------------------------------------
 // Probabilité de victoire dans le match (best-of-3 ou best-of-5)
 // ---------------------------------------------------------------------------
+
+/**
+ * Probabilité que A gagne le MATCH depuis l'état de sets actuel.
+ *
+ * `matchWinProb` ci-dessous démarre TOUJOURS de (0, 0) : il suppose que le set
+ * en cours est le PREMIER du match. En live, A peut déjà mener 1 set à 0 — la
+ * proba de match serait alors surestimée (il faudrait encore 2 sets au lieu
+ * d'1). Cette variante part de l'état réel.
+ *
+ * Même DP, même convention : `pWinSetA` est la proba que A gagne le set EN
+ * COURS (donc déjà sensible au score de jeux, au serveur et aux holds live).
+ *
+ * @param pWinSetA - P(A gagne le set en cours)
+ * @param setsA - Sets déjà gagnés par A
+ * @param setsB - Sets déjà gagnés par B
+ * @param bo3 - true si best-of-3
+ */
+export function matchWinProbFromSets(
+  pWinSetA: number,
+  setsA: number,
+  setsB: number,
+  bo3: boolean = true
+): number {
+  const setsToWin = bo3 ? 2 : 3;
+  const p = Number.isFinite(pWinSetA) ? Math.min(1, Math.max(0, pWinSetA)) : 0.5;
+  const sA = Math.max(0, Math.floor(setsA));
+  const sB = Math.max(0, Math.floor(setsB));
+  if (sA >= setsToWin) return 1;
+  if (sB >= setsToWin) return 0;
+
+  const memo = new Map<string, number>();
+  const dp = (a: number, b: number): number => {
+    if (a >= setsToWin) return 1;
+    if (b >= setsToWin) return 0;
+    const key = `${a},${b}`;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    const result = p * dp(a + 1, b) + (1 - p) * dp(a, b + 1);
+    memo.set(key, result);
+    return result;
+  };
+  return dp(sA, sB);
+}
 
 /**
  * Probabilité que A gagne le match en utilisant la récursion Markov
@@ -800,10 +845,22 @@ export function gameWinProbFromScore(
 const MICRO_BET_MIN = 0.03;
 const MICRO_BET_MAX = 0.97;
 
-/** Borne une probabilité de micro-marché pour l'affichage et le pari. */
-export function clampMicroBetProb(p: number): number {
-  if (!Number.isFinite(p)) return 0.5;
-  return Math.min(MICRO_BET_MAX, Math.max(MICRO_BET_MIN, p));
+/**
+ * Borne une probabilité de micro-marché pour l'affichage et le pari.
+ *
+ * `min`/`max` sont paramétrables : le tennis garde [3 %, 97 %] (bornes
+ * historiques ci-dessus), les sports multi-étendus passent par [2 %, 98 %]
+ * (mission 2026-10-09) — la borne large affiche plus de pari jouable quand
+ * l handicape est serré. Une probabilité non finie renvoie le CENTRE de la
+ * plage, jamais 0.
+ */
+export function clampMicroBetProb(
+  p: number,
+  min: number = MICRO_BET_MIN,
+  max: number = MICRO_BET_MAX
+): number {
+  if (!Number.isFinite(p)) return (min + max) / 2;
+  return Math.min(max, Math.max(min, p));
 }
 
 /**

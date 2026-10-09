@@ -37,6 +37,8 @@ import {
   clampMicroBetProb,
   gameScoreDistribution,
   gameWinProbFromScore,
+  matchWinProbFromSets,
+  setWinProb,
   tieBreakProbability,
   type GameScoreDistribution,
   type GameScoreOutcome,
@@ -320,10 +322,29 @@ function PipBetPanelImpl({
       pHoldB: totalGames.pHoldB,
     });
 
-    return { totalGames, setPred };
+    // Bet ② RÉACTIF : `setWinProb` descend la récursion Markov sur le score de
+    // jeux ET le serveur (π = hold du serveur, 1-hold adverse sinon), là où
+    // `predictSet` ne connaît que les deux totaux. Sans ça, à 3-0 comme à 5-2
+    // le marché affichait la même chose que le multiplicateur bayésien.
+    const setWinA = setWinProb(
+      totalGames.pHoldA,
+      totalGames.pHoldB,
+      liveState.scoreA.sets.length,
+      liveState.scoreB.sets.length,
+      liveState.currentSet,
+      liveState.scoreA.games,
+      liveState.scoreB.games,
+      liveState.server
+    );
+
+    return { totalGames, setPred, setWinA };
   }, [
     liveState?.scoreA.games,
     liveState?.scoreB.games,
+    liveState?.scoreA.sets.length,
+    liveState?.scoreB.sets.length,
+    liveState?.currentSet,
+    liveState?.server,
     match.stats?.surface ?? "Hard",
     match.playerA.elo,
     match.playerB.elo,
@@ -346,11 +367,43 @@ function PipBetPanelImpl({
 
     const marketA = liveState.liveProbA;
     const marketB = liveState.liveProbB;
-    const markovA = setAndGames.setPred.probAWinsSet;
-    const markovB = setAndGames.setPred.probBWinsSet;
+    const markovA = setAndGames.setWinA;
+    const markovB = 1 - setAndGames.setWinA;
 
     let blendedA = markovA * weightMarkov + marketA * (1 - weightMarkov);
     let blendedB = markovB * weightMarkov + marketB * (1 - weightMarkov);
+    const total = blendedA + blendedB;
+    if (total > 0) {
+      blendedA = Math.round((blendedA / total) * 100);
+      blendedB = 100 - blendedA;
+    }
+    return { probA: blendedA, probB: blendedB };
+  }, [liveState, setAndGames, bet1]);
+
+  // === BET ① RÉACTIF : Vainqueur du MATCH. ===
+  //
+  // `liveProbA/liveProbB` de BSD sont des cotes de marché : elles bougent, mais
+  // ne KNOWLEDGE pas qu'un set est déjà gagné. `matchWinProb` (l'export
+  // historique) repart TOUJOURS de dp(0,0) et ferait donc abstraction d'un
+  // A mène 1-0 — d'où `matchWinProbFromSets`, qui part de l'état réel.
+  //
+  // Même mélange bayésien que ② : le modèle Markov domine quand on sait
+  // combien de sets séparent du titre, les cotes dominent au coup d'envoi.
+  const bet1Reactive = useMemo(() => {
+    if (!liveState || !setAndGames) return bet1;
+    const setsA = liveState.scoreA.sets.length;
+    const setsB = liveState.scoreB.sets.length;
+
+    // Set terminal : le marché n'a plus rien à dire.
+    if (setsA >= 2 || setsB >= 2) {
+      return setsA >= 2 ? { probA: 100, probB: 0 } : { probA: 0, probB: 100 };
+    }
+
+    const modelA = matchWinProbFromSets(setAndGames.setWinA, setsA, setsB, true);
+    // sets joués = avance réelle + poids du set en cours.
+    const weightModel = Math.min(1, Math.max(0, (setsA + setsB + 0.5) / 2.5));
+    let blendedA = modelA * weightModel + bet1.probA * (1 - weightModel);
+    let blendedB = (1 - modelA) * weightModel + bet1.probB * (1 - weightModel);
     const total = blendedA + blendedB;
     if (total > 0) {
       blendedA = Math.round((blendedA / total) * 100);
@@ -451,12 +504,12 @@ function PipBetPanelImpl({
             <MarketHead
               n="①"
               label="Vainqueur du match"
-              valueProb={Math.max(bet1.probA, bet1.probB)}
+              valueProb={Math.max(bet1Reactive.probA, bet1Reactive.probB)}
               showValue={!!liveState}
             />
-            <PlayerRow name={nameA} pct={bet1.probA} tone="a" />
+            <PlayerRow name={nameA} pct={bet1Reactive.probA} tone="a" />
             <div className="mt-1">
-              <PlayerRow name={nameB} pct={bet1.probB} tone="b" />
+              <PlayerRow name={nameB} pct={bet1Reactive.probB} tone="b" />
             </div>
           </div>
         )}
