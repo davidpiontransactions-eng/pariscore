@@ -1,674 +1,453 @@
-# Chartre Graphique — PariScore Design System
+# Charte Graphique — PariScore Design System
 
-> **Version** : 1.0 · **Dernière MAJ** : 2026-07-14  
-> **Source** : `pariscore.html` (root `:root` + utility classes) · **Contexte** : DS-Unify Phase 1-3
-
----
-
-## 1. Palette Couleurs
-
-### 1.1 Dark Navy (thème par défaut)
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--bg` | `#0b0e17` | Fond page principal |
-| `--bg2` | `#0e121e` | Fond carte / panel |
-| `--bg3` | `#131722` | Fond carte hover / input |
-| `--bg4` | `#161c2a` | Fond carte actif |
-| `--accent` | `#00e676` | Vert néon — accent principal CTA |
-| `--accent-dim` | `#00c853` | Vert néon atténué (hover) |
-| `--accent-bg` | `rgba(0,230,118,0.12)` | Fond accent (ex: badge) |
-| `--text` | `#ffffff` | Texte principal |
-| `--text2` | `#e8eaed` | Texte secondaire |
-| `--text3` | `#94a3b8` | Texte tertiaire / muted |
-| `--border` | `rgba(255,255,255,0.08)` | Bordure par défaut |
-
-### 1.2 Couleurs fonctionnelles
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--green` | `#00e676` | Succès, positif |
-| `--amber` | `#fbbf24` | Attention, moyen |
-| `--red` | `#ff3856` | Erreur, négatif |
-| `--blue` | `#29b6f6` | Info, lien |
-| `--purple` | `#ab47bc` | IA, insight |
-
-### 1.3 Couleurs sportives
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--sport-primary` | `--accent` | Vert — football, défaut |
-| `--sport-secondary` | `--blue` | Tennis (bleu) |
-| `--sport-tertiary` | `#f59e0b` | MMA (ambre) |
-| `--sport-accent` | Par sport | Surcharge par onglet |
+> **Version** : 2.0 · **Dernière MAJ** : 2026-10-09
+> **Source de vérité** : `src/app/globals.css` (tokens), `src/components/ui/` (primitives)
+> **Remplace** : la v1.0 (2026-07-14), qui documentait des tokens absents du code
+> **Complément** : `DESIGN.md` (réponse « à quoi ça ressemble »), `DESIGN_SYSTEM_CAHIER_DES_CHARGES.md` (benchmark + plan)
 
 ---
 
-## 2. Typographie
+## 0. Comment lire ce document
 
-### 2.1 Font stack
+**Les tokens de ce document sont ceux de `globals.css`.** Si un token listé ici n'est pas
+dans `globals.css`, c'est un bug de ce document — le corriger, pas contourner.
 
-> **MAJ 2026-09-02** : Le Next.js app utilise Geist (pas Poppins/Inter). Ce charter documente la source de vérité actuelle.
+La v1.0 listait `--accent: #00e676`, `--bg*`, `--cf-*`, `--cf-radius-*`, `--cf-z-*`. **Aucun
+de ces tokens n'existe** dans le code actuel. La v2.0 supprime cette dette.
 
-| Rôle | Variable CSS | Famille | Fallback | Usage |
-|---|---|---|---|---|
-| Body/Sans | `--font-sans` | `Geist` | `sans-serif` | Texte principal, labels, tout le body |
-| Monospace | `--font-mono` | `Geist Mono` | `monospace` | Odds, stats, données tabulaires, code |
-| Display | `--font-display` | `Archivo` | `sans-serif` | Scores broadcast, grands chiffres uniquement |
-
-### 2.2 Poids
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--fw-regular` | `400` | Corps de texte |
-| `--fw-medium` | `500` | Labels |
-| `--fw-semibold` | `600` | Boutons, sous-titres |
-| `--fw-bold` | `700` | Titres |
-| `--fw-black` | `800` | Hero, stats |
-
-### 2.3 Tailles (Console Filter — `--cf-fs-*`)
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--cf-fs-xs` | `10px` | Meta, timestamps |
-| `--cf-fs-sm` | `11px` | Labels, badges |
-| `--cf-fs-md` | `13px` | Corps |
-| `--cf-fs-lg` | `15px` | Sous-titres |
-| `--cf-fs-xl` | `18px` | Titres cards |
-| `--cf-fs-2xl` | `24px` | Titres sections |
-| `--cf-fs-3xl` | `32px` | Hero, stats grandes |
-
-### 2.4 Règle
-
-**Interdiction formelle** d'utiliser `font-family` avec une chaîne directe hors variables `--font-*`. Toute référence doit passer par `var(--font-sans/mono/display)`. Les classes Tailwind `font-sans`, `font-mono`, `font-display` mapent vers ces variables.
+Elle listait aussi un script de validation CSS qui **n'a jamais été commité** — voir §14.
 
 ---
 
-## 3. Glassmorphism
+## 1. Thème
 
-### 3.1 Niveaux de flou
+### 1.1 Modèle
 
-| Token CSS | Valeur | Classe utilitaire | Usage |
+**Dual-theme, class-based** (`next-themes`, `attribute="class"`). Thème par défaut
+**dark** — `src/app/layout.tsx` : `defaultTheme="dark"`.
+
+Le dark est le thème de référence produit (le live betting se joue la nuit, sur téléphone).
+Le light existe et est complet : il n'est pas un inversé afterthought, il a ses propres
+tokens de surface.
+
+### 1.2 Structure des blocs
+
+| Bloc | Emplacement | Rôle |
+|---|---|---|
+| `@theme inline` | `globals.css:16-95` | Expose les tokens sémantiques à Tailwind (`--color-*`, `--font-*`) |
+| `:root` | `globals.css:97-161` | Valeurs **light** |
+| `.dark` | `globals.css:163-238` | Valeurs **dark** + tokens Bento Grid |
+| `:root` (Liquid Glass) | `globals.css:696-731` | `--lg-*`, **non thémé** (voir §6.3) |
+| `@layer base` | `globals.css:240+` | Reset, theming navigateur, mobile refinements |
+
+### 1.3 Règle
+
+Les composants consomment des **classes Tailwind sémantiques** (`bg-card`,
+`text-muted-foreground`, `border-border`). **Jamais** une valeur hexadécimale brute en
+dur dans un composant — sauf valeur d'accent sportexplicitement documentée en §4.
+
+---
+
+## 2. Couleurs structurelles
+
+Neutres. **Ne portent aucun sens** — c'est la palette de marque qui porte le sens (§4).
+
+| Token | Light | Dark | Usage |
 |---|---|---|---|
-| `--cf-blur-light` | `blur(6px)` | `.cf-u-glass-light` | Overlays légers, cartes hover |
-| `--cf-blur-medium` | `blur(12px)` | `.cf-u-glass-medium` | Nav, modales, panneaux sticky |
-| `--cf-blur-heavy` | `blur(20px)` | `.cf-u-glass-heavy` | Modales profondes, alertes critiques |
+| `--background` | `#F0ECF8` | `#0E1217` | Fond page |
+| `--bg-deep` | `#F0ECF8` | `#0A0E14` | Fond profond (hero, empty states) |
+| `--foreground` | `#1A1145` | `#E2E8F0` | Texte principal |
+| `--card` | `#FFFFFF` | `#1E2433` | Surface carte |
+| `--card-foreground` | `#1A1145` | `#E2E8F0` | Texte sur carte |
+| `--popover` | `#FFFFFF` | `#1E2433` | Surface flottante |
+| `--secondary` | `#EDE8F5` | `#1A1F2E` | Surface secondaire |
+| `--muted` | `#EDE8F5` | `#1A1F2E` | Surface atténuée |
+| `--muted-foreground` | `#6B5B8D` | `#94A3B8` | Texte tertiaire |
+| `--border` | `#E0D8F0` | `#2D3748` | Bordure standard |
+| `--input` | `#E0D8F0` | `#2D3748` | Bordure input |
+| `--ring` | `#7B3FA0` | `#7B3FA0` | Anneau focus |
+| `--surface-dark` | `#EDE8F5` | `#1A1F2E` | Surface sombre explicite |
+| `--surface-card` | `#FFFFFF` | `#1E2433` | Surface carte explicite |
 
-### 3.2 Niveaux d'opacité verre
+### 2.1 Couleurs de marque
 
-| Token | Valeur | Usage |
-|---|---|---|
-| `--cf-glass-light` | `rgba(15,23,42,0.55)` | Fond verre léger |
-| `--cf-glass-medium` | `rgba(15,23,42,0.78)` | Fond verre moyen |
-| `--cf-glass-heavy` | `rgba(11,18,32,0.92)` | Fond verre épais |
-| `--cf-glass-border` | `rgba(255,255,255,0.08)` | Bordure verre standard |
-| `--cf-glass-border-hot` | `rgba(56,189,248,0.30)` | Bordure verre accentuée |
+| Token | Light | Dark | Usage |
+|---|---|---|---|
+| `--primary` | `#7B3FA0` | `#7B3FA0` | Actions principales, structure |
+| `--primary-foreground` | `#FFFFFF` | `#FFFFFF` | Texte sur primary |
+| `--accent` | `#FF6D00` | `#FF6D00` | **Accent unique** — CTA, mise en avant |
+| `--accent-foreground` | `#FFFFFF` | `#FFFFFF` | Texte sur accent |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` | Erreur, action destructive |
 
-### 3.3 Règle
-
-**Interdiction** d'écrire `backdrop-filter: blur(Xpx)` en dur. Toujours utiliser `var(--cf-blur-light/medium/heavy)` ou la classe `.cf-u-glass-*` correspondante.
-
----
-
-## 4. Ombres (`--cf-shadow-*`)
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--cf-shadow-sm` | `0 2px 8px -4px rgba(0,0,0,0.35)` | Cartes, badges |
-| `--cf-shadow-md` | `0 8px 24px -12px rgba(0,0,0,0.45)` | Panneaux, dropdowns |
-| `--cf-shadow-lg` | `0 30px 60px -30px rgba(0,0,0,0.60)` | Modales |
-
-### Ombres directionnelles SUI (mobile)
-
-| Token | Usage |
-|---|---|
-| `--sui-shadow-card-rest` | Carte au repos (coin supérieur gauche lumière) |
-| `--sui-shadow-card-hover` | Carte survolée |
-| `--sui-shadow-card-active` | Carte active/enfoncée |
+> **`--accent` est identique dans les deux thèmes.** C'est un choix délibéré : l'orange est
+> le signal de marque, il ne change pas de valeur au switch de thème. Ne pas le convertir
+> en token sémantique.
 
 ---
 
-## 5. Bordures (classes utilitaires)
+## 3. Couleurs fonctionnelles — le contrat sémantique
+
+**C'est le seul niveau où la couleur encode du sens.** Ces tokens sont **identiques dans les
+deux thèmes** : ils doivent signifier la même chose en clair et en sombre.
+
+| Token | Valeur | Sémantique |
+|---|---|---|
+| `--edge-positive` | `#FF6D00` | Value, edge au-dessus du seuil |
+| `--edge-negative` | `#EF4444` | Piège, cote trop courte |
+| `--confidence-high` | `#4CAF50` | IC étroit, données suffisantes |
+| `--confidence-mid` | `#FF6D00` | IC modéré |
+| `--confidence-low` | `#EF4444` | IC large ou données insuffisantes |
+| `--live-pulse` | `#4CAF50` | Match en cours |
+| `--ai-insight` | `#7B3FA0` | Analyse IA (Gemini) |
+
+### 3.1 Convention de lecture
+
+```
+--edge-positive  et --accent   = #FF6D00  → « ça vaut quelque chose »
+--confidence-high et --live-pulse = #4CAF50  → « fiable » / « en cours »
+--edge-negative  et --confidence-low = #EF4444  → « piège » / « incertain »
+```
+
+### 3.2 Collision sémantique connue : `live-pulse` est vert
+
+Le vert de `--live-pulse` n'est pas la convention du secteur (le rouge y signifie
+« live »). Ici, le rouge est déjà pris par `edge-negative` / `confidence-low` : le faire
+servir aussi au live rendrait un même rouge ambigu entre « piège » et « en cours ».
+
+**Règle** : `--live-pulse` reste vert. La distinction **live vs terminé** ne repose
+**jamais sur la couleur seule** — voir `MatchStateBadge` (`src/components/shared/`) :
+icône + libellé + `title`, toujours.
+
+### 3.3 Règle dure : aucun signal par la couleur seule
+
+Tout signal codé par une couleur doit porter un **second canal** : icône, forme, libellé
+texte ou position. Non négociable — c'est un défaut WCAG 1.4.1 et une source de
+confusion pour les déficiences de vision des couleurs.
+
+### 3.4 Budget d'accent
+
+La surface de pixels de `--accent` doit rester **≤ 5 %** de la surface visible sur un
+écran d'onglet sport. Le chrome (entêtes, sidebar, chrome de navigation) est neutre ;
+l'accent ne sert que les **signaux**.
+
+---
+
+## 4. Couleurs par sport
+
+| Token | Light | Dark |
+|---|---|---|
+| `--sport-tennis` | `#7B3FA0` | `#60A5FA` |
+| `--sport-football` | `#7B3FA0` | `#7B3FA0` |
+| `--sport-basketball` | `#7B3FA0` | `#F97316` |
+| `--sport-cycling` | `#7B3FA0` | `#7B3FA0` |
+| `--sport-rugby` | `#7B3FA0` | `#7B3FA0` |
+| `--sport-mma` | `#EF4444` | `#EF4444` |
+| `--sport-f1` | `#EF4444` | `#EF4444` |
+| `--sport-cs2` | `#FF6D00` | `#FF6D00` |
+
+### 4.1 Gradients sport
+
+Cinq classes existent : `.gradient-sport-football`, `-tennis`, `-mma`, `-f1`,
+`-basketball`. Angle `135deg`, 3 stops maximum, **fonds de sections uniquement** —
+jamais sur du texte (sauf `.bg-clip-text` existant).
+
+> Il n'existe **pas** de gradient pour basketball/handball/hockey/snooker/baseball. Ne pas
+> supposer leur existence ; ajouter la classe si le besoin est réel.
+
+---
+
+## 5. Typographie
+
+### 5.1 Familles
+
+| Rôle | Token Tailwind | Famille | Usage |
+|---|---|---|---|
+| Body / UI | `font-sans` | **Geist** | Tout le texte courant |
+| Nombres / code | `font-mono` | **Geist Mono** | Cotes, stats tabulaires |
+| Scores | `font-display` | **Archivo** | Scores broadcast, grands chiffres |
+| Titres UI | `font-display-ui` | **Space Grotesk** | Headers de section |
+
+### 5.2 Chiffres tabulaires — règle de base, obligation globale
+
+`font-variant-numeric: tabular-nums` est posé **sur `body`** (`globals.css`, `@layer base`).
+Donc tout le site en bénéficie : cotes, probabilités, scores, minutes, classements, ROI,
+horodatages.
+
+**Pourquoi en base plutôt que composant par composant.** La première version de cette
+charte demandait la classe sur chaque composant numérique. L'audit a trouvé **57 fichiers**
+concernés. Une règle Distributed sur 57 fichiers n'est pas tenable : la règle oubliée dans
+un composant est une colonne qui vibre au tick live, et personne ne la voit relancer. Une
+règle en base ne peut pas être oubliée.
+
+**Échappement** : `.tabular-nums-off` remet un sous-arbre en chiffres proportionnels, pour
+un passage de texte non chiffré où le tabulaire gêne.
+
+**Ce qui reste à faire à la main** : `font-mono` sur les valeurs numériques critiques
+(cotes, scores). `--font-mono` est un choix de famille, pas un correctif de vibration —
+`tabular-nums` fait le travail. Ne pas ajouter `font-mono` partout « par principe » :
+Geist Mono sur un corps de texte coûte de la lisibilité.
+
+**Audit** :
+```bash
+bun scripts/audit-tabular-nums.ts
+```
+Recense les **désactivations** locales (`.tabular-nums-off`, `font-variant-numeric`
+concurrent) — plus les 57 fichiers du type « nombre rendu sans tabular-nums » ne sont plus
+possibles, la règle étant en base. Sortie dans `logs/audit-tabular.txt`.
+
+### 5.3 Règle d'usage
+
+- `Archivo` : scores et grands chiffres **uniquement**. Jamais pour du texte courant.
+- `Space Grotesk` : titres de section. Jamais pour du corps de texte.
+- `Geist Mono` : toute valeur numérique. Jamais pour de la prose.
+- Interdiction de `font-family` en dur hors variables `--font-*`.
+
+### 5.4 Classes utilitaires
 
 | Classe | Effet |
 |---|---|
-| `.cf-u-border` | Bordure standard `1px solid var(--cf-glass-border)` |
-| `.cf-u-border-hot` | Bordure accentuée `1px solid var(--cf-glass-border-hot)` |
-| `.cf-u-border-cyan` | Bordure cyan |
-| `.cf-u-border-emerald` | Bordure émeraude |
-| `.cf-u-border-coral` | Bordure corail |
-
----
-
-## 6. Coins arrondis (`--cf-radius-*`)
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--cf-radius-chip` | `4px` | Badges, tags |
-| `--cf-radius-btn` | `6px` | Boutons |
-| `--cf-radius-card` | `8px` | Cartes |
-| `--cf-radius-panel` | `12px` | Panneaux |
-| `--cf-radius-modal` | `16px` | Modales |
-| `--cf-radius-hero` | `20px` | Hero sections |
-
----
-
-## 7. Ombres portées lumineuses (`--cf-glow-*`)
-
-| Token | Couleur | Usage |
-|---|---|---|
-| `--cf-glow-cyan` | `--cf-cyan-glow` | Info, lien |
-| `--cf-glow-emerald` | `--cf-emerald-glow` | Succès, positif |
-| `--cf-glow-coral` | `--cf-coral-glow` | Alerte, négatif |
-| `--cf-glow-amber` | `--cf-amber-glow` | Attention |
-
----
-
-## 8. z-index (6 Tiers)
-
-### 8.1 Variables CSS
-
-| Token | Valeur | Niveau | Usage |
-|---|---|---|---|
-| `--cf-z-base` | `1` | **Sol** | Pseudo-elements, badges, cartes de fond |
-| `--cf-z-sticky` | `2` | **Socle** | Sticky table cells, hero, hovers |
-| `--cf-z-deco` | `5` | **Décoration** | En-têtes sticky, décorations de tableau |
-| `--cf-z-floating` | `100` | **Flottant** | Dropdowns, tooltips, petites fenêtres |
-| `--cf-z-panel` | `1000` | **Panneau** | Panneaux overlay, modales de base |
-| `--cf-z-overlay` | `9000` | **Overlay** | Overlays d'arrière-plan, backdrops |
-
-### 8.2 Classes utilitaires
-
-| Classe | Z-index |
-|---|---|
-| `.cf-u-z-base` | `var(--cf-z-base)` |
-| `.cf-u-z-sticky` | `var(--cf-z-sticky)` |
-| `.cf-u-z-deco` | `var(--cf-z-deco)` |
-| `.cf-u-z-floating` | `var(--cf-z-floating)` |
-| `.cf-u-z-panel` | `var(--cf-z-panel)` |
-| `.cf-u-z-overlay` | `var(--cf-z-overlay)` |
-
-### 8.3 Règle
-
-**Interdiction** d'écrire `z-index: 1`, `z-index: 2`, `z-index: 5/6`, `z-index: 100/200`, `z-index: 1000`, ou `z-index: 9000` en dur dans les feuilles de style. Ces valeurs doivent passer par `var(--cf-z-*)`.  
-Les valeurs intermédiaires (ex: `10`, `50`, `1010-1100`, `9100-10002`) sont autorisées pour le calibrage fin entre composants d'un même niveau.
-
-### 8.4 Architecture des niveaux supérieurs (9000+)
-
-Les modales et overlays utilisent des valeurs fines (9000 → 10002) pour permettre l'imbrication. La section en fin de fichier CSS (`#theme-toggle` → `#page-locked`, lignes ~19710-19746) définit les priorités explicites via `!important` :
-
-- `11000` — Theme toggle (floating bottom-right)
-- `10002` — Skip link (accessibilité clavier)
-- `10001` — Odds graph tooltip
-- `10000` — MMA modal overlay
-- `9999` — Auth modal / radar overlay / dh-drill / bm-modal
-- `9998` — RG pick card
-- `9997` — RG pick backdrop
-- `9996` — Tennis modal
-- `9990` — Radar overlay (override)
-- `9989` — Security banner
-- `9985` — Strat help overlay
-- `9980` — Betmines modal
-- `9950` — Drill modal
-- `9500` — Profiles modal
-- `9400` — Live tennis sheet
-- `9300` — MLS panel dropdown
-- `9200` — Mob filter sheet
-- `9100` — Mob filter overlay
-- `9001` — Bottom nav
-- `9000` — Strategy setup, page-locked
-- `7000` — Page lock overlay
-
----
-
-## 9. Neon Accents (Console Filter)
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--cf-emerald` | `#4ade80` | Accent vert vif |
-| `--cf-emerald-soft` | `rgba(74,222,128,0.18)` | Fond vert doux |
-| `--cf-emerald-glow` | `rgba(74,222,128,0.55)` | Glow vert |
-| `--cf-coral` | `#ff3856` | Accent rouge vif |
-| `--cf-coral-soft` | `rgba(255,56,86,0.16)` | Fond rouge doux |
-| `--cf-coral-glow` | `rgba(255,56,86,0.55)` | Glow rouge |
-| `--cf-amber-soft` | `rgba(251,191,36,0.16)` | Fond ambre doux |
-| `--cf-amber-glow` | `rgba(251,191,36,0.55)` | Glow ambre |
-
----
-
-## 10. Conventions Générales
-
-### 10.1 À FAIRE
-- Utiliser `var(--font-sans/mono/display)` pour toute déclaration `font-family`
-- Utiliser `var(--cf-blur-light/medium/heavy)` pour tout `backdrop-filter`
-- Utiliser les classes `.cf-u-*` utilitaires quand disponibles
-- Utiliser `color-mix()` pour les variations de couleur plutôt que `rgba()` brut
-- Grouper les transitions par propriété explicite (`transition: opacity .2s, transform .15s`)
-
-### 10.2 À NE PAS FAIRE
-- `transition: all` — toujours explicite
-- `!important` sauf override CSS de librairie externe
-- Valeurs `blur(Xpx)` en dur hors variables
-- `rgba(X, Y, Z, 0.XX)` pour des backgrounds de carte — utiliser `--cf-glass-*`
-- Noms de fontes en dur — toujours via `--font-sans/mono/display`
-- `backdrop-filter` sans `-webkit-backdrop-filter` correspondant
-
-### 10.3 Nommage des classes utilitaires
-- `.cf-u-{propriété}` — utilitaires Console Filter
-- `.sui-{composant}` — composants SUI (mobile V2)
-- Éviter les classes ad-hoc pour des variations uniques
-
----
-
-## 11. Gradients (à consolider en Phase 3.4)
-
-En attendant, les gradients doivent :
-- Utiliser `--accent`, `--bg*`, et `--sport-*` comme couleurs de base
-- Être limités à `135deg` comme angle standard
-- Ne pas dépasser 3 stops
-
----
-
-## 12. Validation
-
-Un script de validation (`scripts/validate-css-conventions.js`) permet de vérifier :
-
-```bash
-node scripts/validate-css-conventions.js
-```
-
-Il détecte automatiquement :
-- `backdrop-filter: blur(Xpx)` en dur (hors variables)
-- `font-family: '...'` hors variables `--font-*`
-- `transition: all`
-- `!important` non justifié (todo list)
-
----
-
-## 13. Motion Policy (Phase 19 — 2026-09-03)
-
-### 13.1 Règle d'or : Functional vs Decorative
-
-> **Chaque animation doit répondre à la question : "Qu'est-ce qu'elle COMMUNIQUE ?"**
-> Si la réponse est "rien" → supprimer ou gate `prefers-reduced-motion`.
-
-### 13.2 Classification des animations existantes
-
-| Animation | Keyframe | Catégorie | Justification |
-|---|---|---|---|
-| `glow-pulse` | `box-shadow` pulsation | **Fonctionnelle** ✅ | Indique l'état "LIVE" — information vitale |
-| `shimmer` | `translateX` skeleton | **Fonctionnelle** ✅ | Feedback de chargement — l'utilisateur sait qu'on attend |
-| `pulse-soft` | `opacity` pulsation | **Fonctionnelle** ✅ | Indique un état actif/sélectionné |
-| `tab-fade-in` | `opacity + translateY` | **Fonctionnelle** ✅ | Transition d'onglet — guide l'œil vers le nouveau contenu |
-| `aurora-drift` | `translate3d + scale` | **Décorative** ⚠️ | Ambiance visuelle — garder mais gate reduced-motion |
-| `grid-pan` | `background-position` | **Décorative** ⚠️ | Pattern ambiant — garder mais gate reduced-motion |
-| `bounce-soft` | `translateY` | **Limite** ⚠️ | Utiliser uniquement sur les CTA/boutons d'action |
-
-### 13.3 Règles
-
-1. **Fonctionnel** = peut être gardé même avec `prefers-reduced-motion: reduce` (avec `0.01ms` fallback)
-2. **Décoratif** = DOIT être désactivé quand `prefers-reduced-motion: reduce` (déjà fait dans globals.css)
-3. **bounce-soft** = réservé aux éléments cliquables (boutons, CTA). Jamais sur du contenu statique.
-4. **Nouvelles animations** : justifier la catégorie "Fonctionnelle" avant d'ajouter un `@keyframes`
-5. **Durée max** : 500ms pour les animations fonctionnelles. 26s pour les ambient (aurora/grid).
-
-### 13.4 Gate reduced-motion
-
-Toute animation décorative AJOUTÉE doit être incluse dans le bloc :
-```css
-@media (prefers-reduced-motion: reduce) {
-  .sport-ambient::after,
-  .sport-ambient::before,
-  .nouvelle-animation-decorative {
-    animation: none;
-  }
-}
-```
-
----
-
-## 14. Anti-Sameness Strategy (Phase 20 — 2026-09-03)
-
-### 14.1 Identité Visuelle Pariscore — Notre ADN
-
-> **Pariscore = Dark Navy + Vert Néon + Glass + Ambient Patterns.**
-> Ce cocktail visuel EST notre identité. Pas de rebrand, pas de tendance qui le remplace.
-
-| Élément | Valeur | Rôle |
-|---|---|---|
-| Fond | `#0a0e17` → `#1A1A2E` | immersion nocturne, contraste fort |
-| Accent | `#00e676` vert néon | signal fort, action, confiance |
-| Glass | blur + translucent | profondeur, hiérarchie spatiale |
-| Ambient | dot pattern + aurora | texture vivante sans surcharge |
-| Typo | Geist (body) + Archivo (scores) | neutralité + caractère broadcast |
-
-### 14.2 Trend Filter — Checklist d'Évaluation
-
-Avant d'adopter TENDANCE, chaque ajout doit répondre :
-
-```
-1. Est-ce que ça aide les parieurs à prendre des décisions ?    → Sinon : SKIP
-2. Est-ce que ça améliore la lisibilité des données/scores ?    → Sinon : SKIP
-3. Est-ce que ça renforce l'identité dark+vert+glass ?           → Sinon : SKIP
-4. Est-ce que ça casse la performance mobile ?                   → Sinon : OK
-5. Est-ce que c'est accessible (contraste, keyboard, motion) ?   → Sinon : FIX d'abord
-```
-
-### 14.3 Tendances Refusées — Anti-Patterns
-
-| Tendance | Raison du refus |
-|---|---|
-| **Y2K / Chrome / Iridescent** | Inadapté au gambling sérieux — décalé |
-| **Neo-Brutalism** | Bordures épaisses = mauvaise lisibilité des odds |
-| **3D lourd (WebGL)** | Coût performance démesuré pour un site data-driven |
-| **Hyper-Maximalism** | Surcharge cognitive = mauvaise UX pour les paris |
-| **Stock photos** | On est data-driven, pas lifestyle |
-
-### 14.4 Tendances Adoptées — avec modération
-
-| Tendance | Application Pariscore | Limite |
-|---|---|---|
-| **Variable Fonts** | Scores broadcast (Archivo) + Geist variable | Pas de typo "fun" |
-| **Glassmorphism** | Déjà en place (3 niveaux) | Pas de glass sur glass |
-| **Micro-Interactions** | Feedback utilitaire (hover, focus, live pulse) | Pas de bounce décoratif |
-| **Scroll Reveal** | Révéler les sections au scroll | Pas d'animation sur CHAQUE élément |
-| **Bold Colors** | Gradients par sport (subtil) | Pas de rainbow partout |
-| **Accessibility** | Built-in, pas widget overlay | Jamais accessiBe/UserWay |
-
-### 14.5 Règle "One Bold Move"
-
-> **Max 1 tendance "bold" par page.** Si la page a déjà du glass + animation + gradient, pas de +.
-> Exemple : Dashboard = Glass (bold) + Scroll Reveal (modéré) = OK.
-> Dashboard = Glass + Gradient + Animation + Cursor custom = OVERDESIGN → Simplifier.
-
----
-
-## 15. Sport Gradients (Phase 17 — 2026-09-03)
-
-> **Principe** : chaque sport a une couleur dominante utilisée en gradient subtil sur les headers/sections.
-
-| Sport | Token CSS | Gradient CSS | Usage |
-|---|---|---|---|
-| Football | `--sport-football` | `#00e676 → 30% opacity → #0a0e17` | Headers, badges, accents |
-| Tennis | `--sport-tennis` | `#29b6f6 → 30% opacity → #0a0e17` | Onglet tennis, cards match |
-| MMA | `--sport-mma` | `#f59e0b → 30% opacity → #0a0e17` | Onglet MMA, fight cards |
-| F1 | `--sport-f1` | `#ef4444 → 30% opacity → #0a0e17` | Onglet F1, race cards |
-| Basketball | `--sport-basketball` | `#f97316 → 30% opacity → #0a0e17` | Onglet basketball |
-
-### Classes utilitaires
-
-| Classe | Description |
-|---|---|
-| `.gradient-sport-football` | Gradient vert football |
-| `.gradient-sport-tennis` | Gradient bleu tennis |
-| `.gradient-sport-mma` | Gradient ambre MMA |
-| `.gradient-sport-f1` | Gradient rouge F1 |
-| `.gradient-sport-basketball` | Gradient orange basketball |
-
-### Règles
-
-1. **Angle standard** : `135deg` (haut-gauche → bas-droite)
-2. **3 stops max** : couleur dominante → 30% opacity → fond deep
-3. **Usage** : backgrounds de sections, pas de texte
-4. **Pas de gradient sur texte** sauf `.bg-clip-text` existant (hero title)
-
----
-
-## 16. Liquid Glass Token (Phase 18 — 2026-09-03)
-
-> **Inspiré Apple Liquid Glass** : glass plus blur (40-60px), saturé (1.5-1.8x), ombre inset subtile.
-
-### Tokens CSS
-
-| Token | Valeur | Usage |
-|---|---|---|
-| `--glass-liquid-bg` | `rgba(255,255,255,0.04)` | Fond glass léger |
-| `--glass-liquid-border` | `rgba(255,255,255,0.08)` | Bordure glass |
-| `--glass-liquid-shadow` | `0 8px 32px rgba(0,0,0,0.12) + inset 0 1px 0 rgba(255,255,255,0.05)` | Ombre + highlight inset |
-| `--glass-liquid-blur` | `blur(40px) saturate(1.5)` | Flou + saturation |
-
-### Classes utilitaires
-
-| Classe | Description |
-|---|---|
-| `.glass-liquid` | Glass standard (40px blur) |
-| `.glass-liquid-elevated` | Glass surélevé (60px blur, ombre forte) |
-
-### Différence avec glass existant
-
-| Aspect | Glass classique | Liquid Glass |
-|---|---|---|
-| Blur | 6-20px | 40-60px |
-| Saturation | 1x | 1.5-1.8x |
-| Inset highlight | Non | Oui (`inset 0 1px 0 rgba(255,255,255,0.05)`) |
-| Usage | Modales, overlays | Hero sections, feature cards |
-
----
-
-## 17. Glassmorphism Raffiné (Phase 4 — 2026-09-03)
-
-> **Amélioration** : border glow subtil au focus-visible pour renforcer l'accessibilité keyboard.
-
-### Classe
-
-| Classe | Description |
-|---|---|
-| `.glass-focus` | Ajoute border emerald glow au `focus-visible` |
-
-### Utilisation
-
-```tsx
-// Avant
-<div className="glass-liquid">
-
-// Après — avec feedback keyboard
-<div className="glass-liquid glass-focus" tabIndex={0}>
-```
-
-### Règles
-
-1. **Uniquement `focus-visible`** — pas de glow au click souris
-2. **Couleur** : emerald (`rgba(0,230,118,0.4)`) — cohérent avec l'accent Pariscore
-3. **Reset** : `:focus-visible:not(:focus-visible)` restaure le style glass de base
-4. **Usage** : cartes interactives, boutons glass, panneaux navigables au clavier
-
----
-
-## 18. Variable Fonts Avancé (Phase 3 — 2026-09-03)
-
-> **Extension** : Space Grotesk ajouté comme font display UI pour les headers de section.
-
-### Fonts disponibles
-
-| Rôle | Variable CSS | Famille | Axes | Usage |
-|---|---|---|---|---|
-| Body | `--font-sans` | Geist | — | Texte principal |
-| Mono | `--font-mono` | Geist Mono | — | Odds, stats, code |
-| Display Score | `--font-display` | Archivo | `wdth` (62-125) | Scores broadcast, grands chiffres |
-| **Display UI** | `--font-display-ui` | **Space Grotesk** | `wght` (300-700) | Headers de section, gros titres UI |
-
-### Classes utilitaires
-
-| Classe | Description |
-|---|---|
-| `.score-hero` | Score broadcast (Archivo wdth 118, weight 800) |
-| `.score-hero-weight` | Score avec weight shift au hover (800→900) |
-| `.score-hover` | Score interactif avec weight + color shift |
+| `.score-hero` | Score broadcast (Archivo, fort, condensé) |
+| `.score-hero-weight` | Weight shift au hover |
 | `.font-display-ui` | Space Grotesk pour headers UI |
 
-### Règles
-
-1. **Archivo** = scores et numéros uniquement. Jamais pour du texte body.
-2. **Space Grotesk** = headers de section, titres UI. Mood dashboard/analytics.
-3. **Geist** = reste du body. Ne pas mélanger.
-
 ---
 
-## 19. Liquid Glass System (Phase 22 — 2026-09-04)
+## 6. Liquid Glass
 
-> **Système unifié de glassmorphism** avec détection automatique capability, feature flag PostHog, et accessibilité intégrée.
+### 6.1 Tokens `--lg-*`
 
-### 19.1 4-Tier Ladder
-
-| Tier | Nom | Effet | Gate | Usage |
-|------|-----|-------|------|-------|
-| **Tier 0** | Blur | `backdrop-filter: blur(8-60px) saturate(1.2-1.8)` | aucun | Base de tout le système |
-| **Tier 1** | Noise | SVG fractalNoise texture via `::before` | `prefers-reduced-transparency` | Texture grain subtil |
-| **Tier 2** | Lens | Gradient incident géométrique via `::after` | `prefers-reduced-motion` | Sheen animée, reflet directionnel |
-| **Tier 3** | Opaque | `liquid-glass--clear` — glass sans opacité réduite | aucun | Modales, dialogues, sheets |
-
-### 19.2 CSS Token Naming Convention (`--lg-*`)
+Définis dans un **second bloc `:root`** (`globals.css:696-731`) — donc **non thémés**.
 
 | Catégorie | Tokens | Valeurs |
-|-----------|--------|---------|
+|---|---|---|
 | Blur | `--lg-blur-sm/md/lg/xl` | 8px, 20px, 40px, 60px |
 | Saturation | `--lg-sat-sm/md/lg` | 1.2, 1.5, 1.8 |
-| Noise | `--lg-noise-opacity`, `--lg-noise-url` | 0.03→0, SVG data URI |
-| Lens | `--lg-lens-angle`, `--lg-lens-spread` | 135deg→0deg, 120%→100% |
-| Couleurs | `--lg-bg`, `--lg-bg-elevated`, `--lg-border`, `--lg-border-elevated` | rgba values |
-| Shadows | `--lg-shadow`, `--lg-shadow-elevated` | box-shadow values |
-| Sport tints | `--lg-tint-tennis/football/mma/basketball/baseball/f1/hockey/rugby` | 12% sport color, transparent |
+| Noise | `--lg-noise-opacity`, `--lg-noise-url` | 0.03, SVG fractalNoise |
+| Lens | `--lg-lens-angle`, `--lg-lens-spread` | 135deg, 120% |
+| Couleurs | `--lg-bg`, `--lg-bg-elevated`, `--lg-border`, `--lg-border-elevated`, `--lg-shadow`, `--lg-shadow-elevated` | **valeurs light** |
+| Tints sport | `--lg-tint-tennis/football/mma/cycling/f1/cs2/basketball/rugby` | 12% sport, transparent |
 
-### 19.3 Component Usage
+### 6.2 Classes
 
-```tsx
-import { LiquidGlass } from "@/components/ui/liquid-glass";
-
-// Navbar (Tier 2, elevated, animated sheen)
-<LiquidGlass tier="tier2" elevated className="absolute inset-0">
-  {children}
-</LiquidGlass>
-
-// Sport tabs (Tier 1, no lens)
-<LiquidGlass tier="tier1" noSheen className="sticky top-0 z-40">
-  {children}
-</LiquidGlass>
-
-// Bottom nav (regular, rendered as <nav>)
-<LiquidGlass tier="regular" as="nav" className="...">
-  {children}
-</LiquidGlass>
-
-// Match card (clear, sport-tinted)
-<LiquidGlass tier="clear" sport="tennis">
-  {children}
-</LiquidGlass>
-
-// Sidebar (elevated)
-<LiquidGlass tier="elevated" className="h-full pt-10">
-  {children}
-</LiquidGlass>
-```
-
-**Props**:
-- `tier`: `"regular" | "elevated" | "clear" | "tier0" | "tier1" | "tier2"`
-- `sport`: `"football" | "tennis" | "mma" | "basketball" | "baseball" | "f1" | "hockey" | "rugby"` — applies `--lg-tint-*` accent
-- `elevated`: boolean — uses stronger blur/saturation tokens
-- `noSheen`: boolean — hides `::after` lens gradient
-- `as`: string — render as any HTML element (preserves semantics)
-- `className`: string — merged with glass classes via `cn()`
-
-**CSS-only alternative** (no React import needed):
-```tsx
-// Apply liquid-glass--clear class directly on existing elements
-<div className="liquid-glass--clear">...</div>
-```
-
-### 19.4 Sport Accent Tints
-
-Each sport maps to a CSS `color-mix()` tint at 12% opacity:
-
-| Sport | Token | Base Color |
-|-------|-------|------------|
-| Football | `--lg-tint-football` | `#00e676` (vert néon) |
-| Tennis | `--lg-tint-tennis` | `#29b6f6` (bleu) |
-| MMA | `--lg-tint-mma` | `#f59e0b` (ambre) |
-| Basketball | `--lg-tint-basketball` | `#f97316` (orange) |
-| Baseball | `--lg-tint-baseball` | `#ef4444` (rouge) |
-| F1 | `--lg-tint-f1` | `#ef4444` (rouge) |
-| Hockey | `--lg-tint-hockey` | `#8b5cf6` (violet) |
-| Rugby | `--lg-tint-rugby` | `#14b8a6` (teal) |
-
-### 19.5 Accessibility Gates
-
-| Gate | Condition | Effect |
-|------|-----------|--------|
-| **Reduced transparency** | `prefers-reduced-transparency: reduce` | `--lg-noise-opacity: 0` — disables noise texture |
-| **Reduced motion** | `prefers-reduced-motion: reduce` | Lens angle=0, spread=100%, sheen animation off, blur reduced |
-| **FPS guard** | FPS < 30 for 3s | Adds `.glass-off` class on `<html>`, disables all glass |
-| **Keyboard focus** | `.glass-focus` class | Emerald border glow on `focus-visible` |
-
-### 19.6 Feature Flag
-
-**Flag name**: `liquid-glass-v1` (PostHog)
-
-| Flag State | Behavior |
-|------------|----------|
-| `false` / `undefined` (default) | `<LiquidGlass>` renders plain `<div>` — no glass effects |
-| `true` | Full glass system active per tier/sport props |
-
-**Rollout**: PostHog dashboard → Feature Flags → `liquid-glass-v1` → set percentage.
-**Kill switch**: Disable flag → all components revert to plain divs instantly.
-
-### 19.7 SVG Refraction (Chromium)
-
-Two SVG filters rendered in `<body>` via `<LiquidGlassFilter />`:
-
-| Filter ID | Target | Parameters |
-|-----------|--------|------------|
-| `#lg-refract` | Navbar, sidebar (macro) | baseFrequency 0.008, scale 0.45, 3 octaves |
-| `#lg-refract-sm` | Cards (small) | baseFrequency 0.012, scale 0.30, 2 octaves |
-
-Activated via `data-lg-refraction` attribute on `<html>`. Firefox/Safari fall back to standard blur.
-
----
-
-## 20. Dark Mode — Accent ≤ 5% (Phase 7 — 2026-09-03)
-
-> **Règle d'or** : `#00e676` apparaît UNIQUEMENT sur les signaux. Tout le chrome = slate translucide.
-
-### Sémantique accent
-
-| Élément | Couleur | Raison |
-|---|---|---|
-| Value bet, win, confiance haute | `#00e676` | Signal positif |
-| Live pulse | `#00e676` | État actif |
-| CTA primaire | `#00e676` | Action principale |
-| Bordures neutres | `rgba(148,163,184,0.12)` | Chrome |
-| Icônes neutres | `rgba(148,163,184,0.7)` | Chrome |
-| Boutons secondaires | `rgba(148,163,184,0.7)` | Chrome |
-
-### Classes utilitaires
-
-| Classe | Description |
+| Classe | Effet |
 |---|---|
-| `.chrome-neutral` | Style neutre slate pour chrome |
-| `.signal-accent` | Réservé aux éléments signalants |
-| `.signal-accent-glow` | Glow vert sur éléments signal |
+| `.glass-liquid` | Base (blur 40px, saturate 1.5) |
+| `.glass-liquid-elevated` | Surélevé (blur 60px, saturate 1.8) |
+| `.glass-tennis` … `.glass-rugby` | Tint sport 12% |
+| `.glass-focus` | Glow violet au `focus-visible` |
+| `.lg-no-sheen` | Masque le `::after` (lens gradient) |
+| `.liquid-glass--animated` | Sheen drift (navbar uniquement) |
 
-### Audit
+### 6.3 Limite connue : les couleurs glass sont light-only
 
-Compter la surface de pixels `#00e676` sur la homepage. Objectif : **≤ 5%** de la surface totale.
+`--lg-bg: rgba(255,255,255,0.85)` et `--lg-border: #E0D8F0` **ne sont pas redéfinis pour
+`.dark`**. Conséquence : une surface glass en thème sombre est un voile blanc translucide
+sur fond navy — lisible sur le texte clair, mais la bordure lavande est presque invisible.
+
+**Règle** : le glass est réservé aux surfaces de détail (drawer, modale, sheet, header
+collant). **Jamais** sur un fond de grille de matchs. Plafond : **1 niveau** de glass
+empilé. Interdiction formelle du glass sur glass.
+
+### 6.4 Gates
+
+| Gate | Condition | Effet |
+|---|---|---|
+| Reduced transparency | `prefers-reduced-transparency: reduce` | `--lg-noise-opacity: 0` |
+| Reduced motion | `prefers-reduced-motion: reduce` | Lens 0deg/100%, sheen off, blur réduit |
+| FPS | FPS < 30 pendant 3s | `.glass-off` sur `<html>` (voir `use-liquid-glass`) |
+
+**Ne pas contourner le FPS guard.** C'est lui qui tient la promesse « aucun retard sur les
+cotes live ».
+
+### 6.5 Feature flag
+
+`liquid-glass-v1` (PostHog). Flag désactivée → `<LiquidGlass>` rend un `<div>` nu.
+C'est le kill switch. Rollout par pourcentage dans PostHog.
+
+### 6.6 HTML laissés sans effet
+
+`.glass-liquid--clear` (cité dans `DESIGN_SYSTEM_CAHIER_DES_CHARGES.md` §1.2 de la v1 du
+cahier) **n'existe pas dans `globals.css`**. Seuls `.glass-liquid` et
+`.glass-liquid-elevated` existent. Utiliser l'un des deux.
 
 ---
 
-## 21. Mobile-First Refinements (Phase 21 — 2026-09-03)
+## 7. Rayons
 
-> **Safe areas + touch targets** pour PWA Capacitor (Android/iOS).
+| Token | Valeur |
+|---|---|
+| `--radius` | `0.625rem` (10px) |
 
-### Tokens / Classes
+Dérivation Tailwind : `sm` 6px · `md` 8px · `lg` 10px · `xl` 14px.
 
-| Classe | Description |
+Cartes et dialogs : `rounded-lg`. Badges et pilules : `rounded-full`. **Ne pas introduire
+`rounded-3xl` (24px) sans arbitrage explicite** : la base 10px est calibrée avec
+`LiquidGlass`, `DESIGN.md` et les cartes existantes. Un rayon à 24px est un changement de
+silhouette de toute l'application, pas un réglage.
+
+Tokens Bento Grid (dark uniquement, `globals.css:227-237`) : `--bento-gap` 16px,
+`--bento-radius` 20px, `--bento-radius-sm` 16px.
+
+---
+
+## 8. Ombres
+
+| Token / classe | Valeur | Usage |
+|---|---|---|
+| `--lg-shadow` | `0 2px 12px rgba(123,63,160,.08), 0 1px 3px rgba(0,0,0,.04)` | Cartes glass |
+| `--lg-shadow-elevated` | `0 4px 20px rgba(123,63,160,.12), 0 2px 6px rgba(0,0,0,.06)` | Panneaux glass |
+| `.glass-focus:focus-visible` | glow violet | Focus clavier |
+
+Ombres SUI (mobile) : `--sui-shadow-card-rest/-hover/-active`.
+
+---
+
+## 9. Motion
+
+### 9.1 Tokens
+
+| Token | Valeur |
+|---|---|
+| `--motion-fast` | 150ms |
+| `--motion-med` | 300ms |
+| `--motion-slow` | 500ms |
+| `--ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` |
+| `--ease-emphasized` | `cubic-bezier(0.2, 0.8, 0.2, 1)` |
+
+### 9.2 Animations declarées
+
+| Token | Keyframe | Catégorie |
+|---|---|---|
+| `--animate-pulse-soft` | `pulse-soft` 3s | Fonctionnelle — état actif |
+| `--animate-glow-pulse` | `glow-pulse` 2.4s | Fonctionnelle — état LIVE |
+| `--animate-shimmer` | `shimmer` 1.6s | Fonctionnelle — chargement |
+| `--animate-aurora` | `aurora-drift` 26s | **Décorative** |
+| `--animate-grid-pan` | `grid-pan` 24s | **Décorative** |
+| `--animate-bounce-soft` | `bounce-soft` 1.2s | Limite — CTA uniquement |
+
+### 9.3 Règle d'or
+
+**Chaque animation doit répondre à : « qu'est-ce qu'elle COMMUNIQUE ? »**
+Si la réponse est « rien » → supprimer, ou gate `prefers-reduced-motion`.
+
+1. **Fonctionnelle** : survit à `prefers-reduced-motion: reduce` (avec fallback `0.01ms`).
+2. **Décorative** : **doit** être désactivée sous `reduce`.
+3. **Animation de cote** : **bornée en durée**. Elle signale le changement puis se rend à
+   l'état stable. Une animation de cote qui pulse en continu est un défaut WCAG 2.2.2
+   (Pause, Stop, Hide) et une charge cognitive en live.
+4. Durée max des animations fonctionnelles : **500ms**.
+5. Nouveaux `@keyframes` : justifier la catégorie « fonctionnelle » avant d'ajouter.
+
+Quatre blocs de gate existent dans `globals.css` (lignes 490, 605, 622, 874). Tout ajout
+décoratif doit y être inscrit.
+
+### 9.4 Règles de style
+
+- `transition: all` **interdit** — toujours explicite.
+- `!important` uniquement pour override CSS de librairie externe.
+
+---
+
+## 10. z-index
+
+La v1.0 documentait `--cf-z-base/sticky/deco/floating/panel/overlay`. **Ces tokens
+n'existent pas** dans `globals.css`. Le code utilise des valeurs en dur.
+
+Convention à respecter en attendant un token :
+
+| Niveau | Usage typique |
+|---|---|
+| `1-5` | Pseudo-éléments, badges, décorations de tableau |
+| `100` | Dropdowns, tooltips |
+| `1000` | Panneaux overlay, modales de base |
+| `9000+` | Modales et overlays imbriqués (réservé) |
+
+---
+
+## 11. Mobile & safe areas
+
+Classes définies dans `globals.css` :
+
+| Classe | Effet |
 |---|---|
 | `.mobile-safe-top` | `padding-top: env(safe-area-inset-top)` |
 | `.mobile-safe-bottom` | `padding-bottom: env(safe-area-inset-bottom)` |
 | `.mobile-safe-x` | `padding-left/right: env(safe-area-inset-left/right)` |
-| `.touch-target` | Min 44x44pt (Apple HIG / Material Design 3) |
-| `.mobile-bottom-nav` | Bottom nav avec safe area auto |
+| `.touch-target` | `min-height: 44px; min-width: 44px` |
+| `.mobile-bottom-nav` | Bottom nav avec safe area |
 
-### Règles
+### 11.1 Règles
 
-1. **Touch targets** : minimum 44x44pt sur tous les éléments interactifs
-2. **Safe areas** : utiliser `env(safe-area-inset-*)` pour les PWA standalone
-3. **Bottom nav** : toujours inclure `mobile-bottom-nav` pour le padding home indicator
-4. **Tap highlight** : `-webkit-tap-highlight-color: transparent` sur tous les boutons/liens
+1. **Touch targets ≥ 44×44 px** sur tout élément interactif (Apple HIG / Material 3).
+2. Safe areas via `env(safe-area-inset-*)` pour la PWA standalone (Capacitor Android/iOS).
+3. `touch-action: manipulation` et `-webkit-tap-highlight-color: transparent` sont déjà
+   posés globalement sur `button`, `a`, `[role="button"]` (`globals.css:274-279`).
+4. PWA standalone en dark : fond `#000` pur (économie batterie + contraste Android),
+   `globals.css:281-285`.
+
+---
+
+## 12. Accessibilité — règles dures
+
+Le corpus de benchmark du cahier des charges ne documente **rien** en accessibilité
+(0 mention WCAG sur 7 sources). Ces règles sont importées en dur, pas sourcées.
+
+| Règle | Seuil |
+|---|---|
+| Contraste texte courant | ≥ 4.5:1 |
+| Contraste texte large (≥ 18px bold / 24px) et composants | ≥ 3:1 |
+| Signal jamais par la couleur seule | Second canal obligatoire (§3.3) |
+| Focus visible | Tout élément interactif, `:focus-visible` |
+| Navigation clavier | Complète — aucun piège de focus |
+| `prefers-reduced-motion` | Tout décoratif désactivé (§9.3) |
+| `prefers-reduced-transparency` | Noise désactivé |
+| Lecteur d'écran | `aria-label` / `title` sur tout élément à signal non textuel |
+
+---
+
+## 13. Ce qui a été supprimé depuis la v1.0
+
+Liste explicite, pour qu'un agent qui cherche un token ne le cherche pas :
+
+| Token / classe v1.0 | Statut |
+|---|---|
+| `--accent: #00e676` | **Supprimé** — `--accent` est `#FF6D00` |
+| `--bg`, `--bg2`, `--bg3`, `--bg4`, `--text`, `--text2`, `--text3` | **N'ont jamais existé** sous ces noms — utiliser `--background`, `--card`, `--foreground`, `--muted-foreground` |
+| `--green`, `--amber`, `--red`, `--blue`, `--purple` | **N'ont jamais existé** — utiliser `--edge-*`, `--confidence-*`, `--destructive` |
+| `--cf-radius-*` (6 tokens) | **N'ont jamais existé** — utiliser `--radius` |
+| `--cf-blur-*`, `--cf-glass-*` | **N'ont jamais existé** — utiliser `--lg-*` |
+| `--cf-shadow-*`, `--cf-glow-*` | **N'ont jamais existé** — utiliser `--lg-shadow*` |
+| `--cf-z-*` (6 tokens) | **N'ont jamais existé** — voir §10 |
+| `.cf-u-*` (toutes) | **N'ont jamais existé** |
+| `.cf-fs-*` | **N'ont jamais existé** — échelle Tailwind standard |
+| `.cf-emerald`, `--cf-coral` | **N'ont jamais existé** |
+| `.glass-liquid--clear` | **N'existe pas** — `.glass-liquid` / `.glass-liquid-elevated` (§6.6) |
+| Poppins / Inter (`--font-head`, `--font-body`) | **N'ont jamais existé** — Geist |
+
+---
+
+## 14. Validation
+
+**Il n'existe aucun script de validation CSS dans ce dépôt.** La v1.0 de cette charte en
+mentionnait un (`scripts/validate-css-conventions.js`) — il n'a jamais été commité. Ne pas
+le chercher, ne pas le citer.
+
+Vérification manuelle des 4 conventions, en attendant un outil :
+
+| Convention | Recherche |
+|---|---|
+| `backdrop-filter: blur(Xpx)` en dur | `backdrop-filter: blur(` hors variables `--lg-*` |
+| `font-family` hors variables | `font-family:` avec une chaîne littérale |
+| `transition: all` | `transition: all` |
+| `!important` non justifié | `!important` hors override de librairie externe |
+
+Gates obligatoires après toute modification :
+```bash
+bun run lint
+bun run typecheck
+```
+
+---
+
+*Version 2.0 — 2026-10-09. Contrat aligné sur `src/app/globals.css`. Spec de refonte et
+benchmark : `DESIGN_SYSTEM_CAHIER_DES_CHARGES.md`.*
