@@ -32,6 +32,10 @@ export function HandballMatchCard({
     // Carte cliquable accessible : bouton natif (clavier Enter/Espace inclus)
     <button
       type="button"
+      // `button[type="button"]` seul est trop large pour cibler une carte
+      // (les filtres du panneau sont des boutons du même type) : la QA doit
+      // pouvoir cliquer « la première carte » et rien d'autre.
+      data-testid="handball-match-card"
       className="w-full cursor-pointer text-left ring-[#00e676] focus-visible:ring-2"
       onClick={() => onClick?.(match)}
       onKeyDown={(e) => {

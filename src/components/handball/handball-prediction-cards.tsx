@@ -287,7 +287,13 @@ export function HandballPredictionCards({
   match?: HandballMatch;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div
+      // Ancre de test : sans elle, la QA visuelle ne peut pas prouver que la
+      // grille est rendue — « Winrate 1N2 » et « Value Bet » se ressemblent
+      // assez pour qu'un screenshot trompeur passe pour une preuve.
+      data-testid="handball-prediction-cards"
+      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+    >
       <WinrateCard
         winrate={prediction.winrate}
         odds={odds}

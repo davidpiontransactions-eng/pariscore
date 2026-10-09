@@ -233,6 +233,65 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
       });
     }
   }
+
+  /**
+   * Dialog handball → grille de prédiction → carte Value Bet.
+   *
+   * La liste ne prouve que le câblage `MatchShell` / `MatchStateBadge`. La
+   * cascade Value Bet (mission §2) n'existe qu'à l'intérieur du dialog, donc
+   * elle exige d'ouvrir une carte.
+   *
+   * `pariscore` est non nul dès qu'un match est sélectionné
+   * (`handball-match-detail-dialog.tsx:1355-1364`), la grille est donc toujours
+   * attendue ; et `HandballPredictionCards` ne rend sa carte Value Bet que si
+   * `match` lui est passé — c'est vérifié explicitement plutôt que supposé.
+   */
+  test("HandballMatchCard @ desktop — dialog, cartes de prédiction et Value Bet", async ({ page }) => {
+    test.setTimeout(240_000);
+    const fatals = await watchPage(page);
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await acceptCookies(page);
+
+    const opened = await openSportTab(page, /handball/i);
+    expect(opened, "onglet handball inaccessible (ni barre ni menu Plus)").toBe(true);
+
+    const card = page.locator('[data-testid="handball-match-card"]:visible').first();
+    expect(
+      await card.count(),
+      `aucune carte handball cliquable (voir ${OUT}/match-card-handballmatchcard-desktop.png)`,
+    ).toBeGreaterThan(0);
+
+    await card.click({ timeout: 20_000 });
+    await page.waitForTimeout(SETTLE_MS);
+
+    const dialog = page.locator('[role="dialog"]:visible').first();
+    expect(dialog, "le dialog de détail ne s'est pas ouvert au clic sur la carte").toBeVisible();
+
+    const cards = dialog.locator('[data-testid="handball-prediction-cards"]');
+    expect(
+      await cards.count(),
+      "dialog ouvert mais grille HandballPredictionCards absente " +
+        `— la prop match est-elle passée au composant ? ` +
+        `(voir ${OUT}/handball-value-bet-dialog.png)`,
+    ).toBe(1);
+
+    // La carte Value Bet : titre « Value Bet », ou son état vide explicite
+    // (« Aucun Value Bet détecté »). Les DEUX sont des rendus valides — refuser
+    // le second ferait échouer la spec dès qu'aucun pari n'atteint 1.20.
+    const valueBet = cards.getByText("Value Bet", { exact: true });
+    const noValueBet = cards.getByText(/Aucun Value Bet détecté/i);
+    expect(
+      (await valueBet.count()) + (await noValueBet.count()),
+      "ni carte « Value Bet » ni état vide « Aucun Value Bet détecté » " +
+        `(voir ${OUT}/handball-value-bet-dialog.png)`,
+    ).toBeGreaterThan(0);
+
+    await page.screenshot({ path: `${OUT}/handball-value-bet-dialog.png`, fullPage: false });
+
+    // Rien ne doit avoir cassé au montage du dialog.
+    expect(fatals, `erreurs fatales: ${fatals.join(" | ")}`).toEqual([]);
+  });
 });
 
 test.describe("ScenarioImpact — composant contrefactuel tennis", () => {
