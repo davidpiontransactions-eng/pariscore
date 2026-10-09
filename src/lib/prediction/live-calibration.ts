@@ -196,6 +196,64 @@ export function calibrateByMarket(
     .sort((a, b) => b.n - a.n);
 }
 
+// ── Politique du badge VALUE ────────────────────────────────────────────────
+
+/** Seuil + autorisation du badge VALUE, dérivés de la calibration mesurée. */
+export type ValueEdgePolicy = {
+  /** Écart minimal (pts) au-delà duquel le marché est considéré sous-coté. */
+  threshold: number;
+  /** false = le modèle est moins bon que le marché, badge neutralisé. */
+  allowBadge: boolean;
+  /** Pourquoi ce seuil — visible au survol dans l'UI, jamais silencieux. */
+  reason: string;
+};
+
+/**
+ * Seuil et autorisation du badge VALUE, DÉRIVÉS DES DONNÉES MESURÉES.
+ *
+ * Le seuil heuristique de 5 pts (`VALUE_EDGE_THRESHOLD` du composant) ne sait
+ * pas si le modèle mérite confiance. Cette politique remplace l'invention :
+ * quand la calibration a assez d'observations, le seuil et le badge suivent le
+ * skill score réel ; avant, l'heuristique reste MAIS la raison le DIT — jamais
+ * un seuil silencieux.
+ *
+ * @param calibration - Rapport de `calibrate()`, ou null avant toute mesure.
+ */
+export function valueEdgePolicy(calibration: CalibrationReport | null): ValueEdgePolicy {
+  if (!calibration || calibration.n < MIN_SAMPLES_FOR_VERDICT) {
+    const n = calibration?.n ?? 0;
+    return {
+      threshold: 5,
+      allowBadge: true,
+      reason:
+        n === 0
+          ? "Il n'y a pas encore de calibration fiable (0 observation résolue) : seuil heuristique de 5 pts."
+          : `Il n'y a pas encore de calibration fiable (${n} observation(s) < ${MIN_SAMPLES_FOR_VERDICT}) : seuil heuristique de 5 pts.`,
+    };
+  }
+
+  const s = calibration.skillScore;
+  if (s !== null && s > 0.05) {
+    return {
+      threshold: 3,
+      allowBadge: true,
+      reason: `Le modèle bat le marché de ${(s * 100).toFixed(1)} % de Brier sur ${calibration.n} observations : seuil abaissé à 3 pts.`,
+    };
+  }
+  if (s !== null && s < -0.05) {
+    return {
+      threshold: 5,
+      allowBadge: false,
+      reason: `Le modèle est ${(-s * 100).toFixed(1)} % moins bon que le marché (Brier sur ${calibration.n} observations) : l'écart affiché est du bruit, badge VALUE neutralisé.`,
+    };
+  }
+  return {
+    threshold: 5,
+    allowBadge: true,
+    reason: `Modèle et marché statistiquement équivalents sur ${calibration.n} observations : seuil heuristique de 5 pts.`,
+  };
+}
+
 // ── Journal d'observations ───────────────────────────────────────────────────
 
 /**
