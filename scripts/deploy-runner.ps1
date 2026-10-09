@@ -73,7 +73,18 @@ if ($Log -eq "") {
 $script:LogPath = $Log
 $script:LockFile = $LOCK_FILE
 function Log([string]$line) {
-  Add-Content -Path $script:LogPath -Value ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss"), $line) -Encoding UTF8
+  # Retry court : une lecture concurrente du log (cmd `type log > capture`,
+  # constat 2026-10-09) ouvre le fichier en refusant le partage en ecriture
+  # et l'Add-Content tombait dessus -> le runner MOURAIT a mi-polling avec
+  # "being used by another process" sur son PROPRE fichier de log, alors
+  # que le deploy distant continuait en setsid. Une ecriture perdue est
+  # preferable a un runner mort : la ligne sera re-loggee au tick suivant.
+  for ($i = 0; $i -lt 3; $i++) {
+    try {
+      Add-Content -Path $script:LogPath -Value ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss"), $line) -Encoding UTF8 -ErrorAction Stop
+      break
+    } catch { Start-Sleep -Milliseconds 300 }
+  }
   if (Test-Path $script:LockFile) {
     try { (Get-Item $script:LockFile).LastWriteTime = Get-Date } catch {}
   }
