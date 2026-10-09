@@ -31,10 +31,24 @@ const nextConfig: NextConfig = {
     // cloned) → build interrompu en prod. Le parallélisme par défaut suffit.
   },
   
+  // ─── Garde-fou TypeScript ────────────────────────────────────────────
+  // `ignoreBuildErrors: false` INCONDITIONNEL (dev compris).
+  //
+  // Constat 2026-10-09 : la feature baseball a ete commitée avec deux imports
+  // (`fetchMlbLiveState`, `extractMlbLiveState`) qui n'existaient QUE dans le
+  // working tree. Le typecheck local annonçait 0 erreur et 265 tests verts
+  // parce qu'il lisait la version non commitée de `mlb-statsapi.ts`. Seul un
+  // `tsc` sur un clone propre de `origin/main` a vu les 2 erreurs reelles
+  // (TS2724, TS2305).
+  //
+  // Un build qui typecheck est le seul garde-fou qui voit ce que le
+  // deployeur voit vraiment. Le neutraliser « pour aller plus vite » retire
+  // exactement la barriere qui aurait bloque un commit casse.
   typescript: {
-    ignoreBuildErrors: process.env.NODE_ENV !== "production",
-    },
-        async headers() {
+    ignoreBuildErrors: false,
+  },
+
+  async headers() {
         return [
       {
         source: "/(.*)",

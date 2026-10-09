@@ -226,14 +226,26 @@ try {
   if ($rc -eq 124) { throw "DEPLOY-FAIL: scp a depasse ${SshCmdTimeoutSec}s (tue) - reseau ou Cle scp bloque ?" }
   if ($rc -ne 0) { throw "DEPLOY-FAIL: scp (exit $rc)" }
 
-  $sshCleanArgs = @($SSH_OPTS) + @($VPS_HOST, "tr -d '\r' < $REMOTE_RAW > $REMOTE_SH; chmod +x $REMOTE_SH")
+  # Commande distante passee en BASE64 puis decodee sur place (constat
+  # 2026-10-09). Le runner construisait la commande en UN argument contenant
+  # des newlines ; PowerShell PassThru les aplatit, `bash -c` recoit
+  # `done ls -d ...` sur une seule ligne et pend 120 s (2 DEPLOY-FAIL
+  # consecutifs, `ssh launch` puis `ssh clean`).
+  # Base64 = un seul token sans espace ni metacaractere : rien a re-quoter.
+  $b64Clean = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("tr -d '\r' < $REMOTE_RAW > $REMOTE_SH; chmod +x $REMOTE_SH"))
+  $sshCleanArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Clean | base64 -d | bash")
   $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $sshCleanArgs -What "ssh clean"
   if ($rc -eq 124) { throw "DEPLOY-FAIL: ssh clean a depasse ${SshCmdTimeoutSec}s (tue)" }
   if ($rc -ne 0) { throw "DEPLOY-FAIL: ssh clean (exit $rc)" }
 
   # --- 3. Launch async on VPS (nohup; survives SSH disconnect) ---
   Log "[4/6] Launch remote deploy (nohup)..."
-  $sshLaunchArgs = @($SSH_OPTS) + @($VPS_HOST, "rm -f $REMOTE_LOG; { nohup bash $REMOTE_SH > $REMOTE_LOG 2>&1 < /dev/null & }; echo LAUNCHED")
+  # `setsid` detache le process du PTY de ssh. Sans lui, un `nohup` herite des
+  # descripteurs du canal ssh et la session cliente ne rend jamais la main
+  # (timeout 120 s). `setsid nohup ... < /dev/null` : verified le 2026-10-09,
+  # le deploy passe de 2 echecs a un lancement immediat.
+  $b64Launch = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("rm -f $REMOTE_LOG; setsid nohup bash $REMOTE_SH > $REMOTE_LOG 2>&1 < /dev/null & echo LAUNCHED"))
+  $sshLaunchArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Launch | base64 -d | bash")
   $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $sshLaunchArgs -What "ssh launch"
   if ($rc -eq 124) { throw "DEPLOY-FAIL: ssh launch a depasse ${SshCmdTimeoutSec}s (tue)" }
   if ($rc -ne 0) { throw "DEPLOY-FAIL: ssh launch (exit $rc)" }
@@ -248,7 +260,8 @@ try {
     # Timeout court (30 s) sur les polls : ce sont des commandes courtes, un
     # depot > 30 s signale un tunnel reseau casse, pas un deploy lent.
     $outFile = "$env:TEMP\deploy-poll.txt"
-    $pollArgs = @($SSH_OPTS) + @($VPS_HOST, "grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3")
+    $b64Poll = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3"))
+    $pollArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Poll | base64 -d | bash")
     $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $pollArgs -What "ssh poll" -TimeoutSec 30
     if ($rc -eq 124) { Log "  ssh poll a depasse 30s - retry"; continue }
     if ($rc -eq 255) { Log "  ssh transient error - retry"; continue }
@@ -267,7 +280,8 @@ try {
     # On loggue aussi la derniere ligne du log distant : sans ca, un agent qui
     # poll le fichier local ne voit RIEN de ce qui se passe cote VPS.
     $tailFile = "$env:TEMP\deploy-tail.txt"
-    $tailArgs = @($SSH_OPTS) + @($VPS_HOST, "tail -n 1 $REMOTE_LOG 2>/dev/null | tr -d '\r'")
+    $b64Tail = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("tail -n 1 $REMOTE_LOG 2>/dev/null"))
+    $tailArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Tail | base64 -d | bash")
     $rcTail = Invoke-Remote -Exe "ssh" -RemoteArgs $tailArgs -What "ssh tail" -TimeoutSec 30
     $tail = if ($rcTail -eq 0 -and (Test-Path $tailFile)) { Get-Content $tailFile -Raw -ErrorAction SilentlyContinue } else { "" }
     $tail = ($tail | Select-Object -Last 1)
@@ -278,7 +292,8 @@ try {
   # --- 5. Report ---
   Log "[6/6] Result: $status"
   $sumFile = "$env:TEMP\deploy-summary.txt"
-  $sumArgs = @($SSH_OPTS) + @($VPS_HOST, "tail -n 15 $REMOTE_LOG")
+  $b64Sum = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("tail -n 15 $REMOTE_LOG"))
+  $sumArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Sum | base64 -d | bash")
   $rcSum = Invoke-Remote -Exe "ssh" -RemoteArgs $sumArgs -What "ssh summary" -TimeoutSec 30
   $summary = if ($rcSum -eq 0 -and (Test-Path $sumFile)) { Get-Content $sumFile -ErrorAction SilentlyContinue } else { @() }
   foreach ($l in @($summary)) { if ($l.Trim() -ne "") { Log "  | $($l.Trim())" } }
