@@ -48,10 +48,18 @@ const BASE = 'https://api.oddspapi.io/v4';
 const SPORT_HANDBALL = 22; // sportId handball OddsPapi (blog officiel handball-odds-api)
 const WINDOW_DAYS = 7; // doc fixtures : from/to < 10 jours avec sportId
 const MAX_TOURNAMENTS = 12; // plafond de ligues batchées par req odds
+// Plafond impose par l'API sur `tournamentIds` (« a maximum of 5 tournament
+// IDs ») : mesure VPS du 2026-10-09, la demande en 12 echouait en 400.
+const MAX_IDS_PER_REQUEST = 5;
+// 12 tournois => 3 lots, + 1 req fixtures = 4 : exactement le budget local.
 const MAX_BILLABLE_ATTEMPTS = 4; // garde-fou budget local (voir calcul ci-dessus)
 const SKIP_FRESH_MS = 20 * 3_600_000; // skip-cache <20h (pattern oddalerts)
 const HTTP_TIMEOUT_MS = 30000;
 const BOOKMAKERS = 'pinnacle,bwin,unibet,bet365,1xbet,betmgm,draftkings';
+// Le param `bookmaker` (singulier) de /odds-by-tournaments attend EXACTEMENT un
+// bookmaker — l'API répond sinon « Please provide exactly one bookmaker ». C'est
+// le premier de la liste, donc celui que `buildWinner` préfère déjà.
+const PRIMARY_BOOK = BOOKMAKERS.split(',')[0];
 // Marchés handball (catalogue officiel, blog oddspapi) :
 //   223 = 1X2 temps régulier (outcomes 223/224/225) — soft books
 //   221 = vainqueur 2 voies avec P.R. (outcomes 221/222) — Pinnacle
@@ -103,15 +111,32 @@ async function billable(url) {
     throw new Error(`budget local atteint (${MAX_BILLABLE_ATTEMPTS} tentatives billables)`);
   }
   billableUsed += 1;
-  const res = await fetch(url, {
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`HTTP ${res.status} ${body.slice(0, 140)}`);
+
+  // Un 429 est TRANSITAIRE (quota par fenêtre), pas une erreur de requête : le
+  // cron du 04:40 UTC tombait dessus et sortait en code 1, donc
+  // `data/odds_handball_papi.json` n'était jamais écrit — c'est la raison pour
+  // laquelle P1 et P3 n'ont jamais rien reçu en prod, alors que tout le
+  // câblage existe. On patiente et on réessaie ; ces reprises ne consomment
+  // pas de quota (requête refusée), donc elles ne mangent pas le budget.
+  const BACKOFF_MS = [5_000, 20_000, 45_000];
+  for (let attempt = 0; attempt <= BACKOFF_MS.length; attempt++) {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+    });
+    if (res.status === 429 && attempt < BACKOFF_MS.length) {
+      const wait = BACKOFF_MS[attempt];
+      console.warn(`[odds-papi] 429 rate-limit — nouvelle tentative dans ${wait / 1000}s`);
+      await new Promise((r) => setTimeout(r, wait));
+      continue;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} ${body.slice(0, 140)}`);
+    }
+    return res.json();
   }
-  return res.json();
+  throw new Error('HTTP 429 persistants après backoff');
 }
 
 /** GET /v4/account — endpoint unmetered (0 req) : quota réel si disponible. */
@@ -175,7 +200,12 @@ function extract1x2(rawMarkets) {
     if (!m?.outcomes) return null;
     const acc = {};
     for (const [oid, o] of Object.entries(m.outcomes)) {
-      const sel = selectionOf(o) || keyMap[Number(oid)] || null;
+      // `keyMap` est null sur le balayage de repli d'extract1x2 (aucune table
+      // d'outcome connue) : sans garde, `null[Number(oid)]` lève un TypeError
+      // dès qu'un marché ≠ 223 est présent. Constaté en prod le 2026-10-09
+      // (« Cannot read properties of null (reading '22132') ») : le chemin
+      // n'avait jamais été exercé, car le script échouait avant sur les 400.
+      const sel = selectionOf(o) || keyMap?.[Number(oid)] || null;
       if (!sel) continue;
       const price = readPrice(o);
       if (price != null) acc[sel] = price;
@@ -446,21 +476,37 @@ async function main() {
     return;
   }
 
-  // ── Req 2 (billable) : odds pour TOUTES les ligues en une requête (batch) ──
-  const ids = [...selectedIds].join(',');
-  let oddsUrl = `${BASE}/odds-by-tournaments?apiKey=${encodeURIComponent(key)}` +
-    `&tournamentIds=${ids}&bookmakers=${encodeURIComponent(BOOKMAKERS)}&oddsFormat=decimal`;
-  let oddsRows;
-  try {
-    oddsRows = await billable(oddsUrl);
-  } catch (err) {
-    // Hedge : la doc v4 montre aussi le param singulier `bookmaker` — 1 retry.
-    console.warn(`[odds-papi] odds-by-tournaments KO (${err.message}) → retry param singulier`);
-    oddsUrl = `${BASE}/odds-by-tournaments?apiKey=${encodeURIComponent(key)}` +
-      `&tournamentIds=${ids}&bookmaker=${encodeURIComponent(BOOKMAKERS)}&oddsFormat=decimal`;
-    oddsRows = await billable(oddsUrl);
+  // ── Req 2 (billable) : odds, par lots de MAX_IDS_PER_REQUEST tournois ──
+  //
+  // Deux plafondsenus par l'API, decouverts a l'execution (mesures VPS du
+  // 2026-10-09) et NON documentes dans le script d'origine :
+  //   - `bookmakers` (pluriel) : « Please provide exactly one bookmaker »
+  //     -> il faut le parametre singulier ET une seule valeur ;
+  //   - `tournamentIds`        : « Please provide a maximum of 5 tournament IDs »
+  //     -> les 12 tournois priorises ne tiennent pas dans une seule requete.
+  // Les deux etaient traites comme des erreurs fatales : rien n'etait ecrit,
+  // donc P1 (1X2) et P3 (totaux) n'ont jamais recu de cote en prod.
+  const allIds = [...selectedIds];
+  const oddsRows = [];
+  for (let i = 0; i < allIds.length; i += MAX_IDS_PER_REQUEST) {
+    const chunk = allIds.slice(i, i + MAX_IDS_PER_REQUEST);
+    const ids = chunk.join(',');
+    console.log(`[odds-papi] lot ${Math.floor(i / MAX_IDS_PER_REQUEST) + 1}/${Math.ceil(allIds.length / MAX_IDS_PER_REQUEST)} : ${chunk.length} tournois`);
+    let rows;
+    try {
+      rows = await billable(
+        `${BASE}/odds-by-tournaments?apiKey=${encodeURIComponent(key)}` +
+        `&tournamentIds=${ids}&bookmaker=${encodeURIComponent(PRIMARY_BOOK)}&oddsFormat=decimal`,
+      );
+    } catch (err) {
+      // Un lot en echec ne doit pas jeter les autres : on le signale et on
+      // continue. Les cotes reellement recuperees restent ecrites, et rien
+      // n'est invente pour le reste.
+      console.warn(`[odds-papi] lot en echec (${err.message.slice(0, 120)}) → passe`);
+      continue;
+    }
+    if (Array.isArray(rows)) oddsRows.push(...rows);
   }
-  if (!Array.isArray(oddsRows)) oddsRows = [];
 
   // ── Assemblage fixture ↔ odds (jointure par fixtureId) ──
   const oddsByFx = new Map();
@@ -547,6 +593,9 @@ async function writeSnapshot(outPath, events, requestsUsed) {
 if (require.main === module) {
   main().catch((err) => {
     console.error('[odds-papi] FATAL:', err.message);
+    // La stack manquait : un « Cannot read properties of null » ne disait rien
+    // de la ligne fautive, et le cron est quotidien — on veut la position.
+    if (err?.stack) console.error(err.stack);
     process.exit(1);
   });
 }
