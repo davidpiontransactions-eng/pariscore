@@ -43,6 +43,7 @@ import {
   type GameScoreDistribution,
   type GameScoreOutcome,
 } from "@/lib/prediction/live-markov";
+import { ValueEdge } from "@/components/tennis/value-edge";
 import { cn } from "@/lib/utils";
 
 /**
@@ -354,43 +355,49 @@ function PipBetPanelImpl({
   ]);
 
   // === BET ② — Vainqueur du set : MÉLANGE BAYÉSIEN entre Markov et cotes marché. ===
-  // weightMarkov = clamp((gamesA + gamesB) / 12, 0, 1) : le Markov (réactif au
-  // break) domine à mesure que le set avance, les cotes (force globale)
-  // dominent au début où le Markov est peu informatif.
+  // === BET ② — Vainqueur du set : MODÈLE et MARCHÉ SÉPARÉS, plus de blend. ===
+  //
+  // Avant : `blend = markov·w + marché·(1-w)` avec `w = (gamesA+gamesB)/12`.
+  // Cette moyenne détruit l'information utile : si le modèle dit 73 % et le
+  // marché 61 %, l'utilisateur veut voir l'écart de +12, pas la moyenne 67.
+  // Et `w` était une rampe linéaire inventée, sans fondement probabiliste.
+  //
+  // On affiche donc les DEUX probabilités et leur différence (edge). C'est la
+  // seule quantité quidit si le modèle apporte une information ou répète le
+  // marché. `edgeA` = P_modèle(A) - P_marché(A) : positif ⇒ le modèle est plus
+  // optimiste pour A que le bookmaker ⇒ VALUE à tester.
   const bet2 = useMemo(() => {
-    if (!liveState) return { probA: 50, probB: 50 };
-    if (!setAndGames) return { probA: bet1.probA, probB: bet1.probB };
-
-    const gamesA = liveState.scoreA.games;
-    const gamesB = liveState.scoreB.games;
-    const weightMarkov = Math.min(1, Math.max(0, (gamesA + gamesB) / 12));
+    if (!liveState || !setAndGames) {
+      return { probA: 50, probB: 50, modelA: 50, marketA: 50, edgeA: 0 };
+    }
 
     const marketA = liveState.liveProbA;
-    const marketB = liveState.liveProbB;
-    const markovA = setAndGames.setWinA;
-    const markovB = 1 - setAndGames.setWinA;
+    const modelA = setAndGames.setWinA;
+    // P(B) = 1 - P(A) des deux côtés : les flux ne fournissent qu'une
+    // probabilité par joueur mais elle doit sommer à 1.
+    const modelAPct = Math.round(modelA * 100);
+    const marketAPct = Math.round(marketA * 100);
 
-    let blendedA = markovA * weightMarkov + marketA * (1 - weightMarkov);
-    let blendedB = markovB * weightMarkov + marketB * (1 - weightMarkov);
-    const total = blendedA + blendedB;
-    if (total > 0) {
-      blendedA = Math.round((blendedA / total) * 100);
-      blendedB = 100 - blendedA;
-    }
-    return { probA: blendedA, probB: blendedB };
-  }, [liveState, setAndGames, bet1]);
+    return {
+      probA: modelAPct,          // Affiche le MODÈLE (la source de vérité PariScore)
+      probB: 100 - modelAPct,
+      modelA: modelAPct,
+      marketA: marketAPct,
+      edgeA: modelAPct - marketAPct,
+    };
+  }, [liveState, setAndGames]);
 
-  // === BET ① RÉACTIF : Vainqueur du MATCH. ===
+  // === BET ① RÉACTIF : Vainqueur du MATCH — modèle et marché SÉPARÉS. ===
   //
-  // `liveProbA/liveProbB` de BSD sont des cotes de marché : elles bougent, mais
-  // ne KNOWLEDGE pas qu'un set est déjà gagné. `matchWinProb` (l'export
-  // historique) repart TOUJOURS de dp(0,0) et ferait donc abstraction d'un
-  // A mène 1-0 — d'où `matchWinProbFromSets`, qui part de l'état réel.
-  //
-  // Même mélange bayésien que ② : le modèle Markov domine quand on sait
-  // combien de sets séparent du titre, les cotes dominent au coup d'envoi.
+  // `liveProbA` de BSD est une probabilité implicite de marché : elle bouge
+  // mais ne sait pas qu'un set est gagné. `matchWinProbFromSets` part de
+  // l'état réel (sets gagnés, set en cours, forme) — d'où deux chiffres, pas
+  // un mélange. Voir `bet2` pour la justification du retrait du blending.
   const bet1Reactive = useMemo(() => {
-    if (!liveState || !setAndGames) return bet1;
+    if (!liveState || !setAndGames) {
+      const a = Math.round(bet1.probA);
+      return { probA: a, probB: 100 - a, modelA: a, marketA: a, edgeA: 0 };
+    }
     const gamesA = liveState.scoreA.games;
     const gamesB = liveState.scoreB.games;
     // Le set en cours est-il fini ? Un set se conclut à 6 jeux (ou 7-6/7-5).
@@ -416,32 +423,32 @@ function PipBetPanelImpl({
     const setsB = liveState.scoreB.sets.filter(
       (g, i) => g > (liveState.scoreA.sets[i] ?? 0)
     ).length;
-    const decidedSets = setsA + setsB;
-
     const winner = setsA >= 2 ? "A" : setsB >= 2 ? "B" : null;
     // 100 % uniquement si le set qui rapporte le 2e set est RÉELLEMENT fini.
     if (winner && currentSetFinished) {
-      return winner === "A" ? { probA: 100, probB: 0 } : { probA: 0, probB: 100 };
+      const r = winner === "A"
+        ? { probA: 100, probB: 0 }
+        : { probA: 0, probB: 100 };
+      return { ...r, modelA: r.probA, marketA: Math.round(bet1.probA), edgeA: 0 };
     }
 
+    // `matchWinProbFromSets` part de l'état réel (sets gagnés + forme du set en
+    // cours) : c'est ce qui manque aux cotes du bookmaker.
     const modelA = matchWinProbFromSets(setAndGames.setWinA, setsA, setsB, true);
-    // Poids du modèle = part du match déjà jouée + le set en cours.
-    const weightModel = Math.min(1, Math.max(0, (decidedSets + 1) / 3));
-    let blendedA = modelA * weightModel + bet1.probA * (1 - weightModel);
-    let blendedB = (1 - modelA) * weightModel + bet1.probB * (1 - weightModel);
-    const total = blendedA + blendedB;
-    if (total > 0) {
-      blendedA = Math.round((blendedA / total) * 100);
-      blendedB = 100 - blendedA;
-    }
-    // Garde-fou d'affichage : ① ne doit JAMAIS être plus catégorique que ②.
-    // Un match à 100 % pendant que le set décisif est à 67 % est un bug
-    // d'affichage, pas un modèle : on rabat ① sur ② dans ce cas.
-    const setA = Math.round(setAndGames.setWinA * 100);
-    const setB = 100 - setA;
-    if (blendedA > setA) return { probA: setA, probB: setB };
-    if (blendedB > setB) return { probA: setA, probB: setB };
-    return { probA: blendedA, probB: blendedB };
+
+    // Le MODÈLE seul. Plus de `weightModel` arbitraire, plus de renormalisation
+    // qui écrasait la précision, plus de renvoi sur ② : avec deux probabilités
+    // séparées, ① ne peut plus contredire ② — l'incohérence 100 %/67 % du
+    // bug Khachanov/Fery n'a plus de chemin de code.
+    const modelAPct = Math.round(modelA * 100);
+    const marketAPct = Math.round(bet1.probA);
+    return {
+      probA: modelAPct,
+      probB: 100 - modelAPct,
+      modelA: modelAPct,
+      marketA: marketAPct,
+      edgeA: modelAPct - marketAPct,
+    };
   }, [liveState, setAndGames, bet1]);
 
   // Force de service par joueur — calculée ICI (niveau composant), pas dans le
@@ -543,6 +550,12 @@ function PipBetPanelImpl({
             <div className="mt-1">
               <PlayerRow name={nameB} pct={bet1Reactive.probB} tone="b" />
             </div>
+            {liveState && (
+              <ValueEdge
+                modelA={bet1Reactive.modelA}
+                marketA={bet1Reactive.marketA}
+              />
+            )}
           </div>
         )}
 
@@ -551,7 +564,7 @@ function PipBetPanelImpl({
             <MarketHead
               n="②"
               label={`Vainqueur du set (Set ${currentSetNumber})`}
-              hint="Mélange pondéré : Markov (réactif au score live) + cotes marché. Le poids du Markov augmente avec l'avancement du set."
+              hint="Modèle Markov (réactif au score live) face au marché. L'écart affiché est la seule information qui indique si le modèle apporte quelque chose."
               valueProb={liveState ? Math.max(bet2.probA, bet2.probB) : 0}
               showValue={!!liveState}
             />
@@ -561,6 +574,7 @@ function PipBetPanelImpl({
                 <div className="mt-1">
                   <PlayerRow name={nameB} pct={bet2.probB} tone="b" emphasis />
                 </div>
+                <ValueEdge modelA={bet2.modelA} marketA={bet2.marketA} />
               </>
             ) : (
               <WaitingLine />
