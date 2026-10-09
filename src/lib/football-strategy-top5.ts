@@ -6,6 +6,7 @@ import { matchXg } from "@/lib/football-xg";
 import { betminesCornerMarket } from "@/lib/betmines";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
 import { dixonColesMarkets } from "@/lib/prediction/football/dixon-coles";
+import { isInKickoffWindow, type KickoffWindow } from "@/lib/football-time";
 
 /**
  * Top 5 MATCHS à venir par stratégie de pari. Un match est scoré en croisant la
@@ -117,7 +118,17 @@ export type StrategyTop5 = {
 };
 
 const FORM_WINDOW = 5;
+/** Matchs minimum dans le contexte EXACT (domicile pour l'hôte, extérieur pour le visiteur). */
 const MIN_PLAYED = 2;
+/**
+ * Matchs minimum pour le repli « forme globale » (tous contextes). BSD n'expose
+ * qu'un échantillon de l'historique : beaucoup d'équipes n'ont 1 seul match
+ * fini sur 21 jours (PSV, Dortmund…) → à 2, la forme L5 est nulle pour la
+ * majorité des fixtures du jour et tout bascule sur le repli « cotes ».
+ * ponytail : le repli any-context accepte 1 match ; pondérer la valeur par
+ * l'échantillon ( shrinkage vers la moyenne) si le classement PPG devient bruité.
+ */
+const MIN_PLAYED_ANY = 1;
 
 const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   bestTeam: true,
@@ -261,7 +272,7 @@ function sideForm(rec: TeamFormRec | undefined, side: SideKey): TeamFormAgg | nu
   if (!rec) return null;
   const exact = rec[side];
   if (exact.length >= MIN_PLAYED) return aggForm(recentForm(exact));
-  if (rec.all.length >= MIN_PLAYED) return aggForm(recentForm(rec.all));
+  if (rec.all.length >= MIN_PLAYED_ANY) return aggForm(recentForm(rec.all));
   return null;
 }
 
@@ -281,8 +292,8 @@ function rawFormFor(store: FormStore, match: BSDFootballMatch): { home: TeamForm
   const homeAll = homeRec.all;
   const awayExact = awayRec.home;
   const awayAll = awayRec.away;
-  const homeRaw = homeExact.length >= MIN_PLAYED ? recentForm(homeExact) : homeAll.length >= MIN_PLAYED ? recentForm(homeAll) : null;
-  const awayRaw = awayExact.length >= MIN_PLAYED ? recentForm(awayExact) : awayAll.length >= MIN_PLAYED ? recentForm(awayAll) : null;
+  const homeRaw = homeExact.length >= MIN_PLAYED ? recentForm(homeExact) : homeAll.length >= MIN_PLAYED_ANY ? recentForm(homeAll) : null;
+  const awayRaw = awayExact.length >= MIN_PLAYED ? recentForm(awayExact) : awayAll.length >= MIN_PLAYED_ANY ? recentForm(awayAll) : null;
   if (!homeRaw || !awayRaw) return null;
   return { home: homeRaw, away: awayRaw };
 }
@@ -506,6 +517,12 @@ export interface ComputeTop5Options {
   limit?: number;
   /** Si fourni, ne classe que les matchs du championnat (nom de ligue BSD). */
   league?: string;
+  /**
+   * Fenêtre de coup d'envoi. Appliquée AVANT le slice top-N : sans elle, le
+   * classement global sur ~1 semaine retourne 10 matchs hors fenêtre et le
+   * filtre client (Jour / 48 h) tombe à zéro (bug « aucun match qualifié »).
+   */
+  window?: KickoffWindow;
 }
 
 export function computeStrategyTop5Matches(
@@ -524,6 +541,9 @@ export function computeStrategyTop5Matches(
     if (fixture.status !== "notstarted") continue;
     // Top 10 par championnat (widget central) : filtrer avant le scoring.
     if (opts.league && fixture.league?.name !== opts.league) continue;
+    // Fenêtre temporelle : filtrer AVANT le scoring/slice, sinon le top N
+    // est classé sur toute la semaine et le filtre client vide la liste.
+    if (opts.window && !isInKickoffWindow(fixture.event_date, opts.window)) continue;
     const form = formFor(store, fixture);
     const leagueSlug = BSD_ID_TO_SLUG[fixture.league?.id ?? -1];
     const soccerForm = leagueSlug ? matchForm(leagueSlug, fixture) : null;
@@ -610,6 +630,12 @@ export function computeStrategyTop5Matches(
         const { value, pick } = scoreMatch(key, form);
         scores[key].push({ fixture, form, value, pick });
       } else {
+        // bestTeam est LA stratégie de forme (« Meilleure équipe (forme) ») : sa
+        // valeur est un PPG (0-3), pas une probabilité. Le repli cotes y injecte
+        // une probabilité 0-100 dans le même classement → toujours en tête,
+        // plus fort que n'importe quel PPG. La variante 100 % cotes existe
+        // déjà : bestTeam1x2.
+        if (key === "bestTeam") continue;
         // Pas de forme L5 exploitable : repli sur les cotes embarquées du fixture.
         const scored = scoreMatchByOdds(key, fixture);
         if (!scored) continue;
@@ -729,5 +755,5 @@ export function computeStrategyTop5Matches(
     .slice(0, 3)
     .map((s) => mapEntry(s, true));
 
-  return { window: FORM_WINDOW, minPlayed: MIN_PLAYED, strategies, drawModal: modal };
+  return { window: FORM_WINDOW, minPlayed: MIN_PLAYED_ANY, strategies, drawModal: modal };
 }

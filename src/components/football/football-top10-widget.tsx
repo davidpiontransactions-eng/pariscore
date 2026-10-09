@@ -175,7 +175,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     }
   }, [league, active, timeWin, winKey]);
 
-  const { data, matchesFor, isLoading, error } = useFootballTopN(TOP_N, league);
+  const { data, matchesFor, isLoading, error } = useFootballTopN(TOP_N, league, timeWin);
   const selectedItems = useTop5SelectionStore((s) => s.items);
   const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
@@ -391,14 +391,20 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           Top 10 indisponible ({(error as Error).message})
         </div>
       ) : rows.length === 0 && forced.length === 0 && drawModalRows.length === 0 ? (
-        <p className="px-1 py-3 text-xs" style={{ color: C.time }}>
-          Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
-        </p>
+        <div className="px-1 py-3 text-xs" style={{ color: C.time }}>
+          <p>
+            Aucun match qualifié pour cette stratégie sur «{" "}
+            {TIME_WINDOWS.find((w) => w.key === timeWin)?.label ?? timeWin}
+            »{league ? ` en ${league}` : ""}.
+          </p>
+          <p className="mt-1 opacity-80">Élargissez la période ou changez de championnat.</p>
+        </div>
       ) : (
         <div className="space-y-3">
           <TopStrategiesTable
             rows={toTableRows(rows, def, active)}
             strategy={active}
+            windowLabel={TIME_WINDOWS.find((w) => w.key === timeWin)?.label}
           />
           {/* I5 : repli « Nul probable » grisé quand gagnant est vide */}
           {drawModalRows.length > 0 && (

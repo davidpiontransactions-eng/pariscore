@@ -38,6 +38,8 @@ type Props = {
   strategy: StrategyTop5Key;
   /** Ligne à surligner (match ciblé depuis une pill calendrier). */
   highlightId?: string | null;
+  /** Libellé de la fenêtre temporelle active (« Jour », « 48h », « Sem. »…). */
+  windowLabel?: string;
 };
 
 /* Teintes FotMob clair — identiques au calendrier (fotmob-calendar-table.tsx) */
@@ -73,14 +75,18 @@ function kickoffLabel(iso: string): string {
   return `${d} · ${h}`;
 }
 
-export function TopStrategiesTable({ rows, strategy, highlightId }: Props) {
+export function TopStrategiesTable({ rows, strategy, highlightId, windowLabel }: Props) {
   if (rows.length === 0) {
+    const span = windowLabel ? ` sur « ${windowLabel} »` : "";
     return (
       <div
         className="rounded-2xl p-6 text-center text-sm"
         style={{ background: C.card, border: `1px solid ${C.cardBorder}`, color: C.time }}
       >
-        Aucun match ne satisfait cette stratégie aujourd&apos;hui.
+        <p>Aucun match ne satisfait cette stratégie{span}.</p>
+        <p className="mt-1 text-xs opacity-80">
+          Élargissez la période (Sem.) ou changez de championnat.
+        </p>
       </div>
     );
   }

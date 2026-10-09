@@ -235,14 +235,14 @@ export function MatchRow({
 }
 
 export function FootballStrategyTop5Widget() {
-  const { matchesFor, isLoading, error, isReady, window: win } = useFootballTop5();
   const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
   const [winKey, setWinKey] = useState<WindowKey>("l5");
+  const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
+  const { matchesFor, isLoading, error, isReady, window: win } = useFootballTop5(timeWin);
   const selectedItems = useTop5SelectionStore((s) => s.items);
   const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
-  const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
   const rawRows = matchesFor(active);
   // Filtre temporel : matchs à venir dans la fenêtre choisie.
   const rows = rawRows.filter((e) => isInKickoffWindow(e.kickoff, timeWin));
