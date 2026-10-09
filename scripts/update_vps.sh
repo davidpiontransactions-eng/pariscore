@@ -158,14 +158,46 @@ if [ "$NEED_BUILD" = "1" ]; then
   # traîner : sans cela, un redéploiement sans DATABASE_PATH le ressusciterait et
   # l'API relirait des chiffres périmés en répondant 200.
   rm -f .next/standalone/pariscore.db
-  bun run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
+
+  # ── BACKUP DU BUILD ACTIF (incident VPS down 2026-10-08) ────────────────────
+  # `next build` PURGE .next avant de recompiler. Un build raté laissait donc
+  # la prod sans bundle et le `pm2 restart` suivant servait un 502 : downtime de
+  # 15 min. Le backup permet de restaurer instantly l'état précédent, et le
+  # rollback est déclenché par le healthcheck (cf. section 6).
+  BACKUP_DIR="$DEPLOY_DIR/.next.bak"
+  rm -rf "$BACKUP_DIR"
+  if [ -d "$DEPLOY_DIR/.next" ]; then
+    echo "  backup du build actif -> .next.bak ($(du -sh "$DEPLOY_DIR/.next" 2>/dev/null | cut -f1))"
+    cp -a "$DEPLOY_DIR/.next" "$BACKUP_DIR" || { echo "ERR: backup .next impossible"; rm -rf "$BACKUP_DIR"; }
+  else
+    echo "  pas de .next actif — pas de backup (premier deploy)"
+  fi
+
+  if ! bun run build 2>&1; then
+    echo "ERR: Next.js build failed — deploy aborted, PM2 untouched"
+    # Le build a purgé .next : on restaure l'état servi précédent, sinon la prod
+    # reste sans bundle jusqu'au prochain déploiement réussi.
+    if [ -d "$BACKUP_DIR" ]; then
+      echo "  restauration du build précédent depuis .next.bak..."
+      rm -rf "$DEPLOY_DIR/.next"
+      cp -a "$BACKUP_DIR" "$DEPLOY_DIR/.next" && echo "  rollback .next OK"
+    fi
+    exit 1
+  fi
   # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
   # Si server.js est absent, pm2 crash en boucle (502) ; on STOPE le deploy
   # plutot que de conclure VPS_DEPLOY_OK / health OK en trompe-l'oeil.
   if [ ! -f .next/standalone/server.js ]; then
     echo "ERR: .next/standalone/server.js absent apres next build - deploy aborted"
+    if [ -d "$BACKUP_DIR" ]; then
+      rm -rf "$DEPLOY_DIR/.next"
+      cp -a "$BACKUP_DIR" "$DEPLOY_DIR/.next" && echo "  rollback .next OK"
+    fi
     exit 1
   fi
+  # Le build est vert : on CONSERVE le backup jusqu'au healthcheck (section 6),
+  # qui peut encore le restaurer si le runtime refuse le bundle. On ne libère
+  # l'espace qu'après le "health: OK".
   BUILD_RAN=1
   echo "  build done ($(date -u +%H:%M:%S))"
   # Sync .env → standalone (.env vars lues au runtime par Next.js standalone ;
@@ -367,12 +399,35 @@ for i in $(seq 1 $MAX_CHECKS); do
   echo "  health: waiting ($i/$MAX_CHECKS)..."; sleep 2
 done
 if [ "$HEALTH_OK" != "1" ]; then
-  echo "ERR: health check échec après $MAX_CHECKS tentatives — deploy en échec"
+  echo "ERR: health check échec après $MAX_CHECKS tentatives — ROLLBACK"
   pm2 ls 2>/dev/null | tail -8 || true
   pm2 logs "$PM2_NEXT" --lines 20 --nostream 2>/dev/null || true
+  # ── ROLLBACK (demande 2026-10-09) ───────────────────────────────────────────
+  # Un healthcheck KO après `pm2 reload` signifie que le nouveau bundle est
+  # incompatible du runtime (ou pire). Sans restauration, la prod reste en 502
+  # jusqu'au prochain deploy. On remet le build précédent et on recharge.
+  if [ "$BUILD_RAN" = "1" ] && [ -d "$DEPLOY_DIR/.next.bak" ]; then
+    echo "  rollback : restauration du build précédent..."
+    rm -rf "$DEPLOY_DIR/.next"
+    cp -a "$DEPLOY_DIR/.next.bak" "$DEPLOY_DIR/.next" || echo "  warn: restauration .next.bak échouée"
+    rm -rf "$DEPLOY_DIR/.next.bak"
+    pm2 startOrRestart "$OPT_DIR/ecosystem.config.js" --only "$PM2_NEXT" --update-env 2>&1 | tail -3 || true
+    for i in 1 2 3 4 5 6; do
+      if curl -s -m 5 http://localhost:3000/api/v1/status 2>/dev/null | grep -q '"status":"ok"'; then
+        echo "  rollback: health OK — prod revenue à l'état précédent"
+        break
+      fi
+      sleep 2
+    done
+  else
+    echo "  pas de backup .next.bak — rollback impossible"
+  fi
   exit 1
 fi
 [ "$HEALTH_OK" = "1" ] || echo "  warn: health check échec — vérifier pm2 logs"
+
+# Health OK : le backup n'a plus servi, on libère l'espace (~900 Mo).
+rm -rf "$DEPLOY_DIR/.next.bak"
 
 echo ""
 echo "--- VPS_DEPLOY_OK ---"

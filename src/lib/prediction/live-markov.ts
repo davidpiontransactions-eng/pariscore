@@ -785,6 +785,28 @@ export function gameWinProbFromScore(
 }
 
 /**
+ * Bornage anti-binaire des probabilités de micro-marchés (mission 2026-10-09).
+ *
+ * Tant que le jeu n'est PAS officiellement terminé côté fournisseur de données,
+ * une probabilité de 0 % ou de 100 % est un défaut d'affichage, pas une
+ * prédiction : le joueur peut toujours gagner le point suivant, et un marché
+ * « FERY hold 0 % » est injouable (aucune valeur, aucun pari possible).
+ *
+ * On borne donc l'affichage dans [3 %, 97 %] — les bornes du moteur
+ * (`gameWinProb`) restent inchangées, ce sont les SEULES valeurs qui passent en
+ * probabilité de marché. Un jeu réellement terminé (ptsA≥4 && écart≥2) n'est
+ * jamais borné : il est archivé, pas prédit.
+ */
+const MICRO_BET_MIN = 0.03;
+const MICRO_BET_MAX = 0.97;
+
+/** Borne une probabilité de micro-marché pour l'affichage et le pari. */
+export function clampMicroBetProb(p: number): number {
+  if (!Number.isFinite(p)) return 0.5;
+  return Math.min(MICRO_BET_MAX, Math.max(MICRO_BET_MIN, p));
+}
+
+/**
  * Mélange la force de service prematch avec la force observée ce match,
  * pondérée par récence : w = gamesPlayed / (gamesPlayed + demiVie).
  *

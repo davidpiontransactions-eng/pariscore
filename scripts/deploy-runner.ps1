@@ -117,6 +117,45 @@ if (Test-Path $LOCK_FILE) {
 }
 Set-Content -Path $LOCK_FILE -Value "$PID" -Encoding ASCII
 
+# ── Timeout par commande (incident #223) ────────────────────────────────────
+# Les appels `scp` / `ssh` directs (lignes 170-178 de l'ancienne version)
+# pendaient INDEFINIMENT quand le processus enfant n'etait pas draine : le
+# deploy figeait a l'etape [3/6] scp, sans message, et le verrou restait pose
+# (le run suivant le declarait "OBSOLETE"). `Start-Process -Wait` sans
+# `WaitForExit(timeout)` reproduit exactement ce defaut.
+#
+# On encapsule donc chaque commande distante dans un job avec delai max :
+# au-dela, le job est tue, la commande orpheline est tuee, et le runner
+# ECHOUE proprement (verrou libere par le finally) au lieu de figer.
+$SshCmdTimeoutSec = 120
+
+function Invoke-Remote {
+  param(
+    [Parameter(Mandatory = $true)][string]$Exe,
+    [Parameter(Mandatory = $true)][string[]]$RemoteArgs,
+    [Parameter(Mandatory = $true)][string]$What,
+    [int]$TimeoutSec = $SshCmdTimeoutSec
+  )
+  $argList = @()
+  foreach ($a in $RemoteArgs) { $argList += "`"$a`"" }
+  $p = Start-Process -FilePath $Exe -ArgumentList $argList -NoNewWindow -PassThru `
+        -RedirectStandardOutput "$env:TEMP\deploy-out.txt" -RedirectStandardError "$env:TEMP\deploy-err.txt"
+  if ($p.WaitForExit($TimeoutSec * 1000)) {
+    return $p.ExitCode
+  }
+  # ── TIMEOUT : tue l'arbre de processus, sinon l'enfant survit ──
+  Log "  [timeout] $What n'a pas repondu en ${TimeoutSec}s - kill"
+  try {
+    # -Force sur toute la descendance : scp/ssh lancent des enfants (ssh-agent,
+    # askpass) qui heritent des handles et:maintenir la session ouverte.
+    & taskkill /PID $p.Id /T /F 2>&1 | Out-Null
+  } catch {
+    try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+  }
+  Start-Sleep -Seconds 1
+  return 124   # code conventionnel « timeout » (comme `timeout(1)`)
+}
+
 Log "======================================================"
 Log "deploy-runner.ps1 - PID $PID"
 Log "script=$Script quick=$Quick nocommit=$NoCommit timeout=${TimeoutSec}s"
@@ -166,16 +205,28 @@ try {
   }
 
   # --- 2. Stream script to VPS (scp, then clean CRLF + chmod via SSH) ---
+  # Les 3 commandes passent par Invoke-Remote : timeout strict + kill de
+  # l'arbre de processus. C'est le correctif de l'incident #223 (deploy fige
+  # a cette etape, sans message, verrou laisse pose).
   Log "[3/6] scp $Script -> $REMOTE_RAW ..."
-  scp @SSH_OPTS -q $Script "${VPS_HOST}:${REMOTE_RAW}"
-  if ($LASTEXITCODE -ne 0) { throw "DEPLOY-FAIL: scp" }
-  ssh @SSH_OPTS $VPS_HOST "tr -d '\r' < $REMOTE_RAW > $REMOTE_SH; chmod +x $REMOTE_SH"
-  if ($LASTEXITCODE -ne 0) { throw "DEPLOY-FAIL: ssh clean" }
+  # `@SSH_OPTS` n'est pas valide dans une expression (splatting reserve aux
+  # arguments de commande) : on construit le tableau explicitement.
+  $scpArgs = @($SSH_OPTS) + @("-q", $Script, "${VPS_HOST}:${REMOTE_RAW}")
+  $rc = Invoke-Remote -Exe "scp" -RemoteArgs $scpArgs -What "scp"
+  if ($rc -eq 124) { throw "DEPLOY-FAIL: scp a depasse ${SshCmdTimeoutSec}s (tue) - reseau ou Cle scp bloque ?" }
+  if ($rc -ne 0) { throw "DEPLOY-FAIL: scp (exit $rc)" }
+
+  $sshCleanArgs = @($SSH_OPTS) + @($VPS_HOST, "tr -d '\r' < $REMOTE_RAW > $REMOTE_SH; chmod +x $REMOTE_SH")
+  $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $sshCleanArgs -What "ssh clean"
+  if ($rc -eq 124) { throw "DEPLOY-FAIL: ssh clean a depasse ${SshCmdTimeoutSec}s (tue)" }
+  if ($rc -ne 0) { throw "DEPLOY-FAIL: ssh clean (exit $rc)" }
 
   # --- 3. Launch async on VPS (nohup; survives SSH disconnect) ---
   Log "[4/6] Launch remote deploy (nohup)..."
-  ssh @SSH_OPTS $VPS_HOST "rm -f $REMOTE_LOG; { nohup bash $REMOTE_SH > $REMOTE_LOG 2>&1 < /dev/null & }; echo LAUNCHED"
-  if ($LASTEXITCODE -ne 0) { throw "DEPLOY-FAIL: ssh launch" }
+  $sshLaunchArgs = @($SSH_OPTS) + @($VPS_HOST, "rm -f $REMOTE_LOG; { nohup bash $REMOTE_SH > $REMOTE_LOG 2>&1 < /dev/null & }; echo LAUNCHED")
+  $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $sshLaunchArgs -What "ssh launch"
+  if ($rc -eq 124) { throw "DEPLOY-FAIL: ssh launch a depasse ${SshCmdTimeoutSec}s (tue)" }
+  if ($rc -ne 0) { throw "DEPLOY-FAIL: ssh launch (exit $rc)" }
 
   # --- 4. Poll every 10s until VPS_DEPLOY_OK or ERR: ---
   Log "[5/6] Polling $REMOTE_LOG (timeout ${TimeoutSec}s)..."
@@ -184,8 +235,14 @@ try {
   $status = "timeout"
   while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 10
-    $out = ssh @SSH_OPTS $VPS_HOST "grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3"
-    if ($LASTEXITCODE -eq 255) { Log "  ssh transient error - retry"; continue }
+    # Timeout court (30 s) sur les polls : ce sont des commandes courtes, un
+    # depot > 30 s signale un tunnel reseau casse, pas un deploy lent.
+    $outFile = "$env:TEMP\deploy-poll.txt"
+    $pollArgs = @($SSH_OPTS) + @($VPS_HOST, "grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3")
+    $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $pollArgs -What "ssh poll" -TimeoutSec 30
+    if ($rc -eq 124) { Log "  ssh poll a depasse 30s - retry"; continue }
+    if ($rc -eq 255) { Log "  ssh transient error - retry"; continue }
+    $out = if (Test-Path $outFile) { Get-Content $outFile -Raw -ErrorAction SilentlyContinue } else { "" }
     if ($out) {
       $lines = @($out -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" })
       $okCount = 0; $errs = @()
@@ -199,7 +256,10 @@ try {
     $elapsed = [int]((Get-Date) - $started).TotalSeconds
     # On loggue aussi la derniere ligne du log distant : sans ca, un agent qui
     # poll le fichier local ne voit RIEN de ce qui se passe cote VPS.
-    $tail = ssh @SSH_OPTS $VPS_HOST "tail -n 1 $REMOTE_LOG 2>/dev/null | tr -d '\r'"
+    $tailFile = "$env:TEMP\deploy-tail.txt"
+    $tailArgs = @($SSH_OPTS) + @($VPS_HOST, "tail -n 1 $REMOTE_LOG 2>/dev/null | tr -d '\r'")
+    $rcTail = Invoke-Remote -Exe "ssh" -RemoteArgs $tailArgs -What "ssh tail" -TimeoutSec 30
+    $tail = if ($rcTail -eq 0 -and (Test-Path $tailFile)) { Get-Content $tailFile -Raw -ErrorAction SilentlyContinue } else { "" }
     $tail = ($tail | Select-Object -Last 1)
     if ($tail) { $tail = $tail.Substring(0, [Math]::Min(110, $tail.Length)) }
     Log "  ...running (${elapsed}s) ${tail}"
@@ -207,7 +267,10 @@ try {
 
   # --- 5. Report ---
   Log "[6/6] Result: $status"
-  $summary = ssh @SSH_OPTS $VPS_HOST "tail -n 15 $REMOTE_LOG"
+  $sumFile = "$env:TEMP\deploy-summary.txt"
+  $sumArgs = @($SSH_OPTS) + @($VPS_HOST, "tail -n 15 $REMOTE_LOG")
+  $rcSum = Invoke-Remote -Exe "ssh" -RemoteArgs $sumArgs -What "ssh summary" -TimeoutSec 30
+  $summary = if ($rcSum -eq 0 -and (Test-Path $sumFile)) { Get-Content $sumFile -ErrorAction SilentlyContinue } else { @() }
   foreach ($l in @($summary)) { if ($l.Trim() -ne "") { Log "  | $($l.Trim())" } }
   if ($status -eq "ok") {
     Log ""

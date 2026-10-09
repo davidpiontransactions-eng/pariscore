@@ -34,12 +34,34 @@ import {
 import { predictSet } from "@/lib/prediction/set-prediction";
 import {
   breakProb,
+  clampMicroBetProb,
   gameScoreDistribution,
   gameWinProbFromScore,
   tieBreakProbability,
+  type GameScoreDistribution,
   type GameScoreOutcome,
 } from "@/lib/prediction/live-markov";
 import { cn } from "@/lib/utils";
+
+/**
+ * Borne chaque issue de la distribution de score PUIS renormalise pour que la
+ * somme reste exactement 1. Sans ça, le bornage anti-binaire (mission
+ * 2026-10-09) ferait sommer à 0.97+0.97+0.03 et l'UI afficherait 197 %.
+ */
+function normalizeGameScore(d: GameScoreDistribution): GameScoreDistribution {
+  const bounded = {
+    "hold-0": clampMicroBetProb(d["hold-0"]),
+    "hold-30": clampMicroBetProb(d["hold-30"]),
+    break: clampMicroBetProb(d.break),
+  };
+  const sum = bounded["hold-0"] + bounded["hold-30"] + bounded.break;
+  if (sum <= 0) return bounded;
+  return {
+    "hold-0": bounded["hold-0"] / sum,
+    "hold-30": bounded["hold-30"] / sum,
+    break: bounded.break / sum,
+  };
+}
 
 type Props = {
   match: TennisMatch;
@@ -97,11 +119,21 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
 }
 
 /**
- * P(gagner le point au service) pour chaque joueur, mélange prematch/observé.
- * Alimente ⑤ ⑥ ⑦ ⑧ — sans lui, ces 4 marchés restent « en attente ».
+ * Force de service par joueur, bornée dans une plage réaliste.
  *
- * HookCalled : doit être appelé au niveau du composant, PAS dans un useMemo.
+ * ⚠️ `ServeStats.servePtsWonPct` est une FRACTION (0.62 = 62 %), pas un
+ * pourcentage — voir `computePServe` (`clamp(f, 0.5, 0.78)` dans total-games.ts).
+ * Une division par 100 donnait 0.0062, borné à 0.05 : la chaîne de Markov
+ * produisait alors ~0 % et l'UI affichait « KHACHANOV 0 % / FERY 100 % »
+ * alors que le serveur était en pleine forme. Aucun `/100` ici.
+ *
+ * Bornes [5 %, 92 %] : sous 5 % un « service » est un défaut de données, au-delà
+ * de 92 % le joueur dominerait le circuit — dans les deux cas la proba de
+ * break affichée n'a plus de sens et le marché ⑤ perd toute valeur.
  */
+const P_SERVE_MIN = 0.05;
+const P_SERVE_MAX = 0.92;
+
 function useServePoints(
   serveStatsA: ServeStats | null | undefined,
   serveStatsB: ServeStats | null | undefined,
@@ -115,9 +147,12 @@ function useServePoints(
     const prematchA = serveStatsA?.servePtsWonPct;
     const prematchB = serveStatsB?.servePtsWonPct;
     // Sans stat prematch, l'observé seul suffit (dégradé, pas de blocage).
-    const pA = prematchA != null ? prematchA / 100 : obsA;
-    const pB = prematchB != null ? prematchB / 100 : obsB;
-    return [Math.min(0.95, Math.max(0.05, pA)), Math.min(0.95, Math.max(0.05, pB))];
+    const pA = prematchA != null ? prematchA : obsA;
+    const pB = prematchB != null ? prematchB : obsB;
+    return [
+      Math.min(P_SERVE_MAX, Math.max(P_SERVE_MIN, pA)),
+      Math.min(P_SERVE_MAX, Math.max(P_SERVE_MIN, pB)),
+    ];
   }, [serveStatsA, serveStatsB, liveStats]);
 }
 
@@ -329,6 +364,8 @@ function PipBetPanelImpl({
   const servePoints = useServePoints(serveStatsA, serveStatsB, liveStats);
 
   // === BETS ⑤ ⑥ ⑦ ⑧ — micro-marchés de jeu (chaîne de Markov point-level) ===
+  // Les 4 marchés lisent la MÊME instance (`micro`) calculée ici : une seule
+  // chaîne de probabilité, donc aucune divergence entre ⑤ ⑥ ⑦ ⑧.
   const micro = useMemo(() => {
     if (!liveState || !servePoints) return null;
 
@@ -338,15 +375,18 @@ function PipBetPanelImpl({
     const ptsB = liveState.scoreB.points;
 
     // ⑤ P(A gagne le JEU en cours) — Markov point-level sensible au score exact.
-    const pGameA = gameWinProbFromScore(ptsA, ptsB, server, pServeA, pServeB);
+    // Borné : tant que le jeu n'est pas archivé, jamais 0 % ni 100 % (mission
+    // 2026-10-09 — l'UI affichait « KHACHANOV 100 % / FERY 0 % »).
+    const pGameA = clampMicroBetProb(gameWinProbFromScore(ptsA, ptsB, server, pServeA, pServeB));
     // ⑥ P(break au prochain jeu) — le joueur AU SERVICE peut être brisé.
-    const pBreakNext = breakProb(server === "A" ? pServeA : pServeB);
+    const pBreakNext = clampMicroBetProb(breakProb(server === "A" ? pServeA : pServeB));
     // ⑦ distribution du score du prochain jeu de service du joueur en service.
-    const gameScore = gameScoreDistribution(server, pServeA, pServeB);
+    // On borne chaque issue PUIS on renormalise : la somme doit rester 1.
+    const gameScore = normalizeGameScore(gameScoreDistribution(server, pServeA, pServeB));
     // ⑧ P(6-6) → tie-break, depuis les holds du set en cours.
     const pHoldA = setAndGames?.totalGames.pHoldA ?? pServeA ** 4;
     const pHoldB = setAndGames?.totalGames.pHoldB ?? pServeB ** 4;
-    const pTieBreak = tieBreakProbability(pHoldA, pHoldB);
+    const pTieBreak = clampMicroBetProb(tieBreakProbability(pHoldA, pHoldB));
 
     return {
       pGameA,
