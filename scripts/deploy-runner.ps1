@@ -59,6 +59,9 @@ $SSH_OPTS = "-o","BatchMode=yes","-o","ConnectTimeout=20","-o","ServerAliveInter
 $REMOTE_RAW = "/tmp/pariscore-deploy-raw.sh"
 $REMOTE_SH  = "/tmp/pariscore-deploy.sh"
 $REMOTE_LOG = "/tmp/pariscore-deploy.log"
+# Depot git du VPS : sert aux controles d'etat reel (SHA + BUILD_ID).
+$REMOTE_REPO = "/home/ubuntu/pariscore"
+$HEALTH_URL  = "https://pariscore.fr/api/v1/status"
 $LOCK_FILE = "logs\.deploy-runner.lock"
 
 if ($Log -eq "") {
@@ -177,6 +180,47 @@ function Invoke-Remote {
   return 124   # code conventionnel « timeout » (comme `timeout(1)`)
 }
 
+# --- Verification d'etat REEL du VPS (2026-10-09) ---
+#
+# POURQUOI CE BLOC EXISTE : le poller historique cherchait `VPS_DEPLOY_OK`
+# dans $REMOTE_LOG. Ce fichier n'existe PAS sur le VPS apres un deploy
+# reussi : le runner a donc annonce `DEPLOY-FAIL: status=timeout` sur des
+# deploiements pourtant termines (HEAD = commit vise, BUILD_ID ecrit, pm2
+# online, /api/v1/status = ok). Deux consecutifs perdus : 12 min ici,
+# 25 min sur le run precedent. Le marqueur dans le log n'est plus la preuve ;
+# l'etat observe du serveur l'est.
+#
+# On interroge donc l'etat reel, et on continue de lire le log pour le fail-fast.
+
+# Sortie standard d'une commande ssh, nettoyee. $null si l'appel echoue.
+function Invoke-RemoteCapture([string]$Cmd, [string]$What, [int]$T = 30) {
+  try {
+    $rc = Invoke-Remote -Exe "ssh" -RemoteArgs (@($SSH_OPTS) + @($VPS_HOST, $Cmd)) -What $What -TimeoutSec $T
+  } catch { return $null }
+  if ($rc -ne 0) { return $null }
+  $f = "$env:TEMP\deploy-out.txt"
+  if (-not (Test-Path $f)) { return $null }
+  $raw = Get-Content $f -Raw -ErrorAction SilentlyContinue
+  if ($null -eq $raw) { return $null }
+  # NE PAS appeler cette variable `$t` : PowerShell est insensible a la casse,
+  # donc `$t = <string>` ecrase le parametre `[int]$T` et tente une conversion
+  # Int32 qui leve une erreur (constate au test : le retour devenait $null a
+  # chaque appel, donc la detection d'etat reel n'aurait jamais reussi).
+  $trimmed = $raw.Trim()
+  if ($trimmed -eq "") { return $null }
+  return $trimmed
+}
+
+# Sante publique : HTTP 200 ET corps {"status":"ok"}. Une seule des deux ne
+# suffit pas - une page d'erreur nginx renvoie du HTML en 200 sur un 502 amont.
+function Test-ProdHealth {
+  try {
+    $r = Invoke-WebRequest -Uri $HEALTH_URL -UseBasicParsing -TimeoutSec 20
+    if ($r.StatusCode -ne 200) { return $false }
+    return ($r.Content -match '"status"\s*:\s*"ok"')
+  } catch { return $false }
+}
+
 Log "======================================================"
 Log "deploy-runner.ps1 - PID $PID"
 Log "script=$Script quick=$Quick nocommit=$NoCommit timeout=${TimeoutSec}s"
@@ -208,7 +252,20 @@ try {
     if ([int]$behind -gt 0) { throw "DEPLOY-FAIL: local HEAD is $behind commit(s) behind origin/main" }
   }
   $HEAD = git rev-parse --short HEAD
-  Log "  HEAD = $HEAD"
+  # SHA complet : la comparaison avec le depot distant se fait sur le SHA
+  # entier, le court suffit pour l'affichage mais pas pour un `StartsWith`
+  # fiable quand le distant est clone avec une profondeur differente.
+  $HEAD_FULL = (git rev-parse HEAD).Trim()
+  Log "  HEAD = $HEAD ($($HEAD_FULL.Substring(0,7)))"
+
+  # Empreinte du build AVANT deploiement. `git pull` met le depot a jour
+  # AVANT que `next build` n'ecrive quoi que ce soit : HEAD + sante sont donc
+  # deja vrais pendant tout le build. Sans ce controle, le runner declarerait
+  # succes ~10 s apres le lancement, en plein build (faux POSITIF, plus grave
+  # que le faux negatif qu'on corrige). BUILD_ID change a chaque build
+  # reussi : sa variation prouve qu'un build neuf a ete installe.
+  $BUILD_BEFORE = Invoke-RemoteCapture "cat $REMOTE_REPO/.next/BUILD_ID" "ssh build-id (avant)"
+  if ($BUILD_BEFORE) { Log "  build courant = $BUILD_BEFORE" } else { Log "  build courant = (absent)" }
 
   # --- 1. Quality gates (skippable) ---
   if (-not $Quick) {
@@ -262,7 +319,7 @@ try {
   if ($rc -ne 0) { throw "DEPLOY-FAIL: ssh launch (exit $rc)" }
 
   # --- 4. Poll every 10s until VPS_DEPLOY_OK or ERR: ---
-  Log "[5/6] Polling $REMOTE_LOG (timeout ${TimeoutSec}s)..."
+  Log "[5/6] Polling (timeout ${TimeoutSec}s) : log distant + etat reel du VPS"
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   $started = Get-Date
   $status = "timeout"
@@ -270,6 +327,7 @@ try {
     Start-Sleep -Seconds 10
     # Timeout court (30 s) sur les polls : ce sont des commandes courtes, un
     # depot > 30 s signale un tunnel reseau casse, pas un deploy lent.
+    # --- Voie 1 : le log distant (fail-fast + marqueur de succes) ---
     $outFile = "$env:TEMP\deploy-poll.txt"
     $b64Poll = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3"))
     $pollArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Poll | base64 -d | bash")
@@ -285,19 +343,30 @@ try {
         elseif ($l -like "ERR:*") { $errs += $l }
       }
       if ($errs.Count -gt 0) { $status = "fail"; Log "  ERR: $($errs -join ' | ')"; break }
-      if ($okCount -gt 0) { $status = "ok"; break }
+      if ($okCount -gt 0) { $status = "ok"; Log "  marqueur VPS_DEPLOY_OK trouve dans le log"; break }
     }
+
+    # --- Voie 2 : ETAT REEL, seul juge de la reussite (voir les helpers) ---
+    # Les trois conditions sont necessaires ET suffisantes :
+    #   sha  : le depot VPS est sur le commit vise
+    #   build: un build NEUF est installe (BUILD_ID change) - sans quoi on
+    #          validerait le build precedent, encore servi
+    #   sante: la prod repond 200 {"status":"ok"}
+    $remoteSha = Invoke-RemoteCapture "git -C $REMOTE_REPO rev-parse HEAD" "ssh sha"
+    $shaOk = ($remoteSha -and $remoteSha.StartsWith($HEAD_FULL.Substring(0, 7)))
+    $buildNow = Invoke-RemoteCapture "cat $REMOTE_REPO/.next/BUILD_ID" "ssh build-id"
+    $buildFresh = ($buildNow -and ($buildNow -ne $BUILD_BEFORE))
+    $healthOk = Test-ProdHealth
+
+    if ($shaOk -and $buildFresh -and $healthOk) {
+      $status = "ok"
+      Log "  etat reel OK : sha=$($remoteSha.Substring(0,7)) build=$buildNow sante=ok"
+      break
+    }
+
     $elapsed = [int]((Get-Date) - $started).TotalSeconds
-    # On loggue aussi la derniere ligne du log distant : sans ca, un agent qui
-    # poll le fichier local ne voit RIEN de ce qui se passe cote VPS.
-    $tailFile = "$env:TEMP\deploy-tail.txt"
-    $b64Tail = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("tail -n 1 $REMOTE_LOG 2>/dev/null"))
-    $tailArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Tail | base64 -d | bash")
-    $rcTail = Invoke-Remote -Exe "ssh" -RemoteArgs $tailArgs -What "ssh tail" -TimeoutSec 30
-    $tail = if ($rcTail -eq 0 -and (Test-Path $tailFile)) { Get-Content $tailFile -Raw -ErrorAction SilentlyContinue } else { "" }
-    $tail = ($tail | Select-Object -Last 1)
-    if ($tail) { $tail = $tail.Substring(0, [Math]::Min(110, $tail.Length)) }
-    Log "  ...running (${elapsed}s) ${tail}"
+    $flags = "sha=$([bool]$shaOk) build=$([bool]$buildFresh) sante=$([bool]$healthOk)"
+    Log "  ...running (${elapsed}s) $flags"
   }
 
   # --- 5. Report ---
@@ -311,6 +380,7 @@ try {
   if ($status -eq "ok") {
     Log ""
     Log "DEPLOY-OK: $HEAD deployed to VPS"
+    Log "DEPLOY_SUCCESS: Production online on commit $HEAD_FULL"
     $code = 0
   } else {
     Log ""
