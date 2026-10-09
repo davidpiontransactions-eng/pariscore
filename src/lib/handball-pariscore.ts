@@ -108,6 +108,31 @@ export type PariscorePrediction = {
   winrate: PariscoreWinrate;
   /** Total moyen attendu (λh + λe), 1 décimale. */
   expectedTotal: number;
+  /**
+   * λh/λe en MOYENNES de buts (pas les taux CMP) — les seules valeurs que
+   * Skellam accepte (cf. `computePariscorePrediction`).
+   *
+   * Exposés pour que la sélection de value bet (handball-value-bet.ts) réutilise
+   * EXACTEMENT les λ de l'Index et du score affiché. Sans eux, le sélecteur
+   * serait forcé de re-typer ses propres λ depuis `resolveLambdas` (non exporté)
+   * ou de reconstruire un form-store : deux chemins de calcul pour un même
+   * nombre, qui divergeraient au premier changement de modèle.
+   */
+  meanHome: number;
+  meanAway: number;
+  /**
+   * Taux CMP (λ) et exposants ν, par côté — les entrées BRUTES du modèle.
+   *
+   * Distincts de `meanHome`/`meanAway` : Skellam exige les moyennes, la
+   * distribution de total exige les taux + ν (CMP est sous-dispersé, ν ≈ 1.3,
+   * alors qu'un Poisson suppose ν = 1). Exposer les deux empêche le sélecteur
+   * de value bet de reconstruire un Poisson pour ses totaux et de diverger du
+   * seuil affiché par `pickTotalThreshold` — qui, lui, lit les vrais taux.
+   */
+  lambdaHome: number;
+  lambdaAway: number;
+  nuHome: number;
+  nuAway: number;
   /** Seuil Over/Under optimal, null si aucun seuil ne passe le seuil de proba. */
   total: PariscoreTotalPick | null;
   /** true si l'historique des 2 équipes est suffisant (≥ CMP_MIN_HISTORY). */
@@ -529,6 +554,15 @@ const pct = (v: number) => round1(v * 100);
     scoreAway: Math.round(meanE),
     winrate,
     expectedTotal: round1(meanH + meanE),
+    // λ en pleine précision : arrondir ici ferait diverger `expectedTotal`
+    // (calculé sur les λ non arrondis) de `meanHome + meanAway` — le total
+    // affiché ne serait plus reproductible depuis les λ exposés.
+    meanHome: meanH,
+    meanAway: meanE,
+    lambdaHome: lambdaH,
+    lambdaAway: lambdaE,
+    nuHome: nuH,
+    nuAway: nuE,
     total,
     hasForm,
     hasSignal,

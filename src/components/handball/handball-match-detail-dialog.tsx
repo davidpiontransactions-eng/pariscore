@@ -1716,6 +1716,7 @@ perte d'information. */}
             odds={match.odds}
             homeName={match.home.name}
             awayName={match.away.name}
+            match={match}
           />
         )}
 

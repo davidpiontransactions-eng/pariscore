@@ -5,6 +5,11 @@ import {
   PARISCORE_MIN_ODDS,
   PARISCORE_MIN_PROB_PCT,
 } from "@/lib/handball-pariscore";
+import type { HandballMatch } from "@/lib/handball-data";
+import {
+  VALUEBET_MIN_ODDS,
+  selectHandballValueBet,
+} from "@/lib/handball-value-bet";
 
 // ─── Winrate 1N2 ───
 
@@ -177,6 +182,83 @@ function TotalCard({ prediction }: { prediction: PariscorePrediction }) {
   );
 }
 
+// ─── Value Bet (mission §2) ───
+
+/**
+ * Carte « Value Bet » : le pari que la cascade 3 niveaux RETIENT pour cette
+ * rencontre (cote ≥ 1.20), ou le motif du refus.
+ *
+ * Les 2 autres cartes ci-dessus répondent « que se passe-t-il ? ». Celle-ci
+ * répond « sur quoi jouer ? » — la seule question qui vaille un arbitrage, et
+ * elle doit être Tranchée publiquement : quand rien n'est publiable, on affiche
+ * la cascade qui a échoué, pas une carte vide.
+ */
+function ValueBetCard({
+  match,
+  prediction,
+}: {
+  match: HandballMatch;
+  prediction: PariscorePrediction;
+}) {
+  const result = selectHandballValueBet(match, prediction);
+  const sel = result.selected;
+
+  return (
+    <section className="space-y-2 rounded-xl border border-[#f0f0f0] bg-white p-3 dark:border-white/10 dark:bg-white/[0.04]">
+      <header className="flex items-center justify-between gap-2">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[#717171]">
+          Value Bet
+        </h4>
+        {sel && (
+          <span className="rounded-full bg-[#00e676]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#00c853] ring-1 ring-[#00e676]/40">
+            Niveau {result.selectedPriority}
+          </span>
+        )}
+      </header>
+
+      {sel ? (
+        <>
+          <p className="font-mono text-2xl font-black leading-none tabular-nums text-[#222222] dark:text-white">
+            {sel.label}
+          </p>
+          <dl className="grid grid-cols-3 gap-1 text-center text-[11px]">
+            <div>
+              <dt className="text-[#717171]">Proba</dt>
+              <dd className="font-bold tabular-nums">{sel.prob.toFixed(1)}%</dd>
+            </div>
+            <div>
+              <dt className="text-[#717171]">Cote</dt>
+              <dd className="font-bold tabular-nums">{sel.odds?.toFixed(2)}</dd>
+            </div>
+            <div>
+              <dt className="text-[#717171]">EV</dt>
+              <dd className="font-bold tabular-nums">
+                {sel.ev != null ? `${(sel.ev * 100).toFixed(1)}%` : "—"}
+              </dd>
+            </div>
+          </dl>
+        </>
+      ) : (
+        <>
+          <p className="text-[11px] leading-snug text-[#717171]">
+            Aucun Value Bet détecté (Cote &lt; {VALUEBET_MIN_ODDS})
+          </p>
+          {/* Motif par niveau : sans ça l'utilisateur ne sait pas s'il lui
+              manque des cotes ou si le modèle ne voit rien. */}
+          <ul className="space-y-0.5 text-[10px] leading-snug text-[#717171]">
+            {result.candidates.map((c) => (
+              <li key={c.market} className="truncate">
+                <span className="font-semibold uppercase">{c.market}</span> —{" "}
+                {c.rejectReason}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
 /**
  * Cartes Prédiction IA — Winrate 1N2 + Total de buts.
  *
@@ -195,11 +277,14 @@ export function HandballPredictionCards({
   odds,
   homeName,
   awayName,
+  match,
 }: {
   prediction: PariscorePrediction;
   odds?: { home?: number; draw?: number; away?: number };
   homeName: string;
   awayName: string;
+  /** Match source — requis pour la carte Value Bet (cotes 1X2 du snapshot). */
+  match?: HandballMatch;
 }) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -211,6 +296,10 @@ export function HandballPredictionCards({
         hasSignal={prediction.hasSignal}
       />
       <TotalCard prediction={prediction} />
+      {/* Le Value Bet occupe la 3ᵉ case : la grille `sm:grid-cols-2` laisse une
+          ligne orpheline, ce qui est correct — la carte est plus large que les
+          deux autres en contenu (3 colonnes de chiffres + motif de refus). */}
+      {match && <ValueBetCard match={match} prediction={prediction} />}
     </div>
   );
 }
