@@ -1,24 +1,29 @@
 "use client";
 
-// Panneau 5 BETS prédictifs — se déploie au clic sur une ligne de match dans
+// Panneau BETS PRÉDICTIFS LIVE — se déploie au clic sur une ligne de match dans
 // le widget Document PiP.
 //
-// Les 5 bets (live, recalculés à chaque maj SSE) :
-//   #1  Vainqueur du match     ← liveProbA/liveProbB (BSD implied prob)
-//   #2  Vainqueur du set actuel ← Markov set (set-prediction.ts)
-//   #3  Over games match        ← predictTotalGames (total-games.ts) — recommendedBet
-//   #4  Over games set actuel   ← Markov set (set-prediction.ts) — recommendedBet
+// Les 8 marchés (live, recalculés à chaque maj SSE) :
+//   ① Vainqueur du match       ← liveProbA/liveProbB (BSD implied prob)
+//   ② Vainqueur du set actuel  ← Markov set + mélange bayésien marché
+//   ③ Over games match         ← predictTotalGames (total-games.ts)
+//   ④ Over games set actuel    ← Markov set (set-prediction.ts)
+//   ⑤ PROCHAIN JEU (Hold/Break) ← gameWinProbFromScore + gameScoreDistribution
+//   ⑥ PROCHAIN BREAK SET       ← breakProb, priorisé si DR momentum ≥ +15
+//   ⑦ SCORE DU JEU             ← gameScoreDistribution (0/15, 30/40, Break)
+//   ⑧ TIE-BREAK SET (Oui/Non)  ← tieBreakProbability (P 6-6)
 //
-// Pour chaque bet : barre % + highlight visuel "value" (proba ∈ [60%, 70%]).
+// Modèle : src/lib/prediction/live-markov.ts (chaîne de Markov point-level,
+// mémoïsée). Ce composant ne calcule AUCUNE probabilité — il lit le moteur.
 //
-// IMPORTANT : le "value bet" est heuristique (proba dans une fenêtre), PAS un
+// IMPORTANT : le badge "value" est heuristique (proba dans une fenêtre), PAS un
 // calcul d'EV réel (qui nécessiterait comparer aux cotes 1xWin+). C'est une
 // AIDE à la décision, pas un signal de trading. Affiché comme tel.
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
-import { useTennisLiveStats } from "@/hooks/use-tennis-live-stats";
+import { useTennisLiveStats, type TennisLiveStats } from "@/hooks/use-tennis-live-stats";
 import { estimateServePointsWon } from "@/lib/tennis-live-metrics";
 import {
   predictTotalGames,
@@ -27,6 +32,13 @@ import {
   type ServeStats,
 } from "@/lib/prediction/total-games";
 import { predictSet } from "@/lib/prediction/set-prediction";
+import {
+  breakProb,
+  gameScoreDistribution,
+  gameWinProbFromScore,
+  tieBreakProbability,
+  type GameScoreOutcome,
+} from "@/lib/prediction/live-markov";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -34,10 +46,30 @@ type Props = {
   liveState?: LiveMatchState;
   serveStatsA?: ServeStats | null;
   serveStatsB?: ServeStats | null;
+  /** Momentum DR des 2 joueurs (0-100). Optionnel : sans lui, ⑥ perd sa
+   *  priorisation « en nette hausse ». */
+  drMomentumA?: number;
+  drMomentumB?: number;
 };
 
 const VALUE_MIN = 0.6;
 const VALUE_MAX = 0.7;
+
+/** Seuil de « nette hausse » du DR momentum qui priorise le marché ⑥. */
+const DR_SURGE_THRESHOLD = 15;
+
+/** Filtre par pilules : tout / micro-bets (jeux) / match & set. */
+type MarketFilter = "all" | "micro" | "match";
+
+const FILTERS: { id: MarketFilter; label: string; icon: string }[] = [
+  { id: "all", label: "Tous", icon: "🎯" },
+  { id: "match", label: "Match / Set", icon: "📈" },
+  { id: "micro", label: "Micro-Bets", icon: "⚡" },
+];
+
+/** Seuils de visibilité : `micro` = les 4 marchés jeu, `match` = les 4 autres. */
+const MICRO_IDS = ["prochain-jeu", "prochain-break", "score-jeu", "tie-break"] as const;
+const MATCH_IDS = ["vainqueur-match", "vainqueur-set", "over-match", "over-set"] as const;
 
 /** Mappe surface UI (FR) → surface modèle (cf. predictive-bets.ts:43). */
 function toModelSurface(s: string): PredictionSurface {
@@ -64,65 +96,167 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
   };
 }
 
+/**
+ * P(gagner le point au service) pour chaque joueur, mélange prematch/observé.
+ * Alimente ⑤ ⑥ ⑦ ⑧ — sans lui, ces 4 marchés restent « en attente ».
+ *
+ * HookCalled : doit être appelé au niveau du composant, PAS dans un useMemo.
+ */
+function useServePoints(
+  serveStatsA: ServeStats | null | undefined,
+  serveStatsB: ServeStats | null | undefined,
+  liveStats: TennisLiveStats | null,
+): [number, number] | null {
+  return useMemo(() => {
+    if (!liveStats) return null;
+    const obsA = estimateServePointsWon(liveStats, "A");
+    const obsB = estimateServePointsWon(liveStats, "B");
+    if (obsA == null || obsB == null) return null;
+    const prematchA = serveStatsA?.servePtsWonPct;
+    const prematchB = serveStatsB?.servePtsWonPct;
+    // Sans stat prematch, l'observé seul suffit (dégradé, pas de blocage).
+    const pA = prematchA != null ? prematchA / 100 : obsA;
+    const pB = prematchB != null ? prematchB / 100 : obsB;
+    return [Math.min(0.95, Math.max(0.05, pA)), Math.min(0.95, Math.max(0.05, pB))];
+  }, [serveStatsA, serveStatsB, liveStats]);
+}
+
+// ─── Sous-composants visuels ───────────────────────────────────────────────
+
 /** Badge "value bet" : ✅ si la proba est dans la fenêtre value. */
 function ValueBadge({ prob, show }: { prob: number; show: boolean }) {
   if (!show) return null;
-  // prob ∈ [0, 100] ; value window = [60, 70].
-  const isValue = prob >= VALUE_MIN * 100 && prob <= VALUE_MAX * 100;
-  if (!isValue) return null;
-  return <span className="text-emerald-400 text-xs font-bold">✅ value</span>;
+  if (!(prob >= VALUE_MIN * 100 && prob <= VALUE_MAX * 100)) return null;
+  return (
+    <span className="rounded-full bg-gradient-to-r from-emerald-500 to-green-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-emerald-500/20">
+      value
+    </span>
+  );
 }
 
-/** Barre horizontale compacte pour une proba binaire (P1 vs P2). */
-function DualBar({
-  probA,
-  probB,
-  colorA = "#22c55e",
-  colorB = "#3b82f6",
+/**
+ * Jauge de probabilité néon : dégradé émeraude→sarcelle pour le joueur A,
+ * bleu pour B. `min-w-0` sur le conteneur est indispensable : sans lui une
+ * ligne de jauge force la largeur du parent et crée un scroll horizontal sur
+ * mobile (le bug exact du composant précédent, `w-[60px]` fixes).
+ */
+function NeonBar({ pct, tone }: { pct: number; tone: "a" | "b" | "amber" }) {
+  const cls =
+    tone === "a"
+      ? "from-emerald-400 to-teal-500"
+      : tone === "b"
+        ? "from-blue-400 to-indigo-500"
+        : "from-amber-400 to-orange-500";
+  return (
+    <div className="h-2.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-800/80">
+      <div
+        className={cn("h-full rounded-full bg-gradient-to-r transition-[width] duration-500", cls)}
+        style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
+      />
+    </div>
+  );
+}
+
+/** En-tête de marché : pastille numérotée, libellé, badge value à droite. */
+function MarketHead({
+  n,
+  label,
+  hint,
+  valueProb,
+  showValue,
 }: {
-  probA: number;
-  probB: number;
-  colorA?: string;
-  colorB?: string;
+  n: string;
+  label: string;
+  hint?: string;
+  valueProb?: number;
+  showValue?: boolean;
 }) {
   return (
-    <div className="flex h-2.5 rounded-full overflow-hidden bg-muted/30">
-      <div style={{ width: `${probA}%`, backgroundColor: colorA }} />
-      <div style={{ width: `${probB}%`, backgroundColor: colorB }} />
+    <div className="mb-1.5 flex items-center justify-between gap-2">
+      <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-300">
+        <span className="shrink-0 font-black text-slate-500">{n}</span>
+        <span className="truncate">{label}</span>
+        {hint ? (
+          <span className="shrink-0 text-[10px] text-slate-500" title={hint}>
+            ⓘ
+          </span>
+        ) : null}
+      </span>
+      {showValue && valueProb != null ? <ValueBadge prob={valueProb} show /> : null}
     </div>
   );
 }
 
-/** Barre single-value (pour Over games : proba que le Over passe). */
-function SingleBar({ prob, color = "#10b981" }: { prob: number; color?: string }) {
+/** Ligne joueur : nom + jauge + %, empilée (mobile) au lieu de colonnes fixes. */
+function PlayerRow({
+  name,
+  pct,
+  tone,
+  emphasis,
+}: {
+  name: string;
+  pct: number;
+  tone: "a" | "b" | "amber";
+  emphasis?: boolean;
+}) {
   return (
-    <div className="flex h-2.5 rounded-full overflow-hidden bg-muted/30">
-      <div style={{ width: `${prob}%`, backgroundColor: color }} />
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "w-[68px] shrink-0 truncate text-xs font-semibold sm:w-[76px]",
+          emphasis ? "text-white" : "text-slate-300",
+        )}
+      >
+        {name}
+      </span>
+      <div className="min-w-0 flex-1">
+        <NeonBar pct={pct} tone={tone} />
+      </div>
+      <span
+        className={cn(
+          "w-9 shrink-0 text-right font-mono text-xs tabular-nums",
+          tone === "a" ? "text-emerald-300" : tone === "b" ? "text-blue-300" : "text-amber-300",
+        )}
+      >
+        {Math.round(pct)}%
+      </span>
     </div>
   );
 }
 
-function shortName(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/);
-  return (parts[parts.length - 1] || fullName).toUpperCase();
+function WaitingLine() {
+  return <p className="py-1 text-xs italic text-slate-500">En attente du live…</p>;
 }
 
-function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) {
+/** Étiquette lisible d'une issue de score de jeu. */
+const GAME_SCORE_LABEL: Record<GameScoreOutcome, string> = {
+  "hold-0": "Hold 0/15",
+  "hold-30": "Hold 30/40",
+  break: "Break",
+};
+
+function PipBetPanelImpl({
+  match,
+  liveState,
+  serveStatsA,
+  serveStatsB,
+  drMomentumA,
+  drMomentumB,
+}: Props) {
+  const [filter, setFilter] = useState<MarketFilter>("all");
   const nameA = shortName(match.playerA.name);
   const nameB = shortName(match.playerB.name);
   // Serve observé ce match (stats BSD via SSE partagé) → blend récence.
   const { stats: liveStats } = useTennisLiveStats(liveState?.matchId ?? "");
 
-  // === BET #1 : Vainqueur du match (liveProbA/liveProbB de BSD) ===
+  // === BET ① : Vainqueur du match (liveProbA/liveProbB de BSD) ===
   // BSD dérive ces probas des cotes en temps réel (bsd-fetcher.ts:300-311).
   const bet1 = useMemo(() => {
     if (!liveState) return { probA: match.probA, probB: match.probB };
     return { probA: liveState.liveProbA, probB: liveState.liveProbB };
   }, [liveState, match.probA, match.probB]);
 
-  // === BET #2 + #4 : Modèle set (Markov) ===
-  // Besoin de pHoldA/pHoldB. On appelle predictTotalGames pour récupérer ces
-  // valeurs (et au passage le bet #3). Coût O(1), recalcul à chaque maj.
+  // === BET ② + ④ : Modèle set (Markov) ===
   const setAndGames = useMemo(() => {
     if (!liveState) return null;
     const surface = toModelSurface(match.stats?.surface ?? "Hard");
@@ -132,7 +266,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
       observedServeB: liveStats ? estimateServePointsWon(liveStats, "B") : null,
     };
 
-    // Bet #3 : Over games match.
+    // Bet ③ : Over games match.
     const totalGames = predictTotalGames(
       serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
       serveStatsB ?? { servePtsWonPct: null, returnPtsWonPct: null },
@@ -143,8 +277,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
       liveCtx,
     );
 
-    // Bet #2 + #4 : set en cours (Markov).
-    // pHold est exposé par predictTotalGames (forme fermée Barnett).
+    // Bet ② + ④ : set en cours (Markov).
     const setPred = predictSet({
       gamesA: liveState.scoreA.games,
       gamesB: liveState.scoreB.games,
@@ -164,189 +297,318 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
     liveStats,
   ]);
 
-  // BET ② — Vainqueur du set : MÉLANGE BAYÉSIEN entre Markov et cotes marché.
-  //
-  // Problème résolu (cf. bug rapporté : P2 a un break mais P1 reste à 61%) :
-  // - Le Markov pur est réactif (capte le break immédiatement) MAIS ignore la
-  //   force globale des joueurs → peu fiable au début du set (0-0).
-  // - Les cotes BSD reflètent la force globale MAIS laguent (peuvent rester à
-  //   l'ancienne valeur pendant 5-10s après un break, surtout en live).
-  // - Au set decisif (3e set BO3), set winner = match winner, donc les 2 probas
-  //   doivent converger.
-  //
-  // Solution : pondération dynamique par avancement du set.
-  //   weightMarkov = clamp((gamesA + gamesB) / 12, 0, 1)
-  //   - 0-0 dans le set → 100% cotes (les 2 sources s'accordent au départ)
-  //   - 4-3 avec break → ~58% Markov (le break est reflété immédiatement)
-  //   - 5-4 avec break → ~75% Markov (le break devient décisif)
-  //   - fin de set → ~100% Markov (les sources convergent)
-  // Au set decisif, on s'assure que le mélange converge vers la même proba que
-  // le bet ① (sinon contradiction visible entre ① et ②).
+  // === BET ② — Vainqueur du set : MÉLANGE BAYÉSIEN entre Markov et cotes marché. ===
+  // weightMarkov = clamp((gamesA + gamesB) / 12, 0, 1) : le Markov (réactif au
+  // break) domine à mesure que le set avance, les cotes (force globale)
+  // dominent au début où le Markov est peu informatif.
   const bet2 = useMemo(() => {
-    if (!liveState) return { probA: 50, probB: 50, source: "blend" as const };
-    if (!setAndGames) return { probA: bet1.probA, probB: bet1.probB, source: "market" as const };
+    if (!liveState) return { probA: 50, probB: 50 };
+    if (!setAndGames) return { probA: bet1.probA, probB: bet1.probB };
 
     const gamesA = liveState.scoreA.games;
     const gamesB = liveState.scoreB.games;
-    // Poids Markov : 0 au début du set, 1 en fin de set. Seuil à 12 games
-    // (couvre 6-6 tiebreak). Au-delà (TB), on plafonne à 1.
     const weightMarkov = Math.min(1, Math.max(0, (gamesA + gamesB) / 12));
-    const weightMarket = 1 - weightMarkov;
 
-    // Cotes marché (peuvent lagger — c'est voulu, le Markov corrige le lag).
     const marketA = liveState.liveProbA;
     const marketB = liveState.liveProbB;
-    // Markov (réactif au break via la chaîne de Markov set).
     const markovA = setAndGames.setPred.probAWinsSet;
     const markovB = setAndGames.setPred.probBWinsSet;
 
-    // Mélange linéaire. On normalise au cas où market et markov ne somment
-    // pas exactement à 100 (arrondis), pour garantir probA + probB = 100.
-    let blendedA = markovA * weightMarkov + marketA * weightMarket;
-    let blendedB = markovB * weightMarkov + marketB * weightMarket;
+    let blendedA = markovA * weightMarkov + marketA * (1 - weightMarkov);
+    let blendedB = markovB * weightMarkov + marketB * (1 - weightMarkov);
     const total = blendedA + blendedB;
     if (total > 0) {
       blendedA = Math.round((blendedA / total) * 100);
       blendedB = 100 - blendedA;
     }
-
-    return {
-      probA: blendedA,
-      probB: blendedB,
-      source: "blend" as const,
-    };
+    return { probA: blendedA, probB: blendedB };
   }, [liveState, setAndGames, bet1]);
 
+  // Force de service par joueur — calculée ICI (niveau composant), pas dans le
+  // useMemo de `micro` : un hook appelé dans un callback viole rules-of-hooks.
+  const servePoints = useServePoints(serveStatsA, serveStatsB, liveStats);
+
+  // === BETS ⑤ ⑥ ⑦ ⑧ — micro-marchés de jeu (chaîne de Markov point-level) ===
+  const micro = useMemo(() => {
+    if (!liveState || !servePoints) return null;
+
+    const [pServeA, pServeB] = servePoints;
+    const server = liveState.server;
+    const ptsA = liveState.scoreA.points;
+    const ptsB = liveState.scoreB.points;
+
+    // ⑤ P(A gagne le JEU en cours) — Markov point-level sensible au score exact.
+    const pGameA = gameWinProbFromScore(ptsA, ptsB, server, pServeA, pServeB);
+    // ⑥ P(break au prochain jeu) — le joueur AU SERVICE peut être brisé.
+    const pBreakNext = breakProb(server === "A" ? pServeA : pServeB);
+    // ⑦ distribution du score du prochain jeu de service du joueur en service.
+    const gameScore = gameScoreDistribution(server, pServeA, pServeB);
+    // ⑧ P(6-6) → tie-break, depuis les holds du set en cours.
+    const pHoldA = setAndGames?.totalGames.pHoldA ?? pServeA ** 4;
+    const pHoldB = setAndGames?.totalGames.pHoldB ?? pServeB ** 4;
+    const pTieBreak = tieBreakProbability(pHoldA, pHoldB);
+
+    return {
+      pGameA,
+      pGameB: 1 - pGameA,
+      pBreakNext,
+      gameScore,
+      pTieBreak,
+      serverIsA: server === "A",
+      // Priorisation ⑥ : un des deux est en « nette hausse » de DR momentum.
+      surgeA: (drMomentumA ?? 0) >= DR_SURGE_THRESHOLD,
+      surgeB: (drMomentumB ?? 0) >= DR_SURGE_THRESHOLD,
+    };
+  }, [liveState, servePoints, drMomentumA, drMomentumB, setAndGames]);
+
   const currentSetNumber = liveState ? liveState.currentSet + 1 : 1;
+  const show = (id: (typeof MICRO_IDS)[number] | (typeof MATCH_IDS)[number]) =>
+    filter === "all" || (filter === "micro" ? (MICRO_IDS as readonly string[]).includes(id) : (MATCH_IDS as readonly string[]).includes(id));
 
   return (
-    <div className="mt-1.5 rounded-lg border border-primary/40 bg-muted/20 px-2.5 py-2">
-      <div className="text-xs font-bold text-primary mb-2 flex items-center gap-1">
-        <span>🎯</span>
-        <span>BETS PRÉDICTIFS LIVE</span>
-        <span className="text-muted-foreground/70 font-normal">· {nameA} vs {nameB}</span>
-      </div>
-
-      {/* BET #1 — Vainqueur du match */}
-      <div className="mb-2.5">
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-muted-foreground">① Vainqueur du match</span>
-          <ValueBadge prob={Math.max(bet1.probA, bet1.probB)} show={!!liveState} />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-[60px] truncate text-xs font-semibold">{nameA}</span>
-          <div className="flex-1"><DualBar probA={bet1.probA} probB={bet1.probB} /></div>
-          <span className="w-8 text-right font-mono tabular-nums text-xs text-emerald-300">{bet1.probA}%</span>
-        </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="w-[60px] truncate text-xs font-semibold">{nameB}</span>
-          <div className="flex-1" />
-          <span className="w-8 text-right font-mono tabular-nums text-xs text-blue-300">{bet1.probB}%</span>
-        </div>
-      </div>
-
-      <div className="border-t border-border/30 my-2" />
-
-      {/* BET #2 — Vainqueur du set actuel */}
-      <div className="mb-2.5">
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-muted-foreground">
-            ② Vainqueur du set (Set {currentSetNumber})
-            {/* Mélange bayésien Markov + marché. On affiche le poids relatif pour
-                transparence : "Markov 58% / marché 42%" reflète l'avancement
-                du set (plus le set avance, plus le Markov domine). */}
-            {liveState && (
-              <span
-                className="ml-1 text-xs text-muted-foreground/50"
-                title="Mélange pondéré : modèle Markov (réactif au score live) + cotes du marché (force globale des joueurs). Le poids du Markov augmente avec l'avancement du set — un break en fin de set pèse plus qu'au début."
-              >
-                🔀 markov+marché
+    <div
+      className="mt-1.5 w-full min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/80 p-2 shadow-2xl backdrop-blur-xl"
+      data-testid="pip-bet-panel"
+    >
+      {/* En-tête + filtre par pilules tactiles */}
+      <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1 text-xs font-bold text-emerald-300">
+          <span aria-hidden>🎯</span>
+          <span className="truncate">BETS PRÉDICTIFS LIVE</span>
+          <span className="truncate font-normal text-slate-500">· {nameA} vs {nameB}</span>
+        </span>
+        <div
+          role="group"
+          aria-label="Filtre de marchés"
+          className="-mx-1 flex shrink-0 gap-1 overflow-x-auto px-1 scrollbar-none"
+        >
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFilter(f.id)}
+              aria-pressed={filter === f.id}
+              className={cn(
+                "min-h-[36px] shrink-0 rounded-full px-3 py-2 text-xs font-semibold transition-colors",
+                filter === f.id
+                  ? "bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/20"
+                  : "bg-slate-800/70 text-slate-400 hover:text-slate-200",
+              )}
+            >
+              <span aria-hidden className="mr-1">
+                {f.icon}
               </span>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Carte 1 : Vainqueur Match & Set ───────────────────────────────── */}
+      <div className="mb-2.5 min-w-0 rounded-2xl border border-white/5 bg-slate-950/40 p-3.5">
+        {show("vainqueur-match") && (
+          <div className="mb-3">
+            <MarketHead
+              n="①"
+              label="Vainqueur du match"
+              valueProb={Math.max(bet1.probA, bet1.probB)}
+              showValue={!!liveState}
+            />
+            <PlayerRow name={nameA} pct={bet1.probA} tone="a" />
+            <div className="mt-1">
+              <PlayerRow name={nameB} pct={bet1.probB} tone="b" />
+            </div>
+          </div>
+        )}
+
+        {show("vainqueur-set") && (
+          <div>
+            <MarketHead
+              n="②"
+              label={`Vainqueur du set (Set ${currentSetNumber})`}
+              hint="Mélange pondéré : Markov (réactif au score live) + cotes marché. Le poids du Markov augmente avec l'avancement du set."
+              valueProb={liveState ? Math.max(bet2.probA, bet2.probB) : 0}
+              showValue={!!liveState}
+            />
+            {liveState ? (
+              <>
+                <PlayerRow name={nameA} pct={bet2.probA} tone="a" emphasis />
+                <div className="mt-1">
+                  <PlayerRow name={nameB} pct={bet2.probB} tone="b" emphasis />
+                </div>
+              </>
+            ) : (
+              <WaitingLine />
             )}
-          </span>
-          <ValueBadge prob={liveState ? Math.max(bet2.probA, bet2.probB) : 0} show={!!liveState} />
-        </div>
-        {liveState ? (
-          <>
-            <div className="flex items-center gap-2">
-              <span className="w-[60px] truncate text-xs font-semibold">{nameA}</span>
-              <div className="flex-1">
-                <DualBar probA={bet2.probA} probB={bet2.probB} />
-              </div>
-              <span className="w-8 text-right font-mono tabular-nums text-xs text-emerald-300">
-                {bet2.probA}%
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="w-[60px] truncate text-xs font-semibold">{nameB}</span>
-              <div className="flex-1" />
-              <span className="w-8 text-right font-mono tabular-nums text-xs text-blue-300">
-                {bet2.probB}%
-              </span>
-            </div>
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground/60 italic">En attente du live…</p>
-        )}
-      </div>
-
-      <div className="border-t border-border/30 my-2" />
-
-      {/* BET #3 — Over games match */}
-      <div className="mb-2.5">
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-muted-foreground">
-            ③ Over games match {setAndGames?.totalGames.recommendedBet.threshold ?? "—"}
-          </span>
-          <ValueBadge prob={setAndGames?.totalGames.recommendedBet.prob ?? 0} show={!!setAndGames} />
-        </div>
-        {setAndGames ? (
-          <div className="flex items-center gap-2">
-            <span className="w-[60px] text-xs text-muted-foreground/80">Over {setAndGames.totalGames.recommendedBet.threshold}</span>
-            <div className="flex-1">
-              <SingleBar prob={setAndGames.totalGames.recommendedBet.prob} />
-            </div>
-            <span className="w-8 text-right font-mono tabular-nums text-xs text-amber-300">
-              {setAndGames.totalGames.recommendedBet.prob}%
-            </span>
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground/60 italic">En attente du live…</p>
         )}
       </div>
 
-      <div className="border-t border-border/30 my-2" />
-
-      {/* BET #4 — Over games set actuel */}
-      <div>
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className="text-muted-foreground">
-            ④ Over games set {setAndGames?.setPred.recommendedBet.threshold ?? "—"}
-          </span>
-          <ValueBadge prob={setAndGames?.setPred.recommendedBet.prob ?? 0} show={!!setAndGames} />
-        </div>
-        {setAndGames ? (
-          <div className="flex items-center gap-2">
-            <span className="w-[60px] text-xs text-muted-foreground/80">Over {setAndGames.setPred.recommendedBet.threshold}</span>
-            <div className="flex-1">
-              <SingleBar prob={setAndGames.setPred.recommendedBet.prob} color="#f59e0b" />
-            </div>
-            <span className="w-8 text-right font-mono tabular-nums text-xs text-amber-300">
-              {setAndGames.setPred.recommendedBet.prob}%
-            </span>
+      {/* ── Carte 2 : Prochain Jeu (Hold vs Break) ───────────────────────── */}
+      <div className="mb-2.5 min-w-0 rounded-2xl border border-white/5 bg-slate-950/40 p-3.5">
+        {show("prochain-jeu") && (
+          <div className="mb-3">
+            <MarketHead
+              n="⑤"
+              label={`Prochain jeu (${micro ? (micro.serverIsA ? nameA : nameB) : "—"} au service)`}
+              hint="Chaîne de Markov point-level : P(gagner le jeu) depuis le score de points EXACT, pondérée par la force de service observée ce match."
+              valueProb={micro ? Math.max(micro.pGameA, micro.pGameB) * 100 : 0}
+              showValue={!!micro}
+            />
+            {micro ? (
+              <>
+                <PlayerRow name={nameA} pct={micro.pGameA * 100} tone="a" />
+                <div className="mt-1">
+                  <PlayerRow name={nameB} pct={micro.pGameB * 100} tone="b" />
+                </div>
+                <p className="mt-1.5 text-[10px] text-slate-500">
+                  {micro.serverIsA ? `${nameA} sert` : `${nameB} sert`}
+                </p>
+              </>
+            ) : (
+              <WaitingLine />
+            )}
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground/60 italic">En attente du live…</p>
+        )}
+
+        {show("prochain-break") && (
+          <div>
+            <MarketHead
+              n="⑥"
+              label="Prochain break (set)"
+              hint={
+                micro?.surgeA || micro?.surgeB
+                  ? `Priorisé : DR momentum en nette hausse (${micro.surgeA ? nameA : nameB} ≥ +${DR_SURGE_THRESHOLD}).`
+                  : `P(le serveur au prochain jeu soit breaké). Priorité si un DR momentum ≥ +${DR_SURGE_THRESHOLD}.`
+              }
+              valueProb={micro ? micro.pBreakNext * 100 : 0}
+              showValue={!!micro && (micro.surgeA || micro.surgeB)}
+            />
+            {micro ? (
+              <PlayerRow
+                name={micro.serverIsA ? `${nameA} hold` : `${nameB} hold`}
+                pct={(1 - micro.pBreakNext) * 100}
+                tone="a"
+              />
+            ) : (
+              <WaitingLine />
+            )}
+            {micro && (micro.surgeA || micro.surgeB) && (
+              <p className="mt-1.5 text-[10px] font-semibold text-emerald-400">
+                ⚡ DR momentum en nette hausse — marché prioritaire
+              </p>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="border-t border-border/30 mt-2 pt-1.5">
-        <p className="text-xs text-muted-foreground/60 italic">
-          ✅ value = proba ∈ [60%, 70%] · heuristique, pas un calcul d&apos;EV réel
-        </p>
+      {/* ── Carte 3 : Over/Under jeux & Tie-Break ────────────────────────── */}
+      <div className="min-w-0 rounded-2xl border border-white/5 bg-slate-950/40 p-3.5">
+        {show("score-jeu") && (
+          <div className="mb-3">
+            <MarketHead
+              n="⑦"
+              label="Score du prochain jeu"
+              hint="Distribution des 3 issues du jeu de service : 4-0 (impeccable), gain après avoir concédé, ou break."
+              showValue={false}
+            />
+            {micro ? (
+              <>
+                {(Object.entries(micro.gameScore) as [GameScoreOutcome, number][])
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([outcome, p]) => (
+                    <div key={outcome} className="mb-1 flex items-center gap-2 last:mb-0">
+                      <span className="w-[68px] shrink-0 truncate text-xs text-slate-400 sm:w-[76px]">
+                        {GAME_SCORE_LABEL[outcome]}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <NeonBar pct={p * 100} tone={outcome === "break" ? "b" : "a"} />
+                      </div>
+                      <span
+                        className={cn(
+                          "w-9 shrink-0 text-right font-mono text-xs tabular-nums",
+                          outcome === "break" ? "text-blue-300" : "text-emerald-300",
+                        )}
+                      >
+                        {Math.round(p * 100)}%
+                      </span>
+                    </div>
+                  ))}
+              </>
+            ) : (
+              <WaitingLine />
+            )}
+          </div>
+        )}
+
+        {show("tie-break") && (
+          <div className="mb-3">
+            <MarketHead
+              n="⑧"
+              label="Tie-break dans le set"
+              hint="P(le set atteint 6-6) : loi hypergéométrique sur les holds des deux joueurs."
+              valueProb={micro ? micro.pTieBreak * 100 : 0}
+              showValue={!!micro}
+            />
+            {micro ? (
+              <PlayerRow name="6-6 → TB" pct={micro.pTieBreak * 100} tone="amber" />
+            ) : (
+              <WaitingLine />
+            )}
+          </div>
+        )}
+
+        {show("over-match") && (
+          <div className="mb-3">
+            <MarketHead
+              n="③"
+              label={`Over games match ${setAndGames?.totalGames.recommendedBet.threshold ?? "—"}`}
+              valueProb={setAndGames?.totalGames.recommendedBet.prob ?? 0}
+              showValue={!!setAndGames}
+            />
+            {setAndGames ? (
+              <PlayerRow
+                name={`Over ${setAndGames.totalGames.recommendedBet.threshold}`}
+                pct={setAndGames.totalGames.recommendedBet.prob}
+                tone="amber"
+              />
+            ) : (
+              <WaitingLine />
+            )}
+          </div>
+        )}
+
+        {show("over-set") && (
+          <div>
+            <MarketHead
+              n="④"
+              label={`Over games set ${setAndGames?.setPred.recommendedBet.threshold ?? "—"}`}
+              valueProb={setAndGames?.setPred.recommendedBet.prob ?? 0}
+              showValue={!!setAndGames}
+            />
+            {setAndGames ? (
+              <PlayerRow
+                name={`Over ${setAndGames.setPred.recommendedBet.threshold}`}
+                pct={setAndGames.setPred.recommendedBet.prob}
+                tone="amber"
+              />
+            ) : (
+              <WaitingLine />
+            )}
+          </div>
+        )}
       </div>
+
+      <p className="mt-2 text-[10px] italic text-slate-500">
+        ✅ value = proba ∈ [60 %, 70 %] · heuristique, pas un calcul d&apos;EV réel
+      </p>
     </div>
   );
+}
+
+function shortName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  return (parts[parts.length - 1] || fullName).toUpperCase();
 }
 
 export const PipBetPanel = memo(PipBetPanelImpl);

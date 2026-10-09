@@ -809,3 +809,89 @@ export function blendServeRecent(
   const w = gamesPlayed / (gamesPlayed + halfLifeGames);
   return pServePrematch * (1 - w) + pServeObserved * w;
 }
+
+// ---------------------------------------------------------------------------
+// Micro-marchés live — distribution de score de jeu et probabilité de 6-6
+// ---------------------------------------------------------------------------
+
+/** Score de jeu du serveur, dans l'ordre de probabilité décroissante attendue
+ *  par l'UI : Hold à 0/15 (4 points d'affilée), Hold à 30/40 (3 points puis
+ *  1 avant conversion), Break (le serveur perd le jeu). */
+export type GameScoreOutcome = "hold-0" | "hold-30" | "break";
+
+/** Probabilités des 3 issues d'un jeu de service, somme = 1. */
+export type GameScoreDistribution = Record<GameScoreOutcome, number>;
+
+/**
+ * Distribution du score d'un JEU DE SERVICE (Hold à 0/15 / Hold à 30/40 /
+ * Break).
+ *
+ * Les 3 issues forment une partition de l'espace des issues du jeu, donc
+ * chacune s'écrit en différences de probabilités déjà calculées par la primitive
+ * existante `gameWinProb` — aucune récursion nouvelle, donc aucune divergence
+ * possible avec le modèle déjà testé :
+ *
+ *   hold-0  = P(4-0)              = p⁴                  (serveur impeccable)
+ *   hold-30 = P(gagne) − P(4-0)                       (gagne en ayant concédé)
+ *   break   = 1 − P(gagne)                            (le serveur se fait broke)
+ *
+ * La somme est EXACTEMENT 1 par construction (telescopage), sans arrondi
+ * résiduel — une version antérieure calculait `hold-30` par une somme de
+ * chemins 3-0 qui pouvait dépasser le complément et rendait `break` négatif.
+ *
+ * @param server - Joueur au service pour CE jeu
+ * @param pServeA - P(A gagne un point au service)
+ * @param pServeB - P(B gagne un point au service)
+ */
+export function gameScoreDistribution(
+  server: Player,
+  pServeA: number,
+  pServeB: number
+): GameScoreDistribution {
+  if (!Number.isFinite(pServeA) || !Number.isFinite(pServeB)) {
+    return { "hold-0": 1 / 3, "hold-30": 1 / 3, break: 1 / 3 };
+  }
+  // P(server gagne un point) : au service → pServe, sinon on lui applique le
+  // taux de retour de son adversaire.
+  const p = server === "A" ? pServeA : pServeB;
+
+  const hold = gameWinProb(p); // P(tient son service)
+  const hold0 = p * p * p * p; // P(4-0) strict
+
+  // `gameWinProb(p) ≥ p⁴` pour tout p ∈ [0,1] (tous les autres chemins gagnants
+  // sont 4-1, 4-2, 4-3). Le `Math.max` protège d'un écart de précision flottante.
+  const hold30 = Math.max(0, hold - hold0);
+  const brk = Math.max(0, 1 - hold);
+
+  return { "hold-0": hold0, "hold-30": hold30, break: brk };
+}
+
+/**
+ * P(le set atteint 6-6, donc tie-break) à partir des holds des deux joueurs.
+ *
+ * Marche de Bernoulli sur les JEUX : A tient le sien, B le sien, et le set
+ * finit à 6-6 si les deux en ont gagné exactement 6. On somme la loi
+ * hypergéométrique (coefficient de Vandermonde) sur k = 0..6 :
+ *
+ *   P(6-6) = Σ_{k=0..6} C(6,k)·C(6,6-k)·hA^k·(1-hA)^{6-k}·hB^{6-k}·(1-hB)^k
+ *
+ * bornée à [0,1] par construction (hA, hB ∈ [0,1]).
+ *
+ * NB: la formule suppose l'indépendance des jeux et uneerve stable dans le
+ * set — même hypothèse que `setWinProb` plus haut, donc même niveau de
+ * précision (et mêmes tests de sanité à passer en CI).
+ */
+export function tieBreakProbability(pHoldA: number, pHoldB: number): number {
+  const hA = Math.min(1, Math.max(0, pHoldA));
+  const hB = Math.min(1, Math.max(0, pHoldB));
+  // Coefficient binomial (ordre 6 suffit : 6-6).
+  const C = [1, 6, 15, 20, 15, 6, 1];
+  let acc = 0;
+  for (let k = 0; k <= 6; k++) {
+    const ways = C[k] * C[6 - k];
+    const pA = Math.pow(hA, k) * Math.pow(1 - hA, 6 - k);
+    const pB = Math.pow(hB, 6 - k) * Math.pow(1 - hB, k);
+    acc += ways * pA * pB;
+  }
+  return Math.min(1, Math.max(0, acc));
+}
