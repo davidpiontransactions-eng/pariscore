@@ -458,6 +458,14 @@ export function matchWinProbFromSets(
   if (sA >= setsToWin) return 1;
   if (sB >= setsToWin) return 0;
 
+  // Règle fondamentale du Bo3 à 1 set partout : le match se décide
+  // EXCLUSIVEMENT sur le set en cours, donc
+  //     P(match A) = P(A gagne le set 3)
+  // C'est ce que donne déjà le DP ci-dessous (0,67·1 + 0,33·0 = 0,67), mais
+  // on l'écrit explicitement : c'est l'invariant que l'UI doit garantir, et il
+  // doit survivre à toute refonte de la récurrence.
+  if (bo3 && sA === 1 && sB === 1) return p;
+
   const memo = new Map<string, number>();
   const dp = (a: number, b: number): number => {
     if (a >= setsToWin) return 1;

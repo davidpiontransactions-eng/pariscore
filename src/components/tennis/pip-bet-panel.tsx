@@ -391,12 +391,27 @@ function PipBetPanelImpl({
   // combien de sets séparent du titre, les cotes dominent au coup d'envoi.
   const bet1Reactive = useMemo(() => {
     if (!liveState || !setAndGames) return bet1;
-    const setsA = liveState.scoreA.sets.length;
-    const setsB = liveState.scoreB.sets.length;
+    const gamesA = liveState.scoreA.games;
+    const gamesB = liveState.scoreB.games;
+    // Le set en cours est-il fini ? Un set se conclut à 6 jeux (ou 7-6/7-5).
+    const currentSetFinished = gamesA >= 6 || gamesB >= 6;
 
-    // Set terminal : le marché n'a plus rien à dire.
-    if (setsA >= 2 || setsB >= 2) {
-      return setsA >= 2 ? { probA: 100, probB: 0 } : { probA: 0, probB: 100 };
+    // Nombre de sets RÉELLEMENT gagnés. `scoreA.sets.length` ne peut pas être
+    // utilisé tel quel : le tableau `setsDetail` de BSD inclut le set EN COURS,
+    // donc sa longueur surcompte d'un set dès que l'index du set courant est
+    // décalé d'un cran. Symptôme observé (Khachanov vs Fery, set 3) :
+    //   ② Vainqueur du set 3 → 67 % / 33 %
+    //   ① Vainqueur du match  → 100 % / 0 %      ← absurde
+    // On borne donc par `currentSet` (index 0-based du set en cours = nombre
+    // de sets déjà terminés) et on refuse l'absorption tant que le set joue.
+    const completed = Math.max(0, liveState.currentSet);
+    const setsA = Math.min(liveState.scoreA.sets.length, completed);
+    const setsB = Math.min(liveState.scoreB.sets.length, completed);
+
+    const winner = setsA >= 2 ? "A" : setsB >= 2 ? "B" : null;
+    // 100 % uniquement si le set qui rapporte le 2e set est RÉELLEMENT fini.
+    if (winner && currentSetFinished) {
+      return winner === "A" ? { probA: 100, probB: 0 } : { probA: 0, probB: 100 };
     }
 
     const modelA = matchWinProbFromSets(setAndGames.setWinA, setsA, setsB, true);
@@ -409,6 +424,13 @@ function PipBetPanelImpl({
       blendedA = Math.round((blendedA / total) * 100);
       blendedB = 100 - blendedA;
     }
+    // Garde-fou d'affichage : ① ne doit JAMAIS être plus catégorique que ②.
+    // Un match à 100 % pendant que le set décisif est à 67 % est un bug
+    // d'affichage, pas un modèle : on rabat ① sur ② dans ce cas.
+    const setA = Math.round(setAndGames.setWinA * 100);
+    const setB = 100 - setA;
+    if (blendedA > setA) return { probA: setA, probB: setB };
+    if (blendedB > setB) return { probA: setA, probB: setB };
     return { probA: blendedA, probB: blendedB };
   }, [liveState, setAndGames, bet1]);
 

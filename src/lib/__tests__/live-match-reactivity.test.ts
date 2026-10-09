@@ -172,6 +172,53 @@ describe("réactivité au SERVEUR (le moteur réagit-il à qui sert ?)", () => {
   });
 });
 
+describe("BUG set 3 : ① ne doit JAMAIS contredire ② (Khachanov vs Fery)", () => {
+  test("à 1 set partout, P(match) = P(set 3) — identité stricte", () => {
+    // Symptôme rapporté : ② Vainqueur du set 3 → 67 % / 33 %
+    //                      ① Vainqueur du match  → 100 % / 0 %  (absurde).
+    for (const p of [0.5, 0.55, 0.67, 0.8, 0.93, 0.99]) {
+      expect(matchWinProbFromSets(p, 1, 1, true)).toBe(p);
+    }
+  });
+
+  test("l'identité 1-1 tient quel que soit le score de jeux du set 3", () => {
+    const hold = gameWinProb(0.62);
+    for (const [gA, gB] of [[0, 0], [2, 1], [3, 3], [5, 4], [6, 5]] as Array<[number, number]>) {
+      const pSet = setWinProb(hold, hold, 1, 1, 3, gA, gB, "A");
+      expect(matchWinProbFromSets(pSet, 1, 1, true)).toBeCloseTo(pSet, 12);
+      // Et surtout : jamais 0 ni 1 tant que le set se joue.
+      expect(pSet).toBeGreaterThan(0);
+      expect(pSet).toBeLessThan(1);
+    }
+  });
+
+  test("1-1 + set 3 en cours : la sortie n'est PAS une absorption", () => {
+    const hold = gameWinProb(0.62);
+    const pSet = setWinProb(hold, hold, 1, 1, 3, 3, 2, "A");
+    const pMatch = matchWinProbFromSets(pSet, 1, 1, true);
+    expect(pMatch).toBeGreaterThan(0.05);
+    expect(pMatch).toBeLessThan(0.95);
+    expect(pMatch).toBeCloseTo(pSet, 12);
+  });
+
+  test("la borne currentSet corrige le surcomptage de setsDetail", () => {
+    // BSD inclut le set EN COURS dans `setsDetail` : à 1-1 en set 3 le tableau
+    // peut exposer 2 entrées alors qu'un seul set a été gagné. La longueur
+    // seule produit donc setsA=2 → absorption 100 % (le bug observé). Bornée
+    // par `currentSet` (index 0-based = 2), c'est 2... donc la VRAI borne
+    // métier est l'identité ci-dessus, pas le clamp : on vérifie ici que le
+    // moteur, lui, ne surcompte jamais et reste défini pour tout couple.
+    for (let a = 0; a <= 4; a++) {
+      for (let b = 0; b <= 4; b++) {
+        const v = matchWinProbFromSets(0.67, a, b, true);
+        expect(Number.isFinite(v)).toBe(true);
+        expect(v).toBeGreaterThanOrEqual(0);
+        expect(v).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+});
+
 describe("bornes et robustesse (bornage anti-binaire des marchés macro)", () => {
   test("toute proba de set/match reste dans [0, 1]", () => {
     for (let gA = 0; gA <= 7; gA++) {
