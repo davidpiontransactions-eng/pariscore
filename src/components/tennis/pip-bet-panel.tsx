@@ -20,7 +20,7 @@
 // calcul d'EV réel (qui nécessiterait comparer aux cotes 1xWin+). C'est une
 // AIDE à la décision, pas un signal de trading. Affiché comme tel.
 
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useTennisLiveStats, type TennisLiveStats } from "@/hooks/use-tennis-live-stats";
@@ -44,6 +44,7 @@ import {
   type GameScoreOutcome,
 } from "@/lib/prediction/live-markov";
 import { ValueEdge } from "@/components/tennis/value-edge";
+import { ScenarioImpact } from "@/components/tennis/scenario-impact";
 import { cn } from "@/lib/utils";
 
 /**
@@ -95,6 +96,20 @@ const FILTERS: { id: MarketFilter; label: string; icon: string }[] = [
 /** Seuils de visibilité : `micro` = les 4 marchés jeu, `match` = les 4 autres. */
 const MICRO_IDS = ["prochain-jeu", "prochain-break", "score-jeu", "tie-break"] as const;
 const MATCH_IDS = ["vainqueur-match", "vainqueur-set", "over-match", "over-set"] as const;
+
+/**
+ * Les 2 marchés qui résument le match. Sur mobile (< 640 px) ce sont les seuls
+ * laissés ouverts : les 6 autres passent sous un volet « Plus de marchés ».
+ *
+ * Pourquoi ces deux-là : ce sont les seuls qui répondent à « qui gagne ? », la
+ * seule question qu'un utilisateur d'un match en direct vient poser. Empiler
+ * 8 cartes sur 375 px force le contenu à défiler dans le PiP lui-même, qui est
+ * déjà une surcouche flottante — la lecture devient impossible.
+ */
+const PRIORITY_IDS = ["vainqueur-match", "vainqueur-set"] as const;
+
+/** Sous cette largeur (px), on applique la priorisation mobile. */
+const MOBILE_BREAKPOINT_PX = 640;
 
 /** Mappe surface UI (FR) → surface modèle (cf. predictive-bets.ts:43). */
 function toModelSurface(s: string): PredictionSurface {
@@ -396,7 +411,11 @@ function PipBetPanelImpl({
   const bet1Reactive = useMemo(() => {
     if (!liveState || !setAndGames) {
       const a = Math.round(bet1.probA);
-      return { probA: a, probB: 100 - a, modelA: a, marketA: a, edgeA: 0 };
+      return {
+        probA: a, probB: 100 - a,
+        setCount: { a: 0, b: 0 },
+        modelA: a, marketA: a, edgeA: 0,
+      };
     }
     const gamesA = liveState.scoreA.games;
     const gamesB = liveState.scoreB.games;
@@ -423,13 +442,17 @@ function PipBetPanelImpl({
     const setsB = liveState.scoreB.sets.filter(
       (g, i) => g > (liveState.scoreA.sets[i] ?? 0)
     ).length;
+    // Sets gagnés, retournés pour que le contrefactuel consomme EXACTEMENT le
+    // même compte que ① (pas de second calcul qui pourrait diverger).
+    const setCount = { a: setsA, b: setsB };
+
     const winner = setsA >= 2 ? "A" : setsB >= 2 ? "B" : null;
     // 100 % uniquement si le set qui rapporte le 2e set est RÉELLEMENT fini.
     if (winner && currentSetFinished) {
       const r = winner === "A"
         ? { probA: 100, probB: 0 }
         : { probA: 0, probB: 100 };
-      return { ...r, modelA: r.probA, marketA: Math.round(bet1.probA), edgeA: 0 };
+      return { ...r, setCount, modelA: r.probA, marketA: Math.round(bet1.probA), edgeA: 0 };
     }
 
     // `matchWinProbFromSets` part de l'état réel (sets gagnés + forme du set en
@@ -445,6 +468,7 @@ function PipBetPanelImpl({
     return {
       probA: modelAPct,
       probB: 100 - modelAPct,
+      setCount,
       modelA: modelAPct,
       marketA: marketAPct,
       edgeA: modelAPct - marketAPct,
@@ -494,8 +518,33 @@ function PipBetPanelImpl({
   }, [liveState, servePoints, drMomentumA, drMomentumB, setAndGames]);
 
   const currentSetNumber = liveState ? liveState.currentSet + 1 : 1;
-  const show = (id: (typeof MICRO_IDS)[number] | (typeof MATCH_IDS)[number]) =>
-    filter === "all" || (filter === "micro" ? (MICRO_IDS as readonly string[]).includes(id) : (MATCH_IDS as readonly string[]).includes(id));
+
+  // Priorisation mobile : sous 640 px, seuls ①② restent ouverts, le reste passe
+  // sous un volet. Mesuré au resize plutôt qu'à `window.innerWidth` lu une
+  // seule fois : un PiP ouvert puis une rotation de l'appareil doit suivre.
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const read = () => setIsNarrow(window.innerWidth < MOBILE_BREAKPOINT_PX);
+    read();
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, []);
+  const [showSecondary, setShowSecondary] = useState(false);
+  const secondaryOpen = !isNarrow || showSecondary;
+
+  const show = (id: (typeof MICRO_IDS)[number] | (typeof MATCH_IDS)[number]) => {
+    const inFilter =
+      filter === "all" ||
+      (filter === "micro"
+        ? (MICRO_IDS as readonly string[]).includes(id)
+        : (MATCH_IDS as readonly string[]).includes(id));
+    if (!inFilter) return false;
+    // Sur mobile, un marché secondaire n'est rendu que si le volet est ouvert.
+    if (isNarrow && !(PRIORITY_IDS as readonly string[]).includes(id)) {
+      return secondaryOpen;
+    }
+    return true;
+  };
 
   return (
     <div
@@ -581,8 +630,50 @@ function PipBetPanelImpl({
             )}
           </div>
         )}
+
+        {/* Contrefactuel : ce que vaut le prochain jeu. Placé sous ① et ②
+            parce qu'il les prolonge — sans lui, la réactivité du moteur n'est
+            perceptible qu'APRÈS que le score a changé. */}
+        {liveState && setAndGames && show("vainqueur-set") && (
+          <ScenarioImpact
+            setWinA={setAndGames.setWinA}
+            holdA={setAndGames.totalGames.pHoldA}
+            holdB={setAndGames.totalGames.pHoldB}
+            setsA={bet1Reactive.setCount.a}
+            setsB={bet1Reactive.setCount.b}
+            gamesA={liveState.scoreA.games}
+            gamesB={liveState.scoreB.games}
+            server={liveState.server}
+            nameA={nameA}
+            nameB={nameB}
+          />
+        )}
+
+        {/* Volet mobile : ouvre les 6 marchés secondaires. `aria-expanded` porte
+            l'état pour les lecteurs d'écran ; le libellé annonce le nombre de
+            marchés, sinon l'utilisateur ne sait pas ce qu'il va déplier. */}
+        {isNarrow && (
+          <button
+            type="button"
+            onClick={() => setShowSecondary((v) => !v)}
+            aria-expanded={secondaryOpen}
+            aria-controls="pip-secondary-markets"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-bold text-slate-300 transition-colors hover:bg-white/10"
+          >
+            <span
+              aria-hidden
+              className={cn("transition-transform", secondaryOpen && "rotate-180")}
+            >
+              ▾
+            </span>
+            {secondaryOpen
+              ? "Masquer les autres marchés"
+              : "Plus de marchés (6)"}
+          </button>
+        )}
       </div>
 
+      <div id="pip-secondary-markets">
       {/* ── Carte 2 : Prochain Jeu (Hold vs Break) ───────────────────────── */}
       <div className="mb-2.5 min-w-0 rounded-2xl border border-white/5 bg-slate-950/40 p-3.5">
         {show("prochain-jeu") && (
@@ -736,6 +827,8 @@ function PipBetPanelImpl({
             )}
           </div>
         )}
+      </div>
+
       </div>
 
       <p className="mt-2 text-[10px] italic text-slate-500">
