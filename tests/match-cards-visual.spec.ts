@@ -340,7 +340,17 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
       });
 
       seen.push(`#${i}:${level ? `niveau ${level}` : "aucun"}`);
-      if (level) retained = { index: i, level };
+      if (level) {
+        // On ne s'arrête pas au premier pari retenu : on privilégie un niveau
+        // adossé à un PRIX DE MARCHÉ (1 = 1X2, 3 = total) plutôt que le niveau 2,
+        // qui se contente d'une cote juste calculée. Le niveau 2 est réservé au
+        // repli, sinon ce test ne couvrirait jamais le branchement des cotes
+        // réelles — l'apport du cron OddsPapi.
+        const rank = level === "1" ? 1 : level === "3" ? 2 : 3;
+        if (!retained || rank < (retained as { rank: number }).rank) {
+          retained = { index: i, level, rank };
+        }
+      }
 
       await page.keyboard.press("Escape").catch(() => {});
       await page.waitForTimeout(1_200);
@@ -362,7 +372,6 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
 
     // Le niveau publié doit être 1, 2 ou 3 — jamais une valeur hors contrat.
     expect(["1", "2", "3"]).toContain((retained as { level: string }).level);
-
 // Un pari retenu doit satisfaire le SEUIL de la mission : cote cible = 1/P
     // >= 1.20, soit P <= 83.3 %.
     //
@@ -407,6 +416,22 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
       `cote juste absente ou incohérente (proba ${proba} % => attendu ` +
         `${targetOdds.toFixed(2)}, lu « ${vb!.fair} »)`,
     ).toContain(targetOdds.toFixed(2));
+
+    // Un niveau adossé au marché (1 = 1X2, 3 = total) doit afficher une VRAIE
+    // cote, pas la cote juste calculée. C'est la preuve que le cron OddsPapi
+    // alimente bien la cascade : sans lui, ces niveaux ne peuvent pas exister.
+    if (vb!.fair.includes("j.")) {
+      expect(
+        (retained as { level: string }).level,
+        `niveau ${(retained as { level: string }).level} retenu sans prix de ` +
+          `marché (cote « ${vb!.fair} ») : les cotes OddsPapi ne sont plus lues ?`,
+      ).toBe("2");
+    } else {
+      console.log(
+        `[value-bet] niveau ${(retained as { level: string }).level} avec VRAIE ` +
+          `cote de marché : ${vb!.fair}`,
+      );
+    }
 
     await page.screenshot({
       path: `${OUT}/handball-value-bet-active.png`,
