@@ -292,6 +292,107 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
     // Rien ne doit avoir cassé au montage du dialog.
     expect(fatals, `erreurs fatales: ${fatals.join(" | ")}`).toEqual([]);
   });
+
+  /**
+   * Branche « pari RETENU » : la cascade retient un niveau et publie le pari.
+   *
+   * La première carte de la liste ne convient pas — mesuré en prod le
+   * 2026-10-09 : sur 14 cartes scannées, 5 n'ont aucune donnée en base
+   * (compétitions hors registre) et 9 retiennent un pari, toutes au niveau 2
+   * (handicap calculé sur la marge Skellam). On parcourt donc les cartes
+   * jusqu'à en trouver une qui affiche le badge de niveau.
+   *
+   * Ce n'est PAS un skip si aucune ne convient : l'absence de tout pari
+   * retenu serait un signal (modèle ou données), pas une raison de se taire.
+   */
+  test("HandballMatchCard @ desktop — la cascade RETIENT un pari et publie son niveau", async ({
+    page,
+  }) => {
+    test.setTimeout(600_000);
+    const fatals = await watchPage(page);
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await acceptCookies(page);
+
+    expect(
+      await openSportTab(page, /handball/i),
+      "onglet handball inaccessible (ni barre ni menu Plus)",
+    ).toBe(true);
+
+    const cards = page.locator('[data-testid="handball-match-card"]');
+    const total = await cards.count();
+    expect(total, "aucune carte handball à scanner").toBeGreaterThan(0);
+
+    const SCAN = Math.min(total, 20);
+    let retained: { index: number; level: string } | null = null;
+    const seen: string[] = [];
+
+    for (let i = 0; i < SCAN && !retained; i++) {
+      await cards.nth(i).click({ timeout: 15_000 }).catch(() => {});
+      const grid = page.locator('[data-testid="handball-prediction-cards"]');
+      await grid.first().waitFor({ state: "visible", timeout: 12_000 }).catch(() => {});
+
+      const level = await page.evaluate(() => {
+        const g = document.querySelector('[data-testid="handball-prediction-cards"]');
+        if (!g) return null;
+        if ((g.textContent ?? "").includes("Aucun Value Bet détecté")) return null;
+        return g.textContent?.match(/Niveau\s*([123])/)?.[1] ?? null;
+      });
+
+      seen.push(`#${i}:${level ? `niveau ${level}` : "aucun"}`);
+      if (level) retained = { index: i, level };
+
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(1_200);
+    }
+
+    expect(
+      retained,
+      `aucun pari retenu sur les ${SCAN} premières cartes handball — la cascade ` +
+        `publierait-elle encore ? (relevé : ${seen.join(", ")})`,
+    ).not.toBeNull();
+
+    // Le dialog du match retenu est rouvert pour la capture : on ne photographie
+    // pas un état refermé.
+    await cards.nth((retained as { index: number }).index).click({ timeout: 15_000 });
+    await page
+      .locator('[data-testid="handball-prediction-cards"]')
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
+
+    // Le niveau publié doit être 1, 2 ou 3 — jamais une valeur hors contrat.
+    expect(["1", "2", "3"]).toContain((retained as { level: string }).level);
+
+    // Un pari retenu doit satisfaire le SEUIL de la mission : cote cible = 1/P
+    // ≥ 1.20, soit P ≤ 83.3 %. On relit la proba PUBLIÉE et on vérifie le
+    // seuil —.Assertion précédente : /\d+\.\d/ sur le texte entier, elle
+    // passait sur la seule proba et ne testait donc rien.
+    const grid = page.locator('[data-testid="handball-prediction-cards"]').first();
+    const text = ((await grid.textContent()) ?? "").replace(/\s+/g, " ");
+    const proba = Number(text.match(/Proba\s*([\d.,]+)\s*%/)?.[1]?.replace(",", ".") ?? NaN);
+    expect(Number.isFinite(proba), `proba illisible dans la carte : « ${text.slice(0, 120)} »`).toBe(true);
+
+    const targetOdds = 100 / proba;
+    expect(
+      targetOdds,
+      `niveau ${(retained as { level: string }).level} retenu avec P ${proba} % ` +
+        `=> cote cible ${targetOdds.toFixed(2)}, sous le seuil ${1.2}`,
+    ).toBeGreaterThanOrEqual(1.2);
+
+    // Et la carte doit afficher CETTE cote juste, sinon l'utilisateur n'a pas
+    // de quoi juger le pari.
+    expect(
+      text,
+      `cote juste absente de la carte (relevé : « ${text.slice(0, 120)} »)`,
+    ).toContain(targetOdds.toFixed(2));
+
+    await page.screenshot({
+      path: `${OUT}/handball-value-bet-active.png`,
+      fullPage: false,
+    });
+
+    expect(fatals, `erreurs fatales: ${fatals.join(" | ")}`).toEqual([]);
+  });
 });
 
 test.describe("ScenarioImpact — composant contrefactuel tennis", () => {

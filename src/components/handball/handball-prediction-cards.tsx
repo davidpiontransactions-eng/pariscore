@@ -227,8 +227,20 @@ function ValueBetCard({
               <dd className="font-bold tabular-nums">{sel.prob.toFixed(1)}%</dd>
             </div>
             <div>
-              <dt className="text-[#717171]">Cote</dt>
-              <dd className="font-bold tabular-nums">{sel.odds?.toFixed(2)}</dd>
+              <dt className="text-[#717171]">
+                {sel.odds != null ? "Cote" : "Cote juste"}
+              </dt>
+              <dd className="font-bold tabular-nums">
+                {/* Sans prix de marché, afficher « — » cachait la seule chose
+                    exploitable : le prix auquel le pari DEVRAIT être vendu
+                    (targetOdds = 1/P). C'est ce prix qui justifie le seuil
+                    1.20 ; sans lui, la carte ne donnait aucune raison de
+                    suivre le modèle. Le marqueur « j. » distingue une juste
+                    prix d'une cote réellement proposée par un bookmaker. */}
+                {sel.odds != null
+                  ? sel.odds.toFixed(2)
+                  : `${sel.targetOdds.toFixed(2)} j.`}
+              </dd>
             </div>
             <div>
               <dt className="text-[#717171]">EV</dt>
