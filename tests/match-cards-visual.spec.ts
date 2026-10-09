@@ -440,6 +440,111 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
 
     expect(fatals, `erreurs fatales: ${fatals.join(" | ")}`).toEqual([]);
   });
+
+  /**
+   * P1 / P3 sur un match RÉELLEMENT COTÉ (feed OddsPapi).
+   *
+   * Les tests précédents s'arrêtaient au niveau 2, qui ne repose que sur une
+   * cote juste calculée : il fallait une rencontre dont le marché cote le
+   * favori pour exercer le branchement des cotes réelles — l'apport du cron
+   * OddsPapi, qui n'écrit `data/odds_handball_papi.json` que depuis le
+   * correctif du 2026-10-09.
+   *
+   * La liste des équipes visées est lue sur l'API à l'exécution, pas codée en
+   * dur : les fixtures tournent tous les jours, et un nom figé ferait échouer
+   * le test dès le lendemain.
+   */
+  test("Handball @ desktop — P1/P3 sur un match coté (vraie cote, EV renseigné)", async ({ page }) => {
+    test.setTimeout(600_000);
+    const fatals = await watchPage(page);
+
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await acceptCookies(page);
+
+    // ── Cibles : les matchs que l'API sert avec une vraie cote ──
+    // Interrogée APRÈS le goto : sur `about:blank` une URL relative n'a pas
+    // d'origine, le fetch echouait et le skip « aucun match coté » masquait
+    // le test alors que l'API en sert 10.
+    const targets = await page.evaluate(async () => {
+      try {
+        const res = await fetch("/api/handball/matches");
+        const body = (await res.json()) as {
+          matches?: Array<{ home?: { name?: string }; odds?: unknown }>;
+        };
+        return (body.matches ?? [])
+          .filter((m) => m.odds && Object.keys(m.odds as object).length > 0)
+          .map((m) => String(m.home?.name ?? ""))
+          .filter(Boolean);
+      } catch {
+        return [] as string[];
+      }
+    });
+    test.skip(targets.length === 0, "aucun match coté par l'API (cron OddsPapi muet)");
+    console.log(`[p1p3] équipes cotées ciblées : ${targets.join(", ")}`);
+
+    expect(await openSportTab(page, /handball/i), "onglet handball inaccessible").toBe(true);
+
+    const cards = page.locator('[data-testid="handball-match-card"]:visible');
+    let picked: string | null = null;
+    for (const name of targets) {
+      if ((await cards.filter({ hasText: name }).count()) > 0) {
+        picked = name;
+        break;
+      }
+    }
+    expect(picked, `aucun des matchs cotés visible dans l'onglet (${targets.length} cibles)`).not.toBeNull();
+
+    await cards.filter({ hasText: picked as string }).first().click({ timeout: 20_000 });
+    await page
+      .locator('[data-testid="handball-prediction-cards"]')
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+
+    const vb = await page.evaluate(() => {
+      const grid = document.querySelector('[data-testid="handball-prediction-cards"]');
+      if (!grid) return null;
+      const section = Array.from(grid.querySelectorAll("section")).find(
+        (s) => (s.querySelector("h4")?.textContent ?? "").trim() === "Value Bet",
+      );
+      if (!section) return null;
+      const dds = Array.from(section.querySelectorAll("dd")).map((d) => (d.textContent ?? "").trim());
+      const dts = Array.from(section.querySelectorAll("dt")).map((d) => (d.textContent ?? "").trim());
+      return {
+        level: section.textContent?.match(/Niveau\s*([123])/)?.[1] ?? null,
+        labels: dts,
+        values: dds,
+      };
+    });
+
+    expect(vb, `section « Value Bet » absente pour ${picked}`).not.toBeNull();
+    const level = vb!.level;
+    const coteIdx = vb!.labels.findIndex((l) => l.startsWith("Cote"));
+    const evIdx = vb!.labels.indexOf("EV");
+    const cote = coteIdx >= 0 ? vb!.values[coteIdx] : "";
+    const ev = evIdx >= 0 ? vb!.values[evIdx] : "";
+    console.log(
+      `[p1p3] ${picked} -> niveau ${level} | ${JSON.stringify(vb!.labels)} = ${JSON.stringify(vb!.values)}`,
+    );
+
+    // 1. Le niveau doit être adossé au marché (1 = 1X2, 3 = total).
+    expect(
+      ["1", "3"],
+      `niveau ${level} sur un match coté : la cascade n'a pas utilisé le prix de marché ?`,
+    ).toContain(level);
+
+    // 2. Vraie cote : libellé « Cote », pas « Cote juste », pas de suffixe « j. ».
+    expect(vb!.labels[coteIdx], `libellé de cote inattendu : ${vb!.labels[coteIdx]}`).toBe("Cote");
+    expect(cote, `cote marquée « juste » (${cote}) sur un match coté`).not.toContain("j.");
+    expect(Number(cote)).toBeGreaterThanOrEqual(1.2);
+
+    // 3. EV renseigné : il n'existe que si une cote ET une proba sont présentes.
+    expect(ev, "EV vide alors qu'une cote de marché est présente").not.toBe("—");
+    expect(Number(ev.replace("%", ""))).toBeGreaterThan(0);
+
+    await page.screenshot({ path: `${OUT}/handball-value-bet-market.png`, fullPage: false });
+    expect(fatals, `erreurs fatales: ${fatals.join(" | ")}`).toEqual([]);
+  });
 });
 
 test.describe("ScenarioImpact — composant contrefactuel tennis", () => {
