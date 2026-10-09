@@ -59,6 +59,130 @@ export interface MlbLiveGame {
   awayRuns: number | null;
 }
 
+/**
+ * État de jeu d'un match MLB en cours.
+ *
+ * Les 5 champs sont EXTRAITS du game feed (`linescore` + `liveData`) et non
+ * devinés : la matrice d'espérance `RUN_EXPECTANCY_MATRIX` est indexée par
+ * (occupation des bases × outs), donc un match sans cet état n'a AUCUN marché
+ * calculable. `bases` est le masque FIRST=1 / SECOND=2 / THIRD=4.
+ */
+export interface MlbLiveState {
+  /** Manche en cours, 1-15 (9e manche + prolongations). */
+  inning: number;
+  /** Moitié de la manche : "top" = visiteurs, "bottom" = domicile. */
+  half: "top" | "bottom";
+  /** Outs accomplishments, 0-2. */
+  outs: number;
+  /** Occupation des bases : 1 = 1re, 2 = 2e, 4 = 3e, 7 = bases pleines. */
+  bases: number;
+  balls: number;
+  strikes: number;
+  /** Score à la fin de chaque demi-manche jouée (index = inning - 1). */
+  inningScores: Array<{ home: number; away: number }>;
+}
+
+interface MlbLiveDataRaw {
+  linescore?: {
+    currentInning?: number;
+    currentInningOrdinal?: string;
+    innings?: Array<{ home?: number; away?: number }>;
+  };
+  allPlay?: Array<{ about?: { halfInning?: string; isTopInning?: boolean } }>;
+  outs?: string;
+  balls?: string;
+  strikes?: string;
+  bases?: string;
+  count?: { balls?: number; strikes?: number; outs?: number };
+}
+
+interface MlbGameFeedRaw {
+  gamePk: number;
+  gameData?: {
+    teams?: { home?: { score?: number }; away?: { score?: number } };
+    linescore?: {
+      currentInning?: number;
+      innings?: Array<{ home?: number; away?: number }>;
+    };
+  };
+  liveData?: MlbLiveDataRaw;
+}
+
+/**
+ * Extrait l'état de jeu du game feed MLB.
+ *
+ * Renvoie `null` si l'un des 5 champs manquent : mieux vaut « indisponible »
+ * qu'un marché calculé sur une base vide qui afficherait 0.46 run attendus
+ * quand le jeu est rechargé après un inning.
+ *
+ * Le champ `bases` du game feed est une chaîne doccupation déjà masquée par
+ * MLB ("110" = 1re+2e) : on la convertit en bitmask pour coller à la matrice
+ * existante (FIRST=1, SECOND=2, THIRD=4).
+ */
+export function extractMlbLiveState(feed: unknown): MlbLiveState | null {
+  if (typeof feed !== "object" || feed === null) return null;
+  const f = feed as MlbGameFeedRaw;
+  const linescore = f.liveData?.linescore ?? f.gameData?.linescore;
+  const inning = linescore?.currentInning;
+  const outs = f.liveData?.count?.outs ?? (f.liveData?.outs !== undefined ? Number(f.liveData.outs) : undefined);
+  const balls = f.liveData?.count?.balls ?? (f.liveData?.balls !== undefined ? Number(f.liveData.balls) : undefined);
+  const strikes = f.liveData?.count?.strikes ?? (f.liveData?.strikes !== undefined ? Number(f.liveData.strikes) : undefined);
+  const basesStr = f.liveData?.bases;
+
+  // La moitié de la manche est lue dans le dernier play joué
+  // (`about.halfInning`) — elle n'est PAS dans `linescore`. Elle décide de
+  // QUI frappe, donc quel camp hérite de l'état des bases : la deviner
+  // attribuerait la matrice d'espérance au mauvais camp, en silence.
+  const lastPlay = f.liveData?.allPlay?.[f.liveData.allPlay.length - 1]?.about;
+  const half = lastPlay?.halfInning;
+
+  if (
+    typeof inning !== "number" ||
+    outs === undefined ||
+    balls === undefined ||
+    strikes === undefined ||
+    typeof basesStr !== "string" ||
+    basesStr.length !== 3 ||
+    (half !== "top" && half !== "bottom")
+  ) {
+    return null;
+  }
+
+  // MLB renvoie l'occupation dans l'ordre 1re-2e-3e sous forme de bits.
+  const bases = (basesStr[0] === "1" ? 1 : 0) | (basesStr[1] === "1" ? 2 : 0) | (basesStr[2] === "1" ? 4 : 0);
+
+  const innings = Array.isArray(linescore?.innings) ? linescore.innings : [];
+
+  return {
+    inning,
+    half,
+    outs,
+    bases,
+    balls,
+    strikes,
+    inningScores: innings.map((i) => ({ home: i.home ?? 0, away: i.away ?? 0 })),
+  };
+}
+
+/**
+ * Récupère l'état live d'un match MLB précis (gamePk).
+ *
+ * Une requête par match : c'est le coût assumé du widget (8 s de polling sur
+ * un seul match ouvert), pas un balayage de la league entière.
+ */
+export async function fetchMlbLiveState(gamePk: number): Promise<MlbLiveState | null> {
+  try {
+    const feed = await fetchJson<MlbGameFeedRaw>(
+      `${MLB_BASE}/api/v1.1/game/${gamePk}/feed/live`,
+      9000
+    );
+    const state = extractMlbLiveState(feed);
+    return state;
+  } catch {
+    return null;
+  }
+}
+
 export interface MlbPitcherStatsRaw {
   era: number | null;
   whip: number | null;
