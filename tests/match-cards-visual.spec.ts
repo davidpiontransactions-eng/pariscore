@@ -75,9 +75,24 @@ async function openSportTab(
     .getByRole("tab", { name: sport })
     .first();
   if ((await tab.count()) === 0) return false;
-  await tab.click({ timeout: 15_000 });
-  // Le tab charge ses données de façon asynchrone ; on laisse le temps au rendu.
-  await page.waitForTimeout(6_000);
+await tab.click({ timeout: 15_000 });
+
+  // Le tab charge ses données de façon asynchrone. L'attente fixe de 6 s du
+  // premier jet était calibrée sur une liste déjà en cache : en prod à froid
+  // elle expirait avant la fin du chargement, et l'absence de carte était
+  // ensuite traitée comme un état normal (2026-10-09).
+  //
+  // On attend la DISPARITION de l'indicateur de chargement, pas « des cartes » :
+  // un sélecteur large (`[role="button"]`) matchait un bouton du header dès la
+  // milliseconde et ne servait à rien. Une route en 503 ou une liste bloquée se
+  // terminent aussi — mais par un échec, que les assertions plus bas nomment.
+  await page
+    .getByText(/Chargement/i)
+    .first()
+    .waitFor({ state: "hidden", timeout: 90_000 })
+    .catch(() => {
+      // Toujours chargé au bout de 90 s : traité plus bas comme liste bloquée.
+    });
   return true;
 }
 
@@ -138,16 +153,59 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
         //    dans un conteneur à largeur fixe.
         expect(overflow, "débordement horizontal sur " + vpName).toBe(false);
 
-        // 3. Le badge n'est exigé QUE s'il y a des cartes. Un onglet vide est un état
-        //    normal, pas un échec : on le dit, on ne le masque pas.
-        if (cards > 0) {
-          expect(states, "des cartes sont rendues mais aucun badge d'état").toBeGreaterThan(0);
-        } else {
+        // 3. AUCUNE carte n'est un ÉCHEC, plus un état « normal » qu'on se contente
+        //    de loguer.
+        //
+        //    Historique : cette branche faisait `console.log(...)` et laissait le
+        //    test passer. Conséquence mesurée le 2026-10-09 : la prod affichait
+        //    « Error: HTTP 503 » sur toute la liste basketball — /api/nba/matches
+        //    en 503 {"details":"expH is not defined"} — et la suite annonçait
+        //    « 3 passed ». Le harnais validait l'absence de données comme un
+        //    succès, ce qui a masqué la panne pendant des semaines.
+        //
+        //    On distingue donc les DEUX causes, qui n'appellent pas la même
+        //    décision : une erreur applicative visible est un défaut ; un
+        //    « pas de match aujourd'hui » est un état normal — mais il doit
+        //    être TYPÉ par le composant, pas deviné par l'absence de carte.
+        const apiError = await page
+          .getByText(/Erreur\s*:?\s*HTTP\s*(5\d\d|429)|HTTP\s*503/i)
+          .first()
+          .textContent({ timeout: 5_000 })
+          .catch(() => null);
+        expect(
+          apiError,
+          `route API en erreur sur ${target.name}/${vpName} : ${apiError?.trim()}`,
+        ).toBeNull();
+
+        if (cards === 0) {
+          // Une liste encore en chargement n'est ni « vide » ni « cassée » : c'est
+          // un troisième état, observé en prod le 2026-10-09 (panneau figé sur
+          // « Chargement… » pendant plus de 3 min). Le nommer évite qu'un tel
+          // blocage passe pour un sport legitement vide.
+          const stuck = await page.getByText(/Chargement/i).first().isVisible().catch(() => false);
+          expect(
+            stuck,
+            `liste encore en chargement après 90 s sur ${target.name}/${vpName} ` +
+              `(voir ${file})`,
+          ).toBe(false);
+
+          // État vide toléré, mais seulement si le composant l'annonce : sinon on
+          // ne sait pas distinguer « pas de match » d'une liste cassée.
+          const emptyState = await page.locator('[data-testid="empty-state"]').count();
+          expect(
+            emptyState,
+            `aucune carte ET aucun [data-testid="empty-state"] : impossible de ` +
+              `dire si le sport est vide ou si la liste est cassée ` +
+              `(voir ${file})`,
+          ).toBeGreaterThan(0);
           console.log(
-            `[${target.name}/${vpName}] AUCUNE CARTE — assertion badge sautée ` +
-              `(données absentes, état normal : base locale vide / flux hors ligne)`,
+            `[${target.name}/${vpName}] liste vide ASSUMÉE (empty-state présent).`,
           );
+          return;
         }
+
+        // 4. Des cartes rendues ⇒ le badge d'état de MatchShell doit l'être aussi.
+        expect(states, "des cartes sont rendues mais aucun badge d'état").toBeGreaterThan(0);
       });
     }
   }
