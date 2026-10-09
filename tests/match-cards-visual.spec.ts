@@ -363,27 +363,49 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
     // Le niveau publié doit être 1, 2 ou 3 — jamais une valeur hors contrat.
     expect(["1", "2", "3"]).toContain((retained as { level: string }).level);
 
-    // Un pari retenu doit satisfaire le SEUIL de la mission : cote cible = 1/P
-    // ≥ 1.20, soit P ≤ 83.3 %. On relit la proba PUBLIÉE et on vérifie le
-    // seuil —.Assertion précédente : /\d+\.\d/ sur le texte entier, elle
-    // passait sur la seule proba et ne testait donc rien.
-    const grid = page.locator('[data-testid="handball-prediction-cards"]').first();
-    const text = ((await grid.textContent()) ?? "").replace(/\s+/g, " ");
-    const proba = Number(text.match(/Proba\s*([\d.,]+)\s*%/)?.[1]?.replace(",", ".") ?? NaN);
-    expect(Number.isFinite(proba), `proba illisible dans la carte : « ${text.slice(0, 120)} »`).toBe(true);
+// Un pari retenu doit satisfaire le SEUIL de la mission : cote cible = 1/P
+    // >= 1.20, soit P <= 83.3 %.
+    //
+    // La lecture se fait sur la SECTION « Value Bet » et nowhere else : la
+    // grille contient trois cartes, chacune avec son propre « Proba ». Une
+    // regex sur le texte entier captait celle de « Total Over Goals » (66.9 %)
+    // au lieu de celle de Value Bet (50.1 %) — le test échouait donc sur un
+    // calcul faux, pas sur un défaut produit.
+    const vb = await page.evaluate(() => {
+      const grid = document.querySelector('[data-testid="handball-prediction-cards"]');
+      if (!grid) return null;
+      const section = Array.from(grid.querySelectorAll("section")).find(
+        (s) => (s.querySelector("h4")?.textContent ?? "").trim() === "Value Bet",
+      );
+      if (!section) return null;
+      const dds = Array.from(section.querySelectorAll("dd")).map((d) =>
+        (d.textContent ?? "").trim(),
+      );
+      return {
+        label: (section.querySelector("p")?.textContent ?? "").trim(),
+        proba: dds[0] ?? "",
+        fair: dds[1] ?? "",
+        ev: dds[2] ?? "",
+      };
+    });
+
+    expect(vb, "section « Value Bet » absente de la grille").not.toBeNull();
+    const proba = Number((vb!.proba ?? "").replace("%", "").replace(",", "."));
+    expect(Number.isFinite(proba), `proba illisible : « ${vb!.proba} »`).toBe(true);
 
     const targetOdds = 100 / proba;
     expect(
       targetOdds,
       `niveau ${(retained as { level: string }).level} retenu avec P ${proba} % ` +
-        `=> cote cible ${targetOdds.toFixed(2)}, sous le seuil ${1.2}`,
+        `=> cote cible ${targetOdds.toFixed(2)}, sous le seuil 1.2`,
     ).toBeGreaterThanOrEqual(1.2);
 
-    // Et la carte doit afficher CETTE cote juste, sinon l'utilisateur n'a pas
-    // de quoi juger le pari.
+    // Et la carte doit afficher CETTE cote juste : sans elle l'utilisateur
+    // n'a aucun moyen de juger le pari (c'était le bug « Cote — »).
     expect(
-      text,
-      `cote juste absente de la carte (relevé : « ${text.slice(0, 120)} »)`,
+      vb!.fair,
+      `cote juste absente ou incohérente (proba ${proba} % => attendu ` +
+        `${targetOdds.toFixed(2)}, lu « ${vb!.fair} »)`,
     ).toContain(targetOdds.toFixed(2));
 
     await page.screenshot({
