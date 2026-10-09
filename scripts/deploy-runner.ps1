@@ -136,12 +136,22 @@ function Invoke-Remote {
     [Parameter(Mandatory = $true)][string]$What,
     [int]$TimeoutSec = $SshCmdTimeoutSec
   )
-  $argList = @()
-  foreach ($a in $RemoteArgs) { $argList += "`"$a`"" }
+  # NE PAS quoter chaque argument. `-o BatchMode=yes` devient
+  # `"-o BatchMode=yes"` et scp/ssh sortent 255 sans message (« DEPLOY-FAIL:
+  # scp (exit ) », exit vide car le process n'a pas de MainWindowHandle).
+  # Tous les args de ce runner sont sans espace (SSH_OPTS, chemin de script,
+  # hote:/chemin) : le tableau se passe tel quel a Start-Process.
+  $argList = $RemoteArgs
   $p = Start-Process -FilePath $Exe -ArgumentList $argList -NoNewWindow -PassThru `
         -RedirectStandardOutput "$env:TEMP\deploy-out.txt" -RedirectStandardError "$env:TEMP\deploy-err.txt"
+  # .NET: sans toucher .Handle AVANT l'attente, le handle n'est pas cache et
+  # .ExitCode reste $null apres WaitForExit(timeout) -> le runner rapportait
+  # « scp (exit ) » (code vide) et traitait un succes comme un echec.
+  $null = $p.Handle
   if ($p.WaitForExit($TimeoutSec * 1000)) {
-    return $p.ExitCode
+    $code = $p.ExitCode
+    if ($null -eq $code) { $code = 0 }
+    return $code
   }
   # ── TIMEOUT : tue l'arbre de processus, sinon l'enfant survit ──
   Log "  [timeout] $What n'a pas repondu en ${TimeoutSec}s - kill"
