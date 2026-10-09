@@ -219,6 +219,61 @@ describe("BUG set 3 : ① ne doit JAMAIS contredire ② (Khachanov vs Fery)", ()
   });
 });
 
+describe("BUG permutation A/B — Mertens vs Swiatek (set 2, Swiatek 79 %)", () => {
+  // Capture : ② Vainqueur du set 2 → Mertens 21 % / Swiatek 79 %
+  //           ① Vainqueur du match → Mertens 82 % / Swiatek 18 %
+  // Swiatek a gagné le set 1 ET mène le set 2 : Mertens ne peut PAS être à 82 %.
+  const setWinA = 0.21; // Mertens au set 2
+
+  test("menant au set 2 alors qu'il a perdu le set 1 : P(match) s'effondre", () => {
+    const setsWonA = 0;
+    const setsWonB = 1;
+    const pMatch = matchWinProbFromSets(setWinA, setsWonA, setsWonB, true);
+    // Doit être 0,21 (x) le set 3 qu'il faut aussi gagner.
+    expect(pMatch).toBeLessThan(setWinA);
+    expect(pMatch).toBeLessThan(0.1);
+    // Et surtout : jamais l'inversion observée.
+    expect(pMatch).toBeLessThan(0.25);
+  });
+
+  test("la chaîne complète ne peut jamais dépasser ② quand A est distancé", () => {
+    // setsDetail ne publie que des sets DÉCIDÉS : A en a perdu un, B en a
+    // gagné un. setsA/setsB doivent être 0 et 1, PAS 1 et 1 (longueur du
+    // tableau), sinon le moteur croit au scenario 1-1 et renvoie setWinA.
+    const setsDetailA = [3]; // Mertens : 3 jeux sur le set 1
+    const setsDetailB = [6]; // Swiatek : 6 jeux sur le set 1
+    const setsWonA = setsDetailA.filter((g, i) => g > (setsDetailB[i] ?? 0)).length;
+    const setsWonB = setsDetailB.filter((g, i) => g > (setsDetailA[i] ?? 0)).length;
+    expect(setsWonA).toBe(0);
+    expect(setsWonB).toBe(1);
+    // longueur naïve ≠ sets gagnés (piège qui causait l'inversion)
+    expect(setsDetailA.length).toBe(1);
+    expect(setsDetailB.length).toBe(1);
+  });
+
+  test("symétrique : favori qui mène le set et le set précédent", () => {
+    // Swiatek à l'inverse : set 1 gagné + set 2 à 79 %.
+    const p = matchWinProbFromSets(0.79, 1, 0, true);
+    expect(p).toBeGreaterThan(0.79);
+    expect(p).toBeGreaterThan(0.9);
+  });
+
+  test("invariant de cohérence : ① ne contredit jamais ②", () => {
+    const hold = gameWinProb(0.62);
+    for (const [sA, sB] of [[0, 0], [1, 0], [0, 1], [1, 1]] as Array<[number, number]>) {
+      for (const [gA, gB] of [[0, 0], [3, 2], [5, 1], [2, 5]] as Array<[number, number]>) {
+        const pSet = setWinProb(hold, hold, sA, sB, sA + sB + 1, gA, gB, "A");
+        const pMatch = matchWinProbFromSets(pSet, sA, sB, true);
+        if (sA > sB) expect(pMatch).toBeGreaterThanOrEqual(pSet - 1e-9);
+        if (sA < sB) expect(pMatch).toBeLessThanOrEqual(pSet + 1e-9);
+        // Un joueur qui mène le set ET les sets ne peut jamais perdre le match.
+        if (sA > sB && pSet > 0.5) expect(pMatch).toBeGreaterThan(0.5);
+        if (sA < sB && pSet < 0.5) expect(pMatch).toBeLessThan(0.5);
+      }
+    }
+  });
+});
+
 describe("bornes et robustesse (bornage anti-binaire des marchés macro)", () => {
   test("toute proba de set/match reste dans [0, 1]", () => {
     for (let gA = 0; gA <= 7; gA++) {

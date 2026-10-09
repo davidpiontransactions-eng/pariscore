@@ -44,6 +44,12 @@ interface SportsSidebarState {
    * centrale n'affiche que ces matchs (ids compatibles arbre ↔ payload).
    */
   selectedMatchIds: string[];
+  /**
+   * Match dont le widget Live « PiP » est DÉPLOYÉ (panneau de marchés ouvert).
+   * null = rien de déployé. Piloté depuis les cartes live via le bouton
+   * « 🎯 Widget Live » pour une ouverture en 1 clic.
+   */
+  expandedMatchId: string | null;
   /** Ensembles nommés de ligues favorites (nom → liste d'ids "sport:slug"). */
   namedLeagueSets: Record<string, string[]>;
   /** Ensemble nommé actuellement actif (null = aucun, affiche tous les favoris). */
@@ -83,6 +89,8 @@ interface SportsSidebarState {
   toggleMatchSelection: (matchId: string) => void;
   /** Retire un id de la sélection — idempotent (ne le rajoute jamais). */
   removeMatchSelection: (matchId: string) => void;
+  /** Déplie (id) ou replie (null) le widget Live PiP sur un match précis. */
+  setExpandedMatchId: (matchId: string | null) => void;
   /** Vide la sélection de matchs. */
   clearMatchSelection: () => void;
   /** Sauvegarde les favoris courants sous un nom d'ensemble. */
@@ -114,6 +122,7 @@ const DEFAULTS = {
   selectedCountryId: null as string | null,
   drawerOpen: false,
   selectedMatchIds: [] as string[],
+    expandedMatchId: null,
   activeLeagueSet: null as string | null,
   hideOdds: false,
   followedTeamIds: [] as string[],
@@ -256,6 +265,13 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
             ? { selectedMatchIds: s.selectedMatchIds.filter((id) => id !== matchId) }
             : {},
         ),
+
+      // Ouvre le widget Live sur un match précis. `expandedMatchId` était un
+      // useState LOCAL de match-pip-widget.tsx : impossible à piloter depuis une
+      // carte de match, donc le raccourci « Widget Live » demandait 2 clics
+      // (épingler, puis cliquer la ligne). Remonté ici pour permettre le
+      // 1-clic. `null` = widget replié.
+      setExpandedMatchId: (matchId) => set({ expandedMatchId: matchId }),
 
       clearMatchSelection: () => set({ selectedMatchIds: [] }),
 

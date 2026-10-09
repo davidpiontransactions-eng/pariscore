@@ -110,7 +110,20 @@ export function MatchPipWidget({ focusMatch = null }: Props = {}) {
   const { liveStates, liveMatchList, connectionStatus } = useLiveStream();
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const removeMatchSelection = useSportsSidebarStore((s) => s.removeMatchSelection);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Ouverture 1-clic depuis une carte live (« 🎯 Widget Live »). Reste piloté
+  // localement pour que le widget garde son comportement autonome (clic sur
+  // une ligne), mais le store prend la main dès qu'une carte le demande.
+  const storeExpandedId = useSportsSidebarStore((s) => s.expandedMatchId);
+  const setStoreExpandedId = useSportsSidebarStore((s) => s.setExpandedMatchId);
+  const [localExpandedId, setLocalExpandedId] = useState<string | null>(null);
+  const expandedId = storeExpandedId ?? localExpandedId;
+  const setExpandedId = useCallback(
+    (id: string | null) => {
+      setLocalExpandedId(id);
+      setStoreExpandedId(id);
+    },
+    [setStoreExpandedId]
+  );
 
   // Dépingle un match des DEUX sources (★ follows + sélection sidebar) : le
   // widget lit leur union, laisser l'un des deux would le ferait réapparaître au
@@ -119,9 +132,9 @@ export function MatchPipWidget({ focusMatch = null }: Props = {}) {
     (matchId: string) => {
       removeMatchSelection(matchId);
       removeFavorite(matchId);
-      setExpandedId((cur) => (cur && sameBsdMatch(cur, matchId) ? null : cur));
+      setExpandedId(expandedId && sameBsdMatch(expandedId, matchId) ? null : expandedId);
     },
-    [removeMatchSelection, removeFavorite],
+    [removeMatchSelection, removeFavorite, setExpandedId, expandedId],
   );
 
   // Lignes du widget, dans l'ordre : (1) le match ciblé, toujours présent ;

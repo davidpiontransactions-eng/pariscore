@@ -396,17 +396,27 @@ function PipBetPanelImpl({
     // Le set en cours est-il fini ? Un set se conclut à 6 jeux (ou 7-6/7-5).
     const currentSetFinished = gamesA >= 6 || gamesB >= 6;
 
-    // Nombre de sets RÉELLEMENT gagnés. `scoreA.sets.length` ne peut pas être
-    // utilisé tel quel : le tableau `setsDetail` de BSD inclut le set EN COURS,
-    // donc sa longueur surcompte d'un set dès que l'index du set courant est
-    // décalé d'un cran. Symptôme observé (Khachanov vs Fery, set 3) :
-    //   ② Vainqueur du set 3 → 67 % / 33 %
-    //   ① Vainqueur du match  → 100 % / 0 %      ← absurde
-    // On borne donc par `currentSet` (index 0-based du set en cours = nombre
-    // de sets déjà terminés) et on refuse l'absorption tant que le set joue.
-    const completed = Math.max(0, liveState.currentSet);
-    const setsA = Math.min(liveState.scoreA.sets.length, completed);
-    const setsB = Math.min(liveState.scoreB.sets.length, completed);
+    // Sets RÉELLEMENT GAGNÉS par chaque joueur.
+    //
+    // ⚠️ `scoreA.sets.length` NE VAUT PAS « sets gagnés par A » : les deux
+    // tableaux font la MÊME longueur (celle des sets DÉCIDÉS), l'un comme
+    // l'autre. Les comparer à leur longueur donnait donc un 1-1 imaginaire
+    // pour tout match à un set décidé, et le poids du marché restait à 80 %
+    // alors que le favori menait le set en cours.
+    //
+    // Symptôme observé (Mertens vs Swiatek, set 2, Swiatek 79 % au set) :
+    //   ② Vainqueur du set 2 → Swiatek 79 %      (setWinA = 0,21 pour Mertens)
+    //   ① Vainqueur du match → Mertens 82 %       ← INCOHÉRENT
+    //
+    // `setsDetail` ne publie que des sets DÉCIDÉS (cf. live-state-builder), donc
+    // gagner un set = avoir strictement plus de jeux que l'autre à l'indice i.
+    const setsA = liveState.scoreA.sets.filter(
+      (g, i) => g > (liveState.scoreB.sets[i] ?? 0)
+    ).length;
+    const setsB = liveState.scoreB.sets.filter(
+      (g, i) => g > (liveState.scoreA.sets[i] ?? 0)
+    ).length;
+    const decidedSets = setsA + setsB;
 
     const winner = setsA >= 2 ? "A" : setsB >= 2 ? "B" : null;
     // 100 % uniquement si le set qui rapporte le 2e set est RÉELLEMENT fini.
@@ -415,8 +425,8 @@ function PipBetPanelImpl({
     }
 
     const modelA = matchWinProbFromSets(setAndGames.setWinA, setsA, setsB, true);
-    // sets joués = avance réelle + poids du set en cours.
-    const weightModel = Math.min(1, Math.max(0, (setsA + setsB + 0.5) / 2.5));
+    // Poids du modèle = part du match déjà jouée + le set en cours.
+    const weightModel = Math.min(1, Math.max(0, (decidedSets + 1) / 3));
     let blendedA = modelA * weightModel + bet1.probA * (1 - weightModel);
     let blendedB = (1 - modelA) * weightModel + bet1.probB * (1 - weightModel);
     const total = blendedA + blendedB;

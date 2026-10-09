@@ -125,13 +125,30 @@ export function matchSig(m: RawLiveMatch): string {
   );
 }
 
+/** Un set est TERMINÉ quand un joueur a 6 jeux avec 2 d'écart, ou 7-6/7-5 au tie-break. */
+function isSetDecided(s: { p1: number; p2: number }): boolean {
+  const hi = Math.max(s.p1, s.p2);
+  const lo = Math.min(s.p1, s.p2);
+  if (hi < 6) return false;
+  // 6-x, 7-x à 2 d'écart → gagné. 7-6 / 7-5 → gagné AU TIE-BREAK (écart 1).
+  return hi - lo >= 2 || hi === 7;
+}
+
 /** Conversion match brut → LiveMatchState (même shape qu'avant). */
 export function toLiveState(m: RawLiveMatch, updatedAt: string): LiveMatchState {
-  // FIX doublon score : ne compte que les sets TERMINÉS — le set courant est
-  // exclu (il est déjà dans currentGame), sinon il serait compté deux fois.
-  const completedCount = Math.min(m.currentSet, (m.setsDetail?.length ?? 0) - 1);
-  const setsA = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
-  const setsB = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
+  // FIX surcomptage des sets : `setsDetail` inclut le set EN COURS. Compter
+  // `slice(0, min(currentSet, length - 1))` donnait `setsA.length` = nombre
+  // d'entrées du TABLEAU, pas nombre de sets GAGNÉS — dès que l'index du set
+  // courant était décalé d'un cran par rapport à la position réelle, un match
+  // à 1-1 exposait 2 sets gagnés et le marché ① s'affichait à 100 % pendant
+  // que le set 3 décisif était à 67 % (Khachanov vs Fery, incident 47b3e074).
+  //
+  // On ne retient donc que les sets RÉELLEMENT decided : c'est auto-cohérent
+  // quelle que soit la position du set courant dans `setsDetail`, et ça couvre
+  // le tie-break (7-6) là où un simple `diff >= 2` l'aurait écarté à tort.
+  const decided = (m.setsDetail ?? []).filter(isSetDecided);
+  const setsA = decided.map((s) => s.p1);
+  const setsB = decided.map((s) => s.p2);
 
   return {
     matchId: m.id,

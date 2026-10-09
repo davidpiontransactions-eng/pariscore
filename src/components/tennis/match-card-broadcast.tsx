@@ -39,6 +39,7 @@ import { MostAcesCompare } from "./most-aces-compare";
 import { MomentumDR } from "./momentum-dr";
 import { MomentumScoreDuo } from "./momentum-score";
 import { WinProbabilityChart } from "./win-probability-chart";
+import { WidgetLiveButton } from "./widget-live-button";
 import { PointTimeline } from "./point-timeline";
 import { LiveStatsPanel } from "./live-stats-panel";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
@@ -595,6 +596,13 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             probB={probB}
             className="mt-1"
           />
+        )}
+
+        {/* Raccourci 1-clic vers le Widget Live de CE match (épingle + déplie). */}
+        {isLive && liveState && (
+          <div className="mt-2 flex justify-end">
+            <WidgetLiveButton matchId={match.id} />
+          </div>
         )}
 
         {/* Sections LIVE analytiques — MomentumDR + WinProbabilityChart +
