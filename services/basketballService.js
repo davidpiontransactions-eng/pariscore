@@ -275,9 +275,12 @@ function computeNbaWinProb(homeRec, awayRec, homeId, awayId) {
  * l'avantage terrain. Résultat : un biais systématique vers l'OVER sur tous
  * les matchs. Le HCA déplace la MARGE (domicile − extérieur), pas la somme.
  */
+function _totalParts(pfH, paH, pfA, paA, leagueAvg) {
+  return { expH: (pfH * paA) / leagueAvg, expA: (pfA * paH) / leagueAvg };
+}
+
 function _totalExpected(pfH, paH, pfA, paA, leagueAvg) {
-  const expH = (pfH * paA) / leagueAvg;
-  const expA = (pfA * paH) / leagueAvg;
+  const { expH, expA } = _totalParts(pfH, paH, pfA, paA, leagueAvg);
   return +(expH + expA).toFixed(1);
 }
 
@@ -288,6 +291,13 @@ function computeNbaTotal(homeStats, awayStats, homeId, awayId) {
   const sA = _standings.map && _standings.map[awayId];
   const LA = _standings.leagueAvg || 114.5;
   if (sH && sA && sH.avgPF != null && sH.avgPA != null && sA.avgPF != null && sA.avgPA != null) {
+    // expH/expA sont calculés DANS _totalExpected depuis la correction du
+    // biais HCA : ils n'étaient plus dans le scope de cette fonction. Le
+    // retour les lisait quand même -> `ReferenceError: expH is not defined`,
+    // jeté pour CHAQUE match des que les standings existent. Symptôme vu en
+    // prod : /api/nba/matches en 503 `{"details":"expH is not defined"}`,
+    // donc TOUTE la liste NBA disparaît (pas seulement un match).
+    const { expH, expA } = _totalParts(sH.avgPF, sH.avgPA, sA.avgPF, sA.avgPA, LA);
     const expected = _totalExpected(sH.avgPF, sH.avgPA, sA.avgPF, sA.avgPA, LA);
     return {
       expected_total: expected, exp_home: +expH.toFixed(1), exp_away: +expA.toFixed(1),
