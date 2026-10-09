@@ -20,7 +20,17 @@ type Props = {
 export function MatchEmptyState({ mode, className, onResetFilters }: Props) {
   const t = useTranslations("matchTabs");
   return (
-    <div className={cn("flex flex-col items-center justify-center py-16 text-center", className)}>
+    <div
+      // Ancre terminale OFFICIELLE d'un onglet vide. Sans elle, un test visuel
+      // ne peut pas distinguer « ce sport n'a aucun match aujourd'hui » d'une
+      // liste cassée ou figée : les deux rendent zéro carte. Constaté le
+      // 2026-10-09 sur l'onglet Basketball, qui restait bloqué sur son
+      // squelette de chargement sans jamais rendre cet état.
+      data-testid="empty-state"
+      role="status"
+      aria-live="polite"
+      className={cn("flex flex-col items-center justify-center py-16 text-center", className)}
+    >
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
         <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" aria-hidden />
       </div>

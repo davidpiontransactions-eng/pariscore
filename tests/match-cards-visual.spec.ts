@@ -3,30 +3,31 @@ import { test, expect } from "@playwright/test";
 /**
  * QA visuelle des cartes de match après l'extraction `MatchShell` + `MatchStateBadge`.
  *
- * ## Pourquoi le local et pas la prod
+ * ## Quelle URL cette spec cible
  *
- * Les specs visuelles du dépôt ciblent `https://pariscore.fr` par défaut. Ce n'est pas
- * applicable ici : le code de ce chantier est **committé mais pas déployé**. Sur prod,
- * une assertion `[data-state]` passerait en vert sur l'ancien code — le test confirmerait
- * exactement ce qu'il prétend vérifier. `QA_BASE_URL` permet de viser la prod pour une
- * régression ultérieure.
+ * `QA_BASE_URL` (et **pas** `PLAYWRIGHT_BASE_URL`, qui n'est lu par personne
+ * ici — un run « contre la prod » tapait en réalité `127.0.0.1:3000` et
+ * échouait sur un serveur absent, ce qui fit conclure à tort que l'UI de prod
+ * était figée ; constat du 2026-10-09). Sans variable, la spec vise le local.
  *
  * ## Ce qui est vérifié sans dépendre des données
  *
  * Le rendu ne casse pas (pas d'erreur React fatale), pas de débordement horizontal à
- * 375 px, screenshot de preuve. Ces trois-là tiennent même quand aucun match n'est
- * disponible — la base locale est vide et les flux externes peuvent être en panne, et
- * une journée sans match est un état **normal**, pas une panne (cf. rapport NHL §3).
+ * 375 px, screenshot de preuve. Un onglet sans match doit porter son
+ * `empty-state` : sans cette ancre, « pas de match » et « liste cassée » sont
+ * indiscernables.
  *
  * ## Ce qui est vérifié SI des données sont présentes
  *
  * La présence du badge d'état. C'est la seule assertion qui prouve le câblage réel :
  * `MatchStateBadge` est rendu par `MatchShell`, que basketball et handball appellent
- * désormais. Conditionnée, et signalée explicitement quand elle saute.
+ * désormais.
  */
 
 const BASE = process.env.QA_BASE_URL ?? "http://127.0.0.1:3000";
 const OUT = "tests/qa-screenshots";
+/** Temps de stabilisation du panneau avant toute assertion — voir `openSportTab`. */
+const SETTLE_MS = 35_000;
 
 const VIEWPORTS = {
   desktop: { width: 1280, height: 800 },
@@ -58,41 +59,60 @@ async function acceptCookies(page: import("@playwright/test").Page): Promise<voi
 }
 
 /**
- * Ouvre un onglet sport. Renvoie `false` si l'onglet n'est pas atteignable.
+ * Ouvre un onglet sport. Renvoie `false` si le sport n'est atteignable ni par la
+ * barre ni par le menu « Plus ».
  *
- * **Un onglet absent n'est pas un bug.** `SPORT_TABS` (`sport-tabs.tsx:58-70`) compte 12
- * sports : les favoris sont en barre, le reste passe par un groupe secondaire en
- * débordement. Handball est le dernier de la liste et n'apparaît donc pas comme un
- * `tab` direct — le premier jet de cette spec échouait sur un timeout de 20 s à chaque
- * exécution, ce qui n'était pas une régression du rendu mais un fait d'ergonomie.
+ * `SPORT_TABS` compte 12 sports : les favoris sont en barre, les autres passent
+ * par le menu « Plus » (débordement). Handball est secondaire, donc absent de la
+ * barre — sans ce repli, ses tests étaient skippés et la carte Value Bet
+ * handball n'a jamais été scannée.
+ *
+ * Le bouton « Plus » n'a **pas** d'`aria-label` (cf. `sport-tabs.tsx:256-274`) :
+ * on le cible par `aria-haspopup="true"` + texte, pas par un libellé supposé.
  */
 async function openSportTab(
   page: import("@playwright/test").Page,
   sport: RegExp,
 ): Promise<boolean> {
-  const tab = page
+  const bar = page
     .locator('[role="tablist"][aria-label="Navigation par sport"]')
     .getByRole("tab", { name: sport })
     .first();
-  if ((await tab.count()) === 0) return false;
-await tab.click({ timeout: 15_000 });
+  if ((await bar.count()) > 0) {
+    await bar.click({ timeout: 15_000 });
+  } else {
+    // Repli « Plus » : le portal est rendu dans `document.body`, hors du
+    // tablist — on cherche donc le sport dans toute la page après ouverture.
+    const more = page.locator('button[aria-haspopup="true"]:has-text("Plus")').first();
+    if ((await more.count()) === 0) return false;
+    await more.click({ timeout: 15_000 });
 
-  // Le tab charge ses données de façon asynchrone. L'attente fixe de 6 s du
-  // premier jet était calibrée sur une liste déjà en cache : en prod à froid
-  // elle expirait avant la fin du chargement, et l'absence de carte était
-  // ensuite traitée comme un état normal (2026-10-09).
+    // L'option doit être cherchée DANS le portal du menu, pas dans toute la
+    // page : `button:has-text("Handball")` matchait d'abord le bouton de la
+    // barre latérale (`aria-label="Élargir Handball"`), et le clic partait alors
+    // dans l'overlay de fermeture `fixed inset-0 z-40` — timeout à chaque fois.
+    //
+    // Le portal est identifié par `min-w-[140px]`, sa classe propre : cibler
+    // `z-50` ne suffit pas, le bandeau responsible-gambling est lui aussi en
+    // `z-50` et sortait en premier, ce qui faisait échouer silencieusement.
+    const menu = page.locator('div[class*="min-w-[140px]"]').first();
+    const option = menu.locator("button").filter({ hasText: sport }).first();
+    if ((await option.count()) === 0) return false;
+    await option.click({ timeout: 15_000 });
+  }
+
+  // Le panneau met plusieurs sources à charger (NBA, WNBA, EuroLeague, EuroCup
+  // — mesuré en prod : 1,2 s à 1,7 s par route) et le rendu suit la dernière.
   //
-  // On attend la DISPARITION de l'indicateur de chargement, pas « des cartes » :
-  // un sélecteur large (`[role="button"]`) matchait un bouton du header dès la
-  // milliseconde et ne servait à rien. Une route en 503 ou une liste bloquée se
-  // terminent aussi — mais par un échec, que les assertions plus bas nomment.
-  await page
-    .getByText(/Chargement/i)
-    .first()
-    .waitFor({ state: "hidden", timeout: 90_000 })
-    .catch(() => {
-      // Toujours chargé au bout de 90 s : traité plus bas comme liste bloquée.
-    });
+  // On n'attend PAS « la disparition de Chargement… » : ce texte existe dans
+  // plusieurs panneaux (handball-tab-content, football-league-rankings-widget,
+  // tennis-top10-section…) et `getByText(...).first()` visait un nœud arbitraire.
+  // On ne sonde PAS non plus « une carte est-elle présente ? » : les panneaux des
+  // AUTRES sports restent montés, donc ce test est vrai dès la première seconde
+  // et la spec relatait l'état trop tôt (mesuré : 0 carte côté spec quand une
+  // sonde isolée en voyait 3 à 35 s). D'où un temps de stabilisation BRUT,
+  // calé sur la valeur mesurée, et non sur une terminaison devinée.
+  await page.waitForTimeout(SETTLE_MS);
   return true;
 }
 
@@ -178,19 +198,26 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
         ).toBeNull();
 
         if (cards === 0) {
-          // Une liste encore en chargement n'est ni « vide » ni « cassée » : c'est
-          // un troisième état, observé en prod le 2026-10-09 (panneau figé sur
-          // « Chargement… » pendant plus de 3 min). Le nommer évite qu'un tel
-          // blocage passe pour un sport legitement vide.
-          const stuck = await page.getByText(/Chargement/i).first().isVisible().catch(() => false);
+          // Zéro carte, zéro état vide, zéro erreur 5xx : le panneau n'a atteint
+          // AUCUN état terminal. On le nomme explicitement plutôt que de supposer
+          // « sport vide » — c'est ce qui avait masqué la panne du 2026-10-09.
+          const stillLoading = await page.evaluate(() =>
+            Array.from(document.querySelectorAll("*")).some(
+              (el) =>
+                (el as HTMLElement).offsetParent !== null &&
+                el.children.length === 0 &&
+                /Chargement/i.test(el.textContent ?? ""),
+            ),
+          );
           expect(
-            stuck,
-            `liste encore en chargement après 90 s sur ${target.name}/${vpName} ` +
-              `(voir ${file})`,
+            stillLoading,
+            `aucun état terminal atteint après ${SETTLE_MS / 1000} s sur ` +
+              `${target.name}/${vpName} : ` +
+              `ni carte, ni [data-testid="empty-state"], ni erreur API — ` +
+              `le panneau est-il figé ? (voir ${file})`,
           ).toBe(false);
 
-          // État vide toléré, mais seulement si le composant l'annonce : sinon on
-          // ne sait pas distinguer « pas de match » d'une liste cassée.
+          // État vide toléré, mais seulement si le composant l'annonce.
           const emptyState = await page.locator('[data-testid="empty-state"]').count();
           expect(
             emptyState,
@@ -198,9 +225,6 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
               `dire si le sport est vide ou si la liste est cassée ` +
               `(voir ${file})`,
           ).toBeGreaterThan(0);
-          console.log(
-            `[${target.name}/${vpName}] liste vide ASSUMÉE (empty-state présent).`,
-          );
           return;
         }
 
