@@ -33,8 +33,16 @@ import {
   type LiveSport,
   type MarketScope,
 } from "@/lib/prediction/live-common";
+import { computeValueEdge, toPercent } from "@/lib/prediction/value-edge";
 
-/** Fenêtre « value » : probabilité dans [60 %, 70 %]. */
+/**
+ * Fenêtre « value » : probabilité entre [60 %, 70 %].
+ *
+ * Bornes exprimées en **fraction** pour rester dans l'échelle du contrat
+ * `LiveBetsBundle` — les écrire en pourcentage (60/70) ferait correspondre la fenêtre
+ * au voisinage de 0, c'est-à-dire à une probabilité de 60 %. C'est le genre d'erreur
+ * d'échelle invisible que `value-edge.ts` existe pour empêcher.
+ */
 const VALUE_MIN = 0.6;
 const VALUE_MAX = 0.7;
 
@@ -88,17 +96,49 @@ function NeonBar({ pct, tone }: { pct: number; tone: "a" | "b" | "amber" }) {
   );
 }
 
+/**
+ * Écart modèle/marché quand la cote live est connue, badge heuristique sinon.
+ *
+ * `edgePts === null` n'est pas un échec : c'est le cas **normal** tant qu'aucune cote
+ * live n'est transmise (mesuré : `/api/football/live` n'expose aucun prix). On garde alors
+ * le badge « value » — une probabilité dans la fenêtre — et on **n'affiche aucun écart en
+ * points**, qui serait un nombre sans référence à comparer.
+ */
+function OutcomeEdge({ prob, odd }: { prob: number; odd?: number | null }) {
+  const edge = computeValueEdge(prob, odd);
+  if (edge.edgePts == null) return <ValueBadge prob={prob} />;
+  if (!edge.meaningful) return null;
+  const positive = edge.edgePts > 0;
+  return (
+    <span
+      title={`Modèle ${edge.modelPct} % · marché ${edge.marketPct} % · écart ${edge.edgePts > 0 ? "+" : ""}${edge.edgePts} pts`}
+      className={cn(
+        "rounded-full px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums",
+        positive
+          ? "bg-emerald-500/15 text-emerald-300"
+          : "bg-rose-500/15 text-rose-300"
+      )}
+    >
+      {positive ? "+" : ""}
+      {edge.edgePts} pts
+    </span>
+  );
+}
+
 /** En-tête de marché : pastille numérotée, libellé, badge value à droite. */
 function MarketHead({
   n,
   label,
   hint,
   valueProb,
+  valueOdd,
 }: {
   n: string;
   label: string;
   hint?: string;
   valueProb?: number;
+  /** Cote live de l'issue la plus probable — `null` si le flux n'en transmet pas. */
+  valueOdd?: number | null;
 }) {
   return (
     <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -111,12 +151,20 @@ function MarketHead({
           </span>
         ) : null}
       </span>
-      {valueProb != null ? <ValueBadge prob={valueProb} /> : null}
+      {valueProb != null ? <OutcomeEdge prob={valueProb} odd={valueOdd} /> : null}
     </div>
   );
 }
 
-/** Ligne d'issue : libellé + jauge + %, empilée pour tenir sur mobile. */
+/**
+ * Ligne d'issue : libellé + jauge + %, empilée pour tenir sur mobile.
+ *
+ * `prob` est une fraction [0, 1] (contrat `LiveBetsBundle`). La conversion vers le
+ * pourcentage passe par `toPercent` et non par `prob * 100` : la fonction borne une
+ * entrée hors contrat au lieu de la multiplier, ce qui produit un « 6900 % » si un
+ * moteur livre un jour un pourcentage. `NeonBar` reçoit le même entier que le texte
+ * affiché — jauge et libellé ne peuvent donc pas diverger.
+ */
 function OutcomeRow({
   label,
   prob,
@@ -128,7 +176,7 @@ function OutcomeRow({
   tone: "a" | "b" | "amber";
   emphasis?: boolean;
 }) {
-  const pct = prob * 100;
+  const pct = toPercent(prob);
   return (
     <div className="flex items-center gap-2">
       <span
@@ -148,7 +196,7 @@ function OutcomeRow({
           tone === "a" ? "text-emerald-300" : tone === "b" ? "text-blue-300" : "text-amber-300"
         )}
       >
-        {pct.toFixed(0)}%
+        {pct}%
       </span>
     </div>
   );
@@ -193,7 +241,13 @@ function MarketCard({ n, market }: { n: string; market: LiveMarket }) {
   const top = market.outcomes.reduce((a, b) => (b.prob > a.prob ? b : a), market.outcomes[0]);
   return (
     <div className="min-w-0 rounded-2xl border border-white/5 bg-slate-950/40 p-3.5">
-      <MarketHead n={n} label={market.label} hint={market.hint} valueProb={top?.prob} />
+      <MarketHead
+        n={n}
+        label={market.label}
+        hint={market.hint}
+        valueProb={top?.prob}
+        valueOdd={top?.odd ?? null}
+      />
       <div className="space-y-1">
         {market.outcomes.map((o, i) => (
           <OutcomeRow

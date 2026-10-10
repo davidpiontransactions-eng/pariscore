@@ -43,6 +43,18 @@ export type LiveOutcome = {
   label: string;
   /** Probabilité dans [0, 1]. */
   prob: number;
+  /**
+   * Cote décimale live du marché pour CETTE issue, si le flux la transmet.
+   *
+   * Absente aujourd'hui : aucun moteur ne renseigne de prix (`/api/football/live`
+   * n'expose aucun champ de cote), donc le widget affiche le badge « value »
+   * heuristique et aucun écart en points. Le champ existe pour que le branchement soit
+   * une simple transmission de donnée, pas une modification du contrat.
+   *
+   * Règle : une issue porte **une** cote, celle de son propre marché. Mixer des cotes
+   * entre marchés donnerait un écart calculé contre la mauvaise référence.
+   */
+  odd?: number | null;
 };
 
 /** Un marché : un titre, N issues exhaustives, une portée. */
