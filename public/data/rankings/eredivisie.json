@@ -4,7 +4,7 @@
     "leagueId": "eredivisie",
     "leagueName": "Netherlands",
     "season": "2026-27",
-    "lastUpdated": "2026-10-09T11:14:47.961177Z",
+    "lastUpdated": "2026-10-10T08:22:42.840845Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -21,19 +21,19 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "PSV",
+        "value": 2.5,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "AZ Alkmaar",
         "value": 2.5,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "PSV",
-        "value": 2.33,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Go Ahead Eagles",
         "value": 2.33,
@@ -149,26 +149,26 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "PSV",
+        "value": 10.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "AZ Alkmaar",
         "value": 10.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "PSV",
-        "value": 7.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Go Ahead Eagles",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Fc Groningen",
         "value": 7.0,
@@ -271,8 +271,8 @@
         "rank": 1,
         "teamId": "",
         "teamName": "PSV",
-        "value": 11.0,
-        "played": 3
+        "value": 13.0,
+        "played": 4
       },
       {
         "rank": 2,
@@ -421,7 +421,7 @@
         "teamId": "",
         "teamName": "PSV",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 4,
@@ -527,8 +527,8 @@
         "rank": 1,
         "teamId": "",
         "teamName": "PSV",
-        "value": 7.0,
-        "played": 3
+        "value": 9.0,
+        "played": 4
       },
       {
         "rank": 2,
@@ -661,26 +661,26 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "PSV",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "AZ Alkmaar",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "PSV",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Go Ahead Eagles",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Fc Groningen",
         "value": 2.0,
@@ -810,16 +810,16 @@
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "AZ Alkmaar",
+        "teamName": "PSV",
         "value": 1.0,
         "played": 4
       },
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "PSV",
+        "teamName": "AZ Alkmaar",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 5,
@@ -917,16 +917,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "AZ Alkmaar",
+        "teamName": "PSV",
         "value": 0.0,
         "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "PSV",
+        "teamName": "AZ Alkmaar",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 1,
@@ -1089,23 +1089,23 @@
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Heerenveen",
-        "value": 1.67,
-        "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
         "teamName": "Twente",
         "value": 1.33,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Fc Groningen",
         "value": 1.33,
         "played": 3
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 1.25,
+        "played": 4
       },
       {
         "rank": 11,
@@ -1219,7 +1219,7 @@
         "teamId": "",
         "teamName": "Heerenveen",
         "value": 5.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 9,
@@ -1340,7 +1340,7 @@
         "teamId": "",
         "teamName": "Heerenveen",
         "value": 8.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 7,
@@ -1459,40 +1459,40 @@
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Heerenveen",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 5,
-        "teamId": "",
         "teamName": "Twente",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Nec Nijmegen",
         "value": 5.0,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Fortuna Sittard",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "PSV",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 9,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Cambuur",
         "value": 6.0,
@@ -1587,26 +1587,26 @@
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Heerenveen",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 7,
-        "teamId": "",
         "teamName": "Fortuna Sittard",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Nec Nijmegen",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Twente",
         "value": 2.0,
@@ -1731,7 +1731,7 @@
         "teamId": "",
         "teamName": "Heerenveen",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 8,
@@ -1824,7 +1824,7 @@
         "teamId": "",
         "teamName": "Heerenveen",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 2,
@@ -1969,49 +1969,49 @@
         "played": 4
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Heerenveen",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "PSV",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Nec Nijmegen",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Twente",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Fc Groningen",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Go Ahead Eagles",
         "value": 1.0,
         "played": 4
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Cambuur",
         "value": 1.0,

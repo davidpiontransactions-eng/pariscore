@@ -4,7 +4,7 @@
     "leagueId": "bundesliga2",
     "leagueName": "Germany2",
     "season": "2026-27",
-    "lastUpdated": "2026-10-09T11:14:39.255984Z",
+    "lastUpdated": "2026-10-10T08:22:35.747886Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -21,16 +21,16 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Heidenheim",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Hertha Berlin",
         "value": 3.0,
         "played": 2
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Heidenheim",
+        "value": 2.5,
+        "played": 4
       },
       {
         "rank": 4,
@@ -91,6 +91,13 @@
       {
         "rank": 12,
         "teamId": "",
+        "teamName": "Braunschweig",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 12,
+        "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 1.0,
         "played": 3
@@ -110,28 +117,21 @@
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Karlsruher SC",
         "value": 0.75,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bochum",
         "value": 0.33,
         "played": 3
       },
       {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Braunschweig",
-        "value": 0.33,
-        "played": 3
-      },
-      {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Greuther Furth",
         "value": 0.33,
@@ -142,14 +142,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Fc Nurnberg",
-        "value": 9.0,
-        "played": 3
+        "teamName": "Heidenheim",
+        "value": 10.0,
+        "played": 4
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
-        "teamName": "Heidenheim",
+        "teamName": "Fc Nurnberg",
         "value": 9.0,
         "played": 3
       },
@@ -217,49 +217,49 @@
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Braunschweig",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Osnabruck",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Karlsruher SC",
         "value": 3.0,
         "played": 4
       },
       {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Bochum",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 16,
-        "teamId": "",
-        "teamName": "Braunschweig",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 16,
+        "rank": 17,
         "teamId": "",
         "teamName": "Greuther Furth",
         "value": 1.0,
@@ -272,7 +272,7 @@
         "teamId": "",
         "teamName": "Heidenheim",
         "value": 10.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 2,
@@ -317,16 +317,16 @@
         "played": 3
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Holstein Kiel",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 8,
+        "rank": 6,
         "teamId": "",
         "teamName": "Braunschweig",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Holstein Kiel",
         "value": 5.0,
         "played": 3
       },
@@ -477,7 +477,7 @@
         "teamId": "",
         "teamName": "Heidenheim",
         "value": 6.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 12,
@@ -512,7 +512,7 @@
         "teamId": "",
         "teamName": "Braunschweig",
         "value": 8.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 18,
@@ -535,7 +535,7 @@
         "teamId": "",
         "teamName": "Heidenheim",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 2,
@@ -617,26 +617,26 @@
       {
         "rank": 14,
         "teamId": "",
+        "teamName": "Braunschweig",
+        "value": -2.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
+        "teamId": "",
         "teamName": "Bochum",
         "value": -2.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Osnabruck",
         "value": -3.0,
         "played": 3
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Braunschweig",
-        "value": -3.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Greuther Furth",
         "value": -3.0,
@@ -654,14 +654,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Fc Nurnberg",
+        "teamName": "Heidenheim",
         "value": 3.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Heidenheim",
+        "teamName": "Fc Nurnberg",
         "value": 3.0,
         "played": 3
       },
@@ -731,6 +731,13 @@
       {
         "rank": 6,
         "teamId": "",
+        "teamName": "Braunschweig",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 1.0,
         "played": 3
@@ -750,28 +757,21 @@
         "played": 4
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Bochum",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Braunschweig",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Greuther Furth",
         "value": 0.0,
@@ -803,6 +803,13 @@
       {
         "rank": 4,
         "teamId": "",
+        "teamName": "Heidenheim",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 4,
+        "teamId": "",
         "teamName": "Kaiserslautern",
         "value": 1.0,
         "played": 3
@@ -838,14 +845,14 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Bochum",
+        "teamName": "Braunschweig",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Braunschweig",
+        "teamName": "Bochum",
         "value": 1.0,
         "played": 3
       },
@@ -857,49 +864,42 @@
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Fc Nurnberg",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Heidenheim",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Hertha Berlin",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Magdeburg",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Osnabruck",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 13,
         "teamId": "",
         "teamName": "Karlsruher SC",
         "value": 0.0,
@@ -910,14 +910,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Fc Nurnberg",
+        "teamName": "Heidenheim",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Heidenheim",
+        "teamName": "Fc Nurnberg",
         "value": 0.0,
         "played": 3
       },
@@ -994,6 +994,13 @@
       {
         "rank": 13,
         "teamId": "",
+        "teamName": "Braunschweig",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 13,
+        "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 2.0,
         "played": 3
@@ -1009,13 +1016,6 @@
         "rank": 13,
         "teamId": "",
         "teamName": "Bochum",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Braunschweig",
         "value": 2.0,
         "played": 3
       },
@@ -1101,11 +1101,11 @@
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 10,
         "teamId": "",
         "teamName": "Kaiserslautern",
-        "value": 1.33,
-        "played": 3
+        "value": 1.25,
+        "played": 4
       },
       {
         "rank": 11,
@@ -1138,16 +1138,16 @@
       {
         "rank": 15,
         "teamId": "",
-        "teamName": "Holstein Kiel",
+        "teamName": "Dynamo Dresden",
         "value": 0.33,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Dynamo Dresden",
-        "value": 0.33,
-        "played": 3
+        "teamName": "Holstein Kiel",
+        "value": 0.25,
+        "played": 4
       },
       {
         "rank": 17,
@@ -1201,37 +1201,37 @@
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Kaiserslautern",
+        "value": 5.0,
+        "played": 4
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Magdeburg",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Energie Cottbus",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Osnabruck",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Heidenheim",
-        "value": 4.0,
-        "played": 3
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Kaiserslautern",
         "value": 4.0,
         "played": 3
       },
@@ -1268,7 +1268,7 @@
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 15,
@@ -1396,7 +1396,7 @@
         "teamId": "",
         "teamName": "Kaiserslautern",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 15,
@@ -1410,7 +1410,7 @@
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 18,
@@ -1461,7 +1461,7 @@
         "teamId": "",
         "teamName": "Kaiserslautern",
         "value": 4.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 7,
@@ -1506,18 +1506,18 @@
         "played": 3
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Holstein Kiel",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Heidenheim",
         "value": 6.0,
         "played": 3
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Holstein Kiel",
+        "value": 6.0,
+        "played": 4
       },
       {
         "rank": 15,
@@ -1629,14 +1629,14 @@
       {
         "rank": 12,
         "teamId": "",
-        "teamName": "Heidenheim",
+        "teamName": "Kaiserslautern",
         "value": -2.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 12,
         "teamId": "",
-        "teamName": "Kaiserslautern",
+        "teamName": "Heidenheim",
         "value": -2.0,
         "played": 3
       },
@@ -1651,8 +1651,8 @@
         "rank": 15,
         "teamId": "",
         "teamName": "Holstein Kiel",
-        "value": -3.0,
-        "played": 3
+        "value": -4.0,
+        "played": 4
       },
       {
         "rank": 16,
@@ -1715,6 +1715,13 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Kaiserslautern",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 5,
+        "teamId": "",
         "teamName": "Magdeburg",
         "value": 1.0,
         "played": 3
@@ -1737,13 +1744,6 @@
         "rank": 5,
         "teamId": "",
         "teamName": "Heidenheim",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Kaiserslautern",
         "value": 1.0,
         "played": 3
       },
@@ -1780,7 +1780,7 @@
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 13,
@@ -1822,61 +1822,61 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Kaiserslautern",
+        "value": 2.0,
+        "played": 4
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Karlsruher SC",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Fc Nurnberg",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Magdeburg",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Energie Cottbus",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Osnabruck",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Heidenheim",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Kaiserslautern",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Holstein Kiel",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 1.0,
@@ -1985,6 +1985,13 @@
       {
         "rank": 6,
         "teamId": "",
+        "teamName": "Kaiserslautern",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Magdeburg",
         "value": 1.0,
         "played": 3
@@ -2011,13 +2018,6 @@
         "played": 3
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Kaiserslautern",
-        "value": 1.0,
-        "played": 3
-      },
-      {
         "rank": 13,
         "teamId": "",
         "teamName": "Braunschweig",
@@ -2034,26 +2034,26 @@
       {
         "rank": 13,
         "teamId": "",
-        "teamName": "Holstein Kiel",
-        "value": 2.0,
-        "played": 3
-      },
-      {
-        "rank": 13,
-        "teamId": "",
         "teamName": "Dynamo Dresden",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 17,
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Holstein Kiel",
+        "value": 3.0,
+        "played": 4
+      },
+      {
+        "rank": 16,
         "teamId": "",
         "teamName": "Bielefeld",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Darmstadt",
         "value": 3.0,
