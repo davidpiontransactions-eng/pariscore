@@ -266,15 +266,81 @@ export const LEAGUE_INFO: Record<string, { name: string; country: string; sport:
  * reconstruire son propre mapping nom→pays — deux copies qui divergeraient au premier
  * ajout de ligue.
  *
+ * Trois passes, de la plus fiable à la moins :
+ *  1. nom exact dans `LEAGUE_INFO` (« La Liga » → Spain) ;
+ *  2. **préfixe pays** — les libellés BSD préfixent souvent le pays ou son adjectif
+ *     (« Austrian Bundesliga » → Austria, « Brasileirão Serie A » → Brazil) ;
+ *  3. `undefined`, et l'IHM range la ligue sous « Autres pays ».
+ *
  * Un même nom peut pointer deux fois (une `Serie A` en Italie et une autre) : le
  * dernier slug rencontré gagne. C'est documenté plutôt que masqué — le groupement par
  * pays sert à *rendre le nom lisible*, pas à prouver l'unicité d'une ligue.
  */
 export const LEAGUE_COUNTRY_BY_NAME: Record<string, string> = (() => {
   const index: Record<string, string> = {};
+  // **Premier slug gagne**, pas le dernier : `Bundesliga`, `Serie A`, `Super League` et
+  // `Primeira Liga` désignent chacun plusieurs pays, et l'ordre d'insertion du fichier
+  // ne dit rien de leur fréquence. Le premier déclaré est celui que l'on considère comme
+  // la ligue canonique — le « dernier gagne » était un choix arbitraire qui résolvait
+  // `Bundesliga` (Allemagne) résolue en `Austria` et `Serie A` (Italie) en un pays
+  // d'Europe de l'Est.
   for (const info of Object.values(LEAGUE_INFO)) {
     if (info.sport !== "football") continue;
-    index[info.name] = info.country;
+    if (index[info.name] == null) index[info.name] = info.country;
   }
   return index;
 })();
+
+/**
+ * Préfixes pays rencontrés dans les libellés de ligues BSD, vers leur nom de pays.
+ *
+ * Volontairement **court et explicite** : une règle automatique « le premier mot est un
+ * pays » se tromperait sur « League One » (Angleterre), « Super League » (Grèce) ou
+ * « Segunda División » (Espagne). Ces préfixes sont donc énumérés, pas devinés — la
+ * liste est courte parce que les noms réellement présents dans le flux le sont aussi.
+ */
+const LEAGUE_COUNTRY_PREFIXES: Record<string, string> = {
+  Austrian: "Austria",
+  Brazilian: "Brazil",
+  // BSD sert « Brasileirão » (portugais), pas seulement « Brazilian » (anglais).
+  Brasileirão: "Brazil",
+  Brasileir: "Brazil",
+  Chinese: "China",
+  Colombian: "Colombia",
+  Czech: "Czechia",
+  Danish: "Denmark",
+  Egyptian: "Egypt",
+  English: "England",
+  French: "France",
+  German: "Germany",
+  Italian: "Italy",
+  Japanese: "Japan",
+  Mexican: "Mexico",
+  Moroccan: "Morocco",
+  Nigerian: "Nigeria",
+  Polish: "Poland",
+  Portuguese: "Portugal",
+  Russian: "Russia",
+  Scottish: "Scotland",
+  Spanish: "Spain",
+  Swedish: "Sweden",
+  Swiss: "Switzerland",
+  Tunisian: "Tunisia",
+  Turkish: "Turkey",
+  Ukrainian: "Ukraine",
+  Welsh: "Wales",
+};
+
+/**
+ * Pays d'une ligue, ou `undefined` si la table ne sait pas.
+ *
+ * Exporte tel quel : l'IHM a besoin de savoir « je ne sais pas » pour afficher un
+ * groupe honnête, et `undefined` est plus facile à tester qu'un groupe sentinelle.
+ */
+export function leagueCountryOf(leagueName: string): string | undefined {
+  if (!leagueName) return undefined;
+  const exact = LEAGUE_COUNTRY_BY_NAME[leagueName];
+  if (exact) return exact;
+  const firstWord = leagueName.split(/[\s-]/)[0] ?? "";
+  return LEAGUE_COUNTRY_PREFIXES[firstWord];
+}

@@ -65,11 +65,48 @@ export function getFlagUrl(
 }
 
 /**
+ * Emoji drapeau universel, calculé depuis le code ISO 3166-1 alpha-2.
+ *
+ * Un drapeau est **deux Regional Indicator Symbols** : la lettre A (U+0041) devient
+ * U+1F1E6, B devient U+1F1E7, etc. — soit `0x1F1E6 + (lettre - 'A')`, ou de façon
+ * équivalente `127397 + charCodeAt(0)`. C'est une règle de l'Unicode, pas une
+ * convention : elle couvre **tous** les pays, sans table.
+ *
+ * La table `FLAG_EMOJI` ci-dessus reste le premier passage, car elle porte les cas
+ * qu'aucun calcul ne peut rendre (drapeaux de subdivision : `GB-ENG`, `GB-SCT`,
+ * `GB-WLS` n'ont pas d'équivalent alpha-2 en un seul couple de lettres).
+ *
+ * Sans ce repli, tout pays absent de la table s'affichait 🌍 — le cas réel des 64
+ * ligues du backtest football, dont une trentaine sont hors table.
+ *
+ * @param countryCode Code ISO alpha-2. Un code de subdivision (`XX-YYY`) est ignoré
+ *   par la conversion et passe par la table.
+ * @returns Emoji drapeau, ou ⚽ si l'entrée n'est pas un pays identifiable — un
+ *   sport plutôt qu'un globe muet, qui se lisait comme un bug de chargement.
+ */
+export function getCountryFlagEmoji(countryCode: string | null | undefined): string {
+  if (!countryCode) return "⚽";
+  const code = countryCode.trim();
+  if (!/^[A-Za-z]{2}$/.test(code)) {
+    // Subdivision (« GB-ENG », « INTL ») ou entrée invalide : table d'abord.
+    return FLAG_EMOJI[code.toUpperCase()] ?? "⚽";
+  }
+  const upper = code.toUpperCase();
+  // Table d'abord : elle peut porter une exception pour un alpha-2.
+  const known = FLAG_EMOJI[upper];
+  if (known) return known;
+  return String.fromCodePoint(
+    0x1f1e6 + upper.charCodeAt(0) - 65,
+    0x1f1e6 + upper.charCodeAt(1) - 65,
+  );
+}
+
+/**
  * Emoji fallback pour un code pays.
  * @param countryCode Code ISO 3166-1.
  */
 export function getFlagEmoji(countryCode: string): string {
-  return FLAG_EMOJI[countryCode.toUpperCase()] ?? "🌍";
+  return getCountryFlagEmoji(countryCode);
 }
 
 /**

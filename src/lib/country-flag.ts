@@ -80,16 +80,71 @@ export const COUNTRY_TO_CODE: Record<string, string> = {
   Slovenia: "SI",
 };
 
-/** Génère un drapeau émoji pour n'importe quel pays (nom complet ou code ISO). */
+/**
+ * Génère un drapeau émoji pour n'importe quel pays (nom complet ou code ISO).
+ *
+ * Le nom est d'abord cherché dans `COUNTRY_TO_CODE`, puis dans une liste de
+ * **variantes frequentatives** (l'API BSD dit « Austria », pas « Austrian » ; le
+ * Top 10 football raisonne sur des libellés de ligue, pas sur des noms de pays).
+ * Sans ces variantes, « Austrian Bundesliga » et une trentaine des 64 ligues du
+ * backtest tombaient sous « Autres pays » ou affichaient un globe.
+ *
+ * Dernier recours : 🌍 — un pays non identifié, pas une image cassée.
+ */
 export function countryFlag(country: string): string {
-  if (!country) return "\uD83C\uDF0D"; // 🌍 fallback
+  if (!country) return "\uD83C\uDF0D"; // 🌍
   // Code ISO 2 lettres direct
   if (country.length === 2 && /^[A-Z]{2}$/.test(country)) {
     return FLAG(country);
   }
   // Mapping nom complet → code
-  const code = COUNTRY_TO_CODE[country];
+  const code = COUNTRY_TO_CODE[country] ?? COUNTRY_ALIASES[country];
   if (code) return FLAG(code);
-  // Dernier recours : globe
-  return "\uD83C\uDF0D";
+  return "\uD83C\uDF0D"; // 🌍
 }
+
+/**
+ * Variantes de nom de pays.
+ *
+ * `COUNTRY_TO_CODE` garde la priorité ; cette table ne rattrape que les libellés que
+ * le flux BSD produit et que personne n'a listés (« Austria », « Turkiye », …).
+ *
+ * ⚠️ **Uniquement des codes ISO 3166-1 alpha-2 valides.** `FLAG()` calcule deux Regional
+ * Indicator Symbols à partir des deux premières lettres : un code de subdivision
+ * (`GB-SCT`, `INT`) produirait un drapeau arbitraire et trompeur. Les drapeaux de
+ * subdivision passent par `getFlagUrl` (flagcdn), qui sait les servir.
+ */
+const COUNTRY_ALIASES: Record<string, string> = {
+  Austria: "AT",
+  Czechia: "CZ",
+  Czech: "CZ",
+  Turkey: "TR",
+  Turkiye: "TR",
+  Russia: "RU",
+  Switzerland: "CH",
+  "South Korea": "KR",
+  Japan: "JP",
+  "United States": "US",
+  "Hong Kong": "HK",
+  "Saudi Arabia": "SA",
+  "United Arab Emirates": "AE",
+  Tunisia: "TN",
+  Algeria: "DZ",
+  Morocco: "MA",
+  Egypt: "EG",
+  Nigeria: "NG",
+  Ghana: "GH",
+  "Ivory Coast": "CI",
+  "South Africa": "ZA",
+  Australia: "AU",
+  Canada: "CA",
+  Colombia: "CO",
+  Uruguay: "UY",
+  Paraguay: "PY",
+  Peru: "PE",
+  Chile: "CL",
+  Venezuela: "VE",
+  Ecuador: "EC",
+  "Costa Rica": "CR",
+  Ireland: "IE",
+};

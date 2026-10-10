@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LEAGUE_COUNTRY_BY_NAME } from "@/lib/league-mapping";
+import { leagueCountryOf } from "@/lib/league-mapping";
 import { countryFlag } from "@/lib/country-flag";
 
 /**
@@ -266,7 +266,7 @@ export function FootballBacktestingView() {
   const leaguesByCountry = useMemo(() => {
     const byCountry = new Map<string, string[]>();
     for (const l of availableLeagues) {
-      const country = LEAGUE_COUNTRY_BY_NAME[l] ?? AUTRE_PAYS;
+      const country = leagueCountryOf(l) ?? AUTRE_PAYS;
       const arr = byCountry.get(country);
       if (arr) arr.push(l);
       else byCountry.set(country, [l]);

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { leagueCountryOf } from "@/lib/league-mapping";
 import { countryFlag } from "@/lib/country-flag";
 import type { MarketBacktest } from "@/lib/football-backtest/market-engine";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
@@ -203,9 +204,10 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   // Ligues groupées par pays, pays triés alphabétiquement (`localeCompare` en
   // locale fr : sinon "Angleterre" passe après "Zambie" sur un tri ASCII).
   //
-  // `leagueCountry` est DÉJÀ typé (`football-strategy-top5.ts:76`) et DÉJÀ transporté
-  // au client par la route `/api/football/top5` (spread `...data`) : aucun changement
-  // d'API n'est nécessaire, seul ce `useMemo` l'ignorait.
+  // `leagueCountryOf` résout le pays d'un NOM de ligue en trois passes : correspondance
+  // exacte dans `LEAGUE_INFO`, puis préfixe pays (« Austrian Bundesliga », « Brasileirão
+  // Serie A »). L'entrée `leagueCountry` du flux reste la source la plus fiable quand
+  // elle est renseignée ; le nom seul ne couvrait qu'une partie des ligues.
   //
   // Le groupement résout au passage une ambiguïté réelle : la valeur d'un `SelectItem`
   // est le NOM de la ligue, et `Serie A` existe en Italie ET en Équateur, `Bundesliga`
@@ -228,7 +230,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     if (data) {
       for (const list of Object.values(data.strategies)) {
         for (const e of list) {
-          if (e.league) add(e.leagueCountry ?? "", e.league);
+          if (e.league) add(leagueCountryOf(e.league) ?? "", e.league);
         }
       }
     }
