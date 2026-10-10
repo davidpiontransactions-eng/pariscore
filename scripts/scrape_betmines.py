@@ -33,6 +33,10 @@ CATALOG = os.path.join(HERE, "..", "data", "betmines-leagues-all.txt")
 OUT_DIR = os.path.join(HERE, "..", "public", "data", "betmines")
 EXTRACT_CJS = os.path.join(HERE, "betmines_extract.cjs")
 
+# Age au-dela duquel un snapshot est considere perime et la ligue re-scrapee.
+# Meme convention que le scraper oddalerts (cron quotidien 04:30 UTC).
+SNAP_MAX_AGE_H = 20
+
 
 def load_catalog() -> list[tuple[int, str]]:
     rows = []
@@ -120,11 +124,38 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # Reprise : skip existants
+    # Reprise : on saute une ligue dont le DERNIER SNAPSHOT est recent.
+    #
+    # Avant : `if exists(out_path): continue` — une ligue presentee n'etait plus
+    # jamais re-scrapee sans --force. Un cron hebdomadaire n'aurait donc jamais rien
+    # ajoute, et toutes les fixtures restaient figees a la premiere collecte.
+    # Meme convention que le scraper oddalerts : cache considered perime au-dela de
+    # SNAP_MAX_AGE_H.
+    def snapshot_path(lid):
+        return os.path.join(args.out_dir, "snapshots", str(lid),
+                            f"{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.json")
+
+    def fresh(lid):
+        """Vrai si un snapshot de cette ligue date d moins de SNAP_MAX_AGE_H heures."""
+        d = os.path.join(args.out_dir, "snapshots", str(lid))
+        if not os.path.isdir(d):
+            return False
+        newest = 0.0
+        for name in os.listdir(d):
+            if not name.endswith(".json"):
+                continue
+            try:
+                day = datetime.strptime(name[:-5], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            except ValueError:
+                continue
+            newest = max(newest, day.timestamp())
+        if newest <= 0:
+            return False
+        return (datetime.now(timezone.utc).timestamp() - newest) < SNAP_MAX_AGE_H * 3600
+
     todo = []
     for lid, slug in targets:
-        out_path = os.path.join(args.out_dir, f"{lid}.json")
-        if not args.force and os.path.exists(out_path):
+        if not args.force and fresh(lid):
             continue
         todo.append((lid, slug))
     if args.limit and args.limit > 0:
@@ -150,6 +181,14 @@ def main():
                 data["scrapedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
                 out_path = os.path.join(args.out_dir, f"{lid}.json")
                 with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, separators=(",", ":"), ensure_ascii=False)
+
+                # Archive immuable : une copie datee par jour et par ligue.
+                # C'est CE fichier que lit le backtest — le fichier {lid}.json ci-dessus
+                # est ecrase a chaque run et ne conserve aucune historique.
+                snap = snapshot_path(lid)
+                os.makedirs(os.path.dirname(snap), exist_ok=True)
+                with open(snap, "w", encoding="utf-8") as f:
                     json.dump(data, f, separators=(",", ":"), ensure_ascii=False)
                 done += 1
                 eta = (time.time() - t_start) / done * (total - done) / 60
