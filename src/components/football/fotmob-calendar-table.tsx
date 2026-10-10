@@ -10,6 +10,7 @@ import { parisKickoff } from "@/lib/football-time";
 import { cn } from "@/lib/utils";
 import { PowerScoreBar } from "@/components/shared/power-score-bar";
 import type { PowerScore } from "@/lib/power-score";
+import { FOTMOB, ROW_CLASSES } from "@/components/football/fotmob-tokens";
 
 /* ─── Types (miroir API /api/football/calendar) ─── */
 export type FotmobCalTeam = { name: string; logo?: string | null };
@@ -34,15 +35,9 @@ export type FotmobCalMatch = {
   power?: { home: PowerScore | null; away: PowerScore | null } | null;
 };
 
-/* ─── Teintes FotMob clair (mesurées getComputedStyle, cf. T1) ─── */
-const C = {
-  card: "#ffffff", cardBorder: "#f0f0f0", rowSep: "#f5f5f5",
-  headerBg: "#f5f5f5", headerText: "#000000",
-  score: "#222222", team: "#222222", time: "#717171",
-  live: "#00985f", reason: "#717171",
-  followBg: "#f0f0f0", starOff: "#222222", starOn: "#00985f",
-  pillBorder: "#f5f5f5", countGray: "#9e9e9e",
-} as const;
+/* Palette FotMob clair — source unique dans fotmob-tokens.ts (voir le commentaire de
+   ce fichier sur la duplication qu'il a résolue). */
+const C = FOTMOB;
 
 function teamLogo(name: string, logo?: string | null): string {
   // Garde : un emoji (countryFlag abusé en logo) n'est pas une URL → fallback.
@@ -141,8 +136,8 @@ function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: (ta
           onClick={(e) => { e.stopPropagation(); onSelect?.(t); }}
           title={`Top 10 · ${t.label} · ${t.value} — voir l'analyse`}
           aria-label={`Top 10 stratégie ${t.label}, ${t.value}, voir l'analyse`}
-          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-transform active:scale-95"
-          style={{ backgroundColor: "#00985f", color: "#ffffff" }}
+          className="inline-flex items-center gap-1 rounded-full border border-[#00985f]/20 bg-[#00985f]/10 px-2 py-0.5 text-[10px] font-bold transition-colors hover:bg-[#00985f]/20 active:scale-95"
+          style={{ color: C.accent }}
         >
           <span aria-hidden="true">{t.emoji}</span>
           <span>Top {t.label}</span>
@@ -178,7 +173,10 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
       aria-label={onSelect ? label : undefined}
       onClick={onSelect ? () => onSelect(m) : undefined}
       onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(m); } } : undefined}
-      className="grid items-center gap-1 px-3 py-1.5 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00985f]"
+      // Rythme de ligne aligné sur `top-strategies-table.tsx` : même padding vertical,
+      // même survol, même texte de base. Les couleurs étaient déjà identiques — c'est
+      // la DENSITÉ qui faisait qu'un onglet paraissait moins soigné que l'autre.
+      className={cn(ROW_CLASSES, "grid items-center gap-1 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00985f]")}
       style={{
         gridTemplateColumns: "1fr auto auto 1fr auto",
       }}
@@ -191,7 +189,7 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
             className="flex min-w-0 items-center gap-1.5 rounded-lg px-1 py-0.5 -mx-1 cursor-pointer transition-all duration-200 hover:bg-emerald-50 hover:shadow-[inset_0_-2px_0_0_#34d399] group/home"
           >
             <span className="flex min-w-0 flex-col items-end">
-              <span className="truncate text-right text-[14px] transition-colors duration-200 group-hover/home:text-emerald-700" style={{ color: C.team }}>{m.home.name}</span>
+              <span className="truncate text-right text-[14px] font-semibold transition-colors duration-200 group-hover/home:text-emerald-700" style={{ color: C.team }}>{m.home.name}</span>
               {m.power?.home != null && <PowerScoreBar score={m.power.home} />}
             </span>
             <img src={teamLogo(m.home.name, m.home.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0 transition-transform duration-200 group-hover/home:scale-110" />
@@ -232,7 +230,7 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
             ) : null}
           </>
         ) : (
-          <span data-testid="status-time" className="text-[14px] font-medium" style={{ color: C.time }}>
+          <span data-testid="status-time" className="text-[14px] font-semibold tabular-nums" style={{ color: C.time }}>
             {parisKickoff(m.scheduledAt)}
           </span>
         )}
@@ -246,7 +244,7 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
           >
             <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0 transition-transform duration-200 group-hover/away:scale-110" />
             <span className="flex min-w-0 flex-col items-start">
-              <span className="truncate text-[14px] transition-colors duration-200 group-hover/away:text-emerald-700" style={{ color: C.team }}>{m.away.name}</span>
+              <span className="truncate text-[14px] font-semibold transition-colors duration-200 group-hover/away:text-emerald-700" style={{ color: C.team }}>{m.away.name}</span>
               {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
             </span>
           </button>
@@ -254,7 +252,7 @@ function FotmobMatchRow({ m, onSelect, onTeamClick, topTags, onTopPillSelect }: 
           <>
             <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
             <span className="flex min-w-0 flex-col items-start">
-              <span className="truncate text-[14px]" style={{ color: C.team }}>{m.away.name}</span>
+              <span className="truncate text-[14px] font-semibold" style={{ color: C.team }}>{m.away.name}</span>
               {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
             </span>
           </>

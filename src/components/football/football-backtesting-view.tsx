@@ -31,16 +31,19 @@ const AUTRE_PAYS = "Autres pays";
  * backtestable faute de cotes réelles. Source : /api/football/backtest/markets.
  */
 
-/* Teintes FotMob clair — identiques à football-results-view.tsx */
+import { FOTMOB } from "@/components/football/fotmob-tokens";
+
+/* Teintes FotMob clair — source unique dans fotmob-tokens.ts. `win`/`loss`/`warn`
+   restent propres au backtest (sémantique P&L, absente des tables de matchs). */
 const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  time: "#717171",
-  accent: "#00985f",
-  win: "#00985f",
+  card: FOTMOB.card,
+  cardBorder: FOTMOB.cardBorder,
+  headerBg: FOTMOB.headerBg,
+  headerText: FOTMOB.headerText,
+  team: FOTMOB.team,
+  time: FOTMOB.time,
+  accent: FOTMOB.accent,
+  win: FOTMOB.accent,
   loss: "#EF4444",
   warn: "#FF6D00",
 } as const;

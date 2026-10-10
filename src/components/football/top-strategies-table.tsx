@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { FOTMOB } from "@/components/football/fotmob-tokens";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import type { StrategyTop5Key } from "@/lib/football-strategy-top5";
 import { parisDateShort, parisKickoff } from "@/lib/football-time";
@@ -51,19 +53,53 @@ type Props = {
   onOpenMatch?: (matchId: string) => void;
 };
 
-/* Teintes FotMob clair — identiques au calendrier (fotmob-calendar-table.tsx) */
-const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  rowSep: "#f5f5f5",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  time: "#717171",
-  live: "#00985f",
-  accent: "#00985f",
-  score: "#222222",
-} as const;
+/* Palette FotMob clair — source unique dans fotmob-tokens.ts, partagée avec
+   fotmob-calendar-table.tsx. Les deux tables affichent désormais les mêmes teintes,
+   le même rythme de ligne et le même style de badge. */
+const C = FOTMOB;
+
+/**
+ * Logo de club 20×20 avec repli sur initiales.
+ *
+ * `logo` est déjà transporté par la conversion `StrategyMatchEntry → StrategyTableRow`
+ * (football-top10-widget.tsx:104-105) mais n'était **pas rendu** : la donnée existait,
+ * l'affichage manquait. L'image est masquée sur erreur (URL morte de seed périmé) au
+ * profit des initiales — une initiale lisible vaut mieux qu'un cadre vide, et les
+ * classes sont sans bord pour ne pas doubler la place en cas d'URL morte.
+ */
+function TeamLogo({ src, name }: { src?: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  if (!src || failed) {
+    return (
+      <span
+        aria-hidden
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#e9e9f2] text-[9px] font-bold text-[#6b6b80]"
+      >
+        {initials || "?"}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      width={20}
+      height={20}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="h-5 w-5 shrink-0 rounded object-contain"
+    />
+  );
+}
 
 function confidenceBand(probPct: number): { label: string; cls: string } {
   if (probPct >= 70) return { label: "Élevée", cls: "bg-[#00985f]/10 text-[#00985f] border-[#00985f]/20" };
@@ -198,12 +234,19 @@ export function TopStrategiesTable({
                   />
                 )}
                 <div className="min-w-0">
-                  <div className="truncate font-medium" style={{ color: C.team }}>
-                    {row.home.teamName}{" "}
-                    <span style={{ color: C.time }}>vs</span>{" "}
-                    {row.away.teamName}
+                  <div
+                    className="flex min-w-0 items-center gap-1.5 truncate font-semibold"
+                    style={{ color: C.team }}
+                  >
+                    <TeamLogo src={row.home.logo} name={row.home.teamName} />
+                    <span className="truncate">{row.home.teamName}</span>
+                    <span className="shrink-0 font-normal" style={{ color: C.time }}>
+                      vs
+                    </span>
+                    <TeamLogo src={row.away.logo} name={row.away.teamName} />
+                    <span className="truncate">{row.away.teamName}</span>
                   </div>
-                  <div className="truncate text-[11px]" style={{ color: C.time }}>
+                  <div className="truncate text-[11px] font-medium" style={{ color: C.time }}>
                     {row.league} · {kickoffLabel(row.kickoff)}
                   </div>
                 </div>

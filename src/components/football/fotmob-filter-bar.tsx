@@ -8,9 +8,15 @@ import { cn } from "@/lib/utils";
    Datepicker jour −/+  +  En direct  +  Par heure (fenêtre)  +  recherche.
    « À la TV » volontairement absent : aucune donnée de diffusion. */
 
+import { FOTMOB } from "@/components/football/fotmob-tokens";
+
+/* Source unique dans fotmob-tokens.ts. Les clés locales sont des alias de la palette
+   partagée : `pillBg`/`text`/`muted` reprennent `card`/`team`/`time`, `live` reprend
+   `accent`. `liveDot` reste propre à la barre (rouge = direct, pas l'accent vert). */
 const C = {
-  pillBg: "#ffffff", pillBorder: "#f0f0f0", text: "#222222", muted: "#717171",
-  live: "#00985f", liveDot: "#e11d48", circleBg: "#f0f0f0",
+  pillBg: FOTMOB.card, pillBorder: FOTMOB.cardBorder,
+  text: FOTMOB.team, muted: FOTMOB.time,
+  live: FOTMOB.accent, liveDot: "#e11d48", circleBg: FOTMOB.followBg,
 } as const;
 
 // ─── Segmented control horaire (E1 P1) : remplace le <select> — 1 tap, état

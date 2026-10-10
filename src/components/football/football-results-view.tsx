@@ -18,18 +18,21 @@ import type {
  * settleFootballPick, enrichi corners/SOT BSD + archives SQLite).
  */
 
-/* Teintes FotMob clair — identiques à top-strategies-table.tsx */
+import { FOTMOB } from "@/components/football/fotmob-tokens";
+
+/* Teintes FotMob clair — source unique dans fotmob-tokens.ts. `win`/`loss` restent
+   propres à cette vue (issuetemplate) car elles n'ont pas d'équivalent ailleurs. */
 const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  rowSep: "#f5f5f5",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  time: "#717171",
-  accent: "#00985f",
-  score: "#222222",
-  win: "#00985f",
+  card: FOTMOB.card,
+  cardBorder: FOTMOB.cardBorder,
+  rowSep: FOTMOB.rowSep,
+  headerBg: FOTMOB.headerBg,
+  headerText: FOTMOB.headerText,
+  team: FOTMOB.team,
+  time: FOTMOB.time,
+  accent: FOTMOB.accent,
+  score: FOTMOB.score,
+  win: FOTMOB.accent,
   loss: "#EF4444",
 } as const;
 

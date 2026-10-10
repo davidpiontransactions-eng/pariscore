@@ -23,18 +23,11 @@ import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
 import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
 import { FootballMatchDetailDialog } from "./football-match-detail-dialog";
+import { FOTMOB } from "./fotmob-tokens";
 
-/* Teintes FotMob clair — identiques au calendrier */
-const C = {
-  card: "#ffffff",
-  cardBorder: "#f0f0f0",
-  headerBg: "#f5f5f5",
-  headerText: "#000000",
-  team: "#222222",
-  time: "#717171",
-  live: "#00985f",
-  accent: "#00985f",
-} as const;
+/* Teintes FotMob clair — source unique dans fotmob-tokens.ts (partagée avec
+   fotmob-calendar-table.tsx et top-strategies-table.tsx). */
+const C = FOTMOB;
 
 /**
  * Libellé du groupe « pays inconnu ».
