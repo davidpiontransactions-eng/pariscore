@@ -45,12 +45,29 @@ const BSD_LEAGUE_IDS = [
   64, 65, 66, 67, 68, 69
 ];
 
-// Saisons à crawler
-const SEASONS = [
-  { start: '2023-08-01', end: '2024-07-31', label: '2023-2024' },
-  { start: '2024-08-01', end: '2025-07-31', label: '2024-2025' },
-  { start: '2025-08-01', end: '2026-07-31', label: '2025-2026' },
-];
+/**
+ * Fenêtres de saisons crawlées.
+ *
+ * Calculées et non codées en dur : un tableau statique finit toujours par
+ * depasser. Constaté le 2026-10-10 — SEASONS s'arrêtait au 2026-07-31, donc la
+ * saison 2026-2027 n'était jamais collectee et corner_history s'arretait au
+ * 2026-06-24 alors qu'on etait en octobre. Un cron quotidien sur ce script ne
+ * produisait aucun nouveau match.
+ *
+ * Le calendrier foot being calé sur août-juillet, une saison court du 1er août
+ * de l'année N au 31 juillet de l'année N+1.
+ */
+function buildSeasons(count = 3) {
+  const year = new Date().getUTCFullYear();
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const y = year - i;
+    out.push({ start: `${y}-08-01`, end: `${y + 1}-07-31`, label: `${y}-${y + 1}` });
+  }
+  return out;
+}
+
+const SEASONS = buildSeasons();
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
 const isDry = process.argv.includes('--dry');

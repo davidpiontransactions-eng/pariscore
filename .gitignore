@@ -196,6 +196,12 @@ data/rugby-backtest.json
 # Backtest Top 5 (runtime, machine-local — settle quotidien cron)
 data/top5-backtest/
 
+# Etat du cron match-stats (runtime, machine-local).
+# Versionne = le deploy ecrase le fichier en root:root, le cron (user ubuntu)
+# echoue alors sur EACCES en fin de run et last_run reste fige : observe le
+# 2026-10-10, bloque depuis le 2026-06-12. Cf. logs/cron-match-stats.err-1.log.
+.cron_match_stats_state.json
+
 # Tennis ML (runtime, machine-local — téléchargement Sackmann + modèles entraînés)
 data/tennis/
 models/tennis-ml/
