@@ -4,7 +4,7 @@
     "leagueId": "championship",
     "leagueName": "England2",
     "season": "2026-27",
-    "lastUpdated": "2026-10-09T11:14:22.642319Z",
+    "lastUpdated": "2026-10-10T08:22:21.745801Z",
     "source": "soccerstats.com",
     "teamCount": 24,
     "partial": false
@@ -35,33 +35,33 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "West Ham Utd",
-        "value": 2.25,
-        "played": 4
-      },
-      {
-        "rank": 4,
-        "teamId": "",
         "teamName": "Stoke",
         "value": 2.25,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 2.0,
+        "played": 5
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Swansea",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "West Bromwich Albion",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Charlton",
         "value": 2.0,
@@ -191,19 +191,19 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 10.0,
+        "played": 5
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Middlesbrough",
         "value": 10.0,
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "West Ham Utd",
-        "value": 9.0,
-        "played": 4
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Stoke",
         "value": 9.0,
@@ -359,11 +359,11 @@
         "played": 4
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
         "teamName": "West Ham Utd",
-        "value": 14.0,
-        "played": 4
+        "value": 15.0,
+        "played": 5
       },
       {
         "rank": 3,
@@ -566,13 +566,6 @@
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "West Ham Utd",
-        "value": 4.0,
-        "played": 4
-      },
-      {
-        "rank": 6,
-        "teamId": "",
         "teamName": "Bristol City",
         "value": 4.0,
         "played": 4
@@ -585,35 +578,42 @@
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 5.0,
+        "played": 5
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Millwall",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Watford",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Cardiff",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Bolton",
         "value": 5.0,
         "played": 4
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 5.0,
@@ -703,7 +703,7 @@
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 10.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 3,
@@ -871,14 +871,14 @@
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Middlesbrough",
+        "teamName": "West Ham Utd",
         "value": 3.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "West Ham Utd",
+        "teamName": "Middlesbrough",
         "value": 3.0,
         "played": 4
       },
@@ -1097,6 +1097,13 @@
       {
         "rank": 10,
         "teamId": "",
+        "teamName": "West Ham Utd",
+        "value": 1.0,
+        "played": 5
+      },
+      {
+        "rank": 10,
+        "teamId": "",
         "teamName": "Middlesbrough",
         "value": 1.0,
         "played": 4
@@ -1144,56 +1151,49 @@
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Southampton",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
-        "teamId": "",
-        "teamName": "West Ham Utd",
-        "value": 0.0,
-        "played": 4
-      },
-      {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Stoke",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Norwich",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Blackburn",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Bolton",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Bristol City",
         "value": 0.0,
         "played": 4
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Preston",
         "value": 0.0,
@@ -1262,7 +1262,7 @@
         "teamId": "",
         "teamName": "West Ham Utd",
         "value": 1.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 9,
@@ -1391,8 +1391,8 @@
         "rank": 3,
         "teamId": "",
         "teamName": "Qp Rangers",
-        "value": 2.0,
-        "played": 4
+        "value": 1.8,
+        "played": 5
       },
       {
         "rank": 4,
@@ -1553,15 +1553,15 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Lincoln City",
+        "teamName": "Qp Rangers",
         "value": 9.0,
-        "played": 4
+        "played": 5
       },
       {
-        "rank": 3,
+        "rank": 1,
         "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 8.0,
+        "teamName": "Lincoln City",
+        "value": 9.0,
         "played": 4
       },
       {
@@ -1745,25 +1745,25 @@
         "rank": 5,
         "teamId": "",
         "teamName": "Qp Rangers",
-        "value": 6.0,
-        "played": 4
+        "value": 7.0,
+        "played": 5
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Bolton",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Millwall",
         "value": 6.0,
         "played": 4
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Norwich",
         "value": 6.0,
@@ -1893,19 +1893,19 @@
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 3.0,
-        "played": 4
-      },
-      {
-        "rank": 2,
-        "teamId": "",
         "teamName": "Portsmouth",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 4.0,
+        "played": 5
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Birmingham City",
         "value": 4.0,
@@ -2065,7 +2065,7 @@
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 3.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 3,
@@ -2242,7 +2242,7 @@
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 2.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 3,
@@ -2396,6 +2396,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Qp Rangers",
+        "value": 3.0,
+        "played": 5
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "West Ham Utd",
         "value": 3.0,
         "played": 4
@@ -2408,35 +2415,28 @@
         "played": 4
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Qp Rangers",
-        "value": 2.0,
-        "played": 4
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Middlesbrough",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sheffield United",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Wrexham",
         "value": 2.0,
         "played": 4
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Southampton",
         "value": 2.0,
@@ -2568,7 +2568,7 @@
         "teamId": "",
         "teamName": "Qp Rangers",
         "value": 0.0,
-        "played": 4
+        "played": 5
       },
       {
         "rank": 1,
