@@ -1,0 +1,50 @@
+#!/bin/sh
+# pre-push — refuse de pousser un arbre commité qui ne compile pas.
+#
+# ## Pourquoi ce hook existe
+#
+# `bun run typecheck` et `bun run lint` inspectent le **working tree**. Dans ce dépôt,
+# plusieurs sessions travaillent en parallèle et le working tree contient donc
+# régulièrement des modifications non commitées d'un tiers.
+#
+# Conséquence subie deux fois le 2026-10-10 : une route non trackée a été commitée
+# alors qu'elle importait un symbole présent dans le working tree mais **absent de
+# HEAD**. Typecheck : 0 erreur. Build Next sur le VPS : échec, rollback automatique —
+# **après** le push, donc sur `origin/main`, devant tout le monde.
+#
+# Ce hook compile l'arbre **commité** (worktree jetable) et bloque le push si ce
+# n'est pas le cas. Le filet devient local au lieu d'être à la production.
+#
+# ## Contournement
+#
+# `git push --no-verify` — pour un hotfix urgent dont le build est déjà validé ailleurs.
+#
+# ## Activation
+#
+#   git config core.hooksPath .githooks
+#
+# Sans cette commande, git lit `.git/hooks/` et ce fichier n'est jamais exécuté.
+
+# Y a-t-il quelque chose a pousser ? Si rien a pousser, rien a verifier (le typecheck
+# coute ~90 s).
+if [ -z "$(git rev-parse --verify HEAD 2>/dev/null)" ]; then
+  exit 0
+fi
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "pre-push: 'bun' introuvable — verification de HEAD compile IGNOREE." >&2
+  exit 0
+fi
+
+bun scripts/verify-head-compiles.ts HEAD
+rc=$?
+
+if [ $rc -ne 0 ]; then
+  echo "" >&2
+  echo "pre-push: REFUSE — l arbre commite ne compile pas." >&2
+  echo "          Le working tree compile peut-etre : le push casserait main." >&2
+  echo "          Contournement : git push --no-verify" >&2
+  exit $rc
+fi
+
+exit 0
