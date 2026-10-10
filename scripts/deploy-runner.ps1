@@ -358,14 +358,31 @@ try {
     $buildFresh = ($buildNow -and ($buildNow -ne $BUILD_BEFORE))
     $healthOk = Test-ProdHealth
 
-    if ($shaOk -and $buildFresh -and $healthOk) {
+    # === CORRECTION (2026-10-10) : un deploiement SANS build doit reussir ===
+    # `update_vps.sh` saute `next build` quand rien de compile n'a change (cas
+    # d'un commit de tests ou de script : BUILD_ID reste donc identique), et il
+    # ecrit alors `build_ran: 0`. La condition `buildFresh` ne pouvait jamais
+    # devenir vraie : tout deploy legitement sans build finissait en
+    # `DEPLOY-FAIL: status=timeout` apres 720 s. Mesure : commit f98a983d
+    # (spec Playwright + script cron) -> VPS a bien ecrit
+    # `--- VPS_DEPLOY_OK --- commit: f98a983d build_ran: 0`, et le runner a
+    # declare l'echec.
+    #
+    # Le marqueur de fin du script distant est donc accepte comme preuve
+    # suffisante : c'est lui qui distingue "deploy termine" de "deploy
+    # encore en cours", et il existe dans les deux cas (build ou pas).
+    # `buildFresh` reste requis uniquement en l'absence de ce marqueur.
+    $markerOk = $null -ne (Invoke-RemoteCapture "grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null" "ssh marker")
+
+    if ($shaOk -and $healthOk -and ($markerOk -or $buildFresh)) {
       $status = "ok"
-      Log "  etat reel OK : sha=$($remoteSha.Substring(0,7)) build=$buildNow sante=ok"
+      $how = if ($markerOk) { "marqueur VPS_DEPLOY_OK" } else { "build neuf ($buildNow)" }
+      Log "  etat reel OK : sha=$($remoteSha.Substring(0,7)) $how sante=ok"
       break
     }
 
     $elapsed = [int]((Get-Date) - $started).TotalSeconds
-    $flags = "sha=$([bool]$shaOk) build=$([bool]$buildFresh) sante=$([bool]$healthOk)"
+    $flags = "sha=$([bool]$shaOk) marqueur=$([bool]$markerOk) build=$([bool]$buildFresh) sante=$([bool]$healthOk)"
     Log "  ...running (${elapsed}s) $flags"
   }
 
