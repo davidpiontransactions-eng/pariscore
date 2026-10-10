@@ -490,6 +490,30 @@ export async function fetchBSDMatchStats(matchId: string): Promise<FootballMatch
   };
 }
 
+/**
+ * Matchs terminés d'une plage de dates (YYYY-MM-DD, bornes incluses) —
+ * pagination offset bornée (une journée mondiale > 200 matchs finis).
+ * Utilisée par /api/v1/multi-matches?from&to et /api/football/results/settled.
+ */
+export async function fetchBSDFootballFinishedRange(
+  fromISO: string,
+  toISO: string,
+  maxPages = 25,
+): Promise<BSDFootballMatch[]> {
+  const out: BSDFootballMatch[] = [];
+  const limit = 200;
+  for (let page = 0; page < maxPages; page++) {
+    // bsdFetchRaw = requête unique (bsdFetch auto-paginerait depuis chaque offset).
+    const raw = await bsdFetchRaw<BSDFootballMatch[] | { results?: BSDFootballMatch[] }>(
+      `/matches/?status=finished&date_from=${fromISO}&date_to=${toISO}&limit=${limit}&offset=${page * limit}`,
+    );
+    const batch = Array.isArray(raw) ? raw : (raw.results ?? []);
+    out.push(...batch);
+    if (batch.length < limit) break;
+  }
+  return out;
+}
+
 export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
   const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=1000");
   const result = matches.map(buildMatch);
