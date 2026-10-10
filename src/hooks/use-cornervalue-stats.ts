@@ -46,12 +46,34 @@ export function estimateOver65(hitRates: CornervalueTeam["hitRates"]): number | 
   return Math.min(100, o75.pct + 15);
 }
 
-/** Matcher fuzzy entre nom FootyStats et nom Cornervalue */
+/**
+ * Longueur minimale du nom stocké pour autoriser une correspondance PARTIELLE.
+ * En dessous, le nom est un fragment générique trop ambigu (voir matchTeamName).
+ */
+const MIN_PARTIAL_MATCH_LENGTH = 8;
+
+/**
+ * Matcher fuzzy entre nom stocké (Cornervalue) et nom requête (BSD).
+ *
+ * ## Pourquoi la correspondance partielle est limitée
+ *
+ * Le scraper a tronqué des noms de clubs : `Madrid` (Real ET Atlético Madrid),
+ * `United` (Manchester / West Ham), `City`, `Town`, `County`, `Rovers`. Dans un
+ * même JSON, `Madrid` porte les stats d'un club et celles de l'autre ne sont pas
+ * identiques. Une correspondance par sous-chaîne non gardée ferait donc afficher les
+ * corners de l'Atlético sur un match du Real Madrid.
+ *
+ * On refuse donc les correspondances partielles dont le nom stocké est trop court
+ * pour être discriminant. Une ligne absente vaut mieux qu'une ligne d'un autre club :
+ * ces valeurs servent à des décisions de pari.
+ */
 export function matchTeamName(cvName: string, fsName: string): boolean {
   const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const c = clean(cvName);
   const f = clean(fsName);
-  return c === f || c.includes(f) || f.includes(c);
+  if (c === f) return true;
+  if (c.length < MIN_PARTIAL_MATCH_LENGTH) return false;
+  return c.includes(f) || f.includes(c);
 }
 
 /**
