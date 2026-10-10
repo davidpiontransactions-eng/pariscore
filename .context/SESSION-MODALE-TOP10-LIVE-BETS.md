@@ -85,4 +85,57 @@ live ne transmet pas — l'écart affiché serait une **invention**, pas une mes
 2. Définir l'arrondi et le seuil minimal d'affichage de l'écart.
 3. Un test d'échelle : une fraction ne doit jamais produire un écart > 100 pts.
 
-Ce n'est pas un composant, c'est un **contrat de données**.
+## Étape 3 — Contrat de données Value Edge
+
+### Étape 3a (ingestion cote) — ❌ IMPOSSIBLE, mesuré
+
+La mission demande de transmettre « la cote live issue du flux (OddsPapi / BSD) ».
+
+**Le flux ne contient aucune cote.** Mesuré sur la production,
+`GET /api/football/live` → **200, 19 matchs** :
+
+- `live` est **`null` sur les 19 matchs** — aucun état live transmis (ni score, ni minute) ;
+- le payload expose `id, league, round, scheduledAt, home, away, prediction, live, venue` ;
+- `prediction` porte des **probabilités modèle** (`homeProb: 33`), pas des prix ;
+- aucun champ `odds_home` / `odds` / équivalent dans le flux.
+
+`FootballLiveInput` (`live-football.ts:51-66`) ne porte donc aucun champ de cote, et
+`adaptFootball` (`live-adapters.ts:92-104`) n'a rien à transmettre. Étendre le type
+n'ingérerait **rien** : le prop serait toujours `undefined`, et le widget afficherait un
+écart partout — un chiffre sans source.
+
+### Étape 3b (normalisation + écart conditionnel) — ✅ LIVRÉE
+
+`src/lib/prediction/value-edge.ts` + `src/lib/__tests__/value-edge.test.ts`.
+
+La logique d'écart est isolée du composant : c'est la seule partie qui puisse produire
+un nombre absurde, donc la seule qui mérite un test.
+
+**Ce que le module garantit** (11 tests, 193 assertions) :
+
+| Invariant | Test |
+|---|---|
+| fraction [0,1] → pourcentage | `toPercent(0.69) === 69` |
+| pourcentage **non** re-multiplié | `toPercent(69) === 69` — c'est l'artefact « 6900 % » |
+| écart toujours dans [−100, +100] | 40 combinaisons modèle × cote |
+| pas de cote → pas d'écart | `edgePts === null`, `modelPct` reste affichable |
+| écart < 3 pts = bruit | filtré par `meaningful` |
+
+**Choix explicite** : `toPercent` **borne** une valeur > 1 au lieu de la multiplier par
+100. Multiplier une entrée déjà en pourcentage par 100 produirait précisément l'artefact
+que la mission voulait empêcher ; la borne le rend inoffensif.
+
+**Ce que le module ne fait pas, délibérément** : pas d'EV. Un EV exige
+`p × (cote × stakes − 1) − (1 − p) × stakes`, qui dépend de la gestion de mise et de la
+marge du bookmaker. Ici on compare deux probabilités — une indication d'écart, pas une
+espérance de gain.
+
+### Pour brancher le widget (reste ouvert)
+
+1. Récupérer des **cotes live réelles** (source externe ou BSD live) et les faire
+   transiter par `adaptFootball` → `FootballLiveInput` → `LiveOutcome.odd`.
+2. Ou, si les cotes ne sont pas disponibles : laisser `edgePts === null` et afficher le
+   badge `value` heuristique actuel.
+
+Le module est prêt pour le branchement dans les deux cas — c'est un contrat de données
+qui manque, pas du code d'UI.
