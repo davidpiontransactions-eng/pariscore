@@ -447,7 +447,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             {/* Encarts façon FotMob : meilleures stats + stade (live et prematch) */}
             {view && (
               <div className="mt-3">
-                <FotmobMatchStats match={view} />
+                <FotmobMatchStats match={view} leagueSlug={profileLeagueSlug} />
               </div>
             )}
 

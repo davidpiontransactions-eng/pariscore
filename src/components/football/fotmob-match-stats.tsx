@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
 import { computeAttackDefense, attackDefenseLabel, attackDefenseColor } from "@/lib/football-attack-defense";
+import { useCornervalueStats, findTeamCornerStats } from "@/hooks/use-cornervalue-stats";
 
 /* ─── Encarts façon FotMob : Meilleures statistiques + infos stade ───
    Carte blanche (page FotMob), texte #222/#717171.
@@ -16,6 +18,9 @@ const HOME_BAR = "#1a1a1a";
 const AWAY_BAR = "#bdbdbd";
 
 type StatRow = { label: string; home: string; away: string; hpct: number | null; isRank?: boolean };
+
+/** Corners obtenus / concédés par match, résolus depuis le JSON Cornervalue. */
+type CornerAverages = { forHome: number; forAway: number; againstHome: number; againstAway: number };
 
 function pct(home: number, away: number): number | null {
   const t = home + away;
@@ -38,7 +43,7 @@ function formatRank(value: number | null, rankTotal: number): string | null {
   return `${value}/${rankTotal}`;
 }
 
-function buildRows(m: FootballMatch): StatRow[] {
+function buildRows(m: FootballMatch, corners: CornerAverages | null): StatRow[] {
   const rows: StatRow[] = [];
   const live = m.live ?? null;
   const standing = m.prediction?.standingStats ?? null;
@@ -120,7 +125,24 @@ function buildRows(m: FootballMatch): StatRow[] {
         push("Tirs cadrés moyens / match", fmt(sot.total.value), fmt(soa.total.value), null);
       }
     }
-    // 5) Scores Attaque/Défense composites
+    // 5) Corners obtenus / concédés par match — source Cornervalue (JSON statique).
+    //    Les deux lignes portent la même jauge : ratio des corners OBTENUS. La ligne
+    //    "concédés" se lit à l'envers (plus bas = meilleure défense), on l'indique dans
+    //    le libellé pour éviter une lecture inversée — un utilisateur voit spontanément
+    //    une barre pleine comme un avantage.
+    if (corners) {
+      const forH = fmt(corners.forHome, 2);
+      const forA = fmt(corners.forAway, 2);
+      if (forH && forA) {
+        push("Corners obtenus / match", forH, forA, pct(corners.forHome, corners.forAway));
+      }
+      const agH = fmt(corners.againstHome, 2);
+      const agA = fmt(corners.againstAway, 2);
+      if (agH && agA) {
+        push("Corners concédés / match (↓)", agH, agA, pct(corners.forHome, corners.forAway));
+      }
+    }
+    // 6) Scores Attaque/Défense composites
     const ad = computeAttackDefense(m);
     if (ad) {
       const aLabelH = attackDefenseLabel(ad.home.attack);
@@ -134,8 +156,33 @@ function buildRows(m: FootballMatch): StatRow[] {
   return rows;
 }
 
-export function FotmobMatchStats({ match }: { match: FootballMatch }) {
-  const rows = buildRows(match);
+export function FotmobMatchStats({
+  match,
+  leagueSlug = null,
+}: {
+  match: FootballMatch;
+  /** Slug interne (ex: "serie-a") — active les lignes de corners via le JSON Cornervalue. */
+  leagueSlug?: string | null;
+}) {
+  const { data: cvData } = useCornervalueStats(leagueSlug);
+  // Les noms Cornervalue suivent la source (FootyStats) : "Inter" côté BSD peut
+  // arriver "Internazionale". findTeamCornerStats fait le matching flou.
+  const corners = useMemo<CornerAverages | null>(() => {
+    if (!cvData) return null;
+    const h = findTeamCornerStats(match.home.name, cvData);
+    const a = findTeamCornerStats(match.away.name, cvData);
+    if (!h || !a) return null;
+    if (h.avgCornersFor == null || a.avgCornersFor == null) return null;
+    if (h.avgCornersAgainst == null || a.avgCornersAgainst == null) return null;
+    return {
+      forHome: h.avgCornersFor,
+      forAway: a.avgCornersFor,
+      againstHome: h.avgCornersAgainst,
+      againstAway: a.avgCornersAgainst,
+    };
+  }, [cvData, match.home.name, match.away.name]);
+
+  const rows = buildRows(match, corners);
   const venue = match.venue;
   if (rows.length === 0 && !venue) return null;
   return (

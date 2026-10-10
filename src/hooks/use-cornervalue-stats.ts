@@ -54,7 +54,13 @@ export function matchTeamName(cvName: string, fsName: string): boolean {
   return c === f || c.includes(f) || f.includes(c);
 }
 
-/** Trouve les stats Cornervalue pour une equipe donnee */
+/**
+ * Trouve les stats Cornervalue pour une equipe donnee.
+ *
+ * Les JSON livres par le scraper dupliquent les equipes (38 lignes pour 19 clubs sur
+ * `cornervalue_italy.json`) : on retourne la PREMIERE occurrence, donc un seul
+ * `find`. Le defaut du dedoublonnage cote scraper reste ouvert.
+ */
 export function findTeamCornerStats(
   teamName: string,
   cvData: CornervalueLeague | undefined,
