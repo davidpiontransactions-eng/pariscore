@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import {
+  baseballMatchState,
   basketballMatchState,
   basketballViewState,
   footballMatchState,
@@ -11,6 +12,7 @@ import {
 import { LIVE_STATUS_PATTERNS, SPORT_TYPES } from "../top-matches/types";
 import type { FootballLiveState } from "../football-data";
 import type { HandballMatchStatus } from "../handball-data";
+import type { GameStatus } from "../baseball/types";
 
 /**
  * Contrat d'adaptation sport → `MatchState`.
@@ -279,6 +281,32 @@ describe("snookerMatchState", () => {
   test("pas de statut → repli sur l'horloge", () => {
     expect(snookerMatchState({ scheduledAt: KO }, now)).toBe("live");
     expect(snookerMatchState({ scheduledAt: "2026-10-09T22:00:00Z" }, now)).toBe("scheduled");
+  });
+});
+
+describe("baseballMatchState", () => {
+  test("union fermée : les 3 statuts de baseball/types.ts", () => {
+    expect(baseballMatchState({ status: "scheduled" })).toBe("scheduled");
+    expect(baseballMatchState({ status: "live" })).toBe("live");
+    // `final` baseball devient `finished` : c'est le meme vocabulaire partout, sinon
+    // « Final » (baseball) et « Terminé » (football) seraient deux mots pour un etat.
+    expect(baseballMatchState({ status: "final" })).toBe("finished");
+  });
+
+  test("couvre l'union entière — aucun statut oublié", () => {
+    const ALL: GameStatus[] = ["scheduled", "live", "final"];
+    for (const s of ALL) expect(typeof baseballMatchState({ status: s })).toBe("string");
+    expect(new Set(ALL).size).toBe(3);
+  });
+
+  test("le baseball n'invente pas d'etat qu'il n'a pas", () => {
+    // Ni `postponed` ni `canceled` dans `GameStatus` : le mapping ne doit donc JAMAIS
+    // produire ces etats la. C'est ce qui distingue un mapping d'une devinette.
+    const ALL: GameStatus[] = ["scheduled", "live", "final"];
+    for (const s of ALL) {
+      const out = baseballMatchState({ status: s });
+      expect(["postponed", "canceled", "suspended"]).not.toContain(out);
+    }
   });
 });
 

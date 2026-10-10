@@ -62,11 +62,39 @@ $REMOTE_LOG = "/tmp/pariscore-deploy.log"
 # Depot git du VPS : sert aux controles d'etat reel (SHA + BUILD_ID).
 $REMOTE_REPO = "/home/ubuntu/pariscore"
 $HEALTH_URL  = "https://pariscore.fr/api/v1/status"
-$LOCK_FILE = "logs\.deploy-runner.lock"
+
+# --- Ancrage sur la racine du depot ---
+# `param` est lepremier bloc execute : aucun chemin n'est resolu avant.
+# Sans ancrage, tous les chemins ci-dessous (lock, log, update_vps.sh, git)
+# dependent du CWD du CALLER. En lancement asynchrone
+# (`Start-Process ... -File scripts\deploy-runner.ps1`) le CWD herite est
+# celui du lanceur, pas la racine : le runner ecrivait son verrou ailleurs
+# que le prochain, ce qui rendait le verrou inutile. Meme piege que
+# mobile-build.ps1:35 qui ancre deja.
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+if (-not $PSScriptRoot) { $RepoRoot = (Get-Location).Path }
+Set-Location $RepoRoot
+
+# --- Verrou et log SORTENT de logs/ ---
+# `logs/` est purge par des sessions paralleles pendant l'execution :
+# le verrou disparaissait sans que personne le detecte (deuxieme runner
+# passait le test "pas de verrou"), et le rapport de run etait efface avant
+# lecture. On utilise %TEMP% (systeme, pas purge par le repo), avec un nom
+# porte par le projet pour ne pas echouer sur un depo voisin.
+$LOCK_FILE = Join-Path $env:TEMP "pariscore-deploy-runner.lock"
+
+# Fichiers stdout/stderr ISSUES de scp/ssh. Noms uniquement par PID : avec un
+# nom fixe, deux runners paralleles se volaient mutuellement leurs sorties et
+# le verdict du second pouvait reposer sur le fichier du premier.
+$script:TmpTag  = "pariscore-deploy-$PID"
+$script:OutFile = Join-Path $env:TEMP "$($script:TmpTag)-out.txt"
+$script:ErrFile = Join-Path $env:TEMP "$($script:TmpTag)-err.txt"
 
 if ($Log -eq "") {
-  if (-not (Test-Path "logs")) { New-Item -ItemType Directory -Path "logs" | Out-Null }
-  $Log = "logs\deploy-runner-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
+  # Defaut aussi en %TEMP%, pour la meme raison : le rapport doit survivre a
+  # la purge de logs/. `-Log logs\...` reste possible pour qui veut l'artefact
+  # dans le repo.
+  $Log = Join-Path $env:TEMP "pariscore-deploy-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
 }
 
 # --- Log immediat : une ligne par ecriture, pas de buffer ---
@@ -105,7 +133,20 @@ function Log([string]$line) {
 # le PID existe encore. On le reprend en le loguant, jamais en silence.
 $LockStaleMin = 20
 
-if (-not (Test-Path "logs")) { New-Item -ItemType Directory -Path "logs" | Out-Null }
+# --- Preflight SSH ---
+# Avant : aucune verification. `ssh` absent -> la premiere commande echouait
+# dans le catch general avec un message nu ("Le systeme ne peut pas trouver
+# le fichier specifie") sans dire QUELLE commande manquait, et la detection
+# d'etat reel (Invoke-RemoteCapture, catch { return $null }) avalait l'erreur
+# et loggeait "build courant = (absent)" : un verdict trompeur.
+# Ici on echoue VITE et CLAIREMENT, avant de poser le verrou.
+foreach ($exe in @("ssh", "scp")) {
+  if (-not (Get-Command $exe -ErrorAction SilentlyContinue)) {
+    # Log impossible : le verrou n'est pas pose, mais Log() marche quand meme.
+    Log "DEPLOY-FAIL: binaire '$exe' introuvable dans le PATH. Installer OpenSSH Client, puis relancer."
+    exit 1
+  }
+}
 
 # L'ordre EST IMPORTANT : on teste le verrou du precedents AVANT d'ecrire le
 # notre, sinon `LastWriteTime` designe notre propre ecriture et la detection
@@ -131,7 +172,7 @@ if (Test-Path $LOCK_FILE) {
 }
 Set-Content -Path $LOCK_FILE -Value "$PID" -Encoding ASCII
 
-# ── Timeout par commande (incident #223) ────────────────────────────────────
+# --- Timeout par commande (incident #223) ------------------------------------
 # Les appels `scp` / `ssh` directs (lignes 170-178 de l'ancienne version)
 # pendaient INDEFINIMENT quand le processus enfant n'etait pas draine : le
 # deploy figeait a l'etape [3/6] scp, sans message, et le verrou restait pose
@@ -151,23 +192,27 @@ function Invoke-Remote {
     [int]$TimeoutSec = $SshCmdTimeoutSec
   )
   # NE PAS quoter chaque argument. `-o BatchMode=yes` devient
-  # `"-o BatchMode=yes"` et scp/ssh sortent 255 sans message (« DEPLOY-FAIL:
-  # scp (exit ) », exit vide car le process n'a pas de MainWindowHandle).
+  # `"-o BatchMode=yes"` et scp/ssh sortent 255 sans message (" DEPLOY-FAIL:
+  # scp (exit ) ", exit vide car le process n'a pas de MainWindowHandle).
   # Tous les args de ce runner sont sans espace (SSH_OPTS, chemin de script,
   # hote:/chemin) : le tableau se passe tel quel a Start-Process.
   $argList = $RemoteArgs
+  # Sorties nommees par PID ($script:OutFile/$script:ErrFile, definis en tete).
+  # Avant, un nom fixe ($env:TEMP\deploy-out.txt) : deux runners paralleles se
+  # le partageaient et le verdict du second pouvait reposer sur la sortie du
+  # premier. Chaque appelcent appelleur lira $script:OutFile APRES l'appel.
   $p = Start-Process -FilePath $Exe -ArgumentList $argList -NoNewWindow -PassThru `
-        -RedirectStandardOutput "$env:TEMP\deploy-out.txt" -RedirectStandardError "$env:TEMP\deploy-err.txt"
+        -RedirectStandardOutput $script:OutFile -RedirectStandardError $script:ErrFile
   # .NET: sans toucher .Handle AVANT l'attente, le handle n'est pas cache et
   # .ExitCode reste $null apres WaitForExit(timeout) -> le runner rapportait
-  # « scp (exit ) » (code vide) et traitait un succes comme un echec.
+  # " scp (exit ) " (code vide) et traitait un succes comme un echec.
   $null = $p.Handle
   if ($p.WaitForExit($TimeoutSec * 1000)) {
     $code = $p.ExitCode
     if ($null -eq $code) { $code = 0 }
     return $code
   }
-  # ── TIMEOUT : tue l'arbre de processus, sinon l'enfant survit ──
+  # -- TIMEOUT : tue l'arbre de processus, sinon l'enfant survit --
   Log "  [timeout] $What n'a pas repondu en ${TimeoutSec}s - kill"
   try {
     # -Force sur toute la descendance : scp/ssh lancent des enfants (ssh-agent,
@@ -177,7 +222,7 @@ function Invoke-Remote {
     try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
   }
   Start-Sleep -Seconds 1
-  return 124   # code conventionnel « timeout » (comme `timeout(1)`)
+  return 124   # code conventionnel " timeout " (comme `timeout(1)`)
 }
 
 # --- Verification d'etat REEL du VPS (2026-10-09) ---
@@ -198,7 +243,9 @@ function Invoke-RemoteCapture([string]$Cmd, [string]$What, [int]$T = 30) {
     $rc = Invoke-Remote -Exe "ssh" -RemoteArgs (@($SSH_OPTS) + @($VPS_HOST, $Cmd)) -What $What -TimeoutSec $T
   } catch { return $null }
   if ($rc -ne 0) { return $null }
-  $f = "$env:TEMP\deploy-out.txt"
+  # $script:OutFile (nom par PID) : l'ancien nom fixe $env:TEMP\deploy-out.txt
+  # etait partage entre runners concurrents.
+  $f = $script:OutFile
   if (-not (Test-Path $f)) { return $null }
   $raw = Get-Content $f -Raw -ErrorAction SilentlyContinue
   if ($null -eq $raw) { return $null }
@@ -328,7 +375,12 @@ try {
     # Timeout court (30 s) sur les polls : ce sont des commandes courtes, un
     # depot > 30 s signale un tunnel reseau casse, pas un deploy lent.
     # --- Voie 1 : le log distant (fail-fast + marqueur de succes) ---
-    $outFile = "$env:TEMP\deploy-poll.txt"
+    # BUG CORRIGE : lisait `$env:TEMP\deploy-poll.txt`, alors qu'Invoke-Remote
+    # ecrit TOUJOURS dans $script:OutFile. Le fichier n'existait donc jamais :
+    # ce bloc etait inatteignable, et surtout s'il restait un `deploy-poll.txt`
+    # PERIME en %TEMP% (fichiers en nom fixe, jamais nettoyes), il etait relu a
+    # chaque tick -> verdict fonde sur une donnee datant d'un deploy precedent.
+    $outFile = $script:OutFile
     $b64Poll = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("grep -c 'VPS_DEPLOY_OK' $REMOTE_LOG 2>/dev/null; grep -E '^ERR:' $REMOTE_LOG 2>/dev/null | tail -3"))
     $pollArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Poll | base64 -d | bash")
     $rc = Invoke-Remote -Exe "ssh" -RemoteArgs $pollArgs -What "ssh poll" -TimeoutSec 30
@@ -388,7 +440,7 @@ try {
 
   # --- 5. Report ---
   Log "[6/6] Result: $status"
-  $sumFile = "$env:TEMP\deploy-summary.txt"
+  $sumFile = $script:OutFile
   $b64Sum = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("tail -n 15 $REMOTE_LOG"))
   $sumArgs = @($SSH_OPTS) + @($VPS_HOST, "echo $b64Sum | base64 -d | bash")
   $rcSum = Invoke-Remote -Exe "ssh" -RemoteArgs $sumArgs -What "ssh summary" -TimeoutSec 30
@@ -410,7 +462,27 @@ try {
   Log $_.Exception.Message
   $code = 1
 } finally {
-  Remove-Item -Path $LOCK_FILE -Force -ErrorAction SilentlyContinue
+  # Ne retirer le verrou que s'il nous appartient ENCORE. Sans ce test, si un
+  # runner obsolete avait ete repris par un second (branche "verrou OBSOLETE"),
+  # le finally du premier mort aurait supprime LE verrou du survivant, laissant
+  # la porte ouverte a un troisieme run simultane. `Remove-Item` blindait
+  # contre l'erreur de fichier absent, pas contre la mauvaise propriete.
+  $owner = ""
+  try {
+    if (Test-Path $LOCK_FILE) { $owner = (Get-Content $LOCK_FILE -First 1 -ErrorAction SilentlyContinue) }
+  } catch {}
+  if ("$owner" -eq "$PID") {
+    Remove-Item -Path $LOCK_FILE -Force -ErrorAction SilentlyContinue
+  } elseif ($owner) {
+    Log "verrou conserve : appartient au PID $owner, pas a nous (PID $PID)"
+  }
+  # Fichiers de sortie en nom par PID : s'ils ne sont pas nettoyes, chaque run
+  # laisse deux fichiers orphelins en %TEMP%. Morts de tout facon, mais un
+  # dossier %TEMP% qui grossit indefiniment est un defaut que personne ne
+  # diagnostique jamais.
+  foreach ($f in @($script:OutFile, $script:ErrFile)) {
+    if ($f) { Remove-Item -Path $f -Force -ErrorAction SilentlyContinue }
+  }
   Log "======================================================"
   Log "deploy-runner.ps1 end (exit $code)"
 }

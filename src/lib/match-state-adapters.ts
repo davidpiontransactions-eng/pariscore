@@ -1,5 +1,6 @@
 import type { FootballMatch } from "./football-data";
 import type { HandballMatch } from "./handball-data";
+import type { GameStatus } from "./baseball/types";
 import { LIVE_STATUS_PATTERNS } from "./top-matches/types";
 import type { MatchState } from "./match-state";
 
@@ -260,6 +261,37 @@ export function handballMatchStateSafe(
 ): MatchState {
   if (!input.status) return inferFromClock(input.kickoff, nowMs);
   return handballMatchState({ status: input.status, kickoff: input.kickoff }, nowMs);
+}
+
+// ---------------------------------------------------------------------------
+// Baseball
+// ---------------------------------------------------------------------------
+
+/**
+ * `BaseballGameRecord.status` est l'**union fermée** `GameStatus = "scheduled" | "live" |
+ * "final"` (`baseball/types.ts:24`), déjà normalisée par les scrapers MLB/KBO/NPB.
+ *
+ * Mapping par switch exhaustif, comme `handballMatchState` : si le type gagne un cas,
+ * la compilation casse ICI plutôt qu'à l'exécution sur une carte de live. Le baseball
+ * n'a ni `postponed` ni `canceled` dans son vocabulaire — pas de cas à inventer, c'est
+ * justement ce qui distingue un mapping d'une devinette.
+ */
+export function baseballMatchState(input: {
+  status: GameStatus;
+  gameDateIso?: string;
+}): MatchState {
+  switch (input.status) {
+    case "live":
+      return "live";
+    case "final":
+      return "finished";
+    case "scheduled":
+      return "scheduled";
+    default: {
+      const exhaustive: never = input.status;
+      return exhaustive;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
