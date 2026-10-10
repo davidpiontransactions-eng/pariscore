@@ -47,6 +47,16 @@ export async function GET(req: NextRequest) {
     const day = e.kickoff.slice(0, 10);
     return day >= from && day <= to;
   });
+
+  // Liste des ligues disponibles, calculée AVANT le filtre `league`.
+  //
+  // Sans cela, le sélecteur de l'IHM se reduce a l'unique option filtree : choisir
+  // « Premier League » ferait disparaitre les 19 autres, et revenir a « tous » serait
+  // impossible. Le filtre change les DONNEES, jamais la liste des CHOIX.
+  const leagues = [...new Set(inWindow.map((e) => e.league).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, "fr"),
+  );
+
   const entries = league ? inWindow.filter((e) => e.league === league) : inWindow;
 
   // 2. Fixtures réelles — cotes BSD (dont dé-rive DC) + scores.
@@ -64,7 +74,9 @@ export async function GET(req: NextRequest) {
 
   // 3. Rejeu walk-forward par marché.
   const payload = runMarketBacktest({ entries, matchesById, from, to });
-  const body = { ...payload, warnings };
+  // `league` demandé par le client : la liste des ligues reste celle de la fenêtre
+  // entière, sinon le sélecteur perdrait ses options (voir commentaire plus haut).
+  const body = { ...payload, warnings, leagues };
   cache.set(body);
   return NextResponse.json(body, { headers: CACHE_HEADERS });
 }

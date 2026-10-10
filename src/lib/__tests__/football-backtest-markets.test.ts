@@ -8,6 +8,7 @@ import {
   STRATEGY_TO_MARKET,
 } from "@/lib/football-backtest/markets";
 import { runMarketBacktest } from "@/lib/football-backtest/market-engine";
+import { LEAGUE_COUNTRY_BY_NAME } from "@/lib/league-mapping";
 
 function mkMatch(over: Partial<BSDFootballMatch> = {}): BSDFootballMatch {
   return {
@@ -265,5 +266,51 @@ describe("filtre league du backtest marchés", () => {
     });
     expect(out.totals.nBets).toBe(0);
     expect(out.markets.every((m) => m.n === 0)).toBe(true);
+  });
+});
+
+/* ── Liste des ligues pour le sélecteur ───────────────────────────────── */
+
+describe("liste des ligues du backtest", () => {
+  const window = { from: "2026-09-01", to: "2026-10-01" };
+
+  test("est calculée sur la fenêtre ENTIERE, pas sur l'ensemble filtré", () => {
+    // Invariant d'IHM : le filtre `league` change les DONNEES, jamais la liste des
+    // CHOIX. Si la liste venait des entrées filtrées, le sélecteur se réduirait à
+    // l'unique option choisie et l'utilisateur ne pourrait plus revenir à « tous ».
+    const inWindow = [
+      mkEntry({ id: "a", matchId: "1", league: "Premier League" }),
+      mkEntry({ id: "b", matchId: "2", league: "La Liga" }),
+      mkEntry({ id: "c", matchId: "3", league: "Serie A" }),
+    ];
+    const leagues = [...new Set(inWindow.map((e) => e.league).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "fr"),
+    );
+    expect(leagues).toEqual(["La Liga", "Premier League", "Serie A"]);
+
+    // Après filtre sur une seule ligue, les données sont réduites…
+    const filtered = inWindow.filter((e) => e.league === "Serie A");
+    const out = runMarketBacktest({ entries: filtered, matchesById: new Map(), ...window });
+    expect(out.totals.nBets).toBe(1);
+
+    // …mais la liste des options, elle, reste complète : calculée AVANT le filtre.
+    expect(leagues).toHaveLength(3);
+  });
+
+  test("trie en locale fr", () => {
+    // Un tri ASCII placerait "Angleterre"/"Angers" après "Zambie" ; c'est le défaut
+    // classique des listes de pays affichées à l'utilisateur francophone.
+    const names = ["Zambie", "Angleterre", "Espagne", "Allemagne", "France"];
+    const sorted = [...names].sort((a, b) => a.localeCompare(b, "fr"));
+    expect(sorted[0]).toBe("Allemagne");
+    expect(sorted[sorted.length - 1]).toBe("Zambie");
+  });
+
+  test("LEAGUE_COUNTRY_BY_NAME indexe les ligues football par leur NOM", () => {
+    expect(LEAGUE_COUNTRY_BY_NAME["Premier League"]).toBe("England");
+    expect(LEAGUE_COUNTRY_BY_NAME["Ligue 1"]).toBe("France");
+    // Une ligue absente de la table doit rester undefined, pas un pays inventé :
+    // l'IHM la range alors sous « Autres pays ».
+    expect(LEAGUE_COUNTRY_BY_NAME["Liga Inconnue FICTIVE"]).toBeUndefined();
   });
 });

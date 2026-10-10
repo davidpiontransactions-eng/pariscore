@@ -1,10 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Lock, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parisDayLabel } from "@/lib/football-time";
 import type { MarketBacktest, MarketBacktestResult, MarketCardInfo } from "@/lib/football-backtest/market-engine";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LEAGUE_COUNTRY_BY_NAME } from "@/lib/league-mapping";
+import { countryFlag } from "@/lib/country-flag";
+
+/**
+ * Libellé du groupe des ligues dont le pays n'est pas dans `LEAGUE_COUNTRY_BY_NAME`
+ * (coupes internationales, ligues hors table). Un `SelectLabel` muet serait pire que
+ * la liste plate d'avant : on dit qu'on ne sait pas, plutôt que d'inventer un pays.
+ */
+const AUTRE_PAYS = "Autres pays";
 
 /**
  * Onglet « Back Testing » football (vague 3, phase 1) — rejeu walk-forward des
@@ -195,28 +213,72 @@ export function FootballBacktestingView() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Championnat filtré — `""` = tous. */
+  const [league, setLeague] = useState("");
+  /**
+   * Liste des ligues disponibles. Toujours celle de la fenêtre ENTIERE, renvoyée par la
+   * route indépendamment du filtre : sinon le sélecteur se réduirait à l'option filtrée
+   * et l'utilisateur ne pourrait plus revenir en arrière.
+   */
+  const [availableLeagues, setAvailableLeagues] = useState<string[]>([]);
+  /** Requête en cours, pour abandonner la précédente si le filtre change. */
+  const setAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // Changer de championnat relance la requête : deux réponses peuvent se croiser si
+    // l'utilisateur enchaîne les sélections, et la dernière arrivée n'est pas forcément
+    // la dernière demandée. L'abandon évite d'afficher les cartes d'une ligue sous
+    // le titre d'une autre — un backtest mensonger.
+    const ctrl = new AbortController();
+    setAbortRef.current = ctrl;
     try {
-      const res = await fetch("/api/football/backtest/markets", { cache: "no-store" });
+      const qs = league ? `?league=${encodeURIComponent(league)}` : "";
+      const res = await fetch(`/api/football/backtest/markets${qs}`, {
+        cache: "no-store",
+        signal: ctrl.signal,
+      });
       if (!res.ok) throw new Error(`API backtest marchés ${res.status}`);
-      const body = (await res.json()) as MarketBacktestResult & { warnings?: string[] };
+      const body = (await res.json()) as MarketBacktestResult & {
+        warnings?: string[];
+        leagues?: string[];
+      };
       setData(body);
       setWarnings(body.warnings ?? []);
+      if (body.leagues) setAvailableLeagues(body.leagues);
     } catch (err) {
+      if ((err as Error).name === "AbortError") return;
       console.error("[FootballBacktesting] fetch error:", err);
       setError("Impossible de charger le backtest des marchés.");
       setData(null);
     } finally {
-      setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
-  }, []);
+  }, [league]);
 
   useEffect(() => {
     void load();
+    return () => setAbortRef.current?.abort();
   }, [load]);
+
+  // Groupement par pays, ordre alphabétique FR.
+  const leaguesByCountry = useMemo(() => {
+    const byCountry = new Map<string, string[]>();
+    for (const l of availableLeagues) {
+      const country = LEAGUE_COUNTRY_BY_NAME[l] ?? AUTRE_PAYS;
+      const arr = byCountry.get(country);
+      if (arr) arr.push(l);
+      else byCountry.set(country, [l]);
+    }
+    return [...byCountry.entries()]
+      .map(([country, list]) => ({
+        country,
+        flag: countryFlag(country),
+        leagues: [...list].sort((a, b) => a.localeCompare(b, "fr")),
+      }))
+      .sort((a, b) => a.country.localeCompare(b.country, "fr"));
+  }, [availableLeagues]);
 
   return (
     <div className="w-full min-w-0 rounded-2xl p-3 sm:p-4">
@@ -232,6 +294,36 @@ export function FootballBacktestingView() {
             {parisDayLabel(`${data.from}T12:00:00Z`)} → {parisDayLabel(`${data.to}T12:00:00Z`)}
           </span>
         )}
+        <Select
+          value={league || "__all__"}
+          onValueChange={(v) => setLeague(v === "__all__" ? "" : v)}
+        >
+          <SelectTrigger
+            size="sm"
+            aria-label="Championnat du backtest"
+            className="h-7 w-full max-w-[15rem] rounded-lg px-2 py-0 text-xs font-medium sm:w-[13rem]"
+            style={{ background: C.card, borderColor: C.cardBorder, color: C.headerText }}
+          >
+            <SelectValue placeholder="Tous les championnats" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Tous les championnats</SelectItem>
+            {leaguesByCountry.map((group) => (
+              <SelectGroup key={group.country}>
+                <SelectLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide">
+                  <span aria-hidden>{group.flag}</span>
+                  {group.country}
+                </SelectLabel>
+                {group.leagues.map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
+
         <button
           type="button"
           onClick={() => void load()}

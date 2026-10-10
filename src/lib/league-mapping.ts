@@ -257,3 +257,24 @@ export const LEAGUE_INFO: Record<string, { name: string; country: string; sport:
   afc_champions_league_elite: { name: "AFC Champions League Elite", country: "Asia", sport: "football" },
   afc_champions_league_two: { name: "AFC Champions League Two", country: "Asia", sport: "football" },
 };
+
+/**
+ * Index inversé `NOM de ligue → pays`.
+ *
+ * `LEAGUE_INFO` est indexé par slug ; le backtest et le widget Top 10, eux, reçoivent
+ * des **noms** (« Premier League », « Serie A »). Sans cet index, chaque écran devait
+ * reconstruire son propre mapping nom→pays — deux copies qui divergeraient au premier
+ * ajout de ligue.
+ *
+ * Un même nom peut pointer deux fois (une `Serie A` en Italie et une autre) : le
+ * dernier slug rencontré gagne. C'est documenté plutôt que masqué — le groupement par
+ * pays sert à *rendre le nom lisible*, pas à prouver l'unicité d'une ligue.
+ */
+export const LEAGUE_COUNTRY_BY_NAME: Record<string, string> = (() => {
+  const index: Record<string, string> = {};
+  for (const info of Object.values(LEAGUE_INFO)) {
+    if (info.sport !== "football") continue;
+    index[info.name] = info.country;
+  }
+  return index;
+})();
