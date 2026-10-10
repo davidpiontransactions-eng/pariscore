@@ -37,8 +37,7 @@ import {
 } from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
-import { TennisCalendarSection } from "@/components/tennis/tennis-calendar-section";
-import { TennisTop10MatchesWidget } from "@/components/tennis/tennis-top10-matches-widget";
+
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -312,16 +311,12 @@ function HomeInner() {
         )}
 
         {/* Calendrier des matchs — filtré par sport + mode.
-            Football est exclu : son calendrier vit dans le sous-onglet
-            « Calendrier » de FootballTabContent (Vague 1), le laisser ici
-            le rendrait en double. Les autres sports gardent le leur. */}
+            **Sports exclus** : leur calendrier et leur Top 10 vivent déjà dans le
+            sous-onglet de leur `*TabContent` (Football Vague 1, Tennis sous-onglets
+            « Pré-match » et « Stratégies »), les laisser ici les rendait EN DOUBLE.
+            On garde ceux qui n'ont pas encore été rapatriés dans leur onglet. */}
         <section className="w-full px-4 sm:px-6 pt-6">
-          {activeTab === "tennis" ? (
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-              <TennisTop10MatchesWidget />
-              <TennisCalendarSection />
-            </div>
-          ) : activeTab === "football" || activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" || activeTab === "basketball" ? null : (
+          {activeTab === "football" || activeTab === "tennis" || activeTab === "hockey" || activeTab === "snooker" || activeTab === "handball" || activeTab === "basketball" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}

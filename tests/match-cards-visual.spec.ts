@@ -125,6 +125,10 @@ test.describe("Cartes de match — QA visuelle (MatchShell + MatchStateBadge)", 
     for (const target of [
       { name: "BasketballMatchCard", tab: /basketball/i, card: '[role="button"]' },
       { name: "HandballMatchCard", tab: /handball/i, card: 'button[type="button"]' },
+      // Baseball : la carte est un `<article>` NON cliquable (le CTA « Analyse » de
+      // BaseballMatchCard.tsx:328 ouvre le détail), et son badge est posé dans le
+      // bandeau du hero. Un selecteur `button` ne l'atteindrait jamais.
+      { name: "BaseballMatchCard", tab: /baseball/i, card: "article" },
     ] as const) {
       test(`${target.name} @ ${vpName} (${vp.width}×${vp.height})`, async ({ page }) => {
         const fatals = await watchPage(page);
