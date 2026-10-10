@@ -12,6 +12,7 @@ import { countryFlag } from "@/lib/country-flag";
 import { CORNER_OVER_MIN_PROB } from "@/lib/football-predictions";
 import { WatchButton } from "@/components/shared/watch-button";
 import { FollowButton } from "@/components/shared/follow-button";
+import { LiveBetsTrigger } from "@/components/sports/live-bets-trigger";
 import { useFootballMatchStats } from "@/hooks/use-football-match-stats";
 import type { MomentumTimePoint } from "@/lib/football-timeline";
 
@@ -456,9 +457,21 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         {/* Stats + xG */}
         {(live.homeShots !== null || live.awayShots !== null || p.xGa) && (
           <div className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
-            {(live.homeShots ?? 0) > 0 || (live.awayShots ?? 0) > 0 ? (
+            {/* Le gate portrait sur « au moins un tir » (ancien `(homeShots ?? 0) > 0 || …`) :
+                il masquait TOUTE la section sur un match sans tir — cas réel à la
+                mi-temps ou en début de rencontre — alors que possession, cadrés et
+                corners sont déjà connus. On affiche dès qu'UNE statistique est
+                présente ; chaque ligne garde sa propre garde `!== null` en dessous. */}
+            {live.homePossession !== null || live.homeShots !== null ? (
               <>
-                <StatRow label="Poss." home={live.homePossession} away={100 - live.homePossession} pct={live.homePossession / 1} />
+                {live.homePossession !== null && (
+                  <StatRow
+                    label="Poss."
+                    home={live.homePossession}
+                    away={100 - live.homePossession}
+                    pct={live.homePossession}
+                  />
+                )}
                 {live.homeShots !== null && live.awayShots !== null && (
                   <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} />
                 )}
@@ -733,6 +746,18 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             />
           </div>
         )}
+
+        {/* BETS PRÉDICTIFS LIVE — football est le seul des 6 sports dont le
+            flux live porte 100 % des champs du moteur (xG, corners, cartons,
+            minute). Le panneau est en frère du bouton Momentum, jamais à
+            l'intérieur : le clic remonterait et rouvrirait le détail. */}
+        <LiveBetsTrigger
+          sport="football"
+          matchId={String(match.id)}
+          nameA={match.home.name}
+          nameB={match.away.name}
+          className="mt-2"
+        />
       </div>
 
       {/* Live dock mobile (B5) — score + proba jamais perdus pendant le scroll */}

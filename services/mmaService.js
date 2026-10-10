@@ -1146,7 +1146,15 @@ function getOdds1xBet() {
       console.warn(`[MMA] 1xBet file stale: ${ageHours}h old (max 168h). Skipping fallback.`);
       return null;
     }
-    const raw = FS_1XBET.readFileSync(PATH_1XBET, 'utf-8');
+    // `turbopackIgnore` : sans lui, le bundler server-side ne peut pas prouver que
+    // `PATH_1XBET` est un chemin unique et scopé (il vient d'une fonction), donc il
+    // embarque littéralement tout le dossier `public/` dans le bundle. Les deux appels
+    // ci-dessus portent déjà ce commentaire — celui-ci était le dernier sans, et
+    // l'unique source de l'avertissement « all source files (including the public
+    // folder) are being deployed ». Le chemin est déjà scopé par `_resolve1xBetPath`
+    // (`process.cwd()/data/odds_1xbet_mma.json`) : rien n'est déplacé, on déclare
+    // seulement au bundler que cette lecture est dynamique.
+    const raw = FS_1XBET.readFileSync(/*turbopackIgnore: true*/ PATH_1XBET, 'utf-8');
     const data = JSON.parse(raw);
     if (data && Array.isArray(data.fights)) {
       _1xbetCache.data = data;
