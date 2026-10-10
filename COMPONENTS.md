@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 227 components total (football: 14, handball: 21, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.). Comptages par sport rectifiés le 2026-10-04 (missions handball) : handball 16 → 25 lignes (9 nouveaux composants : score-banner, prediction-cards, team-stats-table, backtesting-view, danish-stats, pariscore-backtest, sync-badge, top10-table) + 9 libs (handball-pariscore, handball-cmp corrigé, handball-vitibet-league, handball-danish, handball-mol-liga, handball-backtest-pariscore, handball-goals-calibration, handball-optimal-thresholds, handball-top10).
+> extract pass. 227 components total (football: 14, handball: 21, leagues: 12, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.). **+2 le 2026-10-09** : `sports/live-predictive-bets-widget` et `sports/live-bets-trigger` (voir § Sports Predictive). Comptages par sport rectifiés le 2026-10-04 (missions handball) : handball 16 → 25 lignes (9 nouveaux composants : score-banner, prediction-cards, team-stats-table, backtesting-view, danish-stats, pariscore-backtest, sync-badge, top10-table) + 9 libs (handball-pariscore, handball-cmp corrigé, handball-vitibet-league, handball-danish, handball-mol-liga, handball-backtest-pariscore, handball-goals-calibration, handball-optimal-thresholds, handball-top10).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -22,6 +22,7 @@ reference them.** The real equivalent (if any) is in the right column.
 | `player-card` | `player-block` / `player-profile-header` |
 | `odds-card` | `odds-comparator` / `best-odd-badge` |
 | `stats-card` | `stats-indicators-grid` / `player-statline` |
+| `live-predictive-bets-widget` | exists — `src/components/sports/` (multi-sports, see § Sports Predictive) |
 
 **Rule:** when unsure a component exists, `ls src/components/<category>/` once.
 If absent, STOP searching — create it or ask. Do not retry with name variants.
@@ -44,7 +45,42 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 60 components
+## Sports Predictive (`src/components/sports/`) — 2 components
+
+Composants **polymorphes** : ils ne calculent aucune probabilité, ils lisent le
+contrat `LiveBetsBundle` (`src/lib/prediction/live-common.ts`) produit par le
+moteur du sport. Le `sportType` est porté par le bundle.
+
+| Component | File | Role |
+|-----------|------|------|
+| live-predictive-bets-widget | live-predictive-bets-widget.tsx | Panneau BETS PRÉDICTIFS LIVE pour football, basketball, hockey, baseball, handball, snooker. Jauges néon, badges VALUE, filtres par pilules [Tous] [Match/Set/Période] [Micro-Bets], drivers observés |
+| live-bets-trigger | live-bets-trigger.tsx | Bouton raccourci « 🎯 Widget Live » + skeleton glassmorphic + message d'indisponibilité. À poser sur une carte de match ; `stopPropagation` sur sa racine, car la carte hôte est souvent cliquable elle-même |
+
+Moteurs + adaptateurs (`src/lib/prediction/`). L'adaptateur
+(`live-adapters.ts`) est le point de couture route → moteur ; il renvoie
+`null` quand le flux ne porte pas les champs REQUIS, et l'UI affiche alors la
+raison au lieu de probabilités de repli :
+
+| Sport | Engine | Adaptateur | Route live | Marchés |
+|-------|--------|------------|------------|---------|
+| football | live-football.ts | `adaptFootball` | `/api/football/live` | 1N2, prochain but, O/U buts live, prochain corner, prochain carton, O0.5 |
+| basketball | live-basketball.ts | `adaptBasketball` | `/api/fiba/scoreboard` | QT/Match, handicap live, Race to X, valeur du prochain panier, O/U 210.5 |
+| hockey | live-hockey.ts | `adaptHockey` | `/api/hockey/matches` | Vainqueur TR, vainqueur prolongation, but en avantage numérique, total période |
+| baseball | live-baseball.ts | `adaptBaseball` | `/api/baseball/live` | Moneyline match, point de la demi-manche, prochain PA, runs demi-manche, O0.5 résiduel |
+| handball | live-handball.ts | `adaptHandball` | `/api/handball/live` | Mi-temps/Match, impact avantage numérique, prochaine attaque, O/U total |
+| snooker | live-snooker.ts | `adaptSnooker` | `/api/v1/snooker/matches` | Vainqueur frame, vainqueur rencontre, century break, prochaine bille |
+
+Hook de connexion : `useLivePredictiveBets(sport, matchId, { enabled, route })`
+(`src/hooks/use-live-predictive-bets.ts`) — polling 8 s, garde le dernier bundle
+connu en cas de coupure, expose `{ bundle, status, message, updatedAt }`.
+
+---
+
+## Tennis (`src/components/tennis/`) — 59 components
+
+> `tennis-top10-section.tsx` **supprimé le 2026-10-10** — code mort, 0 import dans `src/`.
+> C'était le Top 10 **joueurs** (Elo/momentum), distinct du Top 10 **matchs** ; il avait été
+> écrit pour remplacer le widget sidebar mais n'a jamais été monté. Ne pas le reconstruire.
 
 | Component | File | Role |
 |-----------|------|------|
@@ -280,7 +316,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | cs2-map-pool-analytics | CS2MapPoolAnalytics.tsx | Map pool winrates 3m/6m + pistol index + H2H |
 | cs2-markets-panel | Cs2MarketsPanel.tsx | Marchés calibrés (winner/map/over/handicap) + EV/Kelly + gate ≥65% |
 
-## Snooker (`src/components/snooker/`) — 8 components
+## Snooker (`src/components/snooker/`) — 7 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -288,7 +324,6 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | snooker-top-picks | snooker-top-picks.tsx | Tableau Top-10 picks prédictifs (prob ≥ 58 %, Elo, edge, Kelly) |
 | snooker-top-picks-banner | snooker-top-picks-banner.tsx | Bannière carousel Top Picks du jour (jauge certitude, badge confiance, cote) |
 | snooker-bets-panel | snooker-bets-panel.tsx | Grille paris prédictifs pre-match/live (handicap, O/U frames, century, race-to-X, toggle Pre-match/Live) |
-| snooker-match-card | snooker-match-card.tsx | Carte de match snooker (joueurs, score BoX, Elo, probabilités, edge) |
 | snooker-live-tracker | snooker-live-tracker.tsx | Suivi live frame par frame (points, breaks, progression) |
 | snooker-live-popup | snooker-live-popup.tsx | Popup live interactif : scoreboard + 3 bets prédictifs (vainqueur, O/U frames, handicap ≥65 %), refresh 15 min |
 | snooker-player-card | snooker-player-card.tsx | Carte profil joueur (stats, forme, Win Rate, Century Rate) |
@@ -415,10 +450,13 @@ Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, don
 
 ---
 
-## Shared (`src/components/shared/`) — 10 components
+## Shared (`src/components/shared/`) — 12 components
 
 | Component | File | Role |
 |-----------|------|------|
+| match-shell | match-shell.tsx | Coquille commune des cartes de match : `<article>` + identité (compétition / heure / `MatchStateBadge`) + slots `banner`, `children`, `decision`, `actions`. **Contrainte d'API, pas gabarit visuel** — le sport garde sa silhouette. `banner` remplace la barre d'identité par défaut (ne pas passer les deux) ; `MatchShellIdentity` exporté séparément pour poser le bloc identité dans un banner image (`tone="overlay"`). Adopté par `football-match-card`, `basketball-match-card`, `handball-match-card` |
+| match-state-badge | match-state-badge.tsx | Badge d'état de match : 8 états nommés (scheduled / live / halftime / suspended / odds-changed / finished / postponed / canceled). Icône + libellé + `title` (jamais la couleur seule) ; `reason` obligatoire pour suspended/postponed/canceled ; `odds-changed` et `halftime` retombent sur `live` après `transientMs` (défaut 3000). Logique pure testée dans `src/lib/match-state.ts` |
+| tabular-off-note | — | Pas un composant : `tabular-nums` est posé sur `body` dans `globals.css`. Ne pas ajouter la classe par composant, elle est déjà héritée. Échappement via `.tabular-nums-off`. Audit : `bun scripts/audit-tabular-nums.ts` |
 | odds-sparkline | odds-sparkline.tsx | Sparkline SVG pour mouvement de cotes (dataA[], dataB?) |
 | mini-probability-curve | mini-probability-curve.tsx | Courbe de probabilité compacte (Recharts AreaChart, 60px) |
 | confidence-ring | confidence-ring.tsx | Double arc animé (probabilité + confiance modèle) |

@@ -10,10 +10,14 @@ import { isInKickoffWindow, type KickoffWindow } from "@/lib/football-time";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { countryFlag } from "@/lib/country-flag";
+import type { MarketBacktest } from "@/lib/football-backtest/market-engine";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
 import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
@@ -29,6 +33,16 @@ const C = {
   live: "#00985f",
   accent: "#00985f",
 } as const;
+
+/**
+ * Libellé du groupe « pays inconnu ».
+ *
+ * `leagueCountry` est optionnel (`leagueCountry?: string | null`) et certaines sources
+ * (notament les replis de match sans `country`) ne le renseignent pas. Regrouper ces
+ * ligues sous une entrée vide produirait un `SelectLabel` muet : pire que la liste
+ * plate d'avant. Un libellé explicite vaut mieux qu'un silence.
+ */
+const AUTRE_PAYS = "Autres pays";
 
 type StrategyDef = (typeof STRATEGIES)[number];
 
@@ -186,24 +200,96 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
 
   const def = useMemo(() => STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0], [active]);
 
-  // Liste des ligues issue des données API (source BSD) — repli sur la prop
-  // matches si l'API est encore vide (chargement / fallback).
-  const leagues = useMemo(() => {
-    const set = new Set<string>();
+  // Ligues groupées par pays, pays triés alphabétiquement (`localeCompare` en
+  // locale fr : sinon "Angleterre" passe après "Zambie" sur un tri ASCII).
+  //
+  // `leagueCountry` est DÉJÀ typé (`football-strategy-top5.ts:76`) et DÉJÀ transporté
+  // au client par la route `/api/football/top5` (spread `...data`) : aucun changement
+  // d'API n'est nécessaire, seul ce `useMemo` l'ignorait.
+  //
+  // Le groupement résout au passage une ambiguïté réelle : la valeur d'un `SelectItem`
+  // est le NOM de la ligue, et `Serie A` existe en Italie ET en Équateur, `Bundesliga`
+  // en Allemagne ET en Autriche. Sans groupe, l'utilisateur voit deux « Serie A »
+  // indistinguables et ne sait pas lequel il filtre. Le `SelectLabel` rend le pays
+  // visible au-dessus de ses ligues.
+  const leaguesByCountry = useMemo(() => {
+    // country -> Set<league>
+    const byCountry = new Map<string, Set<string>>();
+    const add = (country: string, league: string) => {
+      const key = country.trim() || AUTRE_PAYS;
+      let set = byCountry.get(key);
+      if (!set) {
+        set = new Set<string>();
+        byCountry.set(key, set);
+      }
+      set.add(league);
+    };
+
     if (data) {
       for (const list of Object.values(data.strategies)) {
         for (const e of list) {
-          if (e.league) set.add(e.league);
+          if (e.league) add(e.leagueCountry ?? "", e.league);
         }
       }
     }
-    if (set.size === 0) {
+    if (byCountry.size === 0) {
+      // Repli sur la prop `matches` pendant le chargement de l'API.
       for (const m of matches) {
-        if (m.league?.name) set.add(m.league.name);
+        if (m.league?.name) add(m.league.country ?? "", m.league.name);
       }
     }
-    return [...set].sort((a, b) => a.localeCompare(b));
+
+    return [...byCountry.entries()]
+      .map(([country, set]) => ({
+        country,
+        flag: countryFlag(country),
+        leagues: [...set].sort((a, b) => a.localeCompare(b, "fr")),
+      }))
+      .sort((a, b) => a.country.localeCompare(b.country, "fr"));
   }, [data, matches]);
+
+  // Liste plate conservée pour le filtrage (l'état `league` reste le nom de la ligue).
+  const leagues = useMemo(
+    () => leaguesByCountry.flatMap((g) => g.leagues),
+    [leaguesByCountry],
+  );
+
+  // 2 meilleurs marchés backtestés pour le championnat sélectionné.
+  //
+  // La requête ne part QUE lorsqu'un championnat est choisi : sans lui, l'onglet affiche
+  // « Toutes les ligues » et un classement par marché n'aurait aucun sens à comparer à
+  // une sélection. Aucun pari n'est déduit ici : la route rejoue le même moteur que le
+  // backtest et renvoie ROI / taux de réussite déjà calculés.
+  const [topMarkets, setTopMarkets] = useState<MarketBacktest[] | null>(null);
+  useEffect(() => {
+    if (!league) {
+      setTopMarkets(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    const url = `/api/football/backtest/markets?league=${encodeURIComponent(league)}`;
+    fetch(url, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { markets?: MarketBacktest[] } | null) => setTopMarkets(d?.markets ?? []))
+      .catch(() => {
+        // Annulé (changement de ligue rapide) ou réseau coupé : on laisse l'état
+        // précédent plutôt que d'afficher un classement faux. Pas d'erreur bloquante —
+        // le tableau principal reste la fonction première du widget.
+        if (!ctrl.signal.aborted) setTopMarkets(null);
+      });
+    return () => ctrl.abort();
+  }, [league]);
+
+  // `sampleOk` d'abord : un marché à 3 paris et +400 % de ROI n'est pas un « meilleur
+  // marché », c'est du bruit. Le seuil MIN_SAMPLE_BETS est déjà appliqué côté moteur.
+  const bestMarkets = useMemo(
+    () =>
+      (topMarkets ?? [])
+        .filter((m) => m.sampleOk && m.nWithOdds > 0 && m.roiPct != null)
+        .sort((a, b) => (b.roiPct ?? -Infinity) - (a.roiPct ?? -Infinity))
+        .slice(0, 2),
+    [topMarkets],
+  );
 
   const rawRows = matchesFor(active);
   const rows = useMemo(
@@ -278,15 +364,48 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
             <SelectItem value="__all__" className="text-xs dark:!bg-white dark:!text-[#222]">
               Toutes les ligues
             </SelectItem>
-            {leagues.map((l) => (
-              <SelectItem key={l} value={l} className="text-xs dark:!bg-white dark:!text-[#222]">
-                {l}
-              </SelectItem>
+            {leaguesByCountry.map((group) => (
+              <SelectGroup key={group.country}>
+                <SelectLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#717171]">
+                  <span aria-hidden>{group.flag}</span>
+                  {group.country}
+                </SelectLabel>
+                {group.leagues.map((l) => (
+                  <SelectItem key={l} value={l} className="text-xs dark:!bg-white dark:!text-[#222]">
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Sélecteur de stratégie */}
+        {/* Top 2 marchés backtestés du championnat sélectionné — n'apparaît QUE
+            lorsqu'un championnat est choisi, sinon le classement porterait sur
+            l'ensemble des ligues et ne répondrait à rien. */}
+        {league && bestMarkets.length > 0 && (
+          <div
+            className="flex w-full flex-wrap items-center gap-1.5"
+            aria-label={`Meilleurs marchés backtestés — ${league}`}
+          >
+            {bestMarkets.map((m, i) => (
+              <span
+                key={m.key}
+                title={`${m.label} · ${m.nWithOdds} paris cotés · ROI ${m.roiPct?.toFixed(1)} % · réussite ${m.winRatePct?.toFixed(0) ?? "—"} %`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#f0f0f0] bg-[#f5f5f5] px-2 py-1 text-[11px]"
+              >
+                <span aria-hidden>{i === 0 ? "🏆" : "🥈"}</span>
+                <span className="font-semibold text-[#222]">{m.label}</span>
+                <span className="font-mono tabular-nums text-[#717171]">
+                  ROI {(m.roiPct ?? 0).toFixed(1)} %
+                </span>
+                <span className="font-mono tabular-nums text-[#717171]">
+                  {(m.winRatePct ?? 0).toFixed(0)} %
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
         <Select value={active} onValueChange={handleStratChange}>
           <SelectTrigger
             size="sm"
