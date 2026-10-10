@@ -40,6 +40,15 @@ type Props = {
   highlightId?: string | null;
   /** Libellé de la fenêtre temporelle active (« Jour », « 48h », « Sem. »…). */
   windowLabel?: string;
+  /**
+   * Ouverture de la fiche détaillée du match (comparatif Domicile/Extérieur).
+   *
+   * Absent = tableau non cliquable (football n'était pas concerné au départ) : le clic
+   * ne fait alors rien et la ligne reste un simple affichage. Présent = chaque ligne est
+   * un vrai bouton, donc atteignable au clavier — condition d'accessibilité qui n'est
+   * pas négociable pour une action.
+   */
+  onOpenMatch?: (matchId: string) => void;
 };
 
 /* Teintes FotMob clair — identiques au calendrier (fotmob-calendar-table.tsx) */
@@ -75,7 +84,13 @@ function kickoffLabel(iso: string): string {
   return `${d} · ${h}`;
 }
 
-export function TopStrategiesTable({ rows, strategy, highlightId, windowLabel }: Props) {
+export function TopStrategiesTable({
+  rows,
+  strategy,
+  highlightId,
+  windowLabel,
+  onOpenMatch,
+}: Props) {
   if (rows.length === 0) {
     const span = windowLabel ? ` sur « ${windowLabel} »` : "";
     return (
@@ -132,12 +147,32 @@ export function TopStrategiesTable({ rows, strategy, highlightId, windowLabel }:
         {rows.map((row, i) => {
           const band = row.probPct != null ? confidenceBand(row.probPct) : null;
           const highlighted = highlightId != null && row.matchId === highlightId;
+          const clickable = onOpenMatch != null;
+          const label = `${row.home.teamName} contre ${row.away.teamName}${row.league ? `, ${row.league}` : ""}`;
+          const interactiveProps = clickable
+            ? {
+                role: "button" as const,
+                tabIndex: 0,
+                "aria-label": `Ouvrir l'analyse de ${label}`,
+                onClick: () => onOpenMatch(row.matchId),
+                onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+                  // Enter + Espace, comme un vrai bouton. Le `<div>` n'en a pas par
+                  // défaut : sans ce bloc, la ligne serait atteignable mais pas actionnable.
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpenMatch(row.matchId);
+                  }
+                },
+              }
+            : {};
           return (
             <div
               key={`${strategy}-${row.matchId}`}
               data-match-id={row.matchId}
+              {...interactiveProps}
               className={cn(
                 "flex flex-col gap-1 px-3 py-2 transition-colors hover:bg-[#f8f8f8] md:grid md:items-center md:gap-0",
+                clickable && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00985f]",
                 row.muted && "opacity-60",
               )}
               style={{

@@ -22,6 +22,7 @@ import type { MarketBacktest } from "@/lib/football-backtest/market-engine";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
 import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
+import { FootballMatchDetailDialog } from "./football-match-detail-dialog";
 
 /* Teintes FotMob clair — identiques au calendrier */
 const C = {
@@ -325,10 +326,42 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     toggleStore(entry, active);
   };
 
+  // Fiche détaillée au clic sur une ligne du Top 10.
+  //
+  // Résolution **locale** : le Top 10 ne reçoit qu'un `matchId`, mais la dialog exige un
+  // `FootballMatch` complet (elle lit `prediction`, `metricStats`, `standingStats`).
+  // La prop `matches` contient déjà ces fixtures — les retrouver par id évite une requête
+  // et le délai qui va avec. Deux critères de résolution, dans l'ordre :
+  //   1. `id` exact, ce qui est le cas normal ;
+  //   2. les deux noms d'équipe, parce que l'API Top-5 (`/api/football/top5`) peut
+  //      servir un match que la liste locale n'a pas encore (cache plus ancien que le
+  //      calendrier affiché). Sans ce repli, le clic ne ferait rien sur ces lignes —
+  //      un bouton qui n'ouvre rien est pire que pas de bouton.
+  const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
+
+  const openMatchDetail = useCallback(
+    (matchId: string) => {
+      const byId = matches.find((m) => String(m.id) === matchId);
+      if (byId) {
+        setDetailMatch(byId);
+        return;
+      }
+      const row = rows.find((r) => r.matchId === matchId);
+      if (!row) return;
+      const hit = matches.find(
+        (m) =>
+          m.home?.name === row.home.teamName && m.away?.name === row.away.teamName,
+      );
+      if (hit) setDetailMatch(hit);
+    },
+    [matches, rows],
+  );
+
   return (
-    <section
-      aria-label="Top 10 matchs par stratégie"
-      className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
+    <>
+      <section
+        aria-label="Top 10 matchs par stratégie"
+        className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
       style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
     >
       {/* Header — même style que FotmobLeagueSection */}
@@ -525,6 +558,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
             rows={toTableRows(rows, def, active)}
             strategy={active}
             windowLabel={TIME_WINDOWS.find((w) => w.key === timeWin)?.label}
+            onOpenMatch={openMatchDetail}
           />
           {/* I5 : repli « Nul probable » grisé quand gagnant est vide */}
           {drawModalRows.length > 0 && (
@@ -535,6 +569,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
               <TopStrategiesTable
                 rows={toTableRows(drawModalRows, def, active)}
                 strategy={active}
+                onOpenMatch={openMatchDetail}
               />
             </div>
           )}
@@ -565,5 +600,17 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
         </div>
       )}
     </section>
+      {/* Fiche détaillée — comparatif Domicile/Extérieur, xG, PowerScore, stats.
+          Montée dans le widget plutôt que remontée jusqu'à l'onglet : le Top 10 est
+          déjà le seul consommateur, et la dialog a déjà un branchement de secours
+          (fetch prématch) pour les matchs absents de la liste locale. */}
+      <FootballMatchDetailDialog
+        match={detailMatch}
+        open={detailMatch !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailMatch(null);
+        }}
+      />
+    </>
   );
 }
