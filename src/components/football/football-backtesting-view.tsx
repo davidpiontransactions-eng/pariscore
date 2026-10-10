@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { leagueCountryOf } from "@/lib/league-mapping";
-import { countryFlag } from "@/lib/country-flag";
+import { CountryFlag } from "@/components/ui/country-flag";
 
 /**
  * Libellé du groupe des ligues dont le pays n'est pas dans `LEAGUE_COUNTRY_BY_NAME`
@@ -274,7 +274,6 @@ export function FootballBacktestingView() {
     return [...byCountry.entries()]
       .map(([country, list]) => ({
         country,
-        flag: countryFlag(country),
         leagues: [...list].sort((a, b) => a.localeCompare(b, "fr")),
       }))
       .sort((a, b) => a.country.localeCompare(b.country, "fr"));
@@ -311,7 +310,7 @@ export function FootballBacktestingView() {
             {leaguesByCountry.map((group) => (
               <SelectGroup key={group.country}>
                 <SelectLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide">
-                  <span aria-hidden>{group.flag}</span>
+                  <CountryFlag country={group.country} size={12} />
                   {group.country}
                 </SelectLabel>
                 {group.leagues.map((l) => (

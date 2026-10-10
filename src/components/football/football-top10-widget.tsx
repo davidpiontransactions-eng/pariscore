@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { leagueCountryOf } from "@/lib/league-mapping";
-import { countryFlag } from "@/lib/country-flag";
+import { CountryFlag } from "@/components/ui/country-flag";
 import type { MarketBacktest } from "@/lib/football-backtest/market-engine";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
@@ -244,7 +244,6 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     return [...byCountry.entries()]
       .map(([country, set]) => ({
         country,
-        flag: countryFlag(country),
         leagues: [...set].sort((a, b) => a.localeCompare(b, "fr")),
       }))
       .sort((a, b) => a.country.localeCompare(b.country, "fr"));
@@ -369,7 +368,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
             {leaguesByCountry.map((group) => (
               <SelectGroup key={group.country}>
                 <SelectLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#717171]">
-                  <span aria-hidden>{group.flag}</span>
+                  <CountryFlag country={group.country} size={12} />
                   {group.country}
                 </SelectLabel>
                 {group.leagues.map((l) => (
